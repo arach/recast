@@ -1,6 +1,8 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
+import JSZip from 'jszip'
+import { saveAs } from 'file-saver'
 import CodeMirror from '@uiw/react-codemirror'
 import { javascript } from '@codemirror/lang-javascript'
 import { oneDark } from '@codemirror/theme-one-dark'
@@ -547,6 +549,9 @@ export default function Home() {
   }
 
   const exportAllSizes = async () => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+
     // Check if this is the ReCast logo
     const isRecastLogo = seed === 'recast-identity'
     
@@ -560,9 +565,40 @@ export default function Home() {
       { size: 16, name: isRecastLogo ? 'favicon-16.png' : `${seed}-16.png` },
     ]
 
+    const zip = new JSZip()
+    const folder = zip.folder(isRecastLogo ? 'recast-logos' : `${seed}-logos`)
+    if (!folder) return
+
+    // Save current canvas as original
+    const originalImageData = canvas.toDataURL()
+
     for (const { size, name } of exports) {
-      await exportAsPNG(size, name)
+      // Create a temporary canvas at the requested size
+      const tempCanvas = document.createElement('canvas')
+      tempCanvas.width = size
+      tempCanvas.height = size
+      const tempCtx = tempCanvas.getContext('2d')
+      if (!tempCtx) continue
+
+      // Draw the logo at the new size
+      const img = document.createElement('img')
+      await new Promise<void>((resolve) => {
+        img.onload = () => {
+          tempCtx.drawImage(img, 0, 0, size, size)
+          tempCanvas.toBlob((blob) => {
+            if (blob) {
+              folder.file(name, blob)
+            }
+            resolve()
+          })
+        }
+        img.src = originalImageData
+      })
     }
+
+    // Generate the zip file
+    const zipBlob = await zip.generateAsync({ type: 'blob' })
+    saveAs(zipBlob, isRecastLogo ? 'recast-logos.zip' : `${seed}-logos.zip`)
   }
 
   const exportAsSVG = () => {
