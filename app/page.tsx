@@ -29,6 +29,12 @@ import {
   Settings,
   FolderOpen,
 } from 'lucide-react'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { SaveDialog } from '@/components/save-dialog'
 import { SavedItemsDialog } from '@/components/saved-items-dialog'
 import { SavedShape, SavedPreset } from '@/lib/storage'
@@ -52,6 +58,21 @@ interface Preset {
 const colorPalette = ['#0070f3', '#7c3aed', '#dc2626', '#059669', '#d97706', '#be185d', '#4338ca', '#0891b2']
 
 const presets: Preset[] = [
+  {
+    name: '🎯 ReCast Logo',
+    mode: 'wavebars',
+    params: {
+      seed: 'recast-identity',
+      frequency: 5,
+      amplitude: 80,
+      complexity: 0.6,
+      chaos: 0.15,
+      damping: 0.85,
+      layers: 1,
+      barCount: 80,
+      barSpacing: 2,
+    },
+  },
   {
     name: 'Gentle Wave',
     mode: 'wave',
@@ -136,6 +157,18 @@ export default function Home() {
     // Clear canvas
     ctx.fillStyle = '#ffffff'
     ctx.fillRect(0, 0, canvas.width, canvas.height)
+    
+    // If this is the ReCast logo preset, add a subtle background
+    if (seed === 'recast-identity') {
+      const gradient = ctx.createRadialGradient(
+        canvas.width / 2, canvas.height / 2, 0,
+        canvas.width / 2, canvas.height / 2, canvas.width / 2
+      )
+      gradient.addColorStop(0, 'rgba(250, 250, 250, 1)')
+      gradient.addColorStop(1, 'rgba(245, 245, 245, 1)')
+      ctx.fillStyle = gradient
+      ctx.fillRect(0, 0, canvas.width, canvas.height)
+    }
 
     // Apply zoom
     ctx.save()
@@ -458,19 +491,45 @@ export default function Home() {
     if (preset.params.barSpacing) setBarSpacing(preset.params.barSpacing)
   }
 
-  const exportAsPNG = () => {
+  const exportAsPNG = (size?: number) => {
     const canvas = canvasRef.current
     if (!canvas) return
 
-    canvas.toBlob((blob) => {
-      if (!blob) return
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `recast-logo-${seed}.png`
-      a.click()
-      URL.revokeObjectURL(url)
-    })
+    if (size && size !== canvas.width) {
+      // Create a temporary canvas at the requested size
+      const tempCanvas = document.createElement('canvas')
+      tempCanvas.width = size
+      tempCanvas.height = size
+      const tempCtx = tempCanvas.getContext('2d')
+      if (!tempCtx) return
+
+      // Save current canvas content
+      const imageData = canvas.toDataURL()
+      const img = new Image()
+      img.onload = () => {
+        tempCtx.drawImage(img, 0, 0, size, size)
+        tempCanvas.toBlob((blob) => {
+          if (!blob) return
+          const url = URL.createObjectURL(blob)
+          const a = document.createElement('a')
+          a.href = url
+          a.download = `recast-logo-${seed}-${size}x${size}.png`
+          a.click()
+          URL.revokeObjectURL(url)
+        })
+      }
+      img.src = imageData
+    } else {
+      canvas.toBlob((blob) => {
+        if (!blob) return
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = `recast-logo-${seed}.png`
+        a.click()
+        URL.revokeObjectURL(url)
+      })
+    }
   }
 
   const exportAsSVG = () => {
@@ -673,14 +732,37 @@ export default function Home() {
             </Button>
 
             <div className="flex space-x-1">
-              <Button
-                size="sm"
-                onClick={exportAsPNG}
-                className="h-9"
-              >
-                <Download className="w-4 h-4 mr-2" />
-                Export PNG
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    size="sm"
+                    className="h-9"
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    Export PNG
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => exportAsPNG()}>
+                    Original (600×600)
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => exportAsPNG(1024)}>
+                    Large (1024×1024)
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => exportAsPNG(512)}>
+                    Medium (512×512)
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => exportAsPNG(256)}>
+                    Small (256×256)
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => exportAsPNG(128)}>
+                    Icon (128×128)
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => exportAsPNG(64)}>
+                    Favicon (64×64)
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
               <Button
                 size="sm"
                 variant="outline"
