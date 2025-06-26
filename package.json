@@ -11,7 +11,8 @@
     "build:lib": "tsup",
     "start": "next start",
     "lint": "eslint . --ext .ts,.tsx",
-    "test": "vitest"
+    "test": "vitest",
+    "generate:logo": "pnpm build:lib && node scripts/generate-logo.js"
   },
   "keywords": [
     "generative",

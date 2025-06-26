@@ -158,7 +158,7 @@ export class WaveGenerator {
       nestedWaves.push(transformed)
     }
 
-    return [containerWave, ...nestedWaves.flat()]
+    return [containerWave, ...nestedWaves.flat()] as WavePoint[][]
   }
 
   // Update parameters (for animation)

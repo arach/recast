@@ -120,6 +120,7 @@ const presets: Preset[] = [
 
 export default function Home() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const logoCanvasRef = useRef<HTMLCanvasElement>(null)
   const [seed, setSeed] = useState('recast-logo')
   const [frequency, setFrequency] = useState(4)
   const [amplitude, setAmplitude] = useState(50)
@@ -609,6 +610,61 @@ export default function Home() {
     return () => mediaQuery.removeEventListener('change', checkTheme)
   }, [])
 
+  // Generate logo in header
+  useEffect(() => {
+    const canvas = logoCanvasRef.current
+    if (!canvas) return
+    
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+
+    // ReCast logo preset
+    const logoPreset = presets[0]
+    const params = {
+      amplitude: logoPreset.params.amplitude,
+      frequency: logoPreset.params.frequency,
+      phase: 0,
+      complexity: logoPreset.params.complexity,
+      chaos: logoPreset.params.chaos,
+      damping: logoPreset.params.damping,
+      layers: logoPreset.params.layers
+    }
+
+    const generator = new WaveGenerator(params, logoPreset.params.seed)
+
+    // Clear and add gradient
+    ctx.fillStyle = '#ffffff'
+    ctx.fillRect(0, 0, 32, 32)
+    
+    const gradient = ctx.createRadialGradient(16, 16, 0, 16, 16, 16)
+    gradient.addColorStop(0, 'rgba(250, 250, 250, 1)')
+    gradient.addColorStop(1, 'rgba(245, 245, 245, 1)')
+    ctx.fillStyle = gradient
+    ctx.fillRect(0, 0, 32, 32)
+
+    // Generate mini wave bars
+    const options = {
+      width: 32,
+      height: 32,
+      resolution: 20, // Less bars for small size
+      time: 0,
+      seed: logoPreset.params.seed
+    }
+
+    const waveData = generator.generate(options)[0]
+    const barWidth = 32 / 20
+    
+    waveData.forEach((point, i) => {
+      const x = i * barWidth
+      const barHeight = 10 + Math.random() * 10
+      const y = point.y - barHeight / 2
+      
+      const hue = (i / 20) * 360
+      ctx.fillStyle = `hsla(${hue}, 70%, 50%, 0.9)`
+      ctx.fillRect(x, y, barWidth - 0.5, barHeight)
+    })
+  }, [])
+
   useEffect(() => {
     generateLogo()
   }, [generateLogo])
@@ -662,8 +718,13 @@ export default function Home() {
         <div className="flex items-center justify-between px-8 py-4">
           <div className="flex items-center space-x-6">
             <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                <Sparkles className="w-4 h-4 text-white" />
+              <div className="w-8 h-8 relative">
+                <canvas 
+                  ref={logoCanvasRef}
+                  width={32}
+                  height={32}
+                  className="rounded-lg"
+                />
               </div>
               <div>
                 <h1 className="text-xl font-semibold text-gray-900 tracking-tight">ReCast</h1>
