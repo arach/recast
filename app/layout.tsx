@@ -7,6 +7,16 @@ const inter = Inter({ subsets: ['latin'] })
 export const metadata: Metadata = {
   title: 'ReCast - Programmatic Logo Generator',
   description: 'Generate unique logos through programmatic definition of shapes',
+  icons: {
+    icon: [
+      { url: '/favicon-16.png', sizes: '16x16', type: 'image/png' },
+      { url: '/favicon-32.png', sizes: '32x32', type: 'image/png' },
+      { url: '/logo-128.png', sizes: '128x128', type: 'image/png' },
+    ],
+    apple: [
+      { url: '/logo-256.png', sizes: '256x256', type: 'image/png' },
+    ],
+  },
 }
 
 export default function RootLayout({
