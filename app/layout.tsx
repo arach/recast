@@ -14,7 +14,7 @@ export const metadata: Metadata = {
       { url: '/ReCast-128.png', sizes: '128x128', type: 'image/png' },
     ],
     apple: [
-      { url: '/ReCast-256.png', sizes: '256x256', type: 'image/png' },
+      { url: '/ReCast-256.png', sizes: '180x180', type: 'image/png' },
     ],
   },
 }

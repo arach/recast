@@ -25,9 +25,6 @@ export function AnimatedLogo({ size = 48 }: { size?: number }) {
       height={size}
       viewBox="0 0 100 100"
       className="rounded-lg overflow-hidden transition-transform hover:scale-110"
-      style={{
-        background: 'radial-gradient(circle at center, #fafafa, #f5f5f5)'
-      }}
     >
       <style>
         {`

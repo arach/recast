@@ -44,6 +44,8 @@ import { SaveDialog } from '@/components/save-dialog'
 import { SavedItemsDialog } from '@/components/saved-items-dialog'
 import { SavedShape, SavedPreset } from '@/lib/storage'
 import { AnimatedLogo } from '@/components/logo'
+import RecastLogo from '@/components/ReCast'
+import { generateLogoPackage, generateReactComponent, ExportConfig } from '@/lib/svg-export'
 
 interface Preset {
   name: string
@@ -302,6 +304,7 @@ export default function Home() {
   const [currentShapeId, setCurrentShapeId] = useState<string | undefined>()
   const [currentShapeName, setCurrentShapeName] = useState('Custom Shape')
   const [previewMode, setPreviewMode] = useState(false)
+  const [forceRender, setForceRender] = useState(0)
   const animationRef = useRef<number>()
   const timeRef = useRef(0)
 
@@ -344,7 +347,7 @@ export default function Home() {
     }
 
     ctx.restore()
-  }, [visualMode, seed, frequency, amplitude, complexity, chaos, damping, layers, barCount, barSpacing, zoom, color, customCode])
+  }, [visualMode, seed, frequency, amplitude, complexity, chaos, damping, layers, barCount, barSpacing, zoom, color, customCode, forceRender])
 
   const generateWaveLines = (ctx: CanvasRenderingContext2D, width: number, height: number) => {
     const params: WaveParameters = {
@@ -647,6 +650,9 @@ export default function Home() {
     setLayers(preset.params.layers)
     if (preset.params.barCount) setBarCount(preset.params.barCount)
     if (preset.params.barSpacing) setBarSpacing(preset.params.barSpacing)
+    
+    // Force re-render after all state updates
+    setForceRender(prev => prev + 1)
   }
 
   const exportAsPNG = async (size?: number, filename?: string) => {
@@ -727,6 +733,7 @@ export default function Home() {
     // Save current canvas as original
     const originalImageData = canvas.toDataURL()
 
+    // Export static PNGs
     for (const { size, name } of exports) {
       // Create a temporary canvas at the requested size
       const tempCanvas = document.createElement('canvas')
@@ -750,6 +757,66 @@ export default function Home() {
         img.src = originalImageData
       })
     }
+
+    // Generate dynamic SVG package
+    const exportConfig: ExportConfig = {
+      seed,
+      mode: visualMode as 'wave' | 'bars' | 'wavebars',
+      frequency,
+      amplitude,
+      complexity,
+      chaos,
+      damping,
+      layers,
+      barCount,
+      barSpacing
+    }
+
+    const logoPackage = generateLogoPackage(canvas.width, canvas.height, exportConfig, timeRef.current)
+    const reactComponent = generateReactComponent(exportConfig)
+    
+    // Add core files to zip
+    folder.file(`${baseName}Logo.tsx`, reactComponent)
+    folder.file(`${baseName}-config.json`, JSON.stringify(logoPackage.config, null, 2))
+    folder.file('README.md', `# ${baseName} Logo Package
+
+This package contains your dynamic ReCast logo in multiple formats:
+
+## Static Images (PNG)
+- Various sizes from 16x16 to 1024x1024
+- Use for favicons, app icons, social media
+
+## Dynamic Logo Component
+- \`${baseName}Logo.tsx\` - Self-contained React component with hover animations
+
+## Configuration
+- \`${baseName}-config.json\` - All parameters used to generate this logo
+
+## Usage
+
+### React Component Usage
+\`\`\`tsx
+import ${baseName.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join('')}Logo from './${baseName}Logo'
+
+export default function MyApp() {
+  return (
+    <${baseName.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join('')}Logo 
+      width={120} 
+      height={120} 
+      animated={false} // Only animates on hover by default
+    />
+  )
+}
+\`\`\`
+
+### Features
+- ✅ Responsive scaling - works at any size
+- ✅ Hover animations with your exact wave parameters  
+- ✅ No dependencies - completely self-contained
+- ✅ TypeScript support with proper prop types
+
+Generated with ReCast - Programmatic Logo Generator
+`)
 
     // Generate the zip file
     const zipBlob = await zip.generateAsync({ type: 'blob' })
@@ -797,6 +864,9 @@ export default function Home() {
       setCurrentShapeId(shape.id)
       setCurrentShapeName(shape.name)
     }
+    
+    // Force re-render after all state updates
+    setForceRender(prev => prev + 1)
   }
 
   const handleLoadPreset = (preset: SavedPreset) => {
@@ -812,6 +882,9 @@ export default function Home() {
     if (preset.params.barSpacing) setBarSpacing(preset.params.barSpacing)
     if (preset.params.color) setColor(preset.params.color)
     if (preset.shapeId) setCurrentShapeId(preset.shapeId)
+    
+    // Force re-render after all state updates
+    setForceRender(prev => prev + 1)
   }
 
   const openSaveDialog = (mode: 'shape' | 'preset') => {
@@ -886,7 +959,7 @@ export default function Home() {
         <div className="flex items-center justify-between px-8 py-4">
           <div className="flex items-center space-x-6">
             <div className="flex items-center space-x-3">
-              <AnimatedLogo size={48} />
+              <RecastLogo width={48} height={48} animated={false} />
               <div>
                 <h1 className="text-xl font-semibold text-gray-900 tracking-tight">ReCast</h1>
                 <p className="text-xs text-gray-500 -mt-0.5">
