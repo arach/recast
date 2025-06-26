@@ -565,7 +565,10 @@ export default function Home() {
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       if (!isDragging) return
-      const newHeight = window.innerHeight - e.clientY - 73 // Header height
+      // Get the header height dynamically
+      const header = document.querySelector('header')
+      const headerHeight = header ? header.offsetHeight : 0
+      const newHeight = window.innerHeight - e.clientY - headerHeight
       setControlsHeight(Math.min(Math.max(200, newHeight), 600))
     }
 
@@ -585,9 +588,9 @@ export default function Home() {
   }, [isDragging])
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white">
+    <div className="h-screen overflow-hidden bg-gradient-to-br from-gray-50 to-white flex flex-col">
       {/* Header */}
-      <header className="border-b border-gray-200 bg-white/80 backdrop-blur-xl sticky top-0 z-50">
+      <header className="border-b border-gray-200 bg-white/80 backdrop-blur-xl flex-shrink-0">
         <div className="flex items-center justify-between px-8 py-4">
           <div className="flex items-center space-x-6">
             <div className="flex items-center space-x-3">
@@ -682,10 +685,10 @@ export default function Home() {
         </div>
       </header>
 
-      <div className="flex h-[calc(100vh-73px)]">
+      <div className="flex flex-1 overflow-hidden">
         {/* Left Panel - Code Editor */}
         <div className={cn(
-          "border-r border-gray-200 bg-gray-50/30 transition-all duration-300",
+          "border-r border-gray-200 bg-gray-50/30 transition-all duration-300 flex flex-col overflow-hidden",
           codeEditorCollapsed ? "w-12" : "w-2/5"
         )}>
           {codeEditorCollapsed ? (
@@ -751,7 +754,7 @@ export default function Home() {
                 </div>
               </div>
 
-              <div className="h-[calc(100%-89px)]">
+              <div className="flex-1 overflow-auto">
                 {codeError && (
                   <div className="mx-4 mt-4 p-3 bg-red-100 text-red-700 rounded-lg text-sm">
                     Error: {codeError}
@@ -776,7 +779,7 @@ export default function Home() {
 
         {/* Right Panel */}
         <div className={cn(
-          "flex flex-col bg-white transition-all duration-300",
+          "flex flex-col bg-white transition-all duration-300 overflow-hidden",
           codeEditorCollapsed ? "w-[calc(100%-48px)]" : "w-3/5"
         )}>
           {/* Canvas Area */}
@@ -843,11 +846,11 @@ export default function Home() {
           </div>
 
           {/* Controls Panel */}
-          <div className="relative" style={{ height: `${controlsHeight}px` }}>
+          <div className="relative flex-shrink-0" style={{ height: `${controlsHeight}px` }}>
             {/* Resize Handle */}
             <div
               className={cn(
-                "absolute top-0 left-0 right-0 h-2 cursor-ns-resize hover:bg-gray-200 transition-colors flex items-center justify-center",
+                "absolute top-0 left-0 right-0 h-2 cursor-ns-resize hover:bg-gray-200 transition-colors flex items-center justify-center z-10",
                 isDragging && "bg-gray-200"
               )}
               onMouseDown={handleMouseDown}
@@ -855,7 +858,7 @@ export default function Home() {
               <div className="w-12 h-1 bg-gray-300 rounded-full" />
             </div>
             
-            <div className="h-full border-t overflow-y-auto pt-2">
+            <div className="h-full border-t overflow-y-auto">
               <div className="p-6 space-y-4">
               {/* Presets */}
               <Card>
