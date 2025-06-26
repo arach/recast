@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
-import Image from 'next/image'
 import CodeMirror from '@uiw/react-codemirror'
 import { javascript } from '@codemirror/lang-javascript'
 import { oneDark } from '@codemirror/theme-one-dark'
@@ -511,7 +510,7 @@ export default function Home() {
 
         // Save current canvas content
         const imageData = canvas.toDataURL()
-        const img = new Image()
+        const img = document.createElement('img')
         img.onload = () => {
           tempCtx.drawImage(img, 0, 0, size, size)
           tempCanvas.toBlob((blob) => {
@@ -696,14 +695,9 @@ export default function Home() {
         <div className="flex items-center justify-between px-8 py-4">
           <div className="flex items-center space-x-6">
             <div className="flex items-center space-x-3">
-              <Image 
-                src="/logo-128.png" 
-                alt="ReCast Logo"
-                width={32}
-                height={32}
-                className="rounded-lg"
-                priority
-              />
+              <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                <Sparkles className="w-4 h-4 text-white" />
+              </div>
               <div>
                 <h1 className="text-xl font-semibold text-gray-900 tracking-tight">ReCast</h1>
                 <p className="text-xs text-gray-500 -mt-0.5">

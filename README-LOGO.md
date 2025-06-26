@@ -1,6 +1,8 @@
 # ReCast Logo Setup
 
-The ReCast logo is generated using ReCast itself! To set up the logo files:
+The ReCast logo is generated using ReCast itself! 
+
+**Note**: The app currently uses a gradient placeholder icon. To use the generated ReCast logo, follow these steps:
 
 1. Start the development server:
    ```bash
@@ -28,6 +30,19 @@ The ReCast logo is generated using ReCast itself! To set up the logo files:
    ├── logo-256.png    # Apple touch icon
    ├── favicon-16.png  # Small favicon
    └── favicon-32.png  # Standard favicon
+   ```
+
+5. Update `app/page.tsx` to use the logo image:
+   ```tsx
+   // Replace the gradient div with:
+   <Image 
+     src="/logo-128.png" 
+     alt="ReCast Logo"
+     width={32}
+     height={32}
+     className="rounded-lg"
+     priority
+   />
    ```
 
 
