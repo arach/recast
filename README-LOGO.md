@@ -13,30 +13,30 @@ The ReCast logo is generated using ReCast itself!
    - http://localhost:3000 and click "🎯 ReCast Logo"
 
 3. Click "Export PNG" → "Export All Sizes" to download a zip file containing:
-   - `logo-1024.png` (1024×1024)
-   - `logo-512.png` (512×512)
-   - `logo-256.png` (256×256)
-   - `logo-128.png` (128×128) - **Used in app header**
-   - `logo-64.png` (64×64)
-   - `favicon-32.png` (32×32) - **Browser favicon**
-   - `favicon-16.png` (16×16) - **Browser favicon**
+   - `ReCast-1024.png` (1024×1024)
+   - `ReCast-512.png` (512×512)
+   - `ReCast-256.png` (256×256) - **Apple touch icon**
+   - `ReCast-128.png` (128×128) - **Used in app header**
+   - `ReCast-64.png` (64×64)
+   - `ReCast-32.png` (32×32) - **Browser favicon**
+   - `ReCast-16.png` (16×16) - **Browser favicon**
 
    **Note**: When using the ReCast Logo preset, you'll get `recast-logos.zip` with properly named files. For other seeds, the zip will be named `[seed]-logos.zip`.
 
 4. Extract the zip and place the files in the `/public` directory:
    ```
    public/
-   ├── logo-128.png    # App header logo
-   ├── logo-256.png    # Apple touch icon
-   ├── favicon-16.png  # Small favicon
-   └── favicon-32.png  # Standard favicon
+   ├── ReCast-128.png  # App header logo
+   ├── ReCast-256.png  # Apple touch icon
+   ├── ReCast-16.png   # Small favicon
+   └── ReCast-32.png   # Standard favicon
    ```
 
 5. Update `app/page.tsx` to use the logo image:
    ```tsx
    // Replace the gradient div with:
    <Image 
-     src="/logo-128.png" 
+     src="/ReCast-128.png" 
      alt="ReCast Logo"
      width={32}
      height={32}

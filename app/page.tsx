@@ -556,13 +556,13 @@ export default function Home() {
     const isRecastLogo = seed === 'recast-identity'
     
     const exports = [
-      { size: 1024, name: isRecastLogo ? 'logo-1024.png' : `${seed}-1024.png` },
-      { size: 512, name: isRecastLogo ? 'logo-512.png' : `${seed}-512.png` },
-      { size: 256, name: isRecastLogo ? 'logo-256.png' : `${seed}-256.png` },
-      { size: 128, name: isRecastLogo ? 'logo-128.png' : `${seed}-128.png` },
-      { size: 64, name: isRecastLogo ? 'logo-64.png' : `${seed}-64.png` },
-      { size: 32, name: isRecastLogo ? 'favicon-32.png' : `${seed}-32.png` },
-      { size: 16, name: isRecastLogo ? 'favicon-16.png' : `${seed}-16.png` },
+      { size: 1024, name: isRecastLogo ? 'ReCast-1024.png' : `${seed}-1024.png` },
+      { size: 512, name: isRecastLogo ? 'ReCast-512.png' : `${seed}-512.png` },
+      { size: 256, name: isRecastLogo ? 'ReCast-256.png' : `${seed}-256.png` },
+      { size: 128, name: isRecastLogo ? 'ReCast-128.png' : `${seed}-128.png` },
+      { size: 64, name: isRecastLogo ? 'ReCast-64.png' : `${seed}-64.png` },
+      { size: 32, name: isRecastLogo ? 'ReCast-32.png' : `${seed}-32.png` },
+      { size: 16, name: isRecastLogo ? 'ReCast-16.png' : `${seed}-16.png` },
     ]
 
     const zip = new JSZip()
