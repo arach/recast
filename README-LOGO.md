@@ -21,7 +21,7 @@ The ReCast logo is generated using ReCast itself!
    - `ReCast-32.png` (32×32) - **Browser favicon**
    - `ReCast-16.png` (16×16) - **Browser favicon**
 
-   **Note**: When using the ReCast Logo preset, you'll get `recast-logos.zip` with properly named files. For other seeds, the zip will be named `[seed]-logos.zip`.
+   **Note**: Files are named using your seed as the base name. For the ReCast Logo preset (seed: recast-identity), files will be named `ReCast-*.png`. For other seeds, they'll be named `{seed}-*.png`.
 
 4. Extract the zip and place the files in the `/public` directory:
    ```

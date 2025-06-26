@@ -552,21 +552,21 @@ export default function Home() {
     const canvas = canvasRef.current
     if (!canvas) return
 
-    // Check if this is the ReCast logo
-    const isRecastLogo = seed === 'recast-identity'
+    // Use the seed as the base name, capitalize first letter if it's the ReCast logo
+    const baseName = seed === 'recast-identity' ? 'ReCast' : seed
     
     const exports = [
-      { size: 1024, name: isRecastLogo ? 'ReCast-1024.png' : `${seed}-1024.png` },
-      { size: 512, name: isRecastLogo ? 'ReCast-512.png' : `${seed}-512.png` },
-      { size: 256, name: isRecastLogo ? 'ReCast-256.png' : `${seed}-256.png` },
-      { size: 128, name: isRecastLogo ? 'ReCast-128.png' : `${seed}-128.png` },
-      { size: 64, name: isRecastLogo ? 'ReCast-64.png' : `${seed}-64.png` },
-      { size: 32, name: isRecastLogo ? 'ReCast-32.png' : `${seed}-32.png` },
-      { size: 16, name: isRecastLogo ? 'ReCast-16.png' : `${seed}-16.png` },
+      { size: 1024, name: `${baseName}-1024.png` },
+      { size: 512, name: `${baseName}-512.png` },
+      { size: 256, name: `${baseName}-256.png` },
+      { size: 128, name: `${baseName}-128.png` },
+      { size: 64, name: `${baseName}-64.png` },
+      { size: 32, name: `${baseName}-32.png` },
+      { size: 16, name: `${baseName}-16.png` },
     ]
 
     const zip = new JSZip()
-    const folder = zip.folder(isRecastLogo ? 'recast-logos' : `${seed}-logos`)
+    const folder = zip.folder(`${baseName}-logos`)
     if (!folder) return
 
     // Save current canvas as original
@@ -598,7 +598,7 @@ export default function Home() {
 
     // Generate the zip file
     const zipBlob = await zip.generateAsync({ type: 'blob' })
-    saveAs(zipBlob, isRecastLogo ? 'recast-logos.zip' : `${seed}-logos.zip`)
+    saveAs(zipBlob, `${baseName}-logos.zip`)
   }
 
   const exportAsSVG = () => {
