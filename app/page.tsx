@@ -142,7 +142,7 @@ export default function Home() {
     ctx.scale(zoom, zoom)
     ctx.translate((canvas.width * (1 - zoom)) / (2 * zoom), (canvas.height * (1 - zoom)) / (2 * zoom))
 
-    if (visualMode === 'custom') {
+    if (visualMode === 'custom' && customCode && customCode.trim()) {
       executeCustomCode(ctx, canvas.width, canvas.height)
     } else if (visualMode === 'bars') {
       generateAudioBars(ctx, canvas.width, canvas.height)
@@ -350,12 +350,21 @@ export default function Home() {
 
       const generator = new WaveGenerator(params, seed)
 
-      const codeToExecute = customCode + '\n\n' + 
-        'drawVisualization(ctx, width, height, { ...params, seed, barCount, barSpacing }, generator, time);'
+      // Create a safe execution environment with all variables defined
+      const safeCode = `
+        // Define all variables in scope to prevent reference errors
+        const seed = params.seed;
+        const barCount = params.barCount;
+        const barSpacing = params.barSpacing;
+        
+        ${customCode}
+        
+        drawVisualization(ctx, width, height, params, generator, time);
+      `
 
       const executeFunction = new Function(
         'ctx', 'width', 'height', 'params', 'generator', 'time', 'WaveGenerator',
-        codeToExecute
+        safeCode
       )
 
       executeFunction(ctx, width, height, 
