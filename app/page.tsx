@@ -25,7 +25,13 @@ import {
   Palette,
   Save,
   GripVertical,
+  Package,
+  Settings,
+  FolderOpen,
 } from 'lucide-react'
+import { SaveDialog } from '@/components/save-dialog'
+import { SavedItemsDialog } from '@/components/saved-items-dialog'
+import { SavedShape, SavedPreset } from '@/lib/storage'
 
 interface Preset {
   name: string
@@ -112,6 +118,11 @@ export default function Home() {
   const [controlsHeight, setControlsHeight] = useState(300)
   const [isDragging, setIsDragging] = useState(false)
   const [isDarkMode, setIsDarkMode] = useState(false)
+  const [saveDialogOpen, setSaveDialogOpen] = useState(false)
+  const [saveMode, setSaveMode] = useState<'shape' | 'preset'>('preset')
+  const [savedItemsOpen, setSavedItemsOpen] = useState(false)
+  const [currentShapeId, setCurrentShapeId] = useState<string | undefined>()
+  const [currentShapeName, setCurrentShapeName] = useState('Custom Shape')
   const animationRef = useRef<number>()
   const timeRef = useRef(0)
 
@@ -378,6 +389,23 @@ export default function Home() {
     const currentCode = getCodeForMode()
     setCustomCode(currentCode)
     setVisualMode('custom')
+    setCurrentShapeId(undefined)
+    setCurrentShapeName(getShapeNameForMode() + ' (Clone)')
+  }
+
+  const getShapeNameForMode = () => {
+    switch (visualMode) {
+      case 'wave':
+        return 'Wave Lines'
+      case 'bars':
+        return 'Audio Bars'
+      case 'wavebars':
+        return 'Wave Bars'
+      case 'custom':
+        return currentShapeName
+      default:
+        return 'Custom Shape'
+    }
   }
 
   const toggleAnimation = () => {
@@ -464,6 +492,41 @@ export default function Home() {
     navigator.clipboard.writeText(url)
   }
 
+  const handleLoadShape = (shape: SavedShape) => {
+    // Check if this is a built-in shape
+    if (shape.id.startsWith('builtin-')) {
+      const mode = shape.id.replace('builtin-', '') as 'wave' | 'bars' | 'wavebars'
+      setVisualMode(mode)
+      setCurrentShapeId(undefined)
+      setCurrentShapeName(shape.name)
+    } else {
+      setCustomCode(shape.code)
+      setVisualMode('custom')
+      setCurrentShapeId(shape.id)
+      setCurrentShapeName(shape.name)
+    }
+  }
+
+  const handleLoadPreset = (preset: SavedPreset) => {
+    setVisualMode(preset.mode)
+    setSeed(preset.params.seed)
+    setFrequency(preset.params.frequency)
+    setAmplitude(preset.params.amplitude)
+    setComplexity(preset.params.complexity)
+    setChaos(preset.params.chaos)
+    setDamping(preset.params.damping)
+    setLayers(preset.params.layers)
+    if (preset.params.barCount) setBarCount(preset.params.barCount)
+    if (preset.params.barSpacing) setBarSpacing(preset.params.barSpacing)
+    if (preset.params.color) setColor(preset.params.color)
+    if (preset.shapeId) setCurrentShapeId(preset.shapeId)
+  }
+
+  const openSaveDialog = (mode: 'shape' | 'preset') => {
+    setSaveMode(mode)
+    setSaveDialogOpen(true)
+  }
+
   // Theme detection
   useEffect(() => {
     const checkTheme = () => {
@@ -544,12 +607,48 @@ export default function Home() {
             <Button
               variant="outline"
               size="sm"
+              onClick={() => setSavedItemsOpen(true)}
+              className="h-9"
+            >
+              <FolderOpen className="w-4 h-4 mr-2" />
+              Library
+            </Button>
+
+            <div className="h-6 w-px bg-gray-200" />
+
+            <Button
+              variant="outline"
+              size="sm"
               onClick={randomizeParams}
               className="h-9"
             >
               <Shuffle className="w-4 h-4 mr-2" />
               Randomize
             </Button>
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => openSaveDialog('preset')}
+              className="h-9"
+            >
+              <Settings className="w-4 h-4 mr-2" />
+              Save Preset
+            </Button>
+
+            {visualMode === 'custom' && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => openSaveDialog('shape')}
+                className="h-9"
+              >
+                <Package className="w-4 h-4 mr-2" />
+                Save Shape
+              </Button>
+            )}
+
+            <div className="h-6 w-px bg-gray-200" />
 
             <Button
               variant="outline"
@@ -604,10 +703,29 @@ export default function Home() {
             <>
               <div className="p-6 border-b border-gray-200 bg-white">
                 <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="font-medium text-gray-900 text-sm">Generation Code</h3>
-                    <p className="text-xs text-gray-500 mt-0.5">
-                      {visualMode === 'custom' ? 'Edit your custom visualization' : 'View-only mode'}
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3">
+                      {visualMode === 'custom' ? (
+                        <input
+                          type="text"
+                          value={currentShapeName}
+                          onChange={(e) => setCurrentShapeName(e.target.value)}
+                          className="text-sm font-medium text-gray-900 bg-transparent border-b border-gray-300 hover:border-gray-400 focus:border-blue-500 focus:outline-none px-1 py-0.5"
+                          placeholder="Shape name..."
+                        />
+                      ) : (
+                        <h3 className="font-medium text-gray-900 text-sm flex items-center gap-2">
+                          {getShapeNameForMode()}
+                          <span className="text-xs font-normal text-gray-500 bg-gray-100 px-2 py-0.5 rounded">
+                            Built-in
+                          </span>
+                        </h3>
+                      )}
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {visualMode === 'custom' ? 
+                        currentShapeId ? 'Editing saved shape' : 'Edit your custom visualization' : 
+                        'View-only mode'}
                     </p>
                   </div>
                   <div className="flex items-center space-x-2">
@@ -742,20 +860,38 @@ export default function Home() {
               {/* Presets */}
               <Card>
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-sm">Quick Presets</CardTitle>
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    Built-in Examples
+                    <span className="text-xs font-normal text-gray-500">
+                      Click to try, save to customize
+                    </span>
+                  </CardTitle>
                 </CardHeader>
                 <CardContent className="pt-0">
-                  <div className="flex space-x-2">
+                  <div className="flex flex-wrap gap-2">
                     {presets.map((preset, index) => (
-                      <Button
-                        key={index}
-                        size="sm"
-                        variant="outline"
-                        onClick={() => loadPreset(preset)}
-                        className="h-8 text-xs"
-                      >
-                        {preset.name}
-                      </Button>
+                      <div key={index} className="flex items-center gap-1">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => loadPreset(preset)}
+                          className="h-8 text-xs"
+                        >
+                          {preset.name}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => {
+                            loadPreset(preset)
+                            openSaveDialog('preset')
+                          }}
+                          className="h-8 w-8 p-0 text-gray-400 hover:text-gray-600"
+                          title="Save to library"
+                        >
+                          <Save className="w-3 h-3" />
+                        </Button>
+                      </div>
                     ))}
                   </div>
                 </CardContent>
@@ -917,6 +1053,40 @@ export default function Home() {
           </div>
         </div>
       </div>
+
+      {/* Save Dialog */}
+      <SaveDialog
+        open={saveDialogOpen}
+        onOpenChange={setSaveDialogOpen}
+        mode={saveMode}
+        visualMode={visualMode}
+        customCode={customCode}
+        currentShapeName={currentShapeName}
+        params={{
+          seed,
+          frequency,
+          amplitude,
+          complexity,
+          chaos,
+          damping,
+          layers,
+          barCount,
+          barSpacing,
+          color,
+        }}
+        currentShapeId={currentShapeId}
+        onSaved={() => {
+          // Optionally show a success message
+        }}
+      />
+
+      {/* Saved Items Dialog */}
+      <SavedItemsDialog
+        open={savedItemsOpen}
+        onOpenChange={setSavedItemsOpen}
+        onLoadShape={handleLoadShape}
+        onLoadPreset={handleLoadPreset}
+      />
     </div>
   )
 }
