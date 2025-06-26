@@ -10,14 +10,16 @@ The ReCast logo is generated using ReCast itself! To set up the logo files:
 2. Load the ReCast Logo preset (first preset in the list) or navigate to:
    - http://localhost:3000 and click "🎯 ReCast Logo"
 
-3. Export the logo at different sizes using the Export PNG dropdown:
-   - logo-1024.png (1024×1024)
-   - logo-512.png (512×512)
-   - logo-256.png (256×256)
-   - logo-128.png (128×128) - **Used in app header**
-   - logo-64.png (64×64)
-   - favicon-32.png (32×32) - **Browser favicon**
-   - favicon-16.png (16×16) - **Browser favicon**
+3. Click "Export PNG" → "Export All Sizes" to download all logo files at once:
+   - `logo-1024.png` (1024×1024)
+   - `logo-512.png` (512×512)
+   - `logo-256.png` (256×256)
+   - `logo-128.png` (128×128) - **Used in app header**
+   - `logo-64.png` (64×64)
+   - `favicon-32.png` (32×32) - **Browser favicon**
+   - `favicon-16.png` (16×16) - **Browser favicon**
+
+   **Note**: When using the ReCast Logo preset (seed: recast-identity), the files will automatically have the correct names. For other logos, the files will be named with your seed.
 
 4. Place the exported files in the `/public` directory:
    ```
@@ -28,9 +30,6 @@ The ReCast logo is generated using ReCast itself! To set up the logo files:
    └── favicon-32.png  # Standard favicon
    ```
 
-## Alternative: Use the Logo Generator Page
-
-Visit http://localhost:3000/generate-logos to download all sizes at once.
 
 ## Logo Configuration
 

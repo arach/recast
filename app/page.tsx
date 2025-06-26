@@ -35,6 +35,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu'
 import { SaveDialog } from '@/components/save-dialog'
 import { SavedItemsDialog } from '@/components/saved-items-dialog'
@@ -492,44 +493,76 @@ export default function Home() {
     if (preset.params.barSpacing) setBarSpacing(preset.params.barSpacing)
   }
 
-  const exportAsPNG = (size?: number) => {
+  const exportAsPNG = async (size?: number, filename?: string) => {
     const canvas = canvasRef.current
     if (!canvas) return
 
-    if (size && size !== canvas.width) {
-      // Create a temporary canvas at the requested size
-      const tempCanvas = document.createElement('canvas')
-      tempCanvas.width = size
-      tempCanvas.height = size
-      const tempCtx = tempCanvas.getContext('2d')
-      if (!tempCtx) return
+    return new Promise<void>((resolve) => {
+      if (size && size !== canvas.width) {
+        // Create a temporary canvas at the requested size
+        const tempCanvas = document.createElement('canvas')
+        tempCanvas.width = size
+        tempCanvas.height = size
+        const tempCtx = tempCanvas.getContext('2d')
+        if (!tempCtx) {
+          resolve()
+          return
+        }
 
-      // Save current canvas content
-      const imageData = canvas.toDataURL()
-      const img = new Image()
-      img.onload = () => {
-        tempCtx.drawImage(img, 0, 0, size, size)
-        tempCanvas.toBlob((blob) => {
-          if (!blob) return
+        // Save current canvas content
+        const imageData = canvas.toDataURL()
+        const img = new Image()
+        img.onload = () => {
+          tempCtx.drawImage(img, 0, 0, size, size)
+          tempCanvas.toBlob((blob) => {
+            if (!blob) {
+              resolve()
+              return
+            }
+            const url = URL.createObjectURL(blob)
+            const a = document.createElement('a')
+            a.href = url
+            a.download = filename || `recast-logo-${seed}-${size}x${size}.png`
+            a.click()
+            URL.revokeObjectURL(url)
+            setTimeout(resolve, 100) // Small delay between downloads
+          })
+        }
+        img.src = imageData
+      } else {
+        canvas.toBlob((blob) => {
+          if (!blob) {
+            resolve()
+            return
+          }
           const url = URL.createObjectURL(blob)
           const a = document.createElement('a')
           a.href = url
-          a.download = `recast-logo-${seed}-${size}x${size}.png`
+          a.download = filename || `recast-logo-${seed}.png`
           a.click()
           URL.revokeObjectURL(url)
+          setTimeout(resolve, 100)
         })
       }
-      img.src = imageData
-    } else {
-      canvas.toBlob((blob) => {
-        if (!blob) return
-        const url = URL.createObjectURL(blob)
-        const a = document.createElement('a')
-        a.href = url
-        a.download = `recast-logo-${seed}.png`
-        a.click()
-        URL.revokeObjectURL(url)
-      })
+    })
+  }
+
+  const exportAllSizes = async () => {
+    // Check if this is the ReCast logo
+    const isRecastLogo = seed === 'recast-identity'
+    
+    const exports = [
+      { size: 1024, name: isRecastLogo ? 'logo-1024.png' : `${seed}-1024.png` },
+      { size: 512, name: isRecastLogo ? 'logo-512.png' : `${seed}-512.png` },
+      { size: 256, name: isRecastLogo ? 'logo-256.png' : `${seed}-256.png` },
+      { size: 128, name: isRecastLogo ? 'logo-128.png' : `${seed}-128.png` },
+      { size: 64, name: isRecastLogo ? 'logo-64.png' : `${seed}-64.png` },
+      { size: 32, name: isRecastLogo ? 'favicon-32.png' : `${seed}-32.png` },
+      { size: 16, name: isRecastLogo ? 'favicon-16.png' : `${seed}-16.png` },
+    ]
+
+    for (const { size, name } of exports) {
+      await exportAsPNG(size, name)
     }
   }
 
@@ -749,6 +782,11 @@ export default function Home() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={exportAllSizes} className="font-semibold">
+                    <Download className="w-4 h-4 mr-2" />
+                    Export All Sizes
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => exportAsPNG()}>
                     Original (600×600)
                   </DropdownMenuItem>
