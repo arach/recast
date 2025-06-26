@@ -1,7 +1,9 @@
 /**
- * Core wave generation engine for ReCast
- * This is the mathematical heart of the identity system
+ * Wave-based generator for ReCast
+ * Implements mathematical wave functions within the generative engine framework
  */
+
+import { GeneratorBase, GeneratedElement, GenerativeParameters, GenerationOptions, GeneratorMetadata, GeneratorRegistry } from './generative-engine'
 
 export interface WavePoint {
   x: number
@@ -10,6 +12,7 @@ export interface WavePoint {
   phase: number
 }
 
+// Legacy interface for backward compatibility
 export interface WaveParameters {
   amplitude: number          // 0-100: Height of waves
   frequency: number         // 0-20: Number of wave cycles  
@@ -20,37 +23,74 @@ export interface WaveParameters {
   layers: number          // 1-5: Number of wave layers
 }
 
-export interface GenerationOptions {
-  width: number
-  height: number
-  resolution: number      // Points per wave
-  time?: number          // For animations
-  seed?: string          // For reproducible randomness
-}
-
-export class WaveGenerator {
-  private params: WaveParameters
-  private rng: () => number
-
-  constructor(params: WaveParameters, seed?: string) {
-    this.params = params
-    this.rng = seed ? this.seededRandom(seed) : Math.random
-  }
-
-  // Seeded random number generator for reproducible results
-  private seededRandom(seed: string): () => number {
-    let hash = 0
-    for (let i = 0; i < seed.length; i++) {
-      const char = seed.charCodeAt(i)
-      hash = ((hash << 5) - hash) + char
-      hash = hash & hash
+export class WaveGenerator extends GeneratorBase {
+  constructor(params: GenerativeParameters | WaveParameters, seed?: string) {
+    // Convert legacy WaveParameters to GenerativeParameters if needed
+    const generativeParams: GenerativeParameters = 'barCount' in params ? params as GenerativeParameters : {
+      frequency: params.frequency,
+      amplitude: params.amplitude,
+      complexity: params.complexity,
+      chaos: params.chaos,
+      damping: params.damping,
+      layers: params.layers,
+      phaseOffset: 'phase' in params ? params.phase : 0
     }
     
-    return () => {
-      hash = (hash * 9301 + 49297) % 233280
-      return hash / 233280
+    super(generativeParams, seed)
+    
+    this.metadata = {
+      name: 'Wave Generator',
+      description: 'Creates smooth mathematical wave patterns with harmonics and complexity',
+      category: 'mathematical',
+      supportedModes: ['wave', 'wavebars'],
+      defaultParameters: {
+        frequency: 3,
+        amplitude: 50,
+        complexity: 0.3,
+        chaos: 0.1,
+        damping: 0.9,
+        layers: 2
+      },
+      parameterRanges: {
+        frequency: { min: 0.1, max: 20, step: 0.1 },
+        amplitude: { min: 0, max: 100, step: 1 },
+        complexity: { min: 0, max: 1, step: 0.01 },
+        chaos: { min: 0, max: 1, step: 0.01 },
+        damping: { min: 0, max: 1, step: 0.01 },
+        layers: { min: 1, max: 5, step: 1 }
+      }
     }
   }
+
+  // New unified generate method for GenerativeEngine compatibility
+  generate(options: GenerationOptions): GeneratedElement[] {
+    const layers = this.generateWavePoints(options)
+    const elements: GeneratedElement[] = []
+    
+    // Convert wave points to GeneratedElement format
+    layers.forEach((layer, layerIndex) => {
+      // For wave mode, create path elements
+      if (layer.length > 1) {
+        const pathData = layer.map((point, i) => 
+          i === 0 ? `M ${point.x} ${point.y}` : `L ${point.x} ${point.y}`
+        ).join(' ')
+        
+        elements.push({
+          type: 'path',
+          props: {
+            d: pathData,
+            stroke: `hsl(${200 + layerIndex * 30}, 70%, 50%)`,
+            strokeWidth: Math.max(1, options.width / 200),
+            fill: 'none',
+            opacity: 0.8 - (layerIndex * 0.1)
+          }
+        })
+      }
+    })
+    
+    return elements
+  }
+
 
   // Generate a single wave layer
   private generateLayer(
@@ -60,12 +100,12 @@ export class WaveGenerator {
   ): WavePoint[] {
     const points: WavePoint[] = []
     const { width, height, resolution } = options
-    const { amplitude, frequency, phase, complexity, chaos, damping } = this.params
+    const { amplitude, frequency, complexity, chaos, damping, phaseOffset } = this.params
 
     // Layer-specific modifications
     const layerFreq = frequency * (1 + layerIndex * 0.3)
     const layerAmp = amplitude * Math.pow(damping, layerIndex)
-    const layerPhase = phase + (layerIndex * Math.PI / 4)
+    const layerPhase = (phaseOffset || 0) + (layerIndex * Math.PI / 4)
 
     for (let i = 0; i < resolution; i++) {
       const x = (i / resolution) * width
@@ -105,8 +145,8 @@ export class WaveGenerator {
     return points
   }
 
-  // Generate all wave layers
-  generate(options: GenerationOptions): WavePoint[][] {
+  // Legacy method - generates raw wave points (DEPRECATED: use generate() for new code)
+  generateWavePoints(options: GenerationOptions): WavePoint[][] {
     const { layers } = this.params
     const { time = 0 } = options
     
@@ -122,7 +162,7 @@ export class WaveGenerator {
 
   // Generate a wave-within-wave effect
   generateNested(options: GenerationOptions): WavePoint[][] {
-    const containerWave = this.generate({
+    const containerWave = this.generateWavePoints({
       ...options,
       resolution: Math.floor(options.resolution / 4)
     })[0]
@@ -161,8 +201,20 @@ export class WaveGenerator {
     return [containerWave, ...nestedWaves.flat()] as WavePoint[][]
   }
 
-  // Update parameters (for animation)
+  // Legacy parameter update method (DEPRECATED: use updateParameters() for new code)
   updateParams(params: Partial<WaveParameters>) {
-    this.params = { ...this.params, ...params }
+    const generativeParams: Partial<GenerativeParameters> = {
+      frequency: params.frequency,
+      amplitude: params.amplitude,
+      complexity: params.complexity,
+      chaos: params.chaos,
+      damping: params.damping,
+      layers: params.layers,
+      phaseOffset: 'phase' in params ? params.phase : undefined
+    }
+    this.updateParameters(generativeParams)
   }
 }
+
+// Register the WaveGenerator with the GenerativeEngine
+GeneratorRegistry.register('wave', WaveGenerator)

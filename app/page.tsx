@@ -369,7 +369,7 @@ export default function Home() {
     }
 
     const generator = new WaveGenerator(params, seed)
-    const waveLayers = generator.generate(options)
+    const waveLayers = generator.generateWavePoints(options)
 
     waveLayers.forEach((layer, layerIndex) => {
       ctx.beginPath()
@@ -409,7 +409,7 @@ export default function Home() {
     }
 
     const generator = new WaveGenerator(params, seed)
-    const waveData = generator.generate(options)[0]
+    const waveData = generator.generateWavePoints(options)[0]
 
     const barWidth = (width - barSpacing * (barCount - 1)) / barCount
     const centerY = height / 2
@@ -461,7 +461,7 @@ export default function Home() {
     }
 
     const generator = new WaveGenerator(waveParams, seed)
-    const waveData = generator.generate(waveOptions)[0]
+    const waveData = generator.generateWavePoints(waveOptions)[0]
 
     const barParams: WaveParameters = {
       amplitude: 40,
@@ -482,7 +482,7 @@ export default function Home() {
     }
 
     const barGenerator = new WaveGenerator(barParams, seed + '-bars')
-    const barHeights = barGenerator.generate(barOptions)[0]
+    const barHeights = barGenerator.generateWavePoints(barOptions)[0]
 
     const barWidth = (width - barSpacing * (barCount - 1)) / barCount
 
