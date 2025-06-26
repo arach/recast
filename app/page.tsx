@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
-import Image from 'next/image'
 import JSZip from 'jszip'
 import { saveAs } from 'file-saver'
 import CodeMirror from '@uiw/react-codemirror'
@@ -44,6 +43,7 @@ import {
 import { SaveDialog } from '@/components/save-dialog'
 import { SavedItemsDialog } from '@/components/saved-items-dialog'
 import { SavedShape, SavedPreset } from '@/lib/storage'
+import { AnimatedLogo } from '@/components/logo'
 
 interface Preset {
   name: string
@@ -886,14 +886,7 @@ export default function Home() {
         <div className="flex items-center justify-between px-8 py-4">
           <div className="flex items-center space-x-6">
             <div className="flex items-center space-x-3">
-              <Image 
-                src="/ReCast-128.png" 
-                alt="ReCast Logo"
-                width={48}
-                height={48}
-                className="rounded-lg"
-                priority
-              />
+              <AnimatedLogo size={48} />
               <div>
                 <h1 className="text-xl font-semibold text-gray-900 tracking-tight">ReCast</h1>
                 <p className="text-xs text-gray-500 -mt-0.5">
