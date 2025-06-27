@@ -102,6 +102,13 @@ export class WaveGenerator extends GeneratorBase {
     const { width, height, resolution } = options
     const { amplitude, frequency, complexity, chaos, damping, phaseOffset } = this.params
 
+    // Performance optimization: Detect if we're likely animating
+    const isAnimating = time !== undefined && Math.abs(time % 1) > 0.001
+
+    // Adaptive complexity for performance during animation
+    const activeComplexity = isAnimating ? Math.min(complexity * 0.3, 0.1) : complexity
+    const maxHarmonics = isAnimating ? 2 : Math.ceil(activeComplexity * 5)
+
     // Layer-specific modifications
     const layerFreq = frequency * (1 + layerIndex * 0.3)
     const layerAmp = amplitude * Math.pow(damping, layerIndex)
@@ -114,15 +121,16 @@ export class WaveGenerator extends GeneratorBase {
       // Base wave
       let y = Math.sin((t * layerFreq * Math.PI * 2) + layerPhase + time)
 
-      // Add harmonics for complexity
-      for (let h = 2; h <= Math.ceil(complexity * 5); h++) {
+      // Add harmonics for complexity (optimized count during animation)
+      for (let h = 2; h <= maxHarmonics; h++) {
         const harmonicAmp = 1 / h
         y += harmonicAmp * Math.sin((t * layerFreq * h * Math.PI * 2) + layerPhase + time)
       }
 
-      // Add chaos
+      // Add chaos (reduced during animation for performance)
       if (chaos > 0) {
-        y += (this.rng() - 0.5) * chaos
+        const activeChaos = isAnimating ? chaos * 0.5 : chaos
+        y += (this.rng() - 0.5) * activeChaos
       }
 
       // Scale to amplitude

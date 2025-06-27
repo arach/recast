@@ -92,7 +92,38 @@ export function CanvasArea({
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
   const [lastPanPoint, setLastPanPoint] = useState({ x: 0, y: 0 })
   
-  // Keep it simple - no caching complexity
+  // Logo canvas cache - CRITICAL FOR PERFORMANCE
+  const logoCanvasCache = useRef<Map<string, { canvas: HTMLCanvasElement, paramHash: string }>>(new Map())
+  
+  // Generate hash for logo parameters to detect changes
+  const getLogoParamHash = useCallback((logo: LogoInstance, time: number) => {
+    // Only include time in hash if animating, otherwise cache static version
+    const timeComponent = animating ? Math.floor(time * 10) / 10 : 0 // Reduce time precision for better caching
+    return JSON.stringify({
+      ...logo.params,
+      code: logo.code,
+      time: timeComponent
+    })
+  }, [animating])
+
+  // Clean up cache for removed logos
+  useEffect(() => {
+    const currentLogoIds = new Set(logos.map(logo => logo.id))
+    const cachedIds = Array.from(logoCanvasCache.current.keys())
+    
+    cachedIds.forEach(cachedId => {
+      if (!currentLogoIds.has(cachedId)) {
+        logoCanvasCache.current.delete(cachedId)
+      }
+    })
+  }, [logos])
+  
+  // Clean up all cached canvases on unmount
+  useEffect(() => {
+    return () => {
+      logoCanvasCache.current.clear()
+    }
+  }, [])
 
   // Logo click detection
   const isPointInLogo = (x: number, y: number, logo: LogoInstance) => {
@@ -180,53 +211,66 @@ export function CanvasArea({
       ctx.save()
       ctx.translate(logo.x, logo.y)
       
-      // Simple approach - just create a canvas and draw on it
-      const logoCanvas = document.createElement('canvas')
-      logoCanvas.width = 600
-      logoCanvas.height = 600
-      const logoCtx = logoCanvas.getContext('2d')
+      // PERFORMANCE OPTIMIZATION: Use cached canvas instead of creating new one every frame
+      const paramHash = getLogoParamHash(logo, currentTime)
+      let logoCanvas: HTMLCanvasElement
       
-      if (logoCtx) {
-        // Clear canvas
-        logoCtx.fillStyle = '#ffffff'
-        logoCtx.fillRect(0, 0, logoCanvas.width, logoCanvas.height)
+      const cached = logoCanvasCache.current.get(logo.id)
+      if (cached && cached.paramHash === paramHash) {
+        // Use cached canvas - no regeneration needed!
+        logoCanvas = cached.canvas
+      } else {
+        // Parameters changed - create new canvas and cache it
+        logoCanvas = document.createElement('canvas')
+        logoCanvas.width = 600
+        logoCanvas.height = 600
+        const logoCtx = logoCanvas.getContext('2d')
         
-        // Add subtle background for ReCast logo
-        if (logo.params.seed === 'recast-identity') {
-          const gradient = logoCtx.createRadialGradient(
-            logoCanvas.width / 2, logoCanvas.height / 2, 0,
-            logoCanvas.width / 2, logoCanvas.height / 2, logoCanvas.width / 2
-          )
-          gradient.addColorStop(0, 'rgba(250, 250, 250, 1)')
-          gradient.addColorStop(1, 'rgba(245, 245, 245, 1)')
-          logoCtx.fillStyle = gradient
+        if (logoCtx) {
+          // Clear canvas
+          logoCtx.fillStyle = '#ffffff'
           logoCtx.fillRect(0, 0, logoCanvas.width, logoCanvas.height)
-        }
+          
+          // Add subtle background for ReCast logo
+          if (logo.params.seed === 'recast-identity') {
+            const gradient = logoCtx.createRadialGradient(
+              logoCanvas.width / 2, logoCanvas.height / 2, 0,
+              logoCanvas.width / 2, logoCanvas.height / 2, logoCanvas.width / 2
+            )
+            gradient.addColorStop(0, 'rgba(250, 250, 250, 1)')
+            gradient.addColorStop(1, 'rgba(245, 245, 245, 1)')
+            logoCtx.fillStyle = gradient
+            logoCtx.fillRect(0, 0, logoCanvas.width, logoCanvas.height)
+          }
 
-        // Create VisualizationParams for this logo
-        const logoParams: VisualizationParams = {
-          seed: logo.params.seed,
-          frequency: logo.params.frequency,
-          amplitude: logo.params.amplitude,
-          complexity: logo.params.complexity,
-          chaos: logo.params.chaos,
-          damping: logo.params.damping,
-          layers: logo.params.layers,
-          barCount: logo.params.barCount,
-          barSpacing: logo.params.barSpacing,
-          radius: logo.params.radius,
-          color: logo.params.color,
-          customParameters: logo.params.customParameters,
-          time: currentTime
-        }
+          // Create VisualizationParams for this logo
+          const logoParams: VisualizationParams = {
+            seed: logo.params.seed,
+            frequency: logo.params.frequency,
+            amplitude: logo.params.amplitude,
+            complexity: logo.params.complexity,
+            chaos: logo.params.chaos,
+            damping: logo.params.damping,
+            layers: logo.params.layers,
+            barCount: logo.params.barCount,
+            barSpacing: logo.params.barSpacing,
+            radius: logo.params.radius,
+            color: logo.params.color,
+            customParameters: logo.params.customParameters,
+            time: currentTime
+          }
 
-        // Generate logo content using the code
-        if (logo.code && logo.code.trim()) {
-          executeCustomCode(logoCtx, logoCanvas.width, logoCanvas.height, logoParams, logo.code, onCodeError)
-        } else {
-          // Fallback to default wave visualization
-          generateWaveLines(logoCtx, logoCanvas.width, logoCanvas.height, logoParams)
+          // Generate logo content using the code
+          if (logo.code && logo.code.trim()) {
+            executeCustomCode(logoCtx, logoCanvas.width, logoCanvas.height, logoParams, logo.code, onCodeError)
+          } else {
+            // Fallback to default wave visualization
+            generateWaveLines(logoCtx, logoCanvas.width, logoCanvas.height, logoParams)
+          }
         }
+        
+        // Cache the new canvas
+        logoCanvasCache.current.set(logo.id, { canvas: logoCanvas, paramHash })
       }
 
       // Draw selection highlight for selected logo
@@ -306,7 +350,7 @@ export function CanvasArea({
   }, [])
 
   // Handle wheel events for mouse-centered zooming
-  const handleWheel = useCallback((e: React.WheelEvent) => {
+  const handleWheel = useCallback((e: WheelEvent) => {
     if (previewMode) return
     
     e.preventDefault()
@@ -356,6 +400,15 @@ export function CanvasArea({
     window.addEventListener('resize', handleResize)
     return () => window.removeEventListener('resize', handleResize)
   }, [drawInfiniteCanvas])
+
+  // Handle wheel events with non-passive listener
+  useEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+
+    canvas.addEventListener('wheel', handleWheel, { passive: false })
+    return () => canvas.removeEventListener('wheel', handleWheel)
+  }, [handleWheel])
 
   return (
     <div 
@@ -430,7 +483,6 @@ export function CanvasArea({
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
           onMouseLeave={handleMouseUp}
-          onWheel={handleWheel}
         />
       ) : (
         <div className="h-full flex items-center justify-center p-8">

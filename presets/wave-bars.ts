@@ -23,75 +23,56 @@ export function draw(
   generator: any,
   time: number
 ) {
-  // Generate the wave center line
-  const waveOptions = {
-    width,
-    height,
-    resolution: params.barCount,
-    time: time,
-    seed: params.seed
-  };
-
-  const waveData = generator.generateWavePoints(waveOptions)[0];
-
-  // Generate bar heights variation
-  const WaveGenerator = generator.constructor;
-  const barGen = new WaveGenerator({
-    ...generator.params,
-    amplitude: 40,
-    frequency: generator.params.frequency * 3,
-    chaos: generator.params.chaos
-  }, params.seed + '-bars');
-  
-  const barHeights = barGen.generateWavePoints({
-    ...waveOptions,
-    time: time * 2
-  })[0];
-
+  // Yesterday's direct approach - simple sine calculations (high performance)
   const barWidth = (width - params.barSpacing * (params.barCount - 1)) / params.barCount;
-
-  // Draw each bar
+  
   for (let i = 0; i < params.barCount; i++) {
     const x = i * (barWidth + params.barSpacing);
-    const waveCenterY = waveData[i].y;
-    const barHeight = Math.abs(barHeights[i].y - height / 2) + 20;
+    
+    // Simple sine wave for center line
+    const t = i / params.barCount;
+    const waveY = height / 2 + Math.sin((t * params.frequency * Math.PI * 2) + time) * params.amplitude;
+    
+    // Simple sine wave for bar height
+    const barHeight = Math.abs(Math.sin((t * params.frequency * 3 * Math.PI * 2) + time * 2) * 40) + 20;
     
     // Rainbow gradient
     const hue = (i / params.barCount) * 360;
-    const gradient = ctx.createLinearGradient(x, waveCenterY - barHeight/2, x, waveCenterY + barHeight/2);
+    const gradient = ctx.createLinearGradient(x, waveY - barHeight/2, x, waveY + barHeight/2);
     gradient.addColorStop(0, `hsla(${hue}, 70%, 60%, 0.9)`);
     gradient.addColorStop(0.5, `hsla(${hue}, 80%, 50%, 1)`);
     gradient.addColorStop(1, `hsla(${hue}, 70%, 60%, 0.9)`);
     
     ctx.fillStyle = gradient;
     
-    // Draw rounded rectangles centered on wave
     const radius = barWidth / 3;
     ctx.beginPath();
-    ctx.roundRect(x, waveCenterY - barHeight/2, barWidth, barHeight, radius);
+    ctx.roundRect(x, waveY - barHeight/2, barWidth, barHeight, radius);
     ctx.fill();
     
-    // Add dots
     if (barHeight > 25) {
       ctx.beginPath();
-      ctx.arc(x + barWidth/2, waveCenterY - barHeight/2 - 4, barWidth/2.5, 0, Math.PI * 2);
-      ctx.arc(x + barWidth/2, waveCenterY + barHeight/2 + 4, barWidth/2.5, 0, Math.PI * 2);
+      ctx.arc(x + barWidth/2, waveY - barHeight/2 - 4, barWidth/2.5, 0, Math.PI * 2);
+      ctx.arc(x + barWidth/2, waveY + barHeight/2 + 4, barWidth/2.5, 0, Math.PI * 2);
       ctx.fill();
     }
   }
-
-  // Draw wave guide line
+  
+  // Simple wave guide line
   ctx.beginPath();
   ctx.strokeStyle = 'rgba(100, 100, 100, 0.15)';
   ctx.lineWidth = 1;
   ctx.setLineDash([5, 5]);
-  waveData.forEach((point, i) => {
+  for (let i = 0; i < params.barCount; i++) {
+    const x = i * (barWidth + params.barSpacing);
+    const t = i / params.barCount;
+    const y = height / 2 + Math.sin((t * params.frequency * Math.PI * 2) + time) * params.amplitude;
     if (i === 0) {
-      ctx.moveTo(point.x, point.y);
+      ctx.moveTo(x, y);
     } else {
-      ctx.lineTo(point.x, point.y);
+      ctx.lineTo(x, y);
     }
-  });
+  }
   ctx.stroke();
   ctx.setLineDash([]);
 }

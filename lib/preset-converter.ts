@@ -75,12 +75,8 @@ export async function loadPresetAsLegacy(presetName: string): Promise<{
     metadata: module.metadata
   };
   
-  // Instead of converting to string, generate code that uses the preset registry
-  const code = `// ${preset.metadata.name}
-// This preset uses the optimized preset registry for better performance
-
-// PRESET_ID: ${presetName}
-// The actual visualization will be executed from the preset registry`;
+  // Convert the preset to viewable code
+  const code = convertPresetToLegacy(preset);
   
   return {
     id: presetName,

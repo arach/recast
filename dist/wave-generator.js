@@ -152,6 +152,9 @@ var WaveGenerator = class _WaveGenerator extends GeneratorBase {
     const points = [];
     const { width, height, resolution } = options;
     const { amplitude, frequency, complexity, chaos, damping, phaseOffset } = this.params;
+    const isAnimating = time !== void 0 && Math.abs(time % 1) > 1e-3;
+    const activeComplexity = isAnimating ? Math.min(complexity * 0.3, 0.1) : complexity;
+    const maxHarmonics = isAnimating ? 2 : Math.ceil(activeComplexity * 5);
     const layerFreq = frequency * (1 + layerIndex * 0.3);
     const layerAmp = amplitude * Math.pow(damping, layerIndex);
     const layerPhase = (phaseOffset || 0) + layerIndex * Math.PI / 4;
@@ -159,12 +162,13 @@ var WaveGenerator = class _WaveGenerator extends GeneratorBase {
       const x = i / resolution * width;
       const t = i / resolution;
       let y = Math.sin(t * layerFreq * Math.PI * 2 + layerPhase + time);
-      for (let h = 2; h <= Math.ceil(complexity * 5); h++) {
+      for (let h = 2; h <= maxHarmonics; h++) {
         const harmonicAmp = 1 / h;
         y += harmonicAmp * Math.sin(t * layerFreq * h * Math.PI * 2 + layerPhase + time);
       }
       if (chaos > 0) {
-        y += (this.rng() - 0.5) * chaos;
+        const activeChaos = isAnimating ? chaos * 0.5 : chaos;
+        y += (this.rng() - 0.5) * activeChaos;
       }
       y = y * layerAmp;
       y = height / 2 + y;

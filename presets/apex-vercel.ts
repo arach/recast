@@ -24,81 +24,97 @@ export function draw(
   generator: any,
   time: number
 ) {
-  // Clear canvas with clean background
+  // Clean gradient background 
   const bgGradient = ctx.createLinearGradient(0, 0, 0, height);
-  bgGradient.addColorStop(0, '#fafafa');
-  bgGradient.addColorStop(1, '#ffffff');
+  bgGradient.addColorStop(0, '#000000');
+  bgGradient.addColorStop(1, '#111111');
   ctx.fillStyle = bgGradient;
   ctx.fillRect(0, 0, width, height);
 
   const barCount = params.barCount || 30;
   const barSpacing = params.barSpacing || 5;
   const totalSpacing = (barCount - 1) * barSpacing;
-  const barWidth = (width - totalSpacing - 100) / barCount; // 100px margin
-  const startX = 50; // 50px left margin
+  const barWidth = (width - totalSpacing - 60) / barCount; 
+  const startX = 30;
   
-  // Generate wave data for triangular pattern
-  const waveData = [];
-  for (let i = 0; i < barCount; i++) {
-    const x = i / (barCount - 1);
-    const frequency = (params.frequency || 7) * Math.PI;
-    
-    // Create triangular wave pattern
-    let triangleWave = Math.abs(2 * (x * frequency / Math.PI - Math.floor(x * frequency / Math.PI + 0.5)));
-    triangleWave = triangleWave * 2 - 1; // Normalize to -1 to 1
-    
-    // Apply sharpness factor
-    const sharpness = params.sharpness || 1.2;
-    triangleWave = Math.sign(triangleWave) * Math.pow(Math.abs(triangleWave), 1/sharpness);
-    
-    const baseHeight = triangleWave * (params.amplitude || 85);
-    
-    // Minimal complexity for clean geometric look
-    let finalHeight = baseHeight;
-    if (params.complexity > 0) {
-      finalHeight += Math.sin(x * frequency * 2 + time) * (params.amplitude || 85) * params.complexity * 0.1;
-    }
-    
-    // Apply damping and ensure positive
-    finalHeight = Math.abs(finalHeight) * (params.damping || 0.98);
-    waveData.push(Math.max(5, finalHeight));
-  }
-  
-  // Draw triangular bars
+  // Dynamic animated wave using simple sine calculations for performance
   for (let i = 0; i < barCount; i++) {
     const x = startX + i * (barWidth + barSpacing);
-    const barHeight = waveData[i];
-    const y = height - barHeight - 50; // 50px from bottom
+    const t = i / barCount;
     
-    // Vercel-inspired color scheme (black to gray gradient)
-    const intensity = barHeight / (params.amplitude || 85);
-    const lightness = 10 + intensity * 40; // Dark to medium gray
+    // Primary wave with animation
+    const primaryWave = Math.sin((t * params.frequency * Math.PI * 2) + time * 2) * params.amplitude;
     
-    ctx.fillStyle = `hsl(0, 0%, ${lightness}%)`;
+    // Secondary wave for complexity
+    const secondaryWave = Math.sin((t * params.frequency * 4 * Math.PI * 2) + time * 3) * params.amplitude * 0.3;
     
-    // Draw sharp triangular bars
+    // Combine waves and ensure positive
+    const combinedHeight = Math.abs(primaryWave + secondaryWave * params.complexity);
+    const barHeight = Math.max(10, combinedHeight);
+    
+    // Dynamic color based on position and time
+    const hue = (i / barCount) * 60 + time * 30; // Blue to cyan spectrum
+    const intensity = (barHeight / params.amplitude);
+    const saturation = 80 + intensity * 20;
+    const lightness = 40 + intensity * 40;
+    
+    // Create dynamic gradient per bar
+    const gradient = ctx.createLinearGradient(x, height - barHeight, x, height);
+    gradient.addColorStop(0, `hsla(${hue}, ${saturation}%, ${lightness}%, 0.9)`);
+    gradient.addColorStop(0.6, `hsla(${hue}, ${saturation * 0.8}%, ${lightness * 0.7}%, 0.7)`);
+    gradient.addColorStop(1, `hsla(${hue}, ${saturation * 0.6}%, ${lightness * 0.4}%, 0.5)`);
+    ctx.fillStyle = gradient;
+    
+    // Draw modern rounded bars instead of triangles
     ctx.beginPath();
-    ctx.moveTo(x + barWidth/2, y); // Top point
-    ctx.lineTo(x, y + barHeight); // Bottom left
-    ctx.lineTo(x + barWidth, y + barHeight); // Bottom right
-    ctx.closePath();
+    const centerY = height - barHeight;
+    const radius = Math.min(barWidth / 2, 8);
+    ctx.roundRect(x, centerY, barWidth, barHeight, [radius, radius, 0, 0]);
     ctx.fill();
     
-    // Add subtle stroke for definition
-    ctx.strokeStyle = `hsl(0, 0%, ${Math.max(0, lightness - 20)}%)`;
-    ctx.lineWidth = 0.5;
-    ctx.stroke();
+    // Add glow effect for better visuals
+    if (barHeight > 30) {
+      ctx.shadowColor = `hsla(${hue}, ${saturation}%, ${lightness}%, 0.6)`;
+      ctx.shadowBlur = 8;
+      ctx.shadowOffsetY = 0;
+      
+      // Draw glow
+      ctx.beginPath();
+      ctx.roundRect(x, centerY, barWidth, barHeight, [radius, radius, 0, 0]);
+      ctx.fill();
+      
+      // Reset shadow
+      ctx.shadowColor = 'transparent';
+      ctx.shadowBlur = 0;
+    }
   }
+  
+  // Add subtle wave guide line
+  ctx.beginPath();
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+  ctx.lineWidth = 1;
+  for (let i = 0; i < barCount; i++) {
+    const x = startX + i * (barWidth + barSpacing) + barWidth / 2;
+    const t = i / barCount;
+    const y = height - Math.abs(Math.sin((t * params.frequency * Math.PI * 2) + time * 2) * params.amplitude);
+    
+    if (i === 0) {
+      ctx.moveTo(x, y);
+    } else {
+      ctx.lineTo(x, y);
+    }
+  }
+  ctx.stroke();
 }
 
 export const metadata: PresetMetadata = {
-  name: "▲ Apex (Vercel-style)",
-  description: "Sharp geometric triangular patterns inspired by Vercel's clean design",
+  name: "🌊 Apex (Modern)",
+  description: "Dynamic animated bars with glowing gradients and smooth wave motion",
   defaultParams: {
-    seed: "apex-triangle",
+    seed: "apex-modern",
     frequency: 7,
     amplitude: 85,
-    complexity: 0.05,
+    complexity: 0.3,
     chaos: 0.0,
     damping: 0.98,
     layers: 1,
