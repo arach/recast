@@ -90,6 +90,13 @@ export function CanvasArea({
   const [isDragging, setIsDragging] = useState(false)
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
   const [lastPanPoint, setLastPanPoint] = useState({ x: 0, y: 0 })
+  
+  // Canvas cache to avoid recreating canvases every frame
+  const canvasCacheRef = useRef<Map<string, HTMLCanvasElement>>(new Map())
+  const lastParamsRef = useRef<Map<string, string>>(new Map())
+  
+  // Animation frame reference
+  const animationFrameRef = useRef<number | null>(null)
 
   // Logo click detection
   const isPointInLogo = (x: number, y: number, logo: LogoInstance) => {
@@ -151,14 +158,23 @@ export function CanvasArea({
     const ctx = canvas.getContext('2d')
     if (!ctx) return
 
-    // Get canvas dimensions
+    // Get canvas dimensions and fix DPI scaling
     const rect = canvas.getBoundingClientRect()
-    canvas.width = rect.width * window.devicePixelRatio
-    canvas.height = rect.height * window.devicePixelRatio
-    ctx.scale(window.devicePixelRatio, window.devicePixelRatio)
+    const dpr = window.devicePixelRatio || 1
+    
+    // Set actual canvas size in memory
+    canvas.width = rect.width * dpr
+    canvas.height = rect.height * dpr
+    
+    // Scale canvas back to CSS size for proper DPI
+    canvas.style.width = rect.width + 'px'
+    canvas.style.height = rect.height + 'px'
+    
+    // Scale context to ensure correct drawing operations
+    ctx.scale(dpr, dpr)
 
-    // Clear canvas (transparent so CSS background shows through)
-    ctx.clearRect(0, 0, canvas.width, canvas.height)
+    // Clear canvas (use actual canvas dimensions)
+    ctx.clearRect(0, 0, rect.width, rect.height)
 
     // Save context for transformations
     ctx.save()
@@ -172,14 +188,34 @@ export function CanvasArea({
       ctx.save()
       ctx.translate(logo.x, logo.y)
       
-      // Create a temporary canvas for the logo
-      const logoCanvas = document.createElement('canvas')
-      logoCanvas.width = 600
-      logoCanvas.height = 600
+      // Get or create cached canvas for this logo
+      const paramKey = JSON.stringify({ 
+        ...logo.params, 
+        code: logo.code?.substring(0, 100), // Include first 100 chars of code
+        time: animating ? Math.floor(currentTime) : 0 // Update every frame when animating
+      })
+      const hasParamsChanged = lastParamsRef.current.get(logo.id) !== paramKey
+      
+      let logoCanvas = canvasCacheRef.current.get(logo.id)
+      let needsRedraw = false
+      
+      if (!logoCanvas) {
+        // Create new canvas if it doesn't exist
+        logoCanvas = document.createElement('canvas')
+        logoCanvas.width = 600
+        logoCanvas.height = 600
+        canvasCacheRef.current.set(logo.id, logoCanvas)
+        needsRedraw = true
+      } else if (hasParamsChanged) {
+        // Parameters changed, need to redraw
+        needsRedraw = true
+        lastParamsRef.current.set(logo.id, paramKey)
+      }
+      
       const logoCtx = logoCanvas.getContext('2d')
       
-      if (logoCtx) {
-        // Clear logo canvas
+      if (logoCtx && needsRedraw) {
+        // Only redraw if needed
         logoCtx.fillStyle = '#ffffff'
         logoCtx.fillRect(0, 0, logoCanvas.width, logoCanvas.height)
         
@@ -219,24 +255,16 @@ export function CanvasArea({
           // Fallback to default wave visualization
           generateWaveLines(logoCtx, logoCanvas.width, logoCanvas.height, logoParams)
         }
+      } // End of needsRedraw check
 
         // Draw selection highlight for selected logo
         const isSelected = logo.id === selectedLogoId
         
-        // Clean shadow for unselected logos only
-        if (!isSelected) {
-          ctx.shadowColor = 'rgba(0, 0, 0, 0.08)'
-          ctx.shadowBlur = 20
-          ctx.shadowOffsetY = 8
-        }
-        
-        // Draw white background with rounded corners
+        // Draw white background with rounded corners (no shadow for performance)
         ctx.fillStyle = '#ffffff'
         ctx.beginPath()
         ctx.roundRect(-10, -10, logoCanvas.width + 20, logoCanvas.height + 20, 12)
         ctx.fill()
-        
-        ctx.shadowColor = 'transparent'
         
         // Draw refined border (very subtle highlight for selected logo)
         ctx.strokeStyle = isSelected ? '#3b82f6' : '#f3f4f6'
@@ -253,7 +281,7 @@ export function CanvasArea({
     })
 
     ctx.restore()
-  }, [logos, selectedLogoId, zoom, onCodeError, forceRender, canvasOffset])
+  }, [logos, selectedLogoId, zoom, onCodeError, forceRender, canvasOffset, animating, currentTime])
 
   // Handle mouse events for dragging and selection
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
@@ -343,9 +371,25 @@ export function CanvasArea({
     centerView()
   }, [centerView])
 
+  // Animation loop using requestAnimationFrame
   useEffect(() => {
-    drawInfiniteCanvas()
-  }, [drawInfiniteCanvas])
+    if (animating) {
+      const animate = () => {
+        drawInfiniteCanvas()
+        animationFrameRef.current = requestAnimationFrame(animate)
+      }
+      animationFrameRef.current = requestAnimationFrame(animate)
+      
+      return () => {
+        if (animationFrameRef.current) {
+          cancelAnimationFrame(animationFrameRef.current)
+        }
+      }
+    } else {
+      // Draw once when not animating
+      drawInfiniteCanvas()
+    }
+  }, [animating, drawInfiniteCanvas])
 
   // Handle window resize
   useEffect(() => {
