@@ -98,6 +98,10 @@ export function CanvasArea({
   
   // Cache canvas dimensions to avoid recalculating DPI
   const canvasDimensionsRef = useRef<{width: number, height: number, dpr: number} | null>(null)
+  
+  // Internal animation loop
+  const internalAnimationRef = useRef<number | null>(null)
+  const lastDrawTimeRef = useRef(0)
 
   // Logo click detection
   const isPointInLogo = (x: number, y: number, logo: LogoInstance) => {
@@ -369,10 +373,30 @@ export function CanvasArea({
     centerView()
   }, [centerView])
 
-  // Simpler animation trigger - just redraw when needed
+  // Internal animation loop that doesn't trigger React re-renders
   useEffect(() => {
-    drawInfiniteCanvas()
-  }, [drawInfiniteCanvas])
+    if (animating) {
+      const animate = () => {
+        // Only redraw if enough time has passed (throttle to ~30fps for performance)
+        const now = performance.now()
+        if (now - lastDrawTimeRef.current >= 33) { // ~30fps
+          drawInfiniteCanvas()
+          lastDrawTimeRef.current = now
+        }
+        internalAnimationRef.current = requestAnimationFrame(animate)
+      }
+      internalAnimationRef.current = requestAnimationFrame(animate)
+      
+      return () => {
+        if (internalAnimationRef.current) {
+          cancelAnimationFrame(internalAnimationRef.current)
+        }
+      }
+    } else {
+      // Draw once when not animating
+      drawInfiniteCanvas()
+    }
+  }, [animating, drawInfiniteCanvas])
 
   // Handle window resize
   useEffect(() => {

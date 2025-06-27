@@ -332,8 +332,8 @@ export default function Home() {
     } else {
       setAnimating(true)
       const animate = () => {
-        timeRef.current += 0.05
-        setForceRender(prev => prev + 1)
+        timeRef.current += 0.1 // Faster time increment for smoother animation
+        // Don't trigger React re-renders, let the canvas handle its own updates
         animationRef.current = requestAnimationFrame(animate)
       }
       animate()
