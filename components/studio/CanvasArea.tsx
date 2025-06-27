@@ -92,16 +92,7 @@ export function CanvasArea({
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
   const [lastPanPoint, setLastPanPoint] = useState({ x: 0, y: 0 })
   
-  // Canvas cache to avoid recreating canvases every frame
-  const canvasCacheRef = useRef<Map<string, HTMLCanvasElement>>(new Map())
-  const lastParamsRef = useRef<Map<string, string>>(new Map())
-  
-  // Cache canvas dimensions to avoid recalculating DPI
-  const canvasDimensionsRef = useRef<{width: number, height: number, dpr: number} | null>(null)
-  
-  // Internal animation loop
-  const internalAnimationRef = useRef<number | null>(null)
-  const lastDrawTimeRef = useRef(0)
+  // Keep it simple - no caching complexity
 
   // Logo click detection
   const isPointInLogo = (x: number, y: number, logo: LogoInstance) => {
@@ -163,23 +154,16 @@ export function CanvasArea({
     const ctx = canvas.getContext('2d')
     if (!ctx) return
 
-    // Optimize DPI scaling - only recalculate when dimensions change
+    // Simple DPI scaling
     const rect = canvas.getBoundingClientRect()
     const dpr = window.devicePixelRatio || 1
-    const cached = canvasDimensionsRef.current
     
-    if (!cached || cached.width !== rect.width || cached.height !== rect.height || cached.dpr !== dpr) {
-      // Dimensions changed, update canvas
-      canvas.width = rect.width * dpr
-      canvas.height = rect.height * dpr
-      canvas.style.width = rect.width + 'px'
-      canvas.style.height = rect.height + 'px'
-      canvasDimensionsRef.current = { width: rect.width, height: rect.height, dpr }
-    }
-
-    // Reset transform and apply DPI scaling fresh each frame
-    ctx.setTransform(1, 0, 0, 1, 0, 0) // Reset to identity
-    ctx.scale(dpr, dpr) // Apply DPI scaling
+    canvas.width = rect.width * dpr
+    canvas.height = rect.height * dpr
+    canvas.style.width = rect.width + 'px'
+    canvas.style.height = rect.height + 'px'
+    
+    ctx.scale(dpr, dpr)
     
     // Clear canvas (use actual canvas dimensions)
     ctx.clearRect(0, 0, rect.width, rect.height)
@@ -196,31 +180,14 @@ export function CanvasArea({
       ctx.save()
       ctx.translate(logo.x, logo.y)
       
-      // Smart canvas caching - only redraw when needed
-      let logoCanvas = canvasCacheRef.current.get(logo.id)
-      
-      if (!logoCanvas) {
-        logoCanvas = document.createElement('canvas')
-        logoCanvas.width = 600
-        logoCanvas.height = 600
-        canvasCacheRef.current.set(logo.id, logoCanvas)
-      }
-      
-      // Check if we need to redraw (dirty checking)
-      const paramKey = JSON.stringify({
-        ...logo.params,
-        code: logo.code,
-        time: animating ? Math.floor(currentTime * 5) : 0 // Update 5 times per second when animating
-      })
-      
-      const lastKey = lastParamsRef.current.get(logo.id)
-      const needsRedraw = lastKey !== paramKey
-      
+      // Simple approach - just create a canvas and draw on it
+      const logoCanvas = document.createElement('canvas')
+      logoCanvas.width = 600
+      logoCanvas.height = 600
       const logoCtx = logoCanvas.getContext('2d')
       
-      if (logoCtx && needsRedraw) {
-        // Only redraw when parameters changed
-        lastParamsRef.current.set(logo.id, paramKey)
+      if (logoCtx) {
+        // Clear canvas
         logoCtx.fillStyle = '#ffffff'
         logoCtx.fillRect(0, 0, logoCanvas.width, logoCanvas.height)
         

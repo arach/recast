@@ -114,11 +114,8 @@ export class WaveGenerator extends GeneratorBase {
       // Base wave
       let y = Math.sin((t * layerFreq * Math.PI * 2) + layerPhase + time)
 
-      // Add harmonics for complexity (reduced during animation for performance)
-      const isAnimating = time > 0 && Math.abs(time % 1) > 0.01
-      const maxHarmonics = isAnimating ? Math.min(2, Math.ceil(complexity * 5)) : Math.ceil(complexity * 5)
-      
-      for (let h = 2; h <= maxHarmonics; h++) {
+      // Add harmonics for complexity
+      for (let h = 2; h <= Math.ceil(complexity * 5); h++) {
         const harmonicAmp = 1 / h
         y += harmonicAmp * Math.sin((t * layerFreq * h * Math.PI * 2) + layerPhase + time)
       }
@@ -153,17 +150,10 @@ export class WaveGenerator extends GeneratorBase {
     const { layers } = this.params
     const { time = 0 } = options
     
-    // Performance optimization: reduce resolution during animation
-    const isAnimating = time > 0 && Math.abs(time % 1) > 0.01
-    const optimizedOptions = {
-      ...options,
-      resolution: isAnimating ? Math.min(100, options.resolution || 200) : (options.resolution || 200)
-    }
-    
     const allLayers: WavePoint[][] = []
 
     for (let i = 0; i < layers; i++) {
-      const layer = this.generateLayer(optimizedOptions, i, time)
+      const layer = this.generateLayer(options, i, time)
       allLayers.push(layer)
     }
 
