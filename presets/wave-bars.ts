@@ -32,7 +32,7 @@ export function draw(
     seed: params.seed
   };
 
-  const waveData = generator.generate(waveOptions)[0];
+  const waveData = generator.generateWavePoints(waveOptions)[0];
 
   // Generate bar heights variation
   const WaveGenerator = generator.constructor;
@@ -43,7 +43,7 @@ export function draw(
     chaos: generator.params.chaos
   }, params.seed + '-bars');
   
-  const barHeights = barGen.generate({
+  const barHeights = barGen.generateWavePoints({
     ...waveOptions,
     time: time * 2
   })[0];

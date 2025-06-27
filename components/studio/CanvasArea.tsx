@@ -212,16 +212,11 @@ export function CanvasArea({
           time: currentTime
         }
 
-        // Generate logo content
-        if (logo.params.visualMode === 'custom' && logo.params.customCode && logo.params.customCode.trim()) {
-          executeCustomCode(logoCtx, logoCanvas.width, logoCanvas.height, logoParams, logo.params.customCode, onCodeError)
-        } else if (logo.params.visualMode === 'bars') {
-          generateAudioBars(logoCtx, logoCanvas.width, logoCanvas.height, logoParams)
-        } else if (logo.params.visualMode === 'wavebars') {
-          generateWaveBars(logoCtx, logoCanvas.width, logoCanvas.height, logoParams)
-        } else if (logo.params.visualMode === 'circles') {
-          generateCircles(logoCtx, logoCanvas.width, logoCanvas.height, logoParams)
+        // Generate logo content using the code
+        if (logo.code && logo.code.trim()) {
+          executeCustomCode(logoCtx, logoCanvas.width, logoCanvas.height, logoParams, logo.code, onCodeError)
         } else {
+          // Fallback to default wave visualization
           generateWaveLines(logoCtx, logoCanvas.width, logoCanvas.height, logoParams)
         }
 

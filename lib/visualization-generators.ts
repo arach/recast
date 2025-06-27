@@ -1,5 +1,6 @@
 import { WaveGenerator, WaveParameters } from '@/core/wave-generator'
 import { GenerativeEngine, GenerativeParameters, GenerationOptions } from '@/core/generative-engine'
+import { executePreset } from '@/lib/preset-registry'
 
 export interface VisualizationParams {
   seed: string
@@ -276,6 +277,15 @@ export const executeCustomCode = (
   onError: (error: string) => void
 ) => {
   try {
+    // Check if this code references a preset from the registry
+    const presetIdMatch = customCode.match(/\/\/ PRESET_ID: ([\w-]+)/)
+    if (presetIdMatch) {
+      const presetId = presetIdMatch[1]
+      const success = executePreset(presetId, ctx, width, height, params, params.time)
+      if (success) {
+        return // Preset executed successfully
+      }
+    }
     const waveParams: WaveParameters = {
       amplitude: params.amplitude,
       frequency: params.frequency,
