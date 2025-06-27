@@ -195,17 +195,8 @@ export function CanvasArea({
       ctx.save()
       ctx.translate(logo.x, logo.y)
       
-      // Smart caching - only redraw when parameters change
-      const staticParams = JSON.stringify({
-        ...logo.params,
-        code: logo.code?.substring(0, 100)
-      })
-      const animationKey = animating ? `anim-${Math.floor(currentTime / 2)}` : 'static' // Update every 2 frames when animating
-      const cacheKey = `${staticParams}-${animationKey}`
-      
+      // Simple canvas reuse - create once, redraw every time for animation
       let logoCanvas = canvasCacheRef.current.get(logo.id)
-      const lastCacheKey = lastParamsRef.current.get(logo.id)
-      const needsRedraw = !logoCanvas || lastCacheKey !== cacheKey
       
       if (!logoCanvas) {
         logoCanvas = document.createElement('canvas')
@@ -216,9 +207,8 @@ export function CanvasArea({
       
       const logoCtx = logoCanvas.getContext('2d')
       
-      if (logoCtx && needsRedraw) {
-        // Only redraw when needed
-        lastParamsRef.current.set(logo.id, cacheKey)
+      if (logoCtx) {
+        // Always redraw for animation
         logoCtx.fillStyle = '#ffffff'
         logoCtx.fillRect(0, 0, logoCanvas.width, logoCanvas.height)
         
@@ -373,30 +363,10 @@ export function CanvasArea({
     centerView()
   }, [centerView])
 
-  // Internal animation loop that doesn't trigger React re-renders
+  // Simple redraw trigger
   useEffect(() => {
-    if (animating) {
-      const animate = () => {
-        // Only redraw if enough time has passed (throttle to ~30fps for performance)
-        const now = performance.now()
-        if (now - lastDrawTimeRef.current >= 33) { // ~30fps
-          drawInfiniteCanvas()
-          lastDrawTimeRef.current = now
-        }
-        internalAnimationRef.current = requestAnimationFrame(animate)
-      }
-      internalAnimationRef.current = requestAnimationFrame(animate)
-      
-      return () => {
-        if (internalAnimationRef.current) {
-          cancelAnimationFrame(internalAnimationRef.current)
-        }
-      }
-    } else {
-      // Draw once when not animating
-      drawInfiniteCanvas()
-    }
-  }, [animating, drawInfiniteCanvas])
+    drawInfiniteCanvas()
+  }, [drawInfiniteCanvas])
 
   // Handle window resize
   useEffect(() => {
