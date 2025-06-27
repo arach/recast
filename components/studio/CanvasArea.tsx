@@ -96,8 +96,8 @@ export function CanvasArea({
   const canvasCacheRef = useRef<Map<string, HTMLCanvasElement>>(new Map())
   const lastParamsRef = useRef<Map<string, string>>(new Map())
   
-  // Animation frame reference
-  const animationFrameRef = useRef<number | null>(null)
+  // Cache canvas dimensions to avoid recalculating DPI
+  const canvasDimensionsRef = useRef<{width: number, height: number, dpr: number} | null>(null)
 
   // Logo click detection
   const isPointInLogo = (x: number, y: number, logo: LogoInstance) => {
@@ -159,19 +159,21 @@ export function CanvasArea({
     const ctx = canvas.getContext('2d')
     if (!ctx) return
 
-    // Get canvas dimensions and fix DPI scaling
+    // Optimize DPI scaling - only recalculate when dimensions change
     const rect = canvas.getBoundingClientRect()
     const dpr = window.devicePixelRatio || 1
+    const cached = canvasDimensionsRef.current
     
-    // Set actual canvas size in memory
-    canvas.width = rect.width * dpr
-    canvas.height = rect.height * dpr
+    if (!cached || cached.width !== rect.width || cached.height !== rect.height || cached.dpr !== dpr) {
+      // Dimensions changed, update canvas
+      canvas.width = rect.width * dpr
+      canvas.height = rect.height * dpr
+      canvas.style.width = rect.width + 'px'
+      canvas.style.height = rect.height + 'px'
+      canvasDimensionsRef.current = { width: rect.width, height: rect.height, dpr }
+    }
     
-    // Scale canvas back to CSS size for proper DPI
-    canvas.style.width = rect.width + 'px'
-    canvas.style.height = rect.height + 'px'
-    
-    // Scale context to ensure correct drawing operations
+    // Always scale context (this is lightweight)
     ctx.scale(dpr, dpr)
 
     // Clear canvas (use actual canvas dimensions)
@@ -189,11 +191,19 @@ export function CanvasArea({
       ctx.save()
       ctx.translate(logo.x, logo.y)
       
-      // Create/get canvas for this logo - always redraw when animating for smooth motion
+      // Smart caching - only redraw when parameters change
+      const staticParams = JSON.stringify({
+        ...logo.params,
+        code: logo.code?.substring(0, 100)
+      })
+      const animationKey = animating ? `anim-${Math.floor(currentTime / 2)}` : 'static' // Update every 2 frames when animating
+      const cacheKey = `${staticParams}-${animationKey}`
+      
       let logoCanvas = canvasCacheRef.current.get(logo.id)
+      const lastCacheKey = lastParamsRef.current.get(logo.id)
+      const needsRedraw = !logoCanvas || lastCacheKey !== cacheKey
       
       if (!logoCanvas) {
-        // Create new canvas if it doesn't exist
         logoCanvas = document.createElement('canvas')
         logoCanvas.width = 600
         logoCanvas.height = 600
@@ -202,8 +212,9 @@ export function CanvasArea({
       
       const logoCtx = logoCanvas.getContext('2d')
       
-      if (logoCtx) {
-        // Always redraw for smooth animation
+      if (logoCtx && needsRedraw) {
+        // Only redraw when needed
+        lastParamsRef.current.set(logo.id, cacheKey)
         logoCtx.fillStyle = '#ffffff'
         logoCtx.fillRect(0, 0, logoCanvas.width, logoCanvas.height)
         
@@ -358,25 +369,10 @@ export function CanvasArea({
     centerView()
   }, [centerView])
 
-  // Animation loop using requestAnimationFrame
+  // Simpler animation trigger - just redraw when needed
   useEffect(() => {
-    if (animating) {
-      const animate = () => {
-        drawInfiniteCanvas()
-        animationFrameRef.current = requestAnimationFrame(animate)
-      }
-      animationFrameRef.current = requestAnimationFrame(animate)
-      
-      return () => {
-        if (animationFrameRef.current) {
-          cancelAnimationFrame(animationFrameRef.current)
-        }
-      }
-    } else {
-      // Draw once when not animating
-      drawInfiniteCanvas()
-    }
-  }, [animating, drawInfiniteCanvas])
+    drawInfiniteCanvas()
+  }, [drawInfiniteCanvas])
 
   // Handle window resize
   useEffect(() => {
