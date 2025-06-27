@@ -176,10 +176,11 @@ export function CanvasArea({
       canvas.style.height = rect.height + 'px'
       canvasDimensionsRef.current = { width: rect.width, height: rect.height, dpr }
     }
-    
-    // Always scale context (this is lightweight)
-    ctx.scale(dpr, dpr)
 
+    // Reset transform and apply DPI scaling fresh each frame
+    ctx.setTransform(1, 0, 0, 1, 0, 0) // Reset to identity
+    ctx.scale(dpr, dpr) // Apply DPI scaling
+    
     // Clear canvas (use actual canvas dimensions)
     ctx.clearRect(0, 0, rect.width, rect.height)
 
