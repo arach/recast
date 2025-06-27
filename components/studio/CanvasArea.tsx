@@ -196,7 +196,7 @@ export function CanvasArea({
       ctx.save()
       ctx.translate(logo.x, logo.y)
       
-      // Simple canvas reuse - create once, redraw every time for animation
+      // Smart canvas caching - only redraw when needed
       let logoCanvas = canvasCacheRef.current.get(logo.id)
       
       if (!logoCanvas) {
@@ -206,10 +206,21 @@ export function CanvasArea({
         canvasCacheRef.current.set(logo.id, logoCanvas)
       }
       
+      // Check if we need to redraw (dirty checking)
+      const paramKey = JSON.stringify({
+        ...logo.params,
+        code: logo.code,
+        time: animating ? Math.floor(currentTime * 5) : 0 // Update 5 times per second when animating
+      })
+      
+      const lastKey = lastParamsRef.current.get(logo.id)
+      const needsRedraw = lastKey !== paramKey
+      
       const logoCtx = logoCanvas.getContext('2d')
       
-      if (logoCtx) {
-        // Always redraw for animation
+      if (logoCtx && needsRedraw) {
+        // Only redraw when parameters changed
+        lastParamsRef.current.set(logo.id, paramKey)
         logoCtx.fillStyle = '#ffffff'
         logoCtx.fillRect(0, 0, logoCanvas.width, logoCanvas.height)
         
