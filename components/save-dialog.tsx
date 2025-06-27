@@ -11,7 +11,6 @@ interface SaveDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   mode: 'shape' | 'preset'
-  visualMode: 'wave' | 'bars' | 'wavebars' | 'circles' | 'custom'
   shapeId?: string
   shapeName?: string
   code?: string
@@ -34,7 +33,6 @@ export function SaveDialog({
   open,
   onOpenChange,
   mode,
-  visualMode,
   shapeId,
   shapeName,
   code,
@@ -64,8 +62,7 @@ export function SaveDialog({
       } else if (mode === 'preset') {
         savePreset({
           name: name.trim(),
-          mode: visualMode,
-          shapeId: visualMode === 'custom' ? shapeId : undefined,
+          shapeId: shapeId,
           params,
         })
       }
@@ -122,10 +119,9 @@ export function SaveDialog({
             <div className="text-sm text-gray-500 space-y-1">
               <p>This will save:</p>
               <ul className="list-disc list-inside space-y-0.5 text-xs">
-                <li>Visualization mode: {visualMode}</li>
                 <li>All parameter values</li>
                 <li>Seed: {params.seed}</li>
-                {visualMode === 'custom' && <li>Reference to custom shape</li>}
+                {shapeId && <li>Reference to custom shape</li>}
               </ul>
             </div>
           )}

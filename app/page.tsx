@@ -6,7 +6,6 @@ import { saveAs } from 'file-saver'
 import { WaveGenerator } from '@/core/wave-generator'
 import { GenerativeEngine, GeneratorRegistry } from '@/core/generative-engine'
 import '@/core/circle-generator' // Import to register
-import { visualizationTemplates } from './visualization-templates'
 import { SavedShape, SavedPreset } from '@/lib/storage'
 import { generateLogoPackage, generateReactComponent, ExportConfig } from '@/lib/svg-export'
 import { SaveDialog } from '@/components/save-dialog'
@@ -16,10 +15,15 @@ import { CodeEditorPanel } from '@/components/studio/CodeEditorPanel'
 import { CanvasArea } from '@/components/studio/CanvasArea'
 import { ControlsPanel } from '@/components/studio/ControlsPanel'
 import { VisualizationParams } from '@/lib/visualization-generators'
+import { loadPresetAsLegacy, getAllPresetsAsLegacy } from '@/lib/preset-converter'
+import type { LoadedPreset } from '@/lib/preset-loader'
 
-interface Preset {
-  name: string
-  mode: 'wave' | 'bars' | 'wavebars' | 'circles'
+const colorPalette = ['#0070f3', '#7c3aed', '#dc2626', '#059669', '#d97706', '#be185d', '#4338ca', '#0891b2']
+
+interface LogoInstance {
+  id: string
+  x: number
+  y: number
   params: {
     seed: string
     frequency: number
@@ -28,108 +32,52 @@ interface Preset {
     chaos: number
     damping: number
     layers: number
-    barCount?: number
-    barSpacing?: number
-    radius?: number
+    barCount: number
+    barSpacing: number
+    radius: number
+    color: string
+    customParameters: Record<string, any>
   }
+  code: string
+  presetId?: string // Track which preset this logo is using
+  presetName?: string
 }
-
-const colorPalette = ['#0070f3', '#7c3aed', '#dc2626', '#059669', '#d97706', '#be185d', '#4338ca', '#0891b2']
-
-const presets: Preset[] = [
-  {
-    name: '🎯 ReCast Logo',
-    mode: 'wavebars',
-    params: {
-      seed: 'recast-identity',
-      frequency: 5,
-      amplitude: 80,
-      complexity: 0.6,
-      chaos: 0.15,
-      damping: 0.85,
-      layers: 1,
-      barCount: 80,
-      barSpacing: 2,
-    },
-  },
-  {
-    name: '⭕ Pulsing Circles',
-    mode: 'circles',
-    params: {
-      seed: 'orbital-identity',
-      frequency: 1.2,
-      amplitude: 20,
-      complexity: 0.2,
-      chaos: 0.05,
-      damping: 0.75,
-      layers: 3,
-      radius: 80,
-    },
-  },
-  {
-    name: 'Gentle Wave',
-    mode: 'wave',
-    params: {
-      seed: 'gentle-wave',
-      frequency: 3,
-      amplitude: 40,
-      complexity: 0.3,
-      chaos: 0.05,
-      damping: 0.9,
-      layers: 2,
-    },
-  },
-  {
-    name: 'Audio Spectrum',
-    mode: 'bars',
-    params: {
-      seed: 'audio-spec',
-      frequency: 2,
-      amplitude: 60,
-      complexity: 0.7,
-      chaos: 0.2,
-      damping: 0.8,
-      layers: 1,
-      barCount: 80,
-      barSpacing: 2,
-    },
-  },
-  {
-    name: 'Wave Flow',
-    mode: 'wavebars',
-    params: {
-      seed: 'wave-flow',
-      frequency: 4,
-      amplitude: 50,
-      complexity: 0.5,
-      chaos: 0.1,
-      damping: 0.85,
-      layers: 1,
-      barCount: 60,
-      barSpacing: 3,
-    },
-  },
-]
 
 export default function Home() {
   const [mounted, setMounted] = useState(false)
-  const [seed, setSeed] = useState('recast-logo')
-  const [frequency, setFrequency] = useState(4)
-  const [amplitude, setAmplitude] = useState(50)
-  const [complexity, setComplexity] = useState(0.5)
-  const [chaos, setChaos] = useState(0.1)
-  const [damping, setDamping] = useState(0.8)
-  const [layers, setLayers] = useState(3)
-  const [visualMode, setVisualMode] = useState<'wave' | 'bars' | 'wavebars' | 'circles' | 'custom'>('wave')
-  const [barCount, setBarCount] = useState(60)
-  const [barSpacing, setBarSpacing] = useState(2)
-  const [radius, setRadius] = useState(50)
+  const [availablePresets, setAvailablePresets] = useState<LoadedPreset[]>([])
+  
+  // Multi-logo state
+  const [logos, setLogos] = useState<LogoInstance[]>([
+    {
+      id: 'main',
+      x: -300,
+      y: -300,
+      params: {
+        seed: 'recast-logo',
+        frequency: 4,
+        amplitude: 50,
+        complexity: 0.5,
+        chaos: 0.1,
+        damping: 0.8,
+        layers: 3,
+        barCount: 60,
+        barSpacing: 2,
+        radius: 50,
+        color: '#0070f3',
+        customParameters: {}
+      },
+      code: '// Default wave visualization\nfunction drawVisualization(ctx, width, height, params, generator, time) {\n  ctx.fillStyle = "#ffffff";\n  ctx.fillRect(0, 0, width, height);\n  \n  // Simple wave drawing\n  ctx.strokeStyle = "#0070f3";\n  ctx.lineWidth = 2;\n  ctx.beginPath();\n  \n  for (let x = 0; x < width; x++) {\n    const y = height/2 + Math.sin(x * 0.01 + time) * 50;\n    if (x === 0) ctx.moveTo(x, y);\n    else ctx.lineTo(x, y);\n  }\n  \n  ctx.stroke();\n}',
+      presetName: 'Default Wave'
+    }
+  ])
+  const [selectedLogoId, setSelectedLogoId] = useState('main')
+  
+  // UI state
   const [animating, setAnimating] = useState(false)
-  const [customCode, setCustomCode] = useState(visualizationTemplates.custom)
   const [codeError, setCodeError] = useState<string | null>(null)
   const [codeEditorCollapsed, setCodeEditorCollapsed] = useState(false)
   const [zoom, setZoom] = useState(1)
-  const [color, setColor] = useState('#0070f3')
   const [isDarkMode, setIsDarkMode] = useState(false)
   const [saveDialogOpen, setSaveDialogOpen] = useState(false)
   const [saveMode, setSaveMode] = useState<'shape' | 'preset'>('preset')
@@ -140,9 +88,108 @@ export default function Home() {
   const [forceRender, setForceRender] = useState(0)
   const [isRendering, setIsRendering] = useState(false)
   const [renderSuccess, setRenderSuccess] = useState(false)
-  const [customParameters, setCustomParameters] = useState<Record<string, any>>({})
   const animationRef = useRef<number>()
   const timeRef = useRef(0)
+
+  // Get currently selected logo
+  const selectedLogo = logos.find(logo => logo.id === selectedLogoId) || logos[0]
+  
+  // Convenience getters for selected logo parameters
+  const seed = selectedLogo.params.seed
+  const frequency = selectedLogo.params.frequency
+  const amplitude = selectedLogo.params.amplitude
+  const complexity = selectedLogo.params.complexity
+  const chaos = selectedLogo.params.chaos
+  const damping = selectedLogo.params.damping
+  const layers = selectedLogo.params.layers
+  const barCount = selectedLogo.params.barCount
+  const barSpacing = selectedLogo.params.barSpacing
+  const radius = selectedLogo.params.radius
+  const color = selectedLogo.params.color
+  const customCode = selectedLogo.code
+  const customParameters = selectedLogo.params.customParameters
+  const currentPresetName = selectedLogo.presetName
+
+  // Load presets on mount
+  useEffect(() => {
+    const loadPresets = async () => {
+      try {
+        const presets = await getAllPresetsAsLegacy()
+        setAvailablePresets(presets)
+        console.log('Loaded presets:', presets.map(p => p.name))
+      } catch (error) {
+        console.error('Failed to load presets:', error)
+      }
+    }
+    
+    if (mounted) {
+      loadPresets()
+    }
+  }, [mounted])
+
+  // Update functions for selected logo parameters
+  const updateSelectedLogo = (updates: Partial<LogoInstance['params']>) => {
+    setLogos(prev => prev.map(logo => 
+      logo.id === selectedLogoId 
+        ? { ...logo, params: { ...logo.params, ...updates } }
+        : logo
+    ))
+  }
+
+  const setSeed = (seed: string) => updateSelectedLogo({ seed })
+  const setFrequency = (frequency: number) => updateSelectedLogo({ frequency })
+  const setAmplitude = (amplitude: number) => updateSelectedLogo({ amplitude })
+  const setComplexity = (complexity: number) => updateSelectedLogo({ complexity })
+  const setChaos = (chaos: number) => updateSelectedLogo({ chaos })
+  const setDamping = (damping: number) => updateSelectedLogo({ damping })
+  const setLayers = (layers: number) => updateSelectedLogo({ layers })
+  const setBarCount = (barCount: number) => updateSelectedLogo({ barCount })
+  const setBarSpacing = (barSpacing: number) => updateSelectedLogo({ barSpacing })
+  const setRadius = (radius: number) => updateSelectedLogo({ radius })
+  const setColor = (color: string) => updateSelectedLogo({ color })
+  const setCustomParameters = (customParameters: Record<string, any>) => updateSelectedLogo({ customParameters })
+  
+  // Update code for selected logo
+  const setCustomCode = (code: string) => {
+    setLogos(prev => prev.map(logo => 
+      logo.id === selectedLogoId 
+        ? { ...logo, code, presetId: undefined, presetName: 'Custom' }
+        : logo
+    ))
+  }
+
+  // Logo management functions
+  const duplicateLogo = (logoId: string) => {
+    const logoToDuplicate = logos.find(logo => logo.id === logoId)
+    if (!logoToDuplicate) return
+    
+    const newId = `logo-${Date.now()}`
+    const newLogo: LogoInstance = {
+      id: newId,
+      x: logoToDuplicate.x + 700, // Place to the right with some spacing
+      y: logoToDuplicate.y,
+      params: { ...logoToDuplicate.params },
+      code: logoToDuplicate.code,
+      presetId: logoToDuplicate.presetId,
+      presetName: logoToDuplicate.presetName
+    }
+    setLogos(prev => [...prev, newLogo])
+    setSelectedLogoId(newId) // Auto-select the new logo
+  }
+
+  const deleteLogo = (logoId: string) => {
+    if (logos.length <= 1) return // Don't delete the last logo
+    
+    setLogos(prev => prev.filter(logo => logo.id !== logoId))
+    
+    // If we deleted the selected logo, select another one
+    if (logoId === selectedLogoId) {
+      const remainingLogos = logos.filter(logo => logo.id !== logoId)
+      if (remainingLogos.length > 0) {
+        setSelectedLogoId(remainingLogos[0].id)
+      }
+    }
+  }
 
   // Set mounted flag after hydration
   useEffect(() => {
@@ -182,23 +229,20 @@ export default function Home() {
 
   // Parse custom parameters when code changes
   useEffect(() => {
-    if (visualMode === 'custom') {
-      const parsedParams = parseCustomParameters(customCode)
-      if (parsedParams) {
-        // Initialize custom parameter values with defaults
-        const paramValues: Record<string, any> = {}
-        Object.entries(parsedParams).forEach(([key, param]) => {
-          paramValues[key] = customParameters[key] ?? param.default ?? 0
-        })
-        setCustomParameters(paramValues)
-      }
+    const parsedParams = parseCustomParameters(customCode)
+    if (parsedParams) {
+      // Initialize custom parameter values with defaults
+      const paramValues: Record<string, any> = {}
+      Object.entries(parsedParams).forEach(([key, param]) => {
+        paramValues[key] = customParameters[key] ?? param.default ?? 0
+      })
+      setCustomParameters(paramValues)
     }
-  }, [customCode, visualMode])
+  }, [customCode])
 
-  // Get metadata for current generator
+  // Get metadata for current generator (simplified - just use wave generator)
   const getCurrentGeneratorMetadata = () => {
-    const generatorName = visualMode === 'wavebars' ? 'wave' : visualMode === 'circles' ? 'circle' : 'wave'
-    const generator = GeneratorRegistry.createGenerator(generatorName, {
+    const generator = GeneratorRegistry.createGenerator('wave', {
       frequency, amplitude, complexity, chaos, damping, layers, radius
     }, seed)
     return generator?.getMetadata()
@@ -268,46 +312,15 @@ export default function Home() {
     }, 300)
   }, [])
 
-  const getCodeForMode = () => {
-    switch (visualMode) {
-      case 'wave':
-        return visualizationTemplates.wave
-      case 'bars':
-        return visualizationTemplates.bars
-      case 'wavebars':
-        return visualizationTemplates.wavebars
-      case 'circles':
-        return visualizationTemplates.circles
-      case 'custom':
-        return customCode
-      default:
-        return visualizationTemplates.wave
-    }
-  }
-
   const handleCloneToCustom = () => {
-    const currentCode = getCodeForMode()
+    const currentCode = selectedLogo.code
     setCustomCode(currentCode)
-    setVisualMode('custom')
     setCurrentShapeId(undefined)
-    setCurrentShapeName(getShapeNameForMode() + ' (Clone)')
+    setCurrentShapeName((selectedLogo.presetName || 'Custom') + ' (Clone)')
   }
 
   const getShapeNameForMode = () => {
-    switch (visualMode) {
-      case 'wave':
-        return 'Wave Lines'
-      case 'bars':
-        return 'Audio Bars'
-      case 'wavebars':
-        return 'Wave Bars'
-      case 'circles':
-        return 'Pulsing Circles'
-      case 'custom':
-        return currentShapeName
-      default:
-        return 'Custom Shape'
-    }
+    return selectedLogo.presetName || 'Custom'
   }
 
   const toggleAnimation = () => {
@@ -338,21 +351,42 @@ export default function Home() {
     setColor(colorPalette[Math.floor(Math.random() * colorPalette.length)])
   }
 
-  const loadPreset = (preset: Preset) => {
-    setVisualMode(preset.mode)
-    setSeed(preset.params.seed)
-    setFrequency(preset.params.frequency)
-    setAmplitude(preset.params.amplitude)
-    setComplexity(preset.params.complexity)
-    setChaos(preset.params.chaos)
-    setDamping(preset.params.damping)
-    setLayers(preset.params.layers)
-    if (preset.params.barCount) setBarCount(preset.params.barCount)
-    if (preset.params.barSpacing) setBarSpacing(preset.params.barSpacing)
-    if (preset.params.radius) setRadius(preset.params.radius)
-    
-    // Force re-render after all state updates
-    setForceRender(prev => prev + 1)
+  // Load preset by ID
+  const loadPresetById = async (presetId: string) => {
+    try {
+      console.log('Loading preset by ID:', presetId)
+      const preset = await loadPresetAsLegacy(presetId)
+      
+      if (!preset) {
+        console.error('Preset not found:', presetId)
+        return
+      }
+      
+      console.log('Loaded preset:', preset.name, 'Code length:', preset.code.length)
+      
+      // Update the selected logo with preset data
+      setLogos(prev => prev.map(logo => 
+        logo.id === selectedLogoId 
+          ? { 
+              ...logo, 
+              params: { 
+                ...logo.params,
+                ...preset.defaultParams, // Apply all default parameters
+              },
+              code: preset.code, // Set the preset code
+              presetId: preset.id,
+              presetName: preset.name
+            }
+          : logo
+      ))
+      
+      // Force re-render
+      setForceRender(prev => prev + 1)
+      console.log('Preset loaded successfully:', preset.name)
+      
+    } catch (error) {
+      console.error('Failed to load preset:', error)
+    }
   }
 
   const exportAsPNG = async (size?: number, filename?: string) => {
@@ -365,18 +399,12 @@ export default function Home() {
   }
 
   const exportAsSVG = () => {
-    if (visualMode === 'custom') {
-      alert('Custom visualizations can only be exported as PNG')
-      exportAsPNG()
-      return
-    }
     alert('SVG export coming soon!')
   }
 
   const shareLink = () => {
     const params = new URLSearchParams({
       seed,
-      mode: visualMode,
       frequency: frequency.toString(),
       amplitude: amplitude.toString(),
       complexity: complexity.toString(),
@@ -391,25 +419,15 @@ export default function Home() {
   }
 
   const handleLoadShape = (shape: SavedShape) => {
-    // Check if this is a built-in shape
-    if (shape.id.startsWith('builtin-')) {
-      const mode = shape.id.replace('builtin-', '') as 'wave' | 'bars' | 'wavebars'
-      setVisualMode(mode)
-      setCurrentShapeId(undefined)
-      setCurrentShapeName(shape.name)
-    } else {
-      setCustomCode(shape.code)
-      setVisualMode('custom')
-      setCurrentShapeId(shape.id)
-      setCurrentShapeName(shape.name)
-    }
+    setCustomCode(shape.code)
+    setCurrentShapeId(shape.id)
+    setCurrentShapeName(shape.name)
     
     // Force re-render after all state updates
     setForceRender(prev => prev + 1)
   }
 
   const handleLoadPreset = (preset: SavedPreset) => {
-    setVisualMode(preset.mode)
     setSeed(preset.params.seed)
     setFrequency(preset.params.frequency)
     setAmplitude(preset.params.amplitude)
@@ -463,21 +481,19 @@ export default function Home() {
         onExportPNG={exportAsPNG}
         onExportAllSizes={exportAllSizes}
         onExportSVG={exportAsSVG}
-        visualMode={visualMode}
       />
 
       <div className="flex flex-1 overflow-hidden">
         <CodeEditorPanel
           collapsed={codeEditorCollapsed}
           onSetCollapsed={setCodeEditorCollapsed}
-          presets={presets}
-          onLoadPreset={loadPreset}
-          visualMode={visualMode}
+          presets={availablePresets}
+          onLoadPreset={loadPresetById}
           currentShapeName={currentShapeName}
           onSetCurrentShapeName={setCurrentShapeName}
           currentShapeId={currentShapeId}
           codeError={codeError}
-          code={getCodeForMode()}
+          code={customCode}
           onCodeChange={setCustomCode}
           isDarkMode={isDarkMode}
           isRendering={isRendering}
@@ -489,13 +505,16 @@ export default function Home() {
         />
 
         <CanvasArea
-          visualMode={visualMode}
-          params={visualizationParams}
-          customCode={customCode}
+          logos={logos}
+          selectedLogoId={selectedLogoId}
+          onSelectLogo={setSelectedLogoId}
+          onDuplicateLogo={duplicateLogo}
+          onDeleteLogo={deleteLogo}
           animating={animating}
           zoom={zoom}
           previewMode={previewMode}
           isRendering={isRendering}
+          currentTime={timeRef.current}
           onToggleAnimation={toggleAnimation}
           onSetZoom={setZoom}
           onTogglePreview={() => setPreviewMode(!previewMode)}
@@ -504,7 +523,7 @@ export default function Home() {
         />
 
         <ControlsPanel
-          visualMode={visualMode}
+          currentPresetName={currentPresetName}
           seed={seed}
           frequency={frequency}
           amplitude={amplitude}
@@ -527,7 +546,6 @@ export default function Home() {
           onBarCountChange={setBarCount}
           onBarSpacingChange={setBarSpacing}
           onRadiusChange={setRadius}
-          onVisualizationModeChange={setVisualMode}
           onCustomParametersChange={setCustomParameters}
           getCurrentGeneratorMetadata={getCurrentGeneratorMetadata}
           parseCustomParameters={parseCustomParameters}
@@ -541,10 +559,9 @@ export default function Home() {
         open={saveDialogOpen}
         onOpenChange={setSaveDialogOpen}
         mode={saveMode}
-        visualMode={visualMode}
         shapeId={currentShapeId}
         shapeName={currentShapeName}
-        code={visualMode === 'custom' ? customCode : getCodeForMode()}
+        code={customCode}
         params={{
           seed,
           frequency,

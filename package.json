@@ -6,10 +6,13 @@
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --turbo",
+    "dev:clean": "pnpm clean && next dev --turbo",
     "build": "tsup && next build",
     "build:lib": "tsup",
     "start": "next start",
+    "clean": "rm -rf .next dist node_modules/.cache .turbopack",
+    "reset": "pnpm clean && pnpm install",
     "lint": "eslint . --ext .ts,.tsx",
     "test": "vitest",
     "generate:logo": "pnpm build:lib && node scripts/generate-logo.js"

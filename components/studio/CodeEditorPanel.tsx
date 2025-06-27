@@ -13,18 +13,19 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
-interface Preset {
+interface LoadedPreset {
+  id: string
   name: string
-  mode: 'wave' | 'bars' | 'wavebars' | 'circles'
-  params: any
+  description: string
+  defaultParams: Record<string, any>
+  code: string
 }
 
 interface CodeEditorPanelProps {
   collapsed: boolean
   onSetCollapsed: (collapsed: boolean) => void
-  presets: Preset[]
-  onLoadPreset: (preset: Preset) => void
-  visualMode: string
+  presets: LoadedPreset[]
+  onLoadPreset: (presetId: string) => void
   currentShapeName: string
   onSetCurrentShapeName: (name: string) => void
   currentShapeId?: string
@@ -45,7 +46,6 @@ export function CodeEditorPanel({
   onSetCollapsed,
   presets,
   onLoadPreset,
-  visualMode,
   currentShapeName,
   onSetCurrentShapeName,
   currentShapeId,
@@ -88,9 +88,10 @@ export function CodeEditorPanel({
             <span className="text-xs font-medium text-gray-600">Try a preset:</span>
             <select
               onChange={(e) => {
-                const presetIndex = parseInt(e.target.value)
-                if (presetIndex >= 0) {
-                  onLoadPreset(presets[presetIndex])
+                const presetId = e.target.value
+                console.log('Dropdown selected preset ID:', presetId)
+                if (presetId) {
+                  onLoadPreset(presetId)
                 }
                 e.target.value = '' // Reset dropdown
               }}
@@ -98,8 +99,8 @@ export function CodeEditorPanel({
               defaultValue=""
             >
               <option value="" disabled>Choose preset...</option>
-              {presets.map((preset, index) => (
-                <option key={index} value={index}>
+              {presets.map((preset) => (
+                <option key={preset.id} value={preset.id}>
                   {preset.name}
                 </option>
               ))}
@@ -113,27 +114,16 @@ export function CodeEditorPanel({
         <div className="flex items-center justify-between">
           <div className="flex-1">
             <div className="flex items-center gap-3">
-              {visualMode === 'custom' ? (
-                <input
-                  type="text"
-                  value={currentShapeName}
-                  onChange={(e) => onSetCurrentShapeName(e.target.value)}
-                  className="text-sm font-medium text-gray-900 bg-transparent border-b border-gray-300 hover:border-gray-400 focus:border-blue-500 focus:outline-none px-1 py-0.5"
-                  placeholder="Shape name..."
-                />
-              ) : (
-                <h3 className="font-medium text-gray-900 text-sm flex items-center gap-2">
-                  {getShapeNameForMode()}
-                  <span className="text-xs font-normal text-gray-500 bg-gray-100 px-2 py-0.5 rounded">
-                    Built-in
-                  </span>
-                </h3>
-              )}
+              <input
+                type="text"
+                value={currentShapeName}
+                onChange={(e) => onSetCurrentShapeName(e.target.value)}
+                className="text-sm font-medium text-gray-900 bg-transparent border-b border-gray-300 hover:border-gray-400 focus:border-blue-500 focus:outline-none px-1 py-0.5"
+                placeholder="Shape name..."
+              />
             </div>
             <p className="text-xs text-gray-500 mt-1">
-              {visualMode === 'custom' ? 
-                currentShapeId ? 'Editing saved shape' : 'Edit your custom visualization' : 
-                'View-only mode'}
+              {currentShapeId ? 'Editing saved shape' : 'Edit your visualization'}
             </p>
           </div>
           <div className="flex items-center space-x-2">
@@ -167,30 +157,17 @@ export function CodeEditorPanel({
               )}
             </Button>
             
-            {/* Save Button - Only in Custom Mode */}
-            {visualMode === 'custom' && (
-              <Button
-                size="sm"
-                onClick={onSaveShape}
-                variant="outline"
-                className="h-8 text-xs"
-                title="Save your custom shape"
-              >
-                <Save className="w-3 h-3 mr-1" />
-                Save
-              </Button>
-            )}
-            
-            {visualMode !== 'custom' && (
-              <Button
-                size="sm"
-                onClick={onCloneToCustom}
-                variant="outline"
-                className="h-8 text-xs"
-              >
-                Clone & Edit
-              </Button>
-            )}
+            {/* Save Button */}
+            <Button
+              size="sm"
+              onClick={onSaveShape}
+              variant="outline"
+              className="h-8 text-xs"
+              title="Save your shape"
+            >
+              <Save className="w-3 h-3 mr-1" />
+              Save
+            </Button>
             <Button
               size="sm"
               variant="outline"
@@ -203,24 +180,41 @@ export function CodeEditorPanel({
         </div>
       </div>
 
-      <div className="flex-1 overflow-auto">
+      <div className="flex-1 flex flex-col min-h-0">
         {codeError && (
           <div className="mx-4 mt-4 p-3 bg-red-100 text-red-700 rounded-lg text-sm">
             Error: {codeError}
           </div>
         )}
-        <CodeMirror
-          value={code}
-          height="100%"
-          theme={isDarkMode ? oneDark : undefined}
-          extensions={[javascript()]}
-          onChange={(value) => {
-            if (visualMode === 'custom') {
+        <div className="flex-1 overflow-hidden">
+          <CodeMirror
+            value={code}
+            height="100%"
+            width="100%"
+            theme={isDarkMode ? oneDark : undefined}
+            extensions={[javascript()]}
+            onChange={(value) => {
               onCodeChange(value)
-            }
-          }}
-          editable={visualMode === 'custom'}
-        />
+            }}
+            editable={true}
+            basicSetup={{
+              lineNumbers: true,
+              foldGutter: true,
+              dropCursor: false,
+              allowMultipleSelections: false,
+              autocompletion: true,
+              bracketMatching: true,
+              closeBrackets: true,
+              highlightActiveLine: true,
+              highlightSelectionMatches: true,
+              searchKeymap: true,
+            }}
+            style={{
+              height: '100%',
+              overflow: 'auto'
+            }}
+          />
+        </div>
       </div>
     </div>
   )

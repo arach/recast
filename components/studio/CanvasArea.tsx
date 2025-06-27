@@ -12,6 +12,8 @@ import {
   Eye,
   Grid3x3,
   Move,
+  Copy,
+  Trash2,
 } from 'lucide-react'
 import { PreviewGrid } from './PreviewGrid'
 import {
@@ -23,14 +25,39 @@ import {
   VisualizationParams
 } from '@/lib/visualization-generators'
 
+interface LogoInstance {
+  id: string
+  x: number
+  y: number
+  params: {
+    seed: string
+    frequency: number
+    amplitude: number
+    complexity: number
+    chaos: number
+    damping: number
+    layers: number
+    barCount: number
+    barSpacing: number
+    radius: number
+    color: string
+    visualMode: 'wave' | 'bars' | 'wavebars' | 'circles' | 'custom'
+    customCode: string
+    customParameters: Record<string, any>
+  }
+}
+
 interface CanvasAreaProps {
-  visualMode: 'wave' | 'bars' | 'wavebars' | 'circles' | 'custom'
-  params: VisualizationParams
-  customCode?: string
+  logos: LogoInstance[]
+  selectedLogoId: string
+  onSelectLogo: (id: string) => void
+  onDuplicateLogo: (logoId: string) => void
+  onDeleteLogo: (logoId: string) => void
   animating: boolean
   zoom: number
   previewMode: boolean
   isRendering: boolean
+  currentTime: number
   onToggleAnimation: () => void
   onSetZoom: (zoom: number) => void
   onTogglePreview: () => void
@@ -39,13 +66,16 @@ interface CanvasAreaProps {
 }
 
 export function CanvasArea({
-  visualMode,
-  params,
-  customCode,
+  logos,
+  selectedLogoId,
+  onSelectLogo,
+  onDuplicateLogo,
+  onDeleteLogo,
   animating,
   zoom,
   previewMode,
   isRendering,
+  currentTime,
   onToggleAnimation,
   onSetZoom,
   onTogglePreview,
@@ -61,42 +91,52 @@ export function CanvasArea({
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
   const [lastPanPoint, setLastPanPoint] = useState({ x: 0, y: 0 })
 
-  // Logo positions on the infinite canvas (positions represent logo centers)
-  const [logoPositions] = useState([
-    { x: -300, y: -300, id: 'main' }, // Main logo centered at origin (600px logo, so offset by half)
-    // Add more logo positions as needed
-  ])
+  // Logo click detection
+  const isPointInLogo = (x: number, y: number, logo: LogoInstance) => {
+    const logoSize = 600
+    return x >= logo.x && x <= logo.x + logoSize && 
+           y >= logo.y && y <= logo.y + logoSize
+  }
 
-  // Center view with balanced spacing around logo
+  // Center view to fit all logos
   const centerView = useCallback(() => {
     const canvas = canvasRef.current
-    if (!canvas) return
+    if (!canvas || logos.length === 0) return
 
     const rect = canvas.getBoundingClientRect()
-    const logoSize = 600 // Logo is 600x600
+    const logoSize = 600
     
-    // Calculate zoom so logo takes up about 70% of the smaller screen dimension
-    // More prominent while still having breathing room
+    // Calculate bounding box of all logos
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity
+    
+    logos.forEach(logo => {
+      minX = Math.min(minX, logo.x)
+      maxX = Math.max(maxX, logo.x + logoSize)
+      minY = Math.min(minY, logo.y)
+      maxY = Math.max(maxY, logo.y + logoSize)
+    })
+    
+    const contentWidth = maxX - minX
+    const contentHeight = maxY - minY
+    const centerX = (minX + maxX) / 2
+    const centerY = (minY + maxY) / 2
+    
+    // Calculate zoom to fit all logos at 70% coverage
     const targetCoverage = 0.7
-    const screenSize = Math.min(rect.width, rect.height)
-    const idealZoom = (screenSize * targetCoverage) / logoSize
+    const zoomX = (rect.width * targetCoverage) / contentWidth
+    const zoomY = (rect.height * targetCoverage) / contentHeight
+    const idealZoom = Math.min(zoomX, zoomY)
     
-    // Allow larger zoom range for better presentation
-    const clampedZoom = Math.max(0.4, Math.min(idealZoom, 1.5))
+    const clampedZoom = Math.max(0.2, Math.min(idealZoom, 1.5))
     
     onSetZoom(clampedZoom)
     
-    // To center the logo at (0,0), we need to translate the canvas
-    // so that point (0,0) appears at screen center
-    // Canvas transform: scale then translate
-    // Screen position = (canvas_pos + offset) * zoom
-    // We want: (0 + offset) * zoom = screen_center
-    // So: offset = screen_center / zoom
+    // Center all logos in view
     setCanvasOffset({
-      x: (rect.width / 2) / clampedZoom,
-      y: (rect.height / 2) / clampedZoom
+      x: (rect.width / 2) / clampedZoom - centerX,
+      y: (rect.height / 2) / clampedZoom - centerY
     })
-  }, [onSetZoom])
+  }, [onSetZoom, logos])
 
   // Center view on initial load
   useEffect(() => {
@@ -128,9 +168,9 @@ export function CanvasArea({
     ctx.translate(canvasOffset.x, canvasOffset.y)
 
     // Draw each logo at its position
-    logoPositions.forEach((logoPos) => {
+    logos.forEach((logo) => {
       ctx.save()
-      ctx.translate(logoPos.x, logoPos.y)
+      ctx.translate(logo.x, logo.y)
       
       // Create a temporary canvas for the logo
       const logoCanvas = document.createElement('canvas')
@@ -144,7 +184,7 @@ export function CanvasArea({
         logoCtx.fillRect(0, 0, logoCanvas.width, logoCanvas.height)
         
         // Add subtle background for ReCast logo
-        if (params.seed === 'recast-identity') {
+        if (logo.params.seed === 'recast-identity') {
           const gradient = logoCtx.createRadialGradient(
             logoCanvas.width / 2, logoCanvas.height / 2, 0,
             logoCanvas.width / 2, logoCanvas.height / 2, logoCanvas.width / 2
@@ -155,23 +195,45 @@ export function CanvasArea({
           logoCtx.fillRect(0, 0, logoCanvas.width, logoCanvas.height)
         }
 
-        // Generate logo content
-        if (visualMode === 'custom' && customCode && customCode.trim()) {
-          executeCustomCode(logoCtx, logoCanvas.width, logoCanvas.height, params, customCode, onCodeError)
-        } else if (visualMode === 'bars') {
-          generateAudioBars(logoCtx, logoCanvas.width, logoCanvas.height, params)
-        } else if (visualMode === 'wavebars') {
-          generateWaveBars(logoCtx, logoCanvas.width, logoCanvas.height, params)
-        } else if (visualMode === 'circles') {
-          generateCircles(logoCtx, logoCanvas.width, logoCanvas.height, params)
-        } else {
-          generateWaveLines(logoCtx, logoCanvas.width, logoCanvas.height, params)
+        // Create VisualizationParams for this logo
+        const logoParams: VisualizationParams = {
+          seed: logo.params.seed,
+          frequency: logo.params.frequency,
+          amplitude: logo.params.amplitude,
+          complexity: logo.params.complexity,
+          chaos: logo.params.chaos,
+          damping: logo.params.damping,
+          layers: logo.params.layers,
+          barCount: logo.params.barCount,
+          barSpacing: logo.params.barSpacing,
+          radius: logo.params.radius,
+          color: logo.params.color,
+          customParameters: logo.params.customParameters,
+          time: currentTime
         }
 
-        // Draw the logo with a border
-        ctx.shadowColor = 'rgba(0, 0, 0, 0.1)'
-        ctx.shadowBlur = 20
-        ctx.shadowOffsetY = 10
+        // Generate logo content
+        if (logo.params.visualMode === 'custom' && logo.params.customCode && logo.params.customCode.trim()) {
+          executeCustomCode(logoCtx, logoCanvas.width, logoCanvas.height, logoParams, logo.params.customCode, onCodeError)
+        } else if (logo.params.visualMode === 'bars') {
+          generateAudioBars(logoCtx, logoCanvas.width, logoCanvas.height, logoParams)
+        } else if (logo.params.visualMode === 'wavebars') {
+          generateWaveBars(logoCtx, logoCanvas.width, logoCanvas.height, logoParams)
+        } else if (logo.params.visualMode === 'circles') {
+          generateCircles(logoCtx, logoCanvas.width, logoCanvas.height, logoParams)
+        } else {
+          generateWaveLines(logoCtx, logoCanvas.width, logoCanvas.height, logoParams)
+        }
+
+        // Draw selection highlight for selected logo
+        const isSelected = logo.id === selectedLogoId
+        
+        // Clean shadow for unselected logos only
+        if (!isSelected) {
+          ctx.shadowColor = 'rgba(0, 0, 0, 0.08)'
+          ctx.shadowBlur = 20
+          ctx.shadowOffsetY = 8
+        }
         
         // Draw white background with rounded corners
         ctx.fillStyle = '#ffffff'
@@ -181,8 +243,8 @@ export function CanvasArea({
         
         ctx.shadowColor = 'transparent'
         
-        // Draw border
-        ctx.strokeStyle = '#e5e7eb'
+        // Draw refined border (very subtle highlight for selected logo)
+        ctx.strokeStyle = isSelected ? '#3b82f6' : '#f3f4f6'
         ctx.lineWidth = 1
         ctx.beginPath()
         ctx.roundRect(-10, -10, logoCanvas.width + 20, logoCanvas.height + 20, 12)
@@ -196,16 +258,42 @@ export function CanvasArea({
     })
 
     ctx.restore()
-  }, [visualMode, params, zoom, customCode, onCodeError, forceRender, canvasOffset, logoPositions])
+  }, [logos, selectedLogoId, zoom, onCodeError, forceRender, canvasOffset])
 
-  // Handle mouse events for dragging
+  // Handle mouse events for dragging and selection
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     if (previewMode) return
     
+    const canvas = canvasRef.current
+    if (!canvas) return
+    
+    const rect = canvas.getBoundingClientRect()
+    const mouseX = e.clientX - rect.left
+    const mouseY = e.clientY - rect.top
+    
+    // Convert screen coordinates to canvas coordinates
+    const canvasX = (mouseX / zoom) - canvasOffset.x
+    const canvasY = (mouseY / zoom) - canvasOffset.y
+    
+    // Check if click is on any logo (check in reverse order so top logos are selected first)
+    let clickedLogo = null
+    for (let i = logos.length - 1; i >= 0; i--) {
+      if (isPointInLogo(canvasX, canvasY, logos[i])) {
+        clickedLogo = logos[i]
+        break
+      }
+    }
+    
+    if (clickedLogo) {
+      // Select the clicked logo
+      onSelectLogo(clickedLogo.id)
+    }
+    
+    // Always start dragging (either logo or canvas)
     setIsDragging(true)
     setDragStart({ x: e.clientX, y: e.clientY })
     setLastPanPoint({ x: canvasOffset.x, y: canvasOffset.y })
-  }, [previewMode, canvasOffset])
+  }, [previewMode, canvasOffset, zoom, logos, onSelectLogo])
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     if (!isDragging || previewMode) return
@@ -299,13 +387,40 @@ export function CanvasArea({
         </Button>
       </div>
 
-      {/* Canvas Coordinates Display */}
-      {!previewMode && (
-        <div className="absolute top-6 left-1/2 transform -translate-x-1/2 z-20">
-          <div className="bg-white/90 backdrop-blur-sm rounded-lg border shadow-lg px-3 py-1">
-            <span className="text-xs font-mono text-gray-600">
-              x: {Math.round(-canvasOffset.x)} y: {Math.round(-canvasOffset.y)} zoom: {Math.round(zoom * 100)}%
+      {/* Selected Logo Actions */}
+      {!previewMode && selectedLogoId && (
+        <div className="absolute top-6 right-20 z-20">
+          <div className="bg-white/95 backdrop-blur-sm rounded-lg border shadow-lg p-2 flex items-center gap-2">
+            <span className="text-xs text-gray-600 px-2">
+              Logo Actions
             </span>
+            <div className="h-4 w-px bg-gray-200" />
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => onDuplicateLogo(selectedLogoId)}
+              className="h-7 px-2 text-xs"
+              title="Duplicate this logo"
+            >
+              <Copy className="w-3 h-3 mr-1" />
+              Duplicate
+            </Button>
+            {logos.length > 1 && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  if (confirm('Delete this logo?')) {
+                    onDeleteLogo(selectedLogoId)
+                  }
+                }}
+                className="h-7 px-2 text-xs text-red-600 hover:text-red-700"
+                title="Delete this logo"
+              >
+                <Trash2 className="w-3 h-3 mr-1" />
+                Delete
+              </Button>
+            )}
           </div>
         </div>
       )}
@@ -325,7 +440,7 @@ export function CanvasArea({
       ) : (
         <div className="h-full flex items-center justify-center p-8">
           <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-2xl border border-gray-200/50 overflow-hidden">
-            <PreviewGrid canvas={canvasRef.current} seed={params.seed} />
+            <PreviewGrid canvas={canvasRef.current} seed={logos.find(l => l.id === selectedLogoId)?.params.seed || 'preview'} />
           </div>
         </div>
       )}
