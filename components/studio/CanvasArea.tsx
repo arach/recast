@@ -189,16 +189,8 @@ export function CanvasArea({
       ctx.save()
       ctx.translate(logo.x, logo.y)
       
-      // Get or create cached canvas for this logo
-      const paramKey = JSON.stringify({ 
-        ...logo.params, 
-        code: logo.code?.substring(0, 100), // Include first 100 chars of code
-        time: animating ? Math.floor(currentTime) : 0 // Update every frame when animating
-      })
-      const hasParamsChanged = lastParamsRef.current.get(logo.id) !== paramKey
-      
+      // Create/get canvas for this logo - always redraw when animating for smooth motion
       let logoCanvas = canvasCacheRef.current.get(logo.id)
-      let needsRedraw = false
       
       if (!logoCanvas) {
         // Create new canvas if it doesn't exist
@@ -206,17 +198,12 @@ export function CanvasArea({
         logoCanvas.width = 600
         logoCanvas.height = 600
         canvasCacheRef.current.set(logo.id, logoCanvas)
-        needsRedraw = true
-      } else if (hasParamsChanged) {
-        // Parameters changed, need to redraw
-        needsRedraw = true
-        lastParamsRef.current.set(logo.id, paramKey)
       }
       
       const logoCtx = logoCanvas.getContext('2d')
       
-      if (logoCtx && needsRedraw) {
-        // Only redraw if needed
+      if (logoCtx) {
+        // Always redraw for smooth animation
         logoCtx.fillStyle = '#ffffff'
         logoCtx.fillRect(0, 0, logoCanvas.width, logoCanvas.height)
         
@@ -256,26 +243,26 @@ export function CanvasArea({
           // Fallback to default wave visualization
           generateWaveLines(logoCtx, logoCanvas.width, logoCanvas.height, logoParams)
         }
-      } // End of needsRedraw check
+      }
 
-        // Draw selection highlight for selected logo
-        const isSelected = logo.id === selectedLogoId
-        
-        // Draw white background with rounded corners (no shadow for performance)
-        ctx.fillStyle = '#ffffff'
-        ctx.beginPath()
-        ctx.roundRect(-10, -10, logoCanvas.width + 20, logoCanvas.height + 20, 12)
-        ctx.fill()
-        
-        // Draw refined border (very subtle highlight for selected logo)
-        ctx.strokeStyle = isSelected ? '#3b82f6' : '#f3f4f6'
-        ctx.lineWidth = 1
-        ctx.beginPath()
-        ctx.roundRect(-10, -10, logoCanvas.width + 20, logoCanvas.height + 20, 12)
-        ctx.stroke()
-        
-        // Draw the logo
-        ctx.drawImage(logoCanvas, 0, 0)
+      // Draw selection highlight for selected logo
+      const isSelected = logo.id === selectedLogoId
+      
+      // Draw white background with rounded corners (no shadow for performance)
+      ctx.fillStyle = '#ffffff'
+      ctx.beginPath()
+      ctx.roundRect(-10, -10, logoCanvas.width + 20, logoCanvas.height + 20, 12)
+      ctx.fill()
+      
+      // Draw refined border (very subtle highlight for selected logo)
+      ctx.strokeStyle = isSelected ? '#3b82f6' : '#f3f4f6'
+      ctx.lineWidth = 1
+      ctx.beginPath()
+      ctx.roundRect(-10, -10, logoCanvas.width + 20, logoCanvas.height + 20, 12)
+      ctx.stroke()
+      
+      // Draw the logo
+      ctx.drawImage(logoCanvas, 0, 0)
       
       ctx.restore()
     })
