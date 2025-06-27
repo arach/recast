@@ -41,10 +41,11 @@ interface LogoInstance {
     barSpacing: number
     radius: number
     color: string
-    visualMode: 'wave' | 'bars' | 'wavebars' | 'circles' | 'custom'
-    customCode: string
     customParameters: Record<string, any>
   }
+  code: string
+  presetId?: string
+  presetName?: string
 }
 
 interface CanvasAreaProps {
@@ -275,7 +276,6 @@ export function CanvasArea({
         
         // Draw the logo
         ctx.drawImage(logoCanvas, 0, 0)
-      }
       
       ctx.restore()
     })
