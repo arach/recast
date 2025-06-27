@@ -11,9 +11,10 @@ interface SaveDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   mode: 'shape' | 'preset'
-  visualMode: 'wave' | 'bars' | 'wavebars' | 'custom'
-  customCode?: string
-  currentShapeName?: string
+  visualMode: 'wave' | 'bars' | 'wavebars' | 'circles' | 'custom'
+  shapeId?: string
+  shapeName?: string
+  code?: string
   params: {
     seed: string
     frequency: number
@@ -24,10 +25,9 @@ interface SaveDialogProps {
     layers: number
     barCount?: number
     barSpacing?: number
+    radius?: number
     color?: string
   }
-  currentShapeId?: string
-  onSaved: () => void
 }
 
 export function SaveDialog({
@@ -35,11 +35,10 @@ export function SaveDialog({
   onOpenChange,
   mode,
   visualMode,
-  customCode,
-  currentShapeName,
+  shapeId,
+  shapeName,
+  code,
   params,
-  currentShapeId,
-  onSaved,
 }: SaveDialogProps) {
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
@@ -47,31 +46,30 @@ export function SaveDialog({
 
   // Set default name when dialog opens
   React.useEffect(() => {
-    if (open && mode === 'shape' && currentShapeName) {
-      setName(currentShapeName)
+    if (open && mode === 'shape' && shapeName) {
+      setName(shapeName)
     }
-  }, [open, mode, currentShapeName])
+  }, [open, mode, shapeName])
 
   const handleSave = async () => {
     if (!name.trim()) return
 
     setSaving(true)
     try {
-      if (mode === 'shape' && customCode) {
+      if (mode === 'shape' && code) {
         saveShape({
           name: name.trim(),
-          code: customCode,
+          code: code,
         })
       } else if (mode === 'preset') {
         savePreset({
           name: name.trim(),
           mode: visualMode,
-          shapeId: visualMode === 'custom' ? currentShapeId : undefined,
+          shapeId: visualMode === 'custom' ? shapeId : undefined,
           params,
         })
       }
       
-      onSaved()
       onOpenChange(false)
       setName('')
       setDescription('')

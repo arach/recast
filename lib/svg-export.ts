@@ -2,7 +2,7 @@ import { WaveGenerator, WaveParameters, GenerationOptions } from '@/core/wave-ge
 
 export interface ExportConfig {
   seed: string
-  mode: 'wave' | 'bars' | 'wavebars'
+  mode: 'wave' | 'bars' | 'wavebars' | 'circles'
   frequency: number
   amplitude: number
   complexity: number
@@ -11,6 +11,7 @@ export interface ExportConfig {
   layers: number
   barCount?: number
   barSpacing?: number
+  radius?: number
   colors?: string[]
 }
 
@@ -289,6 +290,60 @@ export default function ${componentName}Logo({
           }
         })
       }
+    } else if (config.mode === 'circles') {
+      // Generate circles using the new generator system
+      const scaleFactor = Math.min(width, height) / 120
+      const baseRadius = (config.radius || 50) * scaleFactor
+      const centerX = width / 2
+      const centerY = height / 2
+      
+      for (let layer = 0; layer < config.layers; layer++) {
+        const layerPhase = (layer / config.layers) * config.frequency * Math.PI * 2 + animationTime
+        const layerRadius = baseRadius * Math.pow(config.damping, layer)
+        const radiusVariation = (config.amplitude * 0.3) * Math.sin(layerPhase)
+        const finalRadius = Math.max(1, layerRadius + radiusVariation)
+        
+        const hue = (layer / config.layers) * 360 + animationTime * 30
+        const saturation = 70 - (layer * 5)
+        const lightness = 50 + Math.sin(layerPhase) * 20
+        
+        elements.push({
+          type: 'circle',
+          props: {
+            cx: centerX,
+            cy: centerY,
+            r: finalRadius,
+            fill: 'none',
+            stroke: \`hsl(\${hue}, \${saturation}%, \${lightness}%)\`,
+            strokeWidth: Math.max(1, finalRadius / 20),
+            opacity: 0.8 - (layer * 0.1)
+          }
+        })
+        
+        // Add complexity: orbital elements
+        if (config.complexity > 0 && layer < config.layers / 2) {
+          const complexityCount = Math.ceil(config.complexity * 6)
+          
+          for (let i = 0; i < complexityCount; i++) {
+            const orbitPhase = (i / complexityCount) * Math.PI * 2 + animationTime * 2
+            const orbitRadius = finalRadius * 0.7
+            const orbitX = centerX + Math.cos(orbitPhase) * orbitRadius
+            const orbitY = centerY + Math.sin(orbitPhase) * orbitRadius
+            const orbitSize = finalRadius * 0.2
+            
+            elements.push({
+              type: 'circle',
+              props: {
+                cx: Math.max(orbitSize, Math.min(width - orbitSize, orbitX)),
+                cy: Math.max(orbitSize, Math.min(height - orbitSize, orbitY)),
+                r: orbitSize,
+                fill: \`hsl(\${hue + 60}, \${saturation}%, \${lightness + 10}%)\`,
+                opacity: 0.6
+              }
+            })
+          }
+        }
+      }
     }
     
     return elements
@@ -333,6 +388,13 @@ export default function ${componentName}Logo({
         } else if (element.type === 'path') {
           return (
             <path
+              key={index}
+              {...element.props}
+            />
+          )
+        } else if (element.type === 'circle') {
+          return (
+            <circle
               key={index}
               {...element.props}
             />

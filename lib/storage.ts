@@ -11,7 +11,7 @@ export interface SavedShape {
 export interface SavedPreset {
   id: string
   name: string
-  mode: 'wave' | 'bars' | 'wavebars' | 'custom'
+  mode: 'wave' | 'bars' | 'wavebars' | 'circles' | 'custom'
   shapeId?: string // Optional reference to custom shape
   params: {
     seed: string
@@ -23,6 +23,7 @@ export interface SavedPreset {
     layers: number
     barCount?: number
     barSpacing?: number
+    radius?: number
     color?: string
   }
   createdAt: number

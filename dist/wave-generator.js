@@ -23,13 +23,27 @@ __export(wave_generator_exports, {
   WaveGenerator: () => WaveGenerator
 });
 module.exports = __toCommonJS(wave_generator_exports);
-var WaveGenerator = class _WaveGenerator {
+
+// core/generative-engine.ts
+var GeneratorBase = class {
   constructor(params, seed) {
     this.params = params;
-    this.rng = seed ? this.seededRandom(seed) : Math.random;
+    this.rng = seed ? this.createSeededRandom(seed) : Math.random;
+  }
+  // Get metadata about this generator
+  getMetadata() {
+    return this.metadata;
+  }
+  // Update parameters without recreating generator
+  updateParameters(newParams) {
+    this.params = { ...this.params, ...newParams };
+  }
+  // Get current parameters
+  getParameters() {
+    return { ...this.params };
   }
   // Seeded random number generator for reproducible results
-  seededRandom(seed) {
+  createSeededRandom(seed) {
     let hash = 0;
     for (let i = 0; i < seed.length; i++) {
       const char = seed.charCodeAt(i);
@@ -41,14 +55,106 @@ var WaveGenerator = class _WaveGenerator {
       return hash / 233280;
     };
   }
+  // Utility methods for common calculations
+  calculatePhase(index, total, time = 0) {
+    return index / total * this.params.frequency * Math.PI * 2 + time + (this.params.phaseOffset || 0);
+  }
+  applyDamping(value, distance) {
+    return value * Math.pow(this.params.damping, distance);
+  }
+  addChaos(value, intensity = 1) {
+    const chaosAmount = (this.rng() - 0.5) * this.params.chaos * intensity;
+    return value + chaosAmount;
+  }
+  scaleToCanvas(value, canvasSize) {
+    return value / 100 * canvasSize;
+  }
+};
+var GeneratorRegistry = class {
+  static register(name, generatorClass) {
+    this.generators.set(name, generatorClass);
+  }
+  static get(name) {
+    return this.generators.get(name);
+  }
+  static getAll() {
+    return Array.from(this.generators.keys());
+  }
+  static createGenerator(name, params, seed) {
+    const GeneratorClass = this.generators.get(name);
+    if (!GeneratorClass) return null;
+    return new GeneratorClass(params, seed);
+  }
+};
+GeneratorRegistry.generators = /* @__PURE__ */ new Map();
+
+// core/wave-generator.ts
+var WaveGenerator = class _WaveGenerator extends GeneratorBase {
+  constructor(params, seed) {
+    const generativeParams = "barCount" in params ? params : {
+      frequency: params.frequency,
+      amplitude: params.amplitude,
+      complexity: params.complexity,
+      chaos: params.chaos,
+      damping: params.damping,
+      layers: params.layers,
+      phaseOffset: "phase" in params ? params.phase : 0
+    };
+    super(generativeParams, seed);
+    this.metadata = {
+      name: "Wave Generator",
+      description: "Creates smooth mathematical wave patterns with harmonics and complexity",
+      category: "mathematical",
+      supportedModes: ["wave", "wavebars"],
+      defaultParameters: {
+        frequency: 3,
+        amplitude: 50,
+        complexity: 0.3,
+        chaos: 0.1,
+        damping: 0.9,
+        layers: 2
+      },
+      parameterRanges: {
+        frequency: { min: 0.1, max: 20, step: 0.1 },
+        amplitude: { min: 0, max: 100, step: 1 },
+        complexity: { min: 0, max: 1, step: 0.01 },
+        chaos: { min: 0, max: 1, step: 0.01 },
+        damping: { min: 0, max: 1, step: 0.01 },
+        layers: { min: 1, max: 5, step: 1 }
+      }
+    };
+  }
+  // New unified generate method for GenerativeEngine compatibility
+  generate(options) {
+    const layers = this.generateWavePoints(options);
+    const elements = [];
+    layers.forEach((layer, layerIndex) => {
+      if (layer.length > 1) {
+        const pathData = layer.map(
+          (point, i) => i === 0 ? `M ${point.x} ${point.y}` : `L ${point.x} ${point.y}`
+        ).join(" ");
+        elements.push({
+          type: "path",
+          props: {
+            d: pathData,
+            stroke: `hsl(${200 + layerIndex * 30}, 70%, 50%)`,
+            strokeWidth: Math.max(1, options.width / 200),
+            fill: "none",
+            opacity: 0.8 - layerIndex * 0.1
+          }
+        });
+      }
+    });
+    return elements;
+  }
   // Generate a single wave layer
   generateLayer(options, layerIndex, time = 0) {
     const points = [];
     const { width, height, resolution } = options;
-    const { amplitude, frequency, phase, complexity, chaos, damping } = this.params;
+    const { amplitude, frequency, complexity, chaos, damping, phaseOffset } = this.params;
     const layerFreq = frequency * (1 + layerIndex * 0.3);
     const layerAmp = amplitude * Math.pow(damping, layerIndex);
-    const layerPhase = phase + layerIndex * Math.PI / 4;
+    const layerPhase = (phaseOffset || 0) + layerIndex * Math.PI / 4;
     for (let i = 0; i < resolution; i++) {
       const x = i / resolution * width;
       const t = i / resolution;
@@ -72,8 +178,8 @@ var WaveGenerator = class _WaveGenerator {
     }
     return points;
   }
-  // Generate all wave layers
-  generate(options) {
+  // Legacy method - generates raw wave points (DEPRECATED: use generate() for new code)
+  generateWavePoints(options) {
     const { layers } = this.params;
     const { time = 0 } = options;
     const allLayers = [];
@@ -85,7 +191,7 @@ var WaveGenerator = class _WaveGenerator {
   }
   // Generate a wave-within-wave effect
   generateNested(options) {
-    const containerWave = this.generate({
+    const containerWave = this.generateWavePoints({
       ...options,
       resolution: Math.floor(options.resolution / 4)
     })[0];
@@ -113,11 +219,21 @@ var WaveGenerator = class _WaveGenerator {
     }
     return [containerWave, ...nestedWaves.flat()];
   }
-  // Update parameters (for animation)
+  // Legacy parameter update method (DEPRECATED: use updateParameters() for new code)
   updateParams(params) {
-    this.params = { ...this.params, ...params };
+    const generativeParams = {
+      frequency: params.frequency,
+      amplitude: params.amplitude,
+      complexity: params.complexity,
+      chaos: params.chaos,
+      damping: params.damping,
+      layers: params.layers,
+      phaseOffset: "phase" in params ? params.phase : void 0
+    };
+    this.updateParameters(generativeParams);
   }
 };
+GeneratorRegistry.register("wave", WaveGenerator);
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
   WaveGenerator

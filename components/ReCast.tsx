@@ -15,8 +15,13 @@ export default function RecastIdentityLogo({
   animated = false,
   className = ''
 }: RecastIdentityLogoProps) {
+  const [mounted, setMounted] = useState(false)
   const [animationTime, setAnimationTime] = useState(0)
   const [isHovered, setIsHovered] = useState(false)
+  
+  useEffect(() => {
+    setMounted(true)
+  }, [])
   
   // Generate wave data based on ReCast parameters
   const bars = useMemo(() => {
@@ -77,6 +82,11 @@ export default function RecastIdentityLogo({
       cancelAnimationFrame(animationFrameId)
     }
   }, [animated, isHovered])
+
+  // Prevent hydration mismatch by not rendering until mounted
+  if (!mounted) {
+    return <div style={{ width, height, display: 'block' }} />
+  }
 
   return (
     <svg 

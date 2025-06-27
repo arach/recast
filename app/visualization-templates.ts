@@ -1,5 +1,20 @@
 export const visualizationTemplates = {
   wave: `// Wave Lines Visualization
+// PARAMETER DEFINITIONS - These create the controls you see in the UI
+const PARAMETERS = {
+  // Core wave parameters
+  frequency: { type: 'slider', min: 0.1, max: 20, step: 0.1, default: 3, label: 'Wave Frequency' },
+  amplitude: { type: 'slider', min: 0, max: 100, step: 1, default: 50, label: 'Wave Height' },
+  complexity: { type: 'slider', min: 0, max: 1, step: 0.01, default: 0.3, label: 'Harmonics' },
+  chaos: { type: 'slider', min: 0, max: 1, step: 0.01, default: 0.1, label: 'Randomness' },
+  damping: { type: 'slider', min: 0, max: 1, step: 0.01, default: 0.9, label: 'Layer Decay' },
+  layers: { type: 'slider', min: 1, max: 5, step: 1, default: 2, label: 'Layers' },
+  
+  // Wave-specific parameters
+  strokeWidth: { type: 'slider', min: 0.5, max: 8, step: 0.5, default: 3, label: 'Line Width' },
+  colorRange: { type: 'slider', min: 10, max: 180, step: 10, default: 30, label: 'Color Range' }
+}
+
 function drawVisualization(ctx, width, height, params, generator, time) {
   const options = {
     width,
@@ -9,13 +24,13 @@ function drawVisualization(ctx, width, height, params, generator, time) {
     seed: params.seed
   };
 
-  const waveLayers = generator.generate(options);
+  const waveLayers = generator.generateWavePoints(options);
 
-  // Draw each layer
+  // Draw each layer using custom parameters
   waveLayers.forEach((layer, layerIndex) => {
     ctx.beginPath();
-    ctx.strokeStyle = \`hsla(\${200 + layerIndex * 30}, 70%, 50%, \${0.8 - layerIndex * 0.2})\`;
-    ctx.lineWidth = 3 - layerIndex * 0.5;
+    ctx.strokeStyle = \`hsla(\${200 + layerIndex * params.colorRange}, 70%, 50%, \${0.8 - layerIndex * 0.2})\`;
+    ctx.lineWidth = params.strokeWidth - layerIndex * 0.5;
     
     layer.forEach((point, i) => {
       if (i === 0) {
@@ -39,7 +54,7 @@ function drawVisualization(ctx, width, height, params, generator, time) {
     seed: params.seed
   };
 
-  const waveData = generator.generate(options)[0];
+  const waveData = generator.generateWavePoints(options)[0];
   const barWidth = (width - params.barSpacing * (params.barCount - 1)) / params.barCount;
   const centerY = height / 2;
 
@@ -149,10 +164,26 @@ function drawVisualization(ctx, width, height, params, generator, time) {
 }`,
 
   custom: `// Custom Visualization Template
+// PARAMETER DEFINITIONS - These create the controls you see in the UI
+const PARAMETERS = {
+  // Core wave parameters
+  frequency: { type: 'slider', min: 0.1, max: 20, step: 0.1, default: 3, label: 'Wave Frequency' },
+  amplitude: { type: 'slider', min: 0, max: 100, step: 1, default: 50, label: 'Wave Height' },
+  complexity: { type: 'slider', min: 0, max: 1, step: 0.01, default: 0.3, label: 'Harmonics' },
+  chaos: { type: 'slider', min: 0, max: 1, step: 0.01, default: 0.1, label: 'Randomness' },
+  damping: { type: 'slider', min: 0, max: 1, step: 0.01, default: 0.9, label: 'Decay' },
+  layers: { type: 'slider', min: 1, max: 5, step: 1, default: 2, label: 'Layers' },
+  
+  // Custom parameters for this visualization
+  circleSize: { type: 'slider', min: 1, max: 20, step: 1, default: 5, label: 'Circle Size' },
+  colorSpeed: { type: 'slider', min: 0.1, max: 5, step: 0.1, default: 1, label: 'Color Speed' },
+  trailLength: { type: 'slider', min: 0, max: 1, step: 0.01, default: 0.8, label: 'Trail Opacity' }
+}
+
 // You have access to:
 // - ctx: Canvas 2D context
-// - width, height: Canvas dimensions
-// - params: All slider values and settings
+// - width, height: Canvas dimensions  
+// - params: Object containing all the parameter values defined above
 // - generator: WaveGenerator instance
 // - time: Animation time value
 
@@ -173,20 +204,86 @@ function drawVisualization(ctx, width, height, params, generator, time) {
     seed: params.seed
   };
 
-  const waves = generator.generate(options);
+  const waves = generator.generateWavePoints(options);
   
-  // Example: Draw circles along the wave path
+  // Example: Draw circles along the wave path using custom parameters
   const wave = waves[0];
   wave.forEach((point, i) => {
-    const hue = (i / wave.length) * 360;
-    const radius = 5 + Math.sin(time + i * 0.1) * 3;
+    const hue = (i / wave.length * params.colorSpeed + time) * 360;
+    const radius = params.circleSize + Math.sin(time + i * 0.1) * 3;
     
     ctx.beginPath();
-    ctx.fillStyle = \`hsla(\${hue}, 70%, 50%, 0.8)\`;
+    ctx.fillStyle = \`hsla(\${hue}, 70%, 50%, \${params.trailLength})\`;
     ctx.arc(point.x, point.y, radius, 0, Math.PI * 2);
     ctx.fill();
   });
   
   // Add your creative code here!
+  // Access any parameter with params.parameterName (e.g., params.circleSize)
+}`,
+
+  circles: `// Pulsing Circles Visualization
+// PARAMETER DEFINITIONS - These create the controls you see in the UI
+const PARAMETERS = {
+  // Core parameters
+  frequency: { type: 'slider', min: 0.1, max: 20, step: 0.1, default: 1.2, label: 'Pulsing Speed' },
+  amplitude: { type: 'slider', min: 0, max: 100, step: 1, default: 20, label: 'Size Variation' },
+  complexity: { type: 'slider', min: 0, max: 1, step: 0.01, default: 0.2, label: 'Orbital Elements' },
+  chaos: { type: 'slider', min: 0, max: 1, step: 0.01, default: 0.05, label: 'Randomness' },
+  damping: { type: 'slider', min: 0, max: 1, step: 0.01, default: 0.75, label: 'Layer Decay' },
+  layers: { type: 'slider', min: 1, max: 8, step: 1, default: 3, label: 'Layers' },
+  
+  // Circle-specific parameters  
+  radius: { type: 'slider', min: 10, max: 200, step: 5, default: 80, label: 'Base Radius' },
+  strokeWidth: { type: 'slider', min: 1, max: 10, step: 0.5, default: 2, label: 'Stroke Width' },
+  colorShift: { type: 'slider', min: 0, max: 360, step: 10, default: 30, label: 'Color Shift' }
+}
+
+function drawVisualization(ctx, width, height, params, generator, time) {
+  const centerX = width / 2;
+  const centerY = height / 2;
+  const baseRadius = params.radius || 50;
+  
+  // Generate multiple layers of circles
+  for (let layer = 0; layer < params.layers; layer++) {
+    const layerPhase = (layer / params.layers) * params.frequency * Math.PI * 2 + time;
+    const layerRadius = baseRadius * Math.pow(params.damping, layer);
+    const radiusVariation = params.amplitude * 0.3 * Math.sin(layerPhase);
+    const finalRadius = Math.max(1, layerRadius + radiusVariation);
+    
+    // Color based on layer and time using custom parameters
+    const hue = (layer / params.layers) * 360 + time * params.colorShift;
+    const saturation = 70 - (layer * 5);
+    const lightness = 50 + Math.sin(layerPhase) * 20;
+    
+    // Draw main circle
+    ctx.beginPath();
+    ctx.strokeStyle = \`hsl(\${hue}, \${saturation}%, \${lightness}%)\`;
+    ctx.lineWidth = params.strokeWidth;
+    ctx.globalAlpha = 0.8 - (layer * 0.1);
+    ctx.arc(centerX, centerY, finalRadius, 0, Math.PI * 2);
+    ctx.stroke();
+    
+    // Add complexity: orbital elements
+    if (params.complexity > 0 && layer < params.layers / 2) {
+      const complexityCount = Math.ceil(params.complexity * 6);
+      
+      for (let i = 0; i < complexityCount; i++) {
+        const orbitPhase = (i / complexityCount) * Math.PI * 2 + time * 2;
+        const orbitRadius = finalRadius * 0.7;
+        const orbitX = centerX + Math.cos(orbitPhase) * orbitRadius;
+        const orbitY = centerY + Math.sin(orbitPhase) * orbitRadius;
+        const orbitSize = finalRadius * 0.2;
+        
+        ctx.beginPath();
+        ctx.fillStyle = \`hsl(\${hue + 60}, \${saturation}%, \${lightness + 10}%)\`;
+        ctx.globalAlpha = 0.6;
+        ctx.arc(orbitX, orbitY, orbitSize, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+  }
+  
+  ctx.globalAlpha = 1;
 }`,
 };
