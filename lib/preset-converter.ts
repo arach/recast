@@ -96,7 +96,12 @@ export async function getAllPresetsAsLegacy() {
     'audio-bars', 
     'apex-vercel',
     'prism-google',
-    'pulse-spotify'
+    'pulse-spotify',
+    'spinning-triangles',
+    'infinity-loops',
+    'network-constellation',
+    'brand-network',
+    'luxury-brand'
   ];
   
   const presets = await Promise.all(

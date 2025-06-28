@@ -68,17 +68,35 @@ export function ControlsPanel({
   return (
     <div className="w-96 border-l border-gray-200 bg-gray-50/30 overflow-y-auto">
       <div className="p-6 space-y-4">
-        {/* Current Preset */}
-        <Card>
+        {/* Current Preset - Enhanced with Clear Visual Indicator */}
+        <Card className={`${currentPresetName ? 'ring-2 ring-blue-200 bg-blue-50/30' : 'bg-gray-50/30'}`}>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm">Current Preset</CardTitle>
+            <CardTitle className="text-sm flex items-center gap-2">
+              {currentPresetName ? (
+                <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+              ) : (
+                <span className="w-2 h-2 bg-orange-500 rounded-full"></span>
+              )}
+              Active Style
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-sm font-medium text-gray-900 p-2 bg-gray-50 rounded-lg border">
-              {currentPresetName || 'Custom'}
+            <div className={`text-sm font-medium p-3 rounded-lg border-2 ${
+              currentPresetName 
+                ? 'text-blue-900 bg-blue-100 border-blue-200' 
+                : 'text-gray-900 bg-gray-100 border-gray-300'
+            }`}>
+              <div className="flex items-center justify-between">
+                <span>{currentPresetName || 'Custom Code'}</span>
+                {currentPresetName && (
+                  <span className="text-xs px-2 py-1 bg-blue-200 text-blue-800 rounded-full">PRESET</span>
+                )}
+              </div>
             </div>
-            <p className="text-xs text-gray-500 mt-2">
-              {currentPresetName ? 'Using preset template' : 'Custom visualization code'}
+            <p className="text-xs text-gray-600 mt-2">
+              {currentPresetName 
+                ? `Using preset: ${currentPresetName}` 
+                : 'Using custom visualization code'}
             </p>
           </CardContent>
         </Card>
@@ -106,7 +124,9 @@ export function ControlsPanel({
         {/* Dynamic Parameters - show parsed parameters from code */}
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm">Parameters</CardTitle>
+            <CardTitle className="text-sm">
+              {currentPresetName ? `${currentPresetName} Controls` : 'Custom Parameters'}
+            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             {(() => {
@@ -138,19 +158,42 @@ size: { type: 'slider', min: 1, max: 50, default: 10, label: 'Size' }
                   </div>
                   {Object.entries(parsedParams).map(([paramName, param]) => (
                     <div key={paramName}>
-                      <label className="text-xs font-medium">
-                        {param.label || paramName}: {(customParameters[paramName] ?? param.default ?? 0).toFixed(param.step < 1 ? 2 : 0)}
-                      </label>
-                      <Slider
-                        value={[customParameters[paramName] ?? param.default ?? 0]}
-                        onValueChange={([v]) => onCustomParametersChange({ ...customParameters, [paramName]: v })}
-                        max={param.max ?? 100}
-                        min={param.min ?? 0}
-                        step={param.step ?? 1}
-                        className="mt-1"
-                      />
-                      {param.label && (
-                        <p className="text-xs text-gray-500 mt-1">{param.label}</p>
+                      {param.type === 'select' ? (
+                        // Select dropdown
+                        <div>
+                          <label className="text-xs font-medium">
+                            {param.label || paramName}: {customParameters[paramName] ?? param.default}
+                          </label>
+                          <select
+                            value={customParameters[paramName] ?? param.default}
+                            onChange={(e) => onCustomParametersChange({ ...customParameters, [paramName]: e.target.value })}
+                            className="w-full mt-1 p-2 border rounded-lg text-sm bg-white"
+                          >
+                            {param.options?.map((option: string) => (
+                              <option key={option} value={option}>
+                                {option}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      ) : (
+                        // Slider (default)
+                        <div>
+                          <label className="text-xs font-medium">
+                            {param.label || paramName}: {(customParameters[paramName] ?? param.default ?? 0).toFixed(param.step < 1 ? 2 : 0)}
+                          </label>
+                          <Slider
+                            value={[customParameters[paramName] ?? param.default ?? 0]}
+                            onValueChange={([v]) => onCustomParametersChange({ ...customParameters, [paramName]: v })}
+                            max={param.max ?? 100}
+                            min={param.min ?? 0}
+                            step={param.step ?? 1}
+                            className="mt-1"
+                          />
+                          {param.label && (
+                            <p className="text-xs text-gray-500 mt-1">{param.label}</p>
+                          )}
+                        </div>
                       )}
                     </div>
                   ))}
@@ -161,7 +204,8 @@ size: { type: 'slider', min: 1, max: 50, default: 10, label: 'Size' }
           </CardContent>
         </Card>
 
-        {/* Core Wave Parameters */}
+        {/* Core Wave Parameters - Only show if not using preset with its own parameters */}
+        {(!currentPresetName || (parseCustomParameters(customCode) && Object.keys(parseCustomParameters(customCode) || {}).length === 0)) && (
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm">Core Wave Parameters</CardTitle>
@@ -210,8 +254,10 @@ size: { type: 'slider', min: 1, max: 50, default: 10, label: 'Size' }
             </div>
           </CardContent>
         </Card>
+        )}
 
-        {/* Advanced Controls */}
+        {/* Advanced Controls - Only show if not using preset */}
+        {(!currentPresetName || (parseCustomParameters(customCode) && Object.keys(parseCustomParameters(customCode) || {}).length === 0)) && (
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm">Advanced Controls</CardTitle>
@@ -260,8 +306,10 @@ size: { type: 'slider', min: 1, max: 50, default: 10, label: 'Size' }
             </div>
           </CardContent>
         </Card>
+        )}
 
-        {/* Additional Parameters */}
+        {/* Additional Parameters - Only show if not using preset */}
+        {(!currentPresetName || (parseCustomParameters(customCode) && Object.keys(parseCustomParameters(customCode) || {}).length === 0)) && (
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm">Additional Parameters</CardTitle>
@@ -305,6 +353,7 @@ size: { type: 'slider', min: 1, max: 50, default: 10, label: 'Size' }
             </div>
           </CardContent>
         </Card>
+        )}
       </div>
     </div>
   )
