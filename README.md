@@ -44,6 +44,24 @@ pnpm dev
 
 Open [http://localhost:3000](http://localhost:3000) to see ReCast in action.
 
+### AI Features Setup (Optional)
+
+To enable AI-powered suggestions:
+
+1. Copy the environment example file:
+```bash
+cp .env.local.example .env.local
+```
+
+2. Add your OpenAI API key to `.env.local`:
+```
+OPENAI_API_KEY=sk-your-api-key-here
+```
+
+3. Restart the development server
+
+AI features include intelligent parameter suggestions based on your industry and design choices.
+
 ## 🏗️ Architecture
 
 ### Core Components
