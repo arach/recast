@@ -33,7 +33,9 @@ Current context:
 - Current parameters: ${JSON.stringify(currentParams, null, 2)}
 
 Provide 3-5 specific parameter adjustments with explanations.
-Format as JSON array with structure: [{ parameter: string, value: any, reason: string }]`;
+Return ONLY a valid JSON array with NO additional text, markdown, or formatting.
+Structure: [{ "parameter": "string", "value": any, "reason": "string" }]
+Example: [{"parameter": "frequency", "value": 0.8, "reason": "Higher frequency creates more dynamic energy"}]`;
 
     userPrompt = `Based on the current design, suggest refinements that would make this logo more effective for a ${currentIndustry || 'general'} brand.`;
   } else if (requestType === 'personality') {
@@ -43,11 +45,12 @@ Your role is to translate brand personality traits into specific design paramete
 Given personality traits, suggest parameter values that express those traits visually.
 Consider how mathematical properties like frequency, amplitude, and complexity relate to brand characteristics.
 
-Format suggestions as JSON with structure: 
+Return ONLY a valid JSON object with NO additional text, markdown, or formatting.
+Structure:
 {
-  parameters: { [key: string]: any },
-  reasoning: string,
-  alternativeOptions: Array<{ name: string, parameters: { [key: string]: any } }>
+  "parameters": { "paramName": value },
+  "reasoning": "explanation string",
+  "alternativeOptions": [{ "name": "string", "parameters": { "paramName": value } }]
 }`;
 
     userPrompt = `Map these brand personality traits to design parameters: ${JSON.stringify(currentParams.personality || [])}`;

@@ -37,14 +37,30 @@ export function AISuggestions({
     api: '/api/ai-suggestions',
     onFinish: (_prompt, completion) => {
       try {
-        // Extract JSON from the completion - AI might include markdown formatting
+        // Extract JSON from the completion - handle various formats
+        let jsonStr = completion;
+        
+        // Try to find JSON array in the response
         const jsonMatch = completion.match(/\[[\s\S]*\]/);
         if (jsonMatch) {
-          const parsed = JSON.parse(jsonMatch[0]);
+          jsonStr = jsonMatch[0];
+        }
+        
+        // Clean up common formatting issues
+        jsonStr = jsonStr
+          .replace(/```json\s*/g, '') // Remove markdown code blocks
+          .replace(/```\s*/g, '')
+          .replace(/[\u201C\u201D]/g, '"') // Replace smart quotes
+          .replace(/[\u2018\u2019]/g, "'") // Replace smart single quotes
+          .trim();
+        
+        const parsed = JSON.parse(jsonStr);
+        if (Array.isArray(parsed)) {
           setSuggestions(parsed);
         }
       } catch (e) {
         console.error('Failed to parse AI suggestions:', e);
+        console.error('Raw completion:', completion);
       }
     },
   });
