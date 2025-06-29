@@ -20,6 +20,7 @@ import { BrandPresetsPanel } from '@/components/studio/BrandPresetsPanel'
 import { IndustrySelector } from '@/components/studio/IndustrySelector'
 import { ColorThemeSelector } from '@/components/studio/ColorThemeSelector'
 import { AISuggestions } from '@/components/studio/AISuggestions'
+import { BrandPersonality } from '@/components/studio/BrandPersonality'
 import { VisualizationParams } from '@/lib/visualization-generators'
 import { loadPresetAsLegacy, getAllPresetsAsLegacy } from '@/lib/preset-converter'
 import type { LoadedPreset } from '@/lib/preset-loader'
@@ -722,6 +723,10 @@ export default function Home() {
                 currentPreset={selectedLogo.presetId || 'custom'}
                 currentParams={customParameters}
                 onApplySuggestion={handleApplyColorTheme}
+              />
+              <BrandPersonality
+                currentParams={customParameters}
+                onApplyPersonality={handleApplyColorTheme}
               />
               <BrandPresetsPanel
                 onApplyPreset={handleApplyBrandPreset}
