@@ -18,6 +18,7 @@ import { CanvasArea } from '@/components/studio/CanvasArea'
 import { ControlsPanel } from '@/components/studio/ControlsPanel'
 import { BrandPresetsPanel } from '@/components/studio/BrandPresetsPanel'
 import { IndustrySelector } from '@/components/studio/IndustrySelector'
+import { ColorThemeSelector } from '@/components/studio/ColorThemeSelector'
 import { VisualizationParams } from '@/lib/visualization-generators'
 import { loadPresetAsLegacy, getAllPresetsAsLegacy } from '@/lib/preset-converter'
 import type { LoadedPreset } from '@/lib/preset-loader'
@@ -99,6 +100,7 @@ export default function Home() {
   const [isRendering, setIsRendering] = useState(false)
   const [renderSuccess, setRenderSuccess] = useState(false)
   const [showIndustrySelector, setShowIndustrySelector] = useState(false)
+  const [currentIndustry, setCurrentIndustry] = useState<string | undefined>()
   const animationRef = useRef<number>()
   const timeRef = useRef(0)
 
@@ -479,9 +481,23 @@ export default function Home() {
   }
   
   // Handle preset selection from industry selector
-  const handleIndustryPresetSelect = async (presetId: string, industryDefaults?: Record<string, any>) => {
+  const handleIndustryPresetSelect = async (presetId: string, industryDefaults?: Record<string, any>, industryId?: string) => {
     await loadPresetById(presetId, industryDefaults)
+    setCurrentIndustry(industryId)
     setShowIndustrySelector(false)
+  }
+
+  // Handle color theme application
+  const handleApplyColorTheme = (themedParams: Record<string, any>) => {
+    setLogos(prev => prev.map(logo => 
+      logo.id === selectedLogoId 
+        ? { 
+            ...logo, 
+            params: themedParams 
+          }
+        : logo
+    ))
+    setCustomParameters(themedParams)
   }
 
   // Apply brand preset from AI or examples
@@ -694,7 +710,12 @@ export default function Home() {
           />
           
           <div className="w-80 border-l bg-white/50 backdrop-blur-sm overflow-y-auto">
-            <div className="p-4">
+            <div className="p-4 space-y-4">
+              <ColorThemeSelector
+                currentIndustry={currentIndustry}
+                currentParams={customParameters}
+                onApplyTheme={handleApplyColorTheme}
+              />
               <BrandPresetsPanel
                 onApplyPreset={handleApplyBrandPreset}
                 currentParams={customParameters}

@@ -7,7 +7,7 @@ import { industryPacks, getIndustryDefaults, getIndustrySeedSuggestion, type Ind
 import { ArrowRight, Sparkles } from 'lucide-react';
 
 interface IndustrySelectorProps {
-  onSelectPreset: (presetId: string, defaultParams?: Record<string, any>) => void;
+  onSelectPreset: (presetId: string, defaultParams?: Record<string, any>, industryId?: string) => void;
   onClose?: () => void;
 }
 
@@ -27,7 +27,7 @@ export function IndustrySelector({ onSelectPreset, onClose }: IndustrySelectorPr
       industryDefaults.seed = seedSuggestion;
     }
     
-    onSelectPreset(presetId, industryDefaults);
+    onSelectPreset(presetId, industryDefaults, selectedIndustry.id);
   };
 
   return (
