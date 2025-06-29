@@ -38,11 +38,30 @@ cd recast
 # Install dependencies
 pnpm install
 
+# Copy environment variables
+cp .env.local.example .env.local
+
+# Add your Clerk authentication keys to .env.local
+# Get them from: https://dashboard.clerk.com
+
 # Start the development server
 pnpm dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) to see ReCast in action.
+
+### Authentication Setup
+
+ReCast uses [Clerk](https://clerk.com) for authentication, providing:
+- Secure user accounts
+- API key management across sessions
+- User settings persistence
+- Multiple auth methods (email, Google, GitHub, etc.)
+
+1. Create a free Clerk account at [clerk.com](https://clerk.com)
+2. Create a new application
+3. Copy your API keys to `.env.local`
+4. Users can now sign in to save their settings!
 
 ### AI Features
 

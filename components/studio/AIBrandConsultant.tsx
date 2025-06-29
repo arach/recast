@@ -4,8 +4,10 @@ import { useState, useRef, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Sparkles, MessageSquare, Upload, Key, Loader2, Send, Image as ImageIcon, X } from 'lucide-react';
+import { Sparkles, MessageSquare, Upload, Key, Loader2, Send, Image as ImageIcon, X, Settings } from 'lucide-react';
 import { useCompletion } from 'ai/react';
+import { useUser } from '@clerk/nextjs';
+import Link from 'next/link';
 
 interface AIBrandConsultantProps {
   currentParams: Record<string, any>;
@@ -27,6 +29,7 @@ export function AIBrandConsultant({
   collapsed = false,
   onToggleCollapsed
 }: AIBrandConsultantProps) {
+  const { user, isSignedIn } = useUser();
   const [apiKey, setApiKey] = useState<string>('');
   const [showApiKeyInput, setShowApiKeyInput] = useState(false);
   const [brandDescription, setBrandDescription] = useState('');
@@ -34,13 +37,19 @@ export function AIBrandConsultant({
   const [recommendation, setRecommendation] = useState<BrandRecommendation | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
-  // Check if API key exists in localStorage on mount
+  // Check for API key from user settings or localStorage
   useEffect(() => {
-    const savedKey = localStorage.getItem('recast_openai_key');
-    if (savedKey) {
-      setApiKey(savedKey);
+    // First check user settings if signed in
+    if (isSignedIn && user?.publicMetadata?.openaiApiKey) {
+      setApiKey(user.publicMetadata.openaiApiKey as string);
+    } else {
+      // Fall back to localStorage
+      const savedKey = localStorage.getItem('recast_openai_key');
+      if (savedKey) {
+        setApiKey(savedKey);
+      }
     }
-  }, []);
+  }, [user, isSignedIn]);
   
   const { complete, isLoading, error } = useCompletion({
     api: '/api/ai-brand-consultant',
@@ -136,20 +145,37 @@ export function AIBrandConsultant({
                 OpenAI API Key Required
               </div>
               <p className="text-xs text-blue-700">
-                To use AI features, you'll need your own OpenAI API key. Your key is stored locally and never sent to our servers.
+                To use AI features, you'll need your own OpenAI API key. 
+                {isSignedIn 
+                  ? "Add your API key in settings to use it across all your sessions."
+                  : "Your key is stored locally and never sent to our servers."}
               </p>
-              <div className="flex gap-2">
-                <input
-                  type="password"
-                  value={apiKey}
-                  onChange={(e) => setApiKey(e.target.value)}
-                  placeholder="sk-..."
-                  className="flex-1 text-sm p-2 border rounded"
-                />
-                <Button size="sm" onClick={saveApiKey}>
-                  Save
-                </Button>
-              </div>
+              {isSignedIn ? (
+                <Link href="/settings">
+                  <Button size="sm" className="w-full">
+                    <Settings className="h-4 w-4 mr-2" />
+                    Add API Key in Settings
+                  </Button>
+                </Link>
+              ) : (
+                <>
+                  <div className="flex gap-2">
+                    <input
+                      type="password"
+                      value={apiKey}
+                      onChange={(e) => setApiKey(e.target.value)}
+                      placeholder="sk-..."
+                      className="flex-1 text-sm p-2 border rounded"
+                    />
+                    <Button size="sm" onClick={saveApiKey}>
+                      Save
+                    </Button>
+                  </div>
+                  <p className="text-xs text-gray-600">
+                    Sign in to save your API key across sessions
+                  </p>
+                </>
+              )}
               <a 
                 href="https://platform.openai.com/api-keys" 
                 target="_blank" 

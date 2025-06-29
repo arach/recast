@@ -2,6 +2,7 @@
 
 import React from 'react'
 import { Button } from '@/components/ui/button'
+import { UserButton } from '@/components/UserButton'
 import {
   Download,
   Copy,
@@ -171,6 +172,10 @@ export function StudioHeader({
               SVG
             </Button>
           </div>
+
+          <div className="h-6 w-px bg-gray-200" />
+          
+          <UserButton />
         </div>
       </div>
     </header>
