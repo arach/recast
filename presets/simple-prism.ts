@@ -1,5 +1,4 @@
 import type { ParameterDefinition, PresetMetadata } from './types';
-import { applyUniversalBackground, applyUniversalFill, applyUniversalStroke, getBoundsFromPoints } from '../lib/universal-controls';
 
 // Simple Prism - Clean geometric prism perfect for voice/processing apps
 export const parameters: Record<string, ParameterDefinition> = {

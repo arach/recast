@@ -8,7 +8,8 @@ import {
   Shuffle,
   Settings,
   Package,
-  FolderOpen
+  FolderOpen,
+  Sparkles
 } from 'lucide-react'
 import {
   DropdownMenu,
@@ -24,6 +25,7 @@ interface StudioHeaderProps {
   onSavePreset: () => void
   onSaveShape: () => void
   onOpenLibrary: () => void
+  onOpenIndustrySelector: () => void
   onShare: () => void
   onExportPNG: (size?: number) => void
   onExportAllSizes: () => void
@@ -36,6 +38,7 @@ export function StudioHeader({
   onSavePreset,
   onSaveShape,
   onOpenLibrary,
+  onOpenIndustrySelector,
   onShare,
   onExportPNG,
   onExportAllSizes,
@@ -66,6 +69,16 @@ export function StudioHeader({
           >
             <FolderOpen className="w-4 h-4 mr-2" />
             Library
+          </Button>
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onOpenIndustrySelector}
+            className="h-9 bg-gradient-to-r from-blue-50 to-purple-50 hover:from-blue-100 hover:to-purple-100 border-blue-200"
+          >
+            <Sparkles className="w-4 h-4 mr-2" />
+            Industry Presets
           </Button>
 
           <Button

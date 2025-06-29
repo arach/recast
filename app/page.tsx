@@ -17,6 +17,7 @@ import { CodeEditorPanel } from '@/components/studio/CodeEditorPanel'
 import { CanvasArea } from '@/components/studio/CanvasArea'
 import { ControlsPanel } from '@/components/studio/ControlsPanel'
 import { BrandPresetsPanel } from '@/components/studio/BrandPresetsPanel'
+import { IndustrySelector } from '@/components/studio/IndustrySelector'
 import { VisualizationParams } from '@/lib/visualization-generators'
 import { loadPresetAsLegacy, getAllPresetsAsLegacy } from '@/lib/preset-converter'
 import type { LoadedPreset } from '@/lib/preset-loader'
@@ -97,6 +98,7 @@ export default function Home() {
   const [forceRender, setForceRender] = useState(0)
   const [isRendering, setIsRendering] = useState(false)
   const [renderSuccess, setRenderSuccess] = useState(false)
+  const [showIndustrySelector, setShowIndustrySelector] = useState(false)
   const animationRef = useRef<number>()
   const timeRef = useRef(0)
 
@@ -432,7 +434,7 @@ export default function Home() {
   }
 
   // Load preset by ID
-  const loadPresetById = async (presetId: string) => {
+  const loadPresetById = async (presetId: string, customDefaults?: Record<string, any>) => {
     try {
       console.log('Loading preset by ID:', presetId)
       const preset = await loadPresetAsLegacy(presetId)
@@ -444,6 +446,12 @@ export default function Home() {
       
       console.log('Loaded preset:', preset.name, 'Code length:', preset.code.length)
       
+      // Merge preset defaults with custom defaults (industry-specific or otherwise)
+      const mergedParams = {
+        ...preset.defaultParams,
+        ...customDefaults
+      }
+      
       // Update the selected logo with preset data
       setLogos(prev => prev.map(logo => 
         logo.id === selectedLogoId 
@@ -451,7 +459,8 @@ export default function Home() {
               ...logo, 
               params: { 
                 ...logo.params,
-                ...preset.defaultParams, // Apply all default parameters
+                ...mergedParams, // Apply merged parameters
+                customParameters: mergedParams // Also update custom parameters
               },
               code: preset.code, // Set the preset code
               presetId: preset.id,
@@ -467,6 +476,12 @@ export default function Home() {
     } catch (error) {
       console.error('Failed to load preset:', error)
     }
+  }
+  
+  // Handle preset selection from industry selector
+  const handleIndustryPresetSelect = async (presetId: string, industryDefaults?: Record<string, any>) => {
+    await loadPresetById(presetId, industryDefaults)
+    setShowIndustrySelector(false)
   }
 
   // Apply brand preset from AI or examples
@@ -598,10 +613,12 @@ export default function Home() {
         onSavePreset={() => openSaveDialog('preset')}
         onSaveShape={() => openSaveDialog('shape')}
         onOpenLibrary={() => setSavedItemsOpen(true)}
+        onOpenIndustrySelector={() => setShowIndustrySelector(true)}
         onShare={shareLink}
         onExportPNG={exportAsPNG}
         onExportAllSizes={exportAllSizes}
         onExportSVG={exportAsSVG}
+        visualMode={selectedLogo.presetId ? 'preset' : 'custom'}
       />
 
       <div className="flex flex-1 overflow-hidden">
@@ -687,6 +704,14 @@ export default function Home() {
           </div>
         </div>
       </div>
+
+      {/* Industry Selector */}
+      {showIndustrySelector && (
+        <IndustrySelector 
+          onSelectPreset={handleIndustryPresetSelect}
+          onClose={() => setShowIndustrySelector(false)}
+        />
+      )}
 
       {/* Dialogs */}
       <SaveDialog
