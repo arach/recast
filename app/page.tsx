@@ -246,10 +246,13 @@ export default function Home() {
   useEffect(() => {
     const parsedParams = parseCustomParameters(customCode)
     if (parsedParams) {
-      // Initialize custom parameter values with defaults
-      const paramValues: Record<string, any> = {}
+      // Initialize custom parameter values with defaults, preserving existing values
+      const paramValues: Record<string, any> = { ...customParameters }
       Object.entries(parsedParams).forEach(([key, param]) => {
-        paramValues[key] = customParameters[key] ?? param.default ?? 0
+        // Only set if the parameter doesn't exist yet
+        if (!(key in paramValues)) {
+          paramValues[key] = param.default ?? 0
+        }
       })
       setCustomParameters(paramValues)
     }
@@ -464,7 +467,10 @@ export default function Home() {
               params: { 
                 ...logo.params,
                 ...mergedParams, // Apply merged parameters
-                customParameters: mergedParams // Also update custom parameters
+                customParameters: {
+                  ...logo.params.customParameters, // Preserve existing parameters
+                  ...mergedParams // Then apply new ones
+                }
               },
               code: preset.code, // Set the preset code
               presetId: preset.id,
@@ -495,11 +501,20 @@ export default function Home() {
       logo.id === selectedLogoId 
         ? { 
             ...logo, 
-            params: themedParams 
+            params: {
+              ...logo.params,
+              customParameters: {
+                ...logo.params.customParameters,
+                ...themedParams
+              }
+            }
           }
         : logo
     ))
-    setCustomParameters(themedParams)
+    setCustomParameters(prev => ({
+      ...prev,
+      ...themedParams
+    }))
   }
 
   // Apply brand preset from AI or examples
