@@ -50,7 +50,7 @@ pnpm dev
 
 Open [http://localhost:3002](http://localhost:3002) to see ReCast in action.
 
-> **💡 Pro Tip**: Set up a local domain for better development experience. See [LOCAL_DOMAIN_SETUP.md](LOCAL_DOMAIN_SETUP.md) to use `http://local.recast.dev:3002` instead.
+> **💡 Pro Tip**: Set up a local domain for better development experience. See [LOCAL_DOMAIN_SETUP.md](docs/setup-guides/LOCAL_DOMAIN_SETUP.md) to use `http://local.recast.dev:3002` instead.
 
 ### 🏃 Quick Start (No Auth Required)
 
