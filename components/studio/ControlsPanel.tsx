@@ -363,7 +363,7 @@ export function ControlsPanel({
                             ) : param.type === 'text' ? (
                               <input
                                 type="text"
-                                value={customParameters[paramName] ?? param.default ?? ''}
+                                value={customParameters[paramName] !== undefined ? customParameters[paramName] : (param.default || '')}
                                 onChange={(e) => onCustomParametersChange({ ...customParameters, [paramName]: e.target.value })}
                                 className="text-xs p-1 border rounded bg-white min-w-0 w-20"
                                 placeholder={param.default}

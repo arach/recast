@@ -175,8 +175,11 @@ export const colorThemes: ColorTheme[] = [
  * Apply a color theme to current parameters
  */
 export function applyColorTheme(theme: ColorTheme, currentParams: Record<string, any>): Record<string, any> {
-  return {
-    ...currentParams,
+  // Start with all current params to preserve non-color values
+  const updatedParams = { ...currentParams };
+  
+  // Update only color-related parameters that exist in currentParams
+  const colorMappings: Record<string, string> = {
     // Universal control colors
     fillColor: theme.colors.primary,
     strokeColor: theme.colors.secondary,
@@ -184,7 +187,7 @@ export function applyColorTheme(theme: ColorTheme, currentParams: Record<string,
     
     // Common preset-specific color params
     color: theme.colors.primary,
-    accentColor: theme.colors.accent,
+    accentColor: theme.colors.accent || theme.colors.primary,
     primaryColor: theme.colors.primary,
     secondaryColor: theme.colors.secondary,
     
@@ -196,6 +199,17 @@ export function applyColorTheme(theme: ColorTheme, currentParams: Record<string,
     // Text color (inverse of background for contrast)
     textColor: isLightColor(theme.colors.background) ? '#000000' : '#ffffff'
   };
+  
+  // Only update parameters that already exist in currentParams or are universal controls
+  const universalControls = ['fillColor', 'strokeColor', 'backgroundColor'];
+  
+  for (const [param, value] of Object.entries(colorMappings)) {
+    if (universalControls.includes(param) || param in currentParams) {
+      updatedParams[param] = value;
+    }
+  }
+  
+  return updatedParams;
 }
 
 /**
