@@ -1,13 +1,15 @@
 // Preset type definitions for ReCast visualization presets
 
 export interface ParameterDefinition {
-  type: 'slider' | 'select' | 'color' | 'toggle';
+  type: 'slider' | 'select' | 'color' | 'toggle' | 'text';
   min?: number;
   max?: number;
   step?: number;
-  options?: string[];
+  options?: Array<{ value: string; label: string }> | string[];
   default: any;
   label: string;
+  category?: string; // For grouping parameters in UI
+  showIf?: (params: any) => boolean; // Conditional visibility
 }
 
 export interface PresetMetadata {

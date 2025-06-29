@@ -11,6 +11,8 @@ import { draw as audioBarsDraw } from '@/presets/audio-bars'
 import { draw as apexVercelDraw } from '@/presets/apex-vercel'
 import { draw as prismGoogleDraw } from '@/presets/prism-google'
 import { draw as pulseSpotifyDraw } from '@/presets/pulse-spotify'
+import { draw as spinningTrianglesDraw } from '@/presets/spinning-triangles'
+import { draw as infinityLoopsDraw } from '@/presets/infinity-loops'
 
 export type PresetDrawFunction = (
   ctx: CanvasRenderingContext2D,
@@ -27,7 +29,9 @@ export const presetDrawFunctions: Record<string, PresetDrawFunction> = {
   'audio-bars': audioBarsDraw,
   'apex-vercel': apexVercelDraw,
   'prism-google': prismGoogleDraw,
-  'pulse-spotify': pulseSpotifyDraw
+  'pulse-spotify': pulseSpotifyDraw,
+  'spinning-triangles': spinningTrianglesDraw,
+  'infinity-loops': infinityLoopsDraw
 }
 
 /**
@@ -60,8 +64,14 @@ export function executePreset(
   
   const generator = new WaveGenerator(waveParams, params.seed)
   
+  // Merge customParameters into params for universal controls
+  const mergedParams = {
+    ...params,
+    ...params.customParameters // This ensures fillColor, strokeColor, etc. are at the root level
+  }
+  
   // Execute the preset function directly
-  drawFunction(ctx, width, height, params, generator, time)
+  drawFunction(ctx, width, height, mergedParams, generator, time)
   
   return true
 }

@@ -6,6 +6,8 @@ import { saveAs } from 'file-saver'
 import { WaveGenerator } from '@/core/wave-generator'
 import { GenerativeEngine, GeneratorRegistry } from '@/core/generative-engine'
 import '@/core/circle-generator' // Import to register
+import '@/core/triangle-generator' // Import to register
+import '@/core/infinity-generator' // Import to register
 import { SavedShape, SavedPreset } from '@/lib/storage'
 import { generateLogoPackage, generateReactComponent, ExportConfig } from '@/lib/svg-export'
 import { SaveDialog } from '@/components/save-dialog'
@@ -14,6 +16,12 @@ import { StudioHeader } from '@/components/studio/StudioHeader'
 import { CodeEditorPanel } from '@/components/studio/CodeEditorPanel'
 import { CanvasArea } from '@/components/studio/CanvasArea'
 import { ControlsPanel } from '@/components/studio/ControlsPanel'
+import { BrandPresetsPanel } from '@/components/studio/BrandPresetsPanel'
+import { IndustrySelector } from '@/components/studio/IndustrySelector'
+import { ColorThemeSelector } from '@/components/studio/ColorThemeSelector'
+import { AISuggestions } from '@/components/studio/AISuggestions'
+import { BrandPersonality } from '@/components/studio/BrandPersonality'
+import { AIBrandConsultant } from '@/components/studio/AIBrandConsultant'
 import { VisualizationParams } from '@/lib/visualization-generators'
 import { loadPresetAsLegacy, getAllPresetsAsLegacy } from '@/lib/preset-converter'
 import type { LoadedPreset } from '@/lib/preset-loader'
@@ -36,6 +44,9 @@ interface LogoInstance {
     barSpacing: number
     radius: number
     color: string
+    sides: number
+    rotation: number
+    scale: number
     customParameters: Record<string, any>
   }
   code: string
@@ -65,6 +76,9 @@ export default function Home() {
         barSpacing: 2,
         radius: 50,
         color: '#0070f3',
+        sides: 3,
+        rotation: 0,
+        scale: 1.0,
         customParameters: {}
       },
       code: '// Default wave visualization\nfunction drawVisualization(ctx, width, height, params, generator, time) {\n  ctx.fillStyle = "#ffffff";\n  ctx.fillRect(0, 0, width, height);\n  \n  // Simple wave drawing\n  ctx.strokeStyle = "#0070f3";\n  ctx.lineWidth = 2;\n  ctx.beginPath();\n  \n  for (let x = 0; x < width; x++) {\n    const y = height/2 + Math.sin(x * 0.01 + time) * 50;\n    if (x === 0) ctx.moveTo(x, y);\n    else ctx.lineTo(x, y);\n  }\n  \n  ctx.stroke();\n}',
@@ -88,6 +102,8 @@ export default function Home() {
   const [forceRender, setForceRender] = useState(0)
   const [isRendering, setIsRendering] = useState(false)
   const [renderSuccess, setRenderSuccess] = useState(false)
+  const [showIndustrySelector, setShowIndustrySelector] = useState(false)
+  const [currentIndustry, setCurrentIndustry] = useState<string | undefined>()
   const animationRef = useRef<number>()
   const timeRef = useRef(0)
 
@@ -231,10 +247,13 @@ export default function Home() {
   useEffect(() => {
     const parsedParams = parseCustomParameters(customCode)
     if (parsedParams) {
-      // Initialize custom parameter values with defaults
-      const paramValues: Record<string, any> = {}
+      // Initialize custom parameter values with defaults, preserving existing values
+      const paramValues: Record<string, any> = { ...customParameters }
       Object.entries(parsedParams).forEach(([key, param]) => {
-        paramValues[key] = customParameters[key] ?? param.default ?? 0
+        // Only set if the parameter doesn't exist yet
+        if (!(key in paramValues)) {
+          paramValues[key] = param.default ?? 0
+        }
       })
       setCustomParameters(paramValues)
     }
@@ -251,42 +270,113 @@ export default function Home() {
   // Parse parameter definitions from custom code
   const parseCustomParameters = (code: string) => {
     try {
-      // Look for PARAMETERS = { ... } definition
-      const match = code.match(/const\s+PARAMETERS\s*=\s*{([^}]*)}/s)
+      // Look for PARAMETERS = { ... } definition - use a more robust approach
+      const match = code.match(/const\s+PARAMETERS\s*=\s*({[\s\S]*?^});/m)
       if (!match) return null
       
-      const paramsString = match[1]
-      // Extract parameter definitions using regex
-      const paramMatches = paramsString.matchAll(/(\w+):\s*{([^}]*)}/g)
-      const parameters: Record<string, any> = {}
+      const fullParamsBlock = match[1]
       
-      for (const paramMatch of paramMatches) {
-        const [, paramName, paramDef] = paramMatch
-        const param: any = { name: paramName }
+      // Try to parse as actual JavaScript object (safer approach)
+      try {
+        // Replace the object with a safer evaluation
+        const paramsCode = `(${fullParamsBlock})`
+        const paramsObj = eval(paramsCode)
         
-        // Extract properties
-        const typeMatch = paramDef.match(/type:\s*'([^']*)'/)
-        const minMatch = paramDef.match(/min:\s*([\d.]+)/)
-        const maxMatch = paramDef.match(/max:\s*([\d.]+)/)
-        const stepMatch = paramDef.match(/step:\s*([\d.]+)/)
-        const defaultMatch = paramDef.match(/default:\s*([\d.]+)/)
-        const labelMatch = paramDef.match(/label:\s*'([^']*)'/)
+        // Convert to our expected format
+        const parameters: Record<string, any> = {}
+        for (const [paramName, paramDef] of Object.entries(paramsObj)) {
+          parameters[paramName] = paramDef
+        }
         
-        if (typeMatch) param.type = typeMatch[1]
-        if (minMatch) param.min = parseFloat(minMatch[1])
-        if (maxMatch) param.max = parseFloat(maxMatch[1])
-        if (stepMatch) param.step = parseFloat(stepMatch[1])
-        if (defaultMatch) param.default = parseFloat(defaultMatch[1])
-        if (labelMatch) param.label = labelMatch[1]
+        return parameters
+      } catch (evalError) {
+        console.warn('Failed to eval parameters, falling back to regex:', evalError)
         
-        parameters[paramName] = param
+        // Fallback to improved regex parsing
+        const paramsString = fullParamsBlock.slice(1, -1) // Remove outer braces
+        
+        // Find parameter blocks by looking for paramName: { ... } patterns
+        // Use a more sophisticated approach to handle nested braces
+        const parameters: Record<string, any> = {}
+        
+        // Split by commas at the top level only
+        let currentPos = 0
+        let braceDepth = 0
+        let currentParam = ''
+        let inString = false
+        let stringChar = ''
+        
+        for (let i = 0; i < paramsString.length; i++) {
+          const char = paramsString[i]
+          const prevChar = i > 0 ? paramsString[i - 1] : ''
+          
+          if (!inString && (char === '"' || char === "'")) {
+            inString = true
+            stringChar = char
+          } else if (inString && char === stringChar && prevChar !== '\\') {
+            inString = false
+          } else if (!inString) {
+            if (char === '{') braceDepth++
+            else if (char === '}') braceDepth--
+            else if (char === ',' && braceDepth === 0) {
+              // Found a top-level comma - process the parameter
+              const paramBlock = paramsString.slice(currentPos, i).trim()
+              if (paramBlock) {
+                parseParameterBlock(paramBlock, parameters)
+              }
+              currentPos = i + 1
+            }
+          }
+        }
+        
+        // Process the last parameter
+        const lastParamBlock = paramsString.slice(currentPos).trim()
+        if (lastParamBlock) {
+          parseParameterBlock(lastParamBlock, parameters)
+        }
+        
+        return parameters
       }
-      
-      return parameters
     } catch (error) {
       console.warn('Failed to parse custom parameters:', error)
       return null
     }
+  }
+  
+  // Helper function to parse individual parameter blocks
+  const parseParameterBlock = (block: string, parameters: Record<string, any>) => {
+    const colonIndex = block.indexOf(':')
+    if (colonIndex === -1) return
+    
+    const paramName = block.slice(0, colonIndex).trim()
+    const paramDefString = block.slice(colonIndex + 1).trim()
+    
+    const param: any = { name: paramName }
+    
+    // Extract properties using regex
+    const typeMatch = paramDefString.match(/type:\s*['"]([^'"]*)['"]/);
+    const minMatch = paramDefString.match(/min:\s*([\d.]+)/);
+    const maxMatch = paramDefString.match(/max:\s*([\d.]+)/);
+    const stepMatch = paramDefString.match(/step:\s*([\d.]+)/);
+    const defaultMatch = paramDefString.match(/default:\s*(['"]?)([^'",\s}]+)\1/);
+    const labelMatch = paramDefString.match(/label:\s*['"]([^'"]*)['"]/);
+    const optionsMatch = paramDefString.match(/options:\s*\[([^\]]*)\]/);
+    
+    if (typeMatch) param.type = typeMatch[1];
+    if (minMatch) param.min = parseFloat(minMatch[1]);
+    if (maxMatch) param.max = parseFloat(maxMatch[1]);
+    if (stepMatch) param.step = parseFloat(stepMatch[1]);
+    if (defaultMatch) {
+      const defaultValue = defaultMatch[2];
+      param.default = isNaN(Number(defaultValue)) ? defaultValue : parseFloat(defaultValue);
+    }
+    if (labelMatch) param.label = labelMatch[1];
+    if (optionsMatch) {
+      const optionsStr = optionsMatch[1];
+      param.options = optionsStr.split(',').map(opt => opt.trim().replace(/['"]/g, ''));
+    }
+    
+    parameters[paramName] = param;
   }
 
   // Manual refresh function
@@ -352,7 +442,7 @@ export default function Home() {
   }
 
   // Load preset by ID
-  const loadPresetById = async (presetId: string) => {
+  const loadPresetById = async (presetId: string, customDefaults?: Record<string, any>) => {
     try {
       console.log('Loading preset by ID:', presetId)
       const preset = await loadPresetAsLegacy(presetId)
@@ -364,6 +454,12 @@ export default function Home() {
       
       console.log('Loaded preset:', preset.name, 'Code length:', preset.code.length)
       
+      // Merge preset defaults with custom defaults (industry-specific or otherwise)
+      const mergedParams = {
+        ...preset.defaultParams,
+        ...customDefaults
+      }
+      
       // Update the selected logo with preset data
       setLogos(prev => prev.map(logo => 
         logo.id === selectedLogoId 
@@ -371,7 +467,11 @@ export default function Home() {
               ...logo, 
               params: { 
                 ...logo.params,
-                ...preset.defaultParams, // Apply all default parameters
+                ...mergedParams, // Apply merged parameters
+                customParameters: {
+                  ...logo.params.customParameters, // Preserve existing parameters
+                  ...mergedParams // Then apply new ones
+                }
               },
               code: preset.code, // Set the preset code
               presetId: preset.id,
@@ -386,6 +486,78 @@ export default function Home() {
       
     } catch (error) {
       console.error('Failed to load preset:', error)
+    }
+  }
+  
+  // Handle preset selection from industry selector
+  const handleIndustryPresetSelect = async (presetId: string, industryDefaults?: Record<string, any>, industryId?: string) => {
+    await loadPresetById(presetId, industryDefaults)
+    setCurrentIndustry(industryId)
+    setShowIndustrySelector(false)
+  }
+
+  // Handle color theme application
+  const handleApplyColorTheme = (themedParams: Record<string, any>) => {
+    setLogos(prev => prev.map(logo => 
+      logo.id === selectedLogoId 
+        ? { 
+            ...logo, 
+            params: {
+              ...logo.params,
+              customParameters: {
+                ...logo.params.customParameters,
+                ...themedParams
+              }
+            }
+          }
+        : logo
+    ))
+    setCustomParameters(prev => ({
+      ...prev,
+      ...themedParams
+    }))
+    // Force re-render to apply the theme changes
+    setForceRender(prev => prev + 1)
+  }
+
+  // Apply brand preset from AI or examples
+  const handleApplyBrandPreset = async (brandPreset: any) => {
+    try {
+      console.log('Applying brand preset:', brandPreset.name)
+      
+      // First load the base preset if it's different from current
+      if (brandPreset.preset !== selectedLogo.presetId) {
+        await loadPresetById(brandPreset.preset)
+      }
+      
+      // Then apply the custom parameters
+      setLogos(prev => prev.map(logo => 
+        logo.id === selectedLogoId 
+          ? { 
+              ...logo, 
+              params: { 
+                ...logo.params,
+                customParameters: {
+                  ...logo.params.customParameters,
+                  ...brandPreset.params
+                }
+              }
+            }
+          : logo
+      ))
+      
+      // Update custom parameters state for the controls panel
+      setCustomParameters(prev => ({
+        ...prev,
+        ...brandPreset.params
+      }))
+      
+      // Force re-render
+      setForceRender(prev => prev + 1)
+      console.log('Brand preset applied successfully:', brandPreset.name)
+      
+    } catch (error) {
+      console.error('Failed to apply brand preset:', error)
     }
   }
 
@@ -477,10 +649,12 @@ export default function Home() {
         onSavePreset={() => openSaveDialog('preset')}
         onSaveShape={() => openSaveDialog('shape')}
         onOpenLibrary={() => setSavedItemsOpen(true)}
+        onOpenIndustrySelector={() => setShowIndustrySelector(true)}
         onShare={shareLink}
         onExportPNG={exportAsPNG}
         onExportAllSizes={exportAllSizes}
         onExportSVG={exportAsSVG}
+        visualMode={selectedLogo.presetId ? 'preset' : 'custom'}
       />
 
       <div className="flex flex-1 overflow-hidden">
@@ -492,6 +666,7 @@ export default function Home() {
           currentShapeName={currentShapeName}
           onSetCurrentShapeName={setCurrentShapeName}
           currentShapeId={currentShapeId}
+          currentPresetName={selectedLogo.presetName}
           codeError={codeError}
           code={customCode}
           onCodeChange={setCustomCode}
@@ -522,37 +697,76 @@ export default function Home() {
           forceRender={forceRender}
         />
 
-        <ControlsPanel
-          currentPresetName={currentPresetName}
-          seed={seed}
-          frequency={frequency}
-          amplitude={amplitude}
-          complexity={complexity}
-          chaos={chaos}
-          damping={damping}
-          layers={layers}
-          barCount={barCount}
-          barSpacing={barSpacing}
-          radius={radius}
-          customCode={customCode}
-          customParameters={customParameters}
-          onSeedChange={setSeed}
-          onFrequencyChange={setFrequency}
-          onAmplitudeChange={setAmplitude}
-          onComplexityChange={setComplexity}
-          onChaosChange={setChaos}
-          onDampingChange={setDamping}
-          onLayersChange={setLayers}
-          onBarCountChange={setBarCount}
-          onBarSpacingChange={setBarSpacing}
-          onRadiusChange={setRadius}
-          onCustomParametersChange={setCustomParameters}
-          getCurrentGeneratorMetadata={getCurrentGeneratorMetadata}
-          parseCustomParameters={parseCustomParameters}
-          forceRender={forceRender}
-          onForceRender={() => setForceRender(prev => prev + 1)}
-        />
+        <div className="flex">
+          <ControlsPanel
+            currentPresetName={currentPresetName}
+            seed={seed}
+            frequency={frequency}
+            amplitude={amplitude}
+            complexity={complexity}
+            chaos={chaos}
+            damping={damping}
+            layers={layers}
+            barCount={barCount}
+            barSpacing={barSpacing}
+            radius={radius}
+            customCode={customCode}
+            customParameters={customParameters}
+            onSeedChange={setSeed}
+            onFrequencyChange={setFrequency}
+            onAmplitudeChange={setAmplitude}
+            onComplexityChange={setComplexity}
+            onChaosChange={setChaos}
+            onDampingChange={setDamping}
+            onLayersChange={setLayers}
+            onBarCountChange={setBarCount}
+            onBarSpacingChange={setBarSpacing}
+            onRadiusChange={setRadius}
+            onCustomParametersChange={setCustomParameters}
+            getCurrentGeneratorMetadata={getCurrentGeneratorMetadata}
+            parseCustomParameters={parseCustomParameters}
+            forceRender={forceRender}
+            onForceRender={() => setForceRender(prev => prev + 1)}
+          />
+          
+          <div className="w-80 border-l bg-white/50 backdrop-blur-sm overflow-y-auto">
+            <div className="p-4 space-y-4">
+              <AIBrandConsultant
+                currentParams={customParameters}
+                onApplyRecommendation={handleApplyColorTheme}
+              />
+              <ColorThemeSelector
+                currentIndustry={currentIndustry}
+                currentParams={customParameters}
+                onApplyTheme={handleApplyColorTheme}
+              />
+              <AISuggestions
+                currentIndustry={currentIndustry}
+                currentPreset={selectedLogo.presetId || 'custom'}
+                currentParams={customParameters}
+                onApplySuggestion={handleApplyColorTheme}
+              />
+              <BrandPersonality
+                currentParams={customParameters}
+                onApplyPersonality={handleApplyColorTheme}
+              />
+              <BrandPresetsPanel
+                onApplyPreset={handleApplyBrandPreset}
+                currentParams={customParameters}
+                currentPreset={selectedLogo.presetId || 'custom'}
+              />
+            </div>
+          </div>
+        </div>
       </div>
+
+      {/* Industry Selector */}
+      {showIndustrySelector && (
+        <IndustrySelector 
+          onSelectPreset={handleIndustryPresetSelect}
+          onClose={() => setShowIndustrySelector(false)}
+        />
+      )}
 
       {/* Dialogs */}
       <SaveDialog

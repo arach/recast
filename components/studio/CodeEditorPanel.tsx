@@ -29,6 +29,7 @@ interface CodeEditorPanelProps {
   currentShapeName: string
   onSetCurrentShapeName: (name: string) => void
   currentShapeId?: string
+  currentPresetName?: string | null
   codeError: string | null
   code: string
   onCodeChange: (code: string) => void
@@ -49,6 +50,7 @@ export function CodeEditorPanel({
   currentShapeName,
   onSetCurrentShapeName,
   currentShapeId,
+  currentPresetName,
   codeError,
   code,
   onCodeChange,
@@ -81,11 +83,14 @@ export function CodeEditorPanel({
     <div className={cn(
       "w-1/4 border-r border-gray-200 bg-gray-50/30 transition-all duration-300 flex flex-col overflow-hidden"
     )}>
-      {/* Quick Presets Dropdown - Above Code Editor */}
-      <div className="p-4 border-b border-gray-200 bg-gray-50">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <span className="text-xs font-medium text-gray-600">Try a preset:</span>
+      {/* Enhanced Preset Selection */}
+      <div className="p-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-purple-50">
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-gray-800">🎨 Visual Styles</h3>
+            <span className="text-xs text-gray-500">Choose a starting point</span>
+          </div>
+          <div className="flex flex-col gap-2">
             <select
               onChange={(e) => {
                 const presetId = e.target.value
@@ -95,18 +100,20 @@ export function CodeEditorPanel({
                 }
                 e.target.value = '' // Reset dropdown
               }}
-              className="text-xs px-2 py-1 border border-gray-300 rounded-md bg-white"
+              className="text-sm px-3 py-2 border-2 border-blue-200 rounded-lg bg-white hover:border-blue-300 focus:border-blue-400 focus:outline-none transition-colors"
               defaultValue=""
             >
-              <option value="" disabled>Choose preset...</option>
+              <option value="" disabled>🚀 Load a preset style...</option>
               {presets.map((preset) => (
                 <option key={preset.id} value={preset.id}>
-                  {preset.name}
+                  {preset.name} {preset.description ? `- ${preset.description.substring(0, 40)}...` : ''}
                 </option>
               ))}
             </select>
+            <p className="text-xs text-gray-600">
+              💡 Presets provide ready-made styles with custom controls. You can modify the code after loading.
+            </p>
           </div>
-          <span className="text-xs text-gray-400">or customize below</span>
         </div>
       </div>
 
@@ -123,7 +130,7 @@ export function CodeEditorPanel({
               />
             </div>
             <p className="text-xs text-gray-500 mt-1">
-              {currentShapeId ? 'Editing saved shape' : 'Edit your visualization'}
+              {currentShapeId ? 'Editing saved shape' : currentPresetName ? `Based on: ${currentPresetName}` : 'Custom visualization code'}
             </p>
           </div>
           <div className="flex items-center space-x-2">

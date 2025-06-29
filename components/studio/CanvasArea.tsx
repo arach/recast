@@ -14,6 +14,10 @@ import {
   Move,
   Copy,
   Trash2,
+  Download,
+  RotateCw,
+  Clipboard,
+  CopyPlus,
 } from 'lucide-react'
 import { PreviewGrid } from './PreviewGrid'
 import {
@@ -91,6 +95,9 @@ export function CanvasArea({
   const [isDragging, setIsDragging] = useState(false)
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
   const [lastPanPoint, setLastPanPoint] = useState({ x: 0, y: 0 })
+  
+  // Copy feedback state
+  const [showCopyFeedback, setShowCopyFeedback] = useState(false)
   
   // Logo canvas cache - CRITICAL FOR PERFORMANCE
   const logoCanvasCache = useRef<Map<string, { canvas: HTMLCanvasElement, paramHash: string }>>(new Map())
@@ -386,6 +393,113 @@ export function CanvasArea({
     centerView()
   }, [centerView])
 
+  // Generate logo canvas (shared function)
+  const generateLogoCanvas = useCallback((selectedLogo: any) => {
+    const paramHash = getLogoParamHash(selectedLogo, currentTime)
+    const cached = logoCanvasCache.current.get(selectedLogo.id)
+    
+    if (cached && cached.paramHash === paramHash) {
+      return cached.canvas
+    }
+
+    // Generate new canvas
+    const logoCanvas = document.createElement('canvas')
+    logoCanvas.width = 600
+    logoCanvas.height = 600
+    const logoCtx = logoCanvas.getContext('2d')
+    
+    if (logoCtx) {
+      logoCtx.fillStyle = '#ffffff'
+      logoCtx.fillRect(0, 0, logoCanvas.width, logoCanvas.height)
+      
+      const logoParams: VisualizationParams = {
+        seed: selectedLogo.params.seed,
+        frequency: selectedLogo.params.frequency,
+        amplitude: selectedLogo.params.amplitude,
+        complexity: selectedLogo.params.complexity,
+        chaos: selectedLogo.params.chaos,
+        damping: selectedLogo.params.damping,
+        layers: selectedLogo.params.layers,
+        barCount: selectedLogo.params.barCount,
+        barSpacing: selectedLogo.params.barSpacing,
+        radius: selectedLogo.params.radius,
+        color: selectedLogo.params.color,
+        customParameters: selectedLogo.params.customParameters,
+        time: currentTime
+      }
+
+      if (selectedLogo.code && selectedLogo.code.trim()) {
+        executeCustomCode(logoCtx, logoCanvas.width, logoCanvas.height, logoParams, selectedLogo.code, onCodeError)
+      } else {
+        generateWaveLines(logoCtx, logoCanvas.width, logoCanvas.height, logoParams)
+      }
+    }
+    
+    return logoCanvas
+  }, [getLogoParamHash, currentTime, onCodeError])
+
+  // Download logo as PNG
+  const downloadLogoImage = useCallback(() => {
+    const selectedLogo = logos.find(logo => logo.id === selectedLogoId)
+    if (!selectedLogo) return
+
+    const logoCanvas = generateLogoCanvas(selectedLogo)
+    
+    logoCanvas.toBlob((blob) => {
+      if (blob) {
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = `${selectedLogo.params.seed || 'logo'}.png`
+        document.body.appendChild(a)
+        a.click()
+        document.body.removeChild(a)
+        URL.revokeObjectURL(url)
+      }
+    }, 'image/png')
+  }, [selectedLogoId, logos, generateLogoCanvas])
+
+  // Copy logo as image to clipboard
+  const copyLogoImage = useCallback(async () => {
+    const selectedLogo = logos.find(logo => logo.id === selectedLogoId)
+    if (!selectedLogo) return
+
+    try {
+      const logoCanvas = generateLogoCanvas(selectedLogo)
+
+      // Convert canvas to blob and copy to clipboard
+      logoCanvas.toBlob(async (blob) => {
+        if (blob) {
+          try {
+            // Check if clipboard API is supported
+            if (navigator.clipboard && navigator.clipboard.write) {
+              await navigator.clipboard.write([
+                new ClipboardItem({
+                  'image/png': blob
+                })
+              ])
+              console.log('✅ Logo copied to clipboard!')
+              
+              // Show visual feedback
+              setShowCopyFeedback(true)
+              setTimeout(() => setShowCopyFeedback(false), 2000)
+            } else {
+              console.log('📋 Clipboard not supported, downloading instead...')
+              downloadLogoImage()
+            }
+          } catch (err) {
+            console.error('❌ Failed to copy to clipboard:', err)
+            console.log('📥 Falling back to download...')
+            downloadLogoImage()
+          }
+        }
+      }, 'image/png')
+    } catch (error) {
+      console.error('❌ Failed to copy logo:', error)
+      downloadLogoImage()
+    }
+  }, [selectedLogoId, logos, generateLogoCanvas, downloadLogoImage])
+
   // Simple redraw trigger
   useEffect(() => {
     drawInfiniteCanvas()
@@ -435,40 +549,62 @@ export function CanvasArea({
         </Button>
       </div>
 
-      {/* Selected Logo Actions */}
+      {/* Floating Logo Toolbar */}
       {!previewMode && selectedLogoId && (
         <div className="absolute top-6 right-20 z-20">
-          <div className="bg-white/95 backdrop-blur-sm rounded-lg border shadow-lg p-2 flex items-center gap-2">
-            <span className="text-xs text-gray-600 px-2">
-              Logo Actions
-            </span>
-            <div className="h-4 w-px bg-gray-200" />
+          <div className="bg-white/95 backdrop-blur-sm rounded-lg border shadow-lg p-1 flex items-center gap-1">
             <Button
               size="sm"
-              variant="outline"
+              variant="ghost"
+              onClick={copyLogoImage}
+              className="h-8 w-8 p-0"
+              title="Copy image to clipboard"
+            >
+              <Clipboard className="w-4 h-4" />
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={downloadLogoImage}
+              className="h-8 w-8 p-0"
+              title="Download as PNG"
+            >
+              <Download className="w-4 h-4" />
+            </Button>
+            <div className="h-4 w-px bg-gray-200 mx-1" />
+            <Button
+              size="sm"
+              variant="ghost"
               onClick={() => onDuplicateLogo(selectedLogoId)}
-              className="h-7 px-2 text-xs"
+              className="h-8 w-8 p-0"
               title="Duplicate this logo"
             >
-              <Copy className="w-3 h-3 mr-1" />
-              Duplicate
+              <CopyPlus className="w-4 h-4" />
             </Button>
             {logos.length > 1 && (
               <Button
                 size="sm"
-                variant="outline"
+                variant="ghost"
                 onClick={() => {
                   if (confirm('Delete this logo?')) {
                     onDeleteLogo(selectedLogoId)
                   }
                 }}
-                className="h-7 px-2 text-xs text-red-600 hover:text-red-700"
+                className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
                 title="Delete this logo"
               >
-                <Trash2 className="w-3 h-3 mr-1" />
-                Delete
+                <Trash2 className="w-4 h-4" />
               </Button>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Copy Feedback */}
+      {showCopyFeedback && (
+        <div className="absolute top-20 right-20 z-30 animate-in fade-in-0 duration-200">
+          <div className="bg-green-50 border border-green-200 text-green-800 px-3 py-2 rounded-lg shadow-lg text-sm font-medium">
+            📋 Copied to clipboard!
           </div>
         </div>
       )}
