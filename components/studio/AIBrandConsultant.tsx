@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Sparkles, MessageSquare, Upload, Key, Loader2, Send, Image as ImageIcon, X, Settings } from 'lucide-react';
 import { useCompletion } from 'ai/react';
-import { useUser } from '@clerk/nextjs';
+import { useSession } from '@/lib/auth-client';
 import Link from 'next/link';
 
 interface AIBrandConsultantProps {
@@ -29,7 +29,7 @@ export function AIBrandConsultant({
   collapsed = false,
   onToggleCollapsed
 }: AIBrandConsultantProps) {
-  const { user, isSignedIn } = useUser();
+  const { data: session } = useSession();
   const [apiKey, setApiKey] = useState<string>('');
   const [showApiKeyInput, setShowApiKeyInput] = useState(false);
   const [brandDescription, setBrandDescription] = useState('');
@@ -39,17 +39,32 @@ export function AIBrandConsultant({
   
   // Check for API key from user settings or localStorage
   useEffect(() => {
-    // First check user settings if signed in
-    if (isSignedIn && user?.publicMetadata?.openaiApiKey) {
-      setApiKey(user.publicMetadata.openaiApiKey as string);
-    } else {
+    const loadApiKey = async () => {
+      // First check user settings if signed in
+      if (session) {
+        try {
+          const response = await fetch('/api/user/settings');
+          if (response.ok) {
+            const data = await response.json();
+            if (data.openaiApiKey) {
+              setApiKey(data.openaiApiKey);
+              return;
+            }
+          }
+        } catch (error) {
+          console.error('Failed to load API key from settings:', error);
+        }
+      }
+      
       // Fall back to localStorage
       const savedKey = localStorage.getItem('recast_openai_key');
       if (savedKey) {
         setApiKey(savedKey);
       }
-    }
-  }, [user, isSignedIn]);
+    };
+    
+    loadApiKey();
+  }, [session]);
   
   const { complete, isLoading, error } = useCompletion({
     api: '/api/ai-brand-consultant',
@@ -146,11 +161,11 @@ export function AIBrandConsultant({
               </div>
               <p className="text-xs text-blue-700">
                 To use AI features, you'll need your own OpenAI API key. 
-                {isSignedIn 
+                {session 
                   ? "Add your API key in settings to use it across all your sessions."
                   : "Your key is stored locally and never sent to our servers."}
               </p>
-              {isSignedIn ? (
+              {session ? (
                 <Link href="/settings">
                   <Button size="sm" className="w-full">
                     <Settings className="h-4 w-4 mr-2" />

@@ -1,11 +1,18 @@
-import { auth, currentUser } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
-import { clerkClient } from '@clerk/nextjs/server';
+import { auth } from '@/lib/auth';
+import { headers } from 'next/headers';
+import Database from 'better-sqlite3';
+
+// Initialize database connection
+const db = new Database('./recast-auth.db');
 
 export async function POST(request: Request) {
-  const { userId } = await auth();
+  // Get session from Better Auth
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
   
-  if (!userId) {
+  if (!session) {
     return new NextResponse('Unauthorized', { status: 401 });
   }
 
@@ -13,13 +20,14 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { openaiApiKey } = body;
 
-    // Update user's public metadata with API key
-    // Note: In production, you might want to encrypt this
-    await clerkClient().users.updateUser(userId, {
-      publicMetadata: {
-        openaiApiKey: openaiApiKey || null,
-      },
-    });
+    // Update user's openaiApiKey in the database
+    const stmt = db.prepare(`
+      UPDATE user 
+      SET openaiApiKey = ? 
+      WHERE id = ?
+    `);
+    
+    stmt.run(openaiApiKey || null, session.user.id);
 
     return NextResponse.json({ success: true });
   } catch (error) {
@@ -29,17 +37,27 @@ export async function POST(request: Request) {
 }
 
 export async function GET() {
-  const { userId } = await auth();
+  // Get session from Better Auth
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
   
-  if (!userId) {
+  if (!session) {
     return new NextResponse('Unauthorized', { status: 401 });
   }
 
   try {
-    const user = await currentUser();
+    // Get user's openaiApiKey from the database
+    const stmt = db.prepare(`
+      SELECT openaiApiKey 
+      FROM user 
+      WHERE id = ?
+    `);
+    
+    const user = stmt.get(session.user.id) as { openaiApiKey: string | null } | undefined;
     
     return NextResponse.json({
-      openaiApiKey: user?.publicMetadata?.openaiApiKey || null,
+      openaiApiKey: user?.openaiApiKey || null,
     });
   } catch (error) {
     console.error('Error fetching user settings:', error);

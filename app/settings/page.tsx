@@ -1,6 +1,6 @@
 'use client';
 
-import { useUser } from '@clerk/nextjs';
+import { useSession } from '@/lib/auth-client';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -9,7 +9,7 @@ import { ArrowLeft, Key, Save, Eye, EyeOff, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 
 export default function SettingsPage() {
-  const { user, isLoaded } = useUser();
+  const { data: session, isPending } = useSession();
   const router = useRouter();
   const [apiKey, setApiKey] = useState('');
   const [showApiKey, setShowApiKey] = useState(false);
@@ -17,20 +17,32 @@ export default function SettingsPage() {
   const [message, setMessage] = useState('');
 
   useEffect(() => {
-    if (isLoaded && !user) {
-      router.push('/sign-in');
+    if (!isPending && !session) {
+      router.push('/sign-in?redirect=/settings');
     }
-  }, [isLoaded, user, router]);
+  }, [isPending, session, router]);
 
   useEffect(() => {
-    // Load API key from user's public metadata
-    if (user?.publicMetadata?.openaiApiKey) {
-      setApiKey(user.publicMetadata.openaiApiKey as string);
-    }
-  }, [user]);
+    // Load API key from user data
+    const loadUserSettings = async () => {
+      if (!session) return;
+      
+      try {
+        const response = await fetch('/api/user/settings');
+        if (response.ok) {
+          const data = await response.json();
+          setApiKey(data.openaiApiKey || '');
+        }
+      } catch (error) {
+        console.error('Failed to load settings:', error);
+      }
+    };
+    
+    loadUserSettings();
+  }, [session]);
 
   const saveApiKey = async () => {
-    if (!user) return;
+    if (!session) return;
     
     setIsSaving(true);
     setMessage('');
@@ -69,7 +81,7 @@ export default function SettingsPage() {
     await saveApiKey();
   };
 
-  if (!isLoaded || !user) {
+  if (isPending || !session) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
@@ -99,11 +111,11 @@ export default function SettingsPage() {
             <div className="space-y-2">
               <div className="flex justify-between">
                 <span className="text-sm text-gray-600">Email</span>
-                <span className="text-sm font-medium">{user.primaryEmailAddress?.emailAddress}</span>
+                <span className="text-sm font-medium">{session.user.email}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-sm text-gray-600">User ID</span>
-                <span className="text-sm font-mono text-gray-500">{user.id}</span>
+                <span className="text-sm font-mono text-gray-500">{session.user.id}</span>
               </div>
             </div>
           </CardContent>

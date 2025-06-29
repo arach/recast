@@ -1,33 +1,38 @@
-import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
 
-// Define public routes that don't require authentication
-const isPublicRoute = createRouteMatcher([
-  '/',
-  '/sign-in(.*)',
-  '/sign-up(.*)',
-  '/api/public(.*)',
-  // For now, keep the main app public
-  // Users can try it without signing up
-]);
+// Define protected routes
+const protectedRoutes = ['/settings'];
+const protectedApiRoutes = ['/api/user'];
 
-// Define API routes that should be protected
-const isProtectedApiRoute = createRouteMatcher([
-  '/api/ai-brand-consultant',
-  '/api/ai-suggestions',
-  '/api/user(.*)',
-]);
-
-export default clerkMiddleware(async (auth, req) => {
-  // Only protect specific API routes that need user context
-  if (isProtectedApiRoute(req)) {
-    await auth.protect();
+export function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+  
+  // Check if the route is protected
+  const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route));
+  const isProtectedApiRoute = protectedApiRoutes.some(route => pathname.startsWith(route));
+  
+  if (isProtectedRoute || isProtectedApiRoute) {
+    // Check for session cookie (Better Auth uses httpOnly cookies)
+    const sessionCookie = request.cookies.get('better-auth.session');
+    
+    if (!sessionCookie) {
+      // Redirect to sign-in page for protected routes
+      if (isProtectedRoute) {
+        const signInUrl = new URL('/sign-in', request.url);
+        signInUrl.searchParams.set('redirect', pathname);
+        return NextResponse.redirect(signInUrl);
+      }
+      
+      // Return 401 for protected API routes
+      if (isProtectedApiRoute) {
+        return new NextResponse('Unauthorized', { status: 401 });
+      }
+    }
   }
   
-  // Protect user settings pages
-  if (req.nextUrl.pathname.startsWith('/settings')) {
-    await auth.protect();
-  }
-});
+  return NextResponse.next();
+}
 
 export const config = {
   matcher: [

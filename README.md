@@ -52,16 +52,25 @@ Open [http://localhost:3000](http://localhost:3000) to see ReCast in action.
 
 ### Authentication Setup
 
-ReCast uses [Clerk](https://clerk.com) for authentication, providing:
-- Secure user accounts
+ReCast uses [Better Auth](https://better-auth.com) for authentication, providing:
+- Secure user accounts with your own database
 - API key management across sessions
 - User settings persistence
-- Multiple auth methods (email, Google, GitHub, etc.)
+- Multiple auth methods (email, Google, GitHub)
+- No vendor lock-in - you own your data
 
-1. Create a free Clerk account at [clerk.com](https://clerk.com)
-2. Create a new application
-3. Copy your API keys to `.env.local`
-4. Users can now sign in to save their settings!
+1. Generate a secret key:
+   ```bash
+   openssl rand -base64 32
+   ```
+2. Add to `.env.local`:
+   ```
+   BETTER_AUTH_SECRET=your-generated-secret
+   ```
+3. (Optional) Add OAuth providers:
+   - GitHub: Create app at [github.com/settings/developers](https://github.com/settings/developers)
+   - Google: Create app at [console.cloud.google.com](https://console.cloud.google.com)
+4. The database (SQLite) is created automatically on first run
 
 ### AI Features
 

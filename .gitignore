@@ -34,5 +34,11 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# authentication database
+*.db
+*.db-journal
+*.db-wal
+
 # clerk configuration (can include secrets)
 /.clerk/
