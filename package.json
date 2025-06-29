@@ -6,9 +6,10 @@
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
   "scripts": {
-    "dev": "next dev --turbo",
-    "dev:webpack": "next dev",
-    "dev:clean": "pnpm clean && next dev --turbo",
+    "dev": "next dev --turbo --port 3002",
+    "dev:alt": "next dev --turbo --port 3012", 
+    "dev:webpack": "next dev --port 3002",
+    "dev:clean": "pnpm clean && next dev --turbo --port 3002",
     "build": "tsup && next build",
     "build:lib": "tsup",
     "start": "next start",

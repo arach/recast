@@ -1,7 +1,7 @@
 // Preset type definitions for ReCast visualization presets
 
 export interface ParameterDefinition {
-  type: 'slider' | 'select' | 'color' | 'toggle';
+  type: 'slider' | 'select' | 'color' | 'toggle' | 'text';
   min?: number;
   max?: number;
   step?: number;
