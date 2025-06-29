@@ -156,9 +156,35 @@ size: { type: 'slider', min: 1, max: 50, default: 10, label: 'Size' }
                   <div className="text-xs font-medium text-gray-600 border-b pb-1">
                     Code Parameters
                   </div>
-                  {Object.entries(parsedParams).map(([paramName, param]) => (
+                  {Object.entries(parsedParams)
+                    .filter(([paramName, param]) => {
+                      // Handle conditional visibility
+                      if (param.showIf && typeof param.showIf === 'function') {
+                        return param.showIf(customParameters);
+                      }
+                      return true;
+                    })
+                    .map(([paramName, param]) => (
                     <div key={paramName}>
-                      {param.type === 'select' ? (
+                      {param.type === 'color' ? (
+                        // Color picker
+                        <div>
+                          <label className="text-xs font-medium">
+                            {param.label || paramName}
+                          </label>
+                          <div className="flex items-center gap-2 mt-1">
+                            <input
+                              type="color"
+                              value={customParameters[paramName] ?? param.default ?? '#000000'}
+                              onChange={(e) => onCustomParametersChange({ ...customParameters, [paramName]: e.target.value })}
+                              className="w-12 h-8 border border-gray-300 rounded cursor-pointer"
+                            />
+                            <span className="text-xs text-gray-600">
+                              {customParameters[paramName] ?? param.default ?? '#000000'}
+                            </span>
+                          </div>
+                        </div>
+                      ) : param.type === 'select' ? (
                         // Select dropdown
                         <div>
                           <label className="text-xs font-medium">
@@ -169,18 +195,39 @@ size: { type: 'slider', min: 1, max: 50, default: 10, label: 'Size' }
                             onChange={(e) => onCustomParametersChange({ ...customParameters, [paramName]: e.target.value })}
                             className="w-full mt-1 p-2 border rounded-lg text-sm bg-white"
                           >
-                            {param.options?.map((option: string) => (
-                              <option key={option} value={option}>
-                                {option}
-                              </option>
-                            ))}
+                            {param.options?.map((option: any) => {
+                              // Handle both string arrays and object arrays
+                              const value = typeof option === 'string' ? option : option.value;
+                              const label = typeof option === 'string' ? option : option.label;
+                              return (
+                                <option key={value} value={value}>
+                                  {label}
+                                </option>
+                              );
+                            })}
                           </select>
+                        </div>
+                      ) : param.type === 'toggle' ? (
+                        // Toggle/checkbox
+                        <div>
+                          <label className="flex items-center gap-2 text-xs font-medium cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={customParameters[paramName] ?? param.default ?? false}
+                              onChange={(e) => onCustomParametersChange({ ...customParameters, [paramName]: e.target.checked })}
+                              className="rounded"
+                            />
+                            {param.label || paramName}
+                          </label>
                         </div>
                       ) : (
                         // Slider (default)
                         <div>
                           <label className="text-xs font-medium">
-                            {param.label || paramName}: {(customParameters[paramName] ?? param.default ?? 0).toFixed(param.step < 1 ? 2 : 0)}
+                            {param.label || paramName}: {(() => {
+                              const value = customParameters[paramName] ?? param.default ?? 0;
+                              return typeof value === 'number' ? value.toFixed(param.step < 1 ? 2 : 0) : value;
+                            })()}
                           </label>
                           <Slider
                             value={[customParameters[paramName] ?? param.default ?? 0]}
@@ -190,10 +237,10 @@ size: { type: 'slider', min: 1, max: 50, default: 10, label: 'Size' }
                             step={param.step ?? 1}
                             className="mt-1"
                           />
-                          {param.label && (
-                            <p className="text-xs text-gray-500 mt-1">{param.label}</p>
-                          )}
                         </div>
+                      )}
+                      {param.category && (
+                        <div className="text-xs text-gray-400 mt-1">{param.category}</div>
                       )}
                     </div>
                   ))}
