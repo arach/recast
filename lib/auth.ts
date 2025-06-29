@@ -1,9 +1,14 @@
 import { betterAuth } from "better-auth";
-import { Database } from "better-sqlite3";
+import Database from "better-sqlite3";
 
+// Create database instance
+const db = new Database("./recast-auth.db");
+
+// Server-only auth configuration
 export const auth = betterAuth({
-  database: new Database("./recast-auth.db"),
+  database: db,
   secret: process.env.BETTER_AUTH_SECRET,
+  baseURL: process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3002",
   emailAndPassword: {
     enabled: true,
   },

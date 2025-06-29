@@ -26,7 +26,7 @@ ReCast is a revolutionary approach to brand identity that treats logos as living
 ### Prerequisites
 
 - Node.js 18 or higher
-- pnpm (preferred) or npm
+- pnpm (required) - [install instructions](https://pnpm.io/installation)
 
 ### Installation
 
@@ -35,42 +35,91 @@ ReCast is a revolutionary approach to brand identity that treats logos as living
 git clone https://github.com/yourusername/recast.git
 cd recast
 
-# Install dependencies
+# Install dependencies (pnpm required)
 pnpm install
+
+# Approve native module builds when prompted
+# This is needed for better-sqlite3
 
 # Copy environment variables
 cp .env.local.example .env.local
-
-# Add your Clerk authentication keys to .env.local
-# Get them from: https://dashboard.clerk.com
 
 # Start the development server
 pnpm dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) to see ReCast in action.
+Open [http://localhost:3002](http://localhost:3002) to see ReCast in action.
 
-### Authentication Setup
+> **💡 Pro Tip**: Set up a local domain for better development experience. See [LOCAL_DOMAIN_SETUP.md](LOCAL_DOMAIN_SETUP.md) to use `http://local.recast.dev:3002` instead.
+
+### 🏃 Quick Start (No Auth Required)
+
+You can start using ReCast immediately without any authentication setup:
+
+1. Visit http://localhost:3002
+2. Click "Continue as Guest" or start designing right away
+3. All features work locally in your browser
+4. To save settings across sessions, create a free account
+
+### 🔐 Authentication Setup (Optional but Recommended)
 
 ReCast uses [Better Auth](https://better-auth.com) for authentication, providing:
-- Secure user accounts with your own database
-- API key management across sessions
-- User settings persistence
-- Multiple auth methods (email, Google, GitHub)
-- No vendor lock-in - you own your data
+- 🏠 **Self-hosted authentication** - No external services required
+- 💾 **Local SQLite database** - Your data stays on your machine
+- 🔑 **Secure API key storage** - Save OpenAI keys per user account
+- 🔐 **Multiple auth methods** - Email/password, Google, GitHub
+- 💰 **Free forever** - No usage limits or paid tiers
+- 🚀 **Modern architecture** - Edge-ready, TypeScript-first
 
-1. Generate a secret key:
+#### Required Setup
+
+1. **Generate a secret key** (required for session encryption):
    ```bash
    openssl rand -base64 32
    ```
-2. Add to `.env.local`:
+
+2. **Add to `.env.local`**:
+   ```env
+   BETTER_AUTH_SECRET=your-generated-secret-here
    ```
-   BETTER_AUTH_SECRET=your-generated-secret
+
+3. **Run database migration** (first time only):
+   ```bash
+   npx @better-auth/cli migrate
    ```
-3. (Optional) Add OAuth providers:
-   - GitHub: Create app at [github.com/settings/developers](https://github.com/settings/developers)
-   - Google: Create app at [console.cloud.google.com](https://console.cloud.google.com)
-4. The database (SQLite) is created automatically on first run
+   This creates `recast-auth.db` with user tables.
+
+#### Optional OAuth Setup
+
+Enable social sign-in by adding OAuth providers:
+
+**Google OAuth:**
+1. Visit [Google Cloud Console](https://console.cloud.google.com/)
+2. Create OAuth 2.0 credentials (Web application)
+3. Add redirect URI: `http://localhost:3002/api/auth/callback/google`
+4. Add to `.env.local`:
+   ```env
+   GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com
+   GOOGLE_CLIENT_SECRET=your-client-secret
+   ```
+
+**GitHub OAuth:**
+1. Visit [GitHub Developer Settings](https://github.com/settings/developers)
+2. Create a new OAuth App
+3. Set callback URL: `http://localhost:3002/api/auth/callback/github`
+4. Add to `.env.local`:
+   ```env
+   GITHUB_CLIENT_ID=your-client-id
+   GITHUB_CLIENT_SECRET=your-client-secret
+   ```
+
+#### Database Details
+
+- **Type**: SQLite 3 (via better-sqlite3)
+- **Location**: `./recast-auth.db` (auto-created)
+- **Tables**: user, session, account, verification
+- **Backup**: Simply copy the `.db` file
+- **Reset**: Delete `.db` file and run migration again
 
 ### AI Features
 
@@ -199,13 +248,16 @@ Quick-start with pre-configured designs:
 
 ```bash
 # Development
-pnpm dev              # Start dev server
+pnpm dev              # Start dev server (port 3002)
 pnpm build            # Build for production
 pnpm start            # Start production server
 
 # Code Quality
 pnpm lint             # Run ESLint
 pnpm typecheck        # Run TypeScript compiler
+
+# Database
+npx @better-auth/cli migrate  # Create/update auth tables
 
 # Testing
 pnpm test             # Run tests (coming soon)
