@@ -150,7 +150,7 @@ export function ControlsPanel({
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-medium text-gray-700">Background</span>
                       <select
-                        value={customParameters['backgroundType'] ?? 'transparent'}
+                        value={customParameters['backgroundType'] || 'transparent'}
                         onChange={(e) => onCustomParametersChange({ ...customParameters, backgroundType: e.target.value })}
                         className="text-xs p-1 border rounded bg-white min-w-0"
                       >
@@ -163,7 +163,7 @@ export function ControlsPanel({
                       <div className="flex items-center gap-2">
                         <input
                           type="color"
-                          value={customParameters['backgroundColor'] ?? '#ffffff'}
+                          value={customParameters['backgroundColor'] || '#ffffff'}
                           onChange={(e) => onCustomParametersChange({ ...customParameters, backgroundColor: e.target.value })}
                           className="w-8 h-6 border border-gray-300 rounded cursor-pointer"
                         />
@@ -171,7 +171,7 @@ export function ControlsPanel({
                           <>
                             <input
                               type="color"
-                              value={customParameters['backgroundGradientEnd'] ?? '#f0f0f0'}
+                              value={customParameters['backgroundGradientEnd'] || '#f0f0f0'}
                               onChange={(e) => onCustomParametersChange({ ...customParameters, backgroundGradientEnd: e.target.value })}
                               className="w-8 h-6 border border-gray-300 rounded cursor-pointer"
                             />
@@ -188,7 +188,7 @@ export function ControlsPanel({
                       <span className="text-xs font-medium text-gray-700">Fill</span>
                       <div className="flex items-center gap-2">
                         <select
-                          value={customParameters['fillType'] ?? 'solid'}
+                          value={customParameters['fillType'] || 'solid'}
                           onChange={(e) => onCustomParametersChange({ ...customParameters, fillType: e.target.value })}
                           className="text-xs p-1 border rounded bg-white min-w-0"
                         >
@@ -207,14 +207,14 @@ export function ControlsPanel({
                       <div className="flex items-center gap-2">
                         <input
                           type="color"
-                          value={customParameters['fillColor'] ?? '#3b82f6'}
+                          value={customParameters['fillColor'] || '#3b82f6'}
                           onChange={(e) => onCustomParametersChange({ ...customParameters, fillColor: e.target.value })}
                           className="w-8 h-6 border border-gray-300 rounded cursor-pointer"
                         />
                         {customParameters['fillType'] === 'gradient' && (
                           <input
                             type="color"
-                            value={customParameters['fillGradientEnd'] ?? '#1d4ed8'}
+                            value={customParameters['fillGradientEnd'] || '#1d4ed8'}
                             onChange={(e) => onCustomParametersChange({ ...customParameters, fillGradientEnd: e.target.value })}
                             className="w-8 h-6 border border-gray-300 rounded cursor-pointer"
                           />
@@ -224,7 +224,7 @@ export function ControlsPanel({
                           min="0"
                           max="1"
                           step="0.05"
-                          value={customParameters['fillOpacity'] ?? 1}
+                          value={customParameters['fillOpacity'] !== undefined ? customParameters['fillOpacity'] : 1}
                           onChange={(e) => onCustomParametersChange({ ...customParameters, fillOpacity: parseFloat(e.target.value) })}
                           className="flex-1 h-2"
                         />
@@ -238,7 +238,7 @@ export function ControlsPanel({
                       <span className="text-xs font-medium text-gray-700">Stroke</span>
                       <div className="flex items-center gap-2">
                         <select
-                          value={customParameters['strokeType'] ?? 'solid'}
+                          value={customParameters['strokeType'] || 'solid'}
                           onChange={(e) => onCustomParametersChange({ ...customParameters, strokeType: e.target.value })}
                           className="text-xs p-1 border rounded bg-white min-w-0"
                         >
@@ -258,7 +258,7 @@ export function ControlsPanel({
                       <div className="flex items-center gap-2">
                         <input
                           type="color"
-                          value={customParameters['strokeColor'] ?? '#1e40af'}
+                          value={customParameters['strokeColor'] || '#1e40af'}
                           onChange={(e) => onCustomParametersChange({ ...customParameters, strokeColor: e.target.value })}
                           className="w-8 h-6 border border-gray-300 rounded cursor-pointer"
                         />
@@ -267,7 +267,7 @@ export function ControlsPanel({
                           min="0.5"
                           max="10"
                           step="0.5"
-                          value={customParameters['strokeWidth'] ?? 2}
+                          value={customParameters['strokeWidth'] !== undefined ? customParameters['strokeWidth'] : 2}
                           onChange={(e) => onCustomParametersChange({ ...customParameters, strokeWidth: parseFloat(e.target.value) })}
                           className="flex-1 h-2"
                         />
@@ -370,7 +370,7 @@ export function ControlsPanel({
                               />
                             ) : param.type === 'select' ? (
                               <select
-                                value={customParameters[paramName] ?? param.default}
+                                value={customParameters[paramName] !== undefined ? customParameters[paramName] : (param.default || '')}
                                 onChange={(e) => onCustomParametersChange({ ...customParameters, [paramName]: e.target.value })}
                                 className="text-xs p-1 border rounded bg-white min-w-0 max-w-20"
                               >
@@ -387,7 +387,7 @@ export function ControlsPanel({
                             ) : param.type === 'toggle' ? (
                               <input
                                 type="checkbox"
-                                checked={customParameters[paramName] ?? param.default ?? false}
+                                checked={customParameters[paramName] !== undefined ? customParameters[paramName] : (param.default || false)}
                                 onChange={(e) => onCustomParametersChange({ ...customParameters, [paramName]: e.target.checked })}
                                 className="w-4 h-4 rounded"
                               />
@@ -398,7 +398,7 @@ export function ControlsPanel({
                                   min={param.min ?? 0}
                                   max={param.max ?? 100}
                                   step={param.step ?? 1}
-                                  value={customParameters[paramName] ?? param.default ?? 0}
+                                  value={customParameters[paramName] !== undefined ? customParameters[paramName] : (param.default !== undefined ? param.default : 0)}
                                   onChange={(e) => onCustomParametersChange({ ...customParameters, [paramName]: parseFloat(e.target.value) })}
                                   className="w-20 h-2"
                                 />
