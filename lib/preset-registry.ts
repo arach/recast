@@ -64,8 +64,14 @@ export function executePreset(
   
   const generator = new WaveGenerator(waveParams, params.seed)
   
+  // Merge customParameters into params for universal controls
+  const mergedParams = {
+    ...params,
+    ...params.customParameters // This ensures fillColor, strokeColor, etc. are at the root level
+  }
+  
   // Execute the preset function directly
-  drawFunction(ctx, width, height, params, generator, time)
+  drawFunction(ctx, width, height, mergedParams, generator, time)
   
   return true
 }

@@ -515,6 +515,8 @@ export default function Home() {
       ...prev,
       ...themedParams
     }))
+    // Force re-render to apply the theme changes
+    setForceRender(prev => prev + 1)
   }
 
   // Apply brand preset from AI or examples
