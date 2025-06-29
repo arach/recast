@@ -7,6 +7,16 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  // Allow external images
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'www.google.com',
+        pathname: '/favicon.ico',
+      },
+    ],
+  },
   // Improve HMR reliability
   experimental: {
     optimizePackageImports: ['lucide-react', '@radix-ui/react-slider'],
