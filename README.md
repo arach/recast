@@ -44,9 +44,12 @@ pnpm dev
 
 Open [http://localhost:3000](http://localhost:3000) to see ReCast in action.
 
-### AI Features Setup (Optional)
+### AI Features
 
-To enable AI-powered suggestions:
+ReCast includes several AI-powered features to help create the perfect brand identity:
+
+#### Option 1: Server-Side AI (Using Project API Key)
+For quick setup during development:
 
 1. Copy the environment example file:
 ```bash
@@ -60,7 +63,19 @@ OPENAI_API_KEY=sk-your-api-key-here
 
 3. Restart the development server
 
-AI features include intelligent parameter suggestions based on your industry and design choices.
+#### Option 2: Client-Side AI (Users Bring Their Own Keys)
+The AI Brand Consultant allows users to use their own OpenAI API keys:
+
+- Users enter their API key once (stored in localStorage)
+- Keys are never sent to your servers
+- Users pay for their own API usage
+- Perfect for production deployments
+
+#### AI Features Include:
+
+1. **AI Brand Consultant** - Describe your brand in natural language and get personalized design recommendations
+2. **AI Suggestions** - Context-aware parameter refinements based on industry and current design
+3. **Brand Personality Mapping** - Translate personality traits into mathematical parameters
 
 ## 🏗️ Architecture
 

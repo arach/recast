@@ -21,6 +21,7 @@ import { IndustrySelector } from '@/components/studio/IndustrySelector'
 import { ColorThemeSelector } from '@/components/studio/ColorThemeSelector'
 import { AISuggestions } from '@/components/studio/AISuggestions'
 import { BrandPersonality } from '@/components/studio/BrandPersonality'
+import { AIBrandConsultant } from '@/components/studio/AIBrandConsultant'
 import { VisualizationParams } from '@/lib/visualization-generators'
 import { loadPresetAsLegacy, getAllPresetsAsLegacy } from '@/lib/preset-converter'
 import type { LoadedPreset } from '@/lib/preset-loader'
@@ -730,6 +731,10 @@ export default function Home() {
           
           <div className="w-80 border-l bg-white/50 backdrop-blur-sm overflow-y-auto">
             <div className="p-4 space-y-4">
+              <AIBrandConsultant
+                currentParams={customParameters}
+                onApplyRecommendation={handleApplyColorTheme}
+              />
               <ColorThemeSelector
                 currentIndustry={currentIndustry}
                 currentParams={customParameters}
