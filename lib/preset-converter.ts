@@ -101,7 +101,26 @@ export async function getAllPresetsAsLegacy() {
     'infinity-loops',
     'network-constellation',
     'brand-network',
-    'luxury-brand'
+    'luxury-brand',
+    'premium-kinetic',
+    'sophisticated-strokes',
+    'border-effects',
+    'nexus-ai-brand',
+    'terra-eco-brand',
+    'volt-electric-brand',
+    'clean-triangle',
+    'golden-circle',
+    'smart-hexagon',
+    'dynamic-diamond',
+    'neon-glow',
+    'minimal-line', 
+    'hand-sketch',
+    'liquid-flow',
+    'crystal-lattice',
+    'organic-bark',
+    'architectural-grid',
+    'quantum-field',
+    'simple-prism'
   ];
   
   const presets = await Promise.all(

@@ -16,6 +16,7 @@ import { StudioHeader } from '@/components/studio/StudioHeader'
 import { CodeEditorPanel } from '@/components/studio/CodeEditorPanel'
 import { CanvasArea } from '@/components/studio/CanvasArea'
 import { ControlsPanel } from '@/components/studio/ControlsPanel'
+import { BrandPresetsPanel } from '@/components/studio/BrandPresetsPanel'
 import { VisualizationParams } from '@/lib/visualization-generators'
 import { loadPresetAsLegacy, getAllPresetsAsLegacy } from '@/lib/preset-converter'
 import type { LoadedPreset } from '@/lib/preset-loader'
@@ -468,6 +469,47 @@ export default function Home() {
     }
   }
 
+  // Apply brand preset from AI or examples
+  const handleApplyBrandPreset = async (brandPreset: any) => {
+    try {
+      console.log('Applying brand preset:', brandPreset.name)
+      
+      // First load the base preset if it's different from current
+      if (brandPreset.preset !== selectedLogo.presetId) {
+        await loadPresetById(brandPreset.preset)
+      }
+      
+      // Then apply the custom parameters
+      setLogos(prev => prev.map(logo => 
+        logo.id === selectedLogoId 
+          ? { 
+              ...logo, 
+              params: { 
+                ...logo.params,
+                customParameters: {
+                  ...logo.params.customParameters,
+                  ...brandPreset.params
+                }
+              }
+            }
+          : logo
+      ))
+      
+      // Update custom parameters state for the controls panel
+      setCustomParameters(prev => ({
+        ...prev,
+        ...brandPreset.params
+      }))
+      
+      // Force re-render
+      setForceRender(prev => prev + 1)
+      console.log('Brand preset applied successfully:', brandPreset.name)
+      
+    } catch (error) {
+      console.error('Failed to apply brand preset:', error)
+    }
+  }
+
   const exportAsPNG = async (size?: number, filename?: string) => {
     // Implementation would go here - simplified for brevity
     alert(`Exporting PNG ${size ? `at ${size}x${size}` : ''}...`)
@@ -602,36 +644,48 @@ export default function Home() {
           forceRender={forceRender}
         />
 
-        <ControlsPanel
-          currentPresetName={currentPresetName}
-          seed={seed}
-          frequency={frequency}
-          amplitude={amplitude}
-          complexity={complexity}
-          chaos={chaos}
-          damping={damping}
-          layers={layers}
-          barCount={barCount}
-          barSpacing={barSpacing}
-          radius={radius}
-          customCode={customCode}
-          customParameters={customParameters}
-          onSeedChange={setSeed}
-          onFrequencyChange={setFrequency}
-          onAmplitudeChange={setAmplitude}
-          onComplexityChange={setComplexity}
-          onChaosChange={setChaos}
-          onDampingChange={setDamping}
-          onLayersChange={setLayers}
-          onBarCountChange={setBarCount}
-          onBarSpacingChange={setBarSpacing}
-          onRadiusChange={setRadius}
-          onCustomParametersChange={setCustomParameters}
-          getCurrentGeneratorMetadata={getCurrentGeneratorMetadata}
-          parseCustomParameters={parseCustomParameters}
-          forceRender={forceRender}
-          onForceRender={() => setForceRender(prev => prev + 1)}
-        />
+        <div className="flex">
+          <ControlsPanel
+            currentPresetName={currentPresetName}
+            seed={seed}
+            frequency={frequency}
+            amplitude={amplitude}
+            complexity={complexity}
+            chaos={chaos}
+            damping={damping}
+            layers={layers}
+            barCount={barCount}
+            barSpacing={barSpacing}
+            radius={radius}
+            customCode={customCode}
+            customParameters={customParameters}
+            onSeedChange={setSeed}
+            onFrequencyChange={setFrequency}
+            onAmplitudeChange={setAmplitude}
+            onComplexityChange={setComplexity}
+            onChaosChange={setChaos}
+            onDampingChange={setDamping}
+            onLayersChange={setLayers}
+            onBarCountChange={setBarCount}
+            onBarSpacingChange={setBarSpacing}
+            onRadiusChange={setRadius}
+            onCustomParametersChange={setCustomParameters}
+            getCurrentGeneratorMetadata={getCurrentGeneratorMetadata}
+            parseCustomParameters={parseCustomParameters}
+            forceRender={forceRender}
+            onForceRender={() => setForceRender(prev => prev + 1)}
+          />
+          
+          <div className="w-80 border-l bg-white/50 backdrop-blur-sm overflow-y-auto">
+            <div className="p-4">
+              <BrandPresetsPanel
+                onApplyPreset={handleApplyBrandPreset}
+                currentParams={customParameters}
+                currentPreset={selectedLogo.presetId || 'custom'}
+              />
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Dialogs */}

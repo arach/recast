@@ -1,0 +1,219 @@
+[
+  {
+    "name": "Fintech Triangle - Trustworthy Edge",
+    "description": "Sharp, professional, trustworthy with subtle sophistication - perfect for financial technology platforms",
+    "preset": "clean-triangle",
+    "params": {
+      "triangleType": 1,
+      "heightRatio": 1.15,
+      "baseWidth": 0.9,
+      "cornerRadius": 6,
+      "strokeWeight": 3,
+      "fillStyle": 2,
+      "brandHue": 210,
+      "brandSaturation": 0.85,
+      "brandLightness": 0.45,
+      "depth": 0.12,
+      "highlight": 0.18
+    },
+    "tags": ["fintech", "professional", "trustworthy", "sharp"]
+  },
+  {
+    "name": "Wellness Circle - Organic Calm",
+    "description": "Warm, breathing, natural with golden ratio harmony - ideal for wellness and mindfulness brands",
+    "preset": "golden-circle",
+    "params": {
+      "circleStyle": 1,
+      "goldenProportion": 1.618,
+      "organicVariation": 0.12,
+      "fillType": 3,
+      "brandHue": 95,
+      "warmth": 0.85,
+      "sophistication": 0.7,
+      "breathingMotion": 0.08,
+      "innerGlow": 0.25
+    },
+    "tags": ["wellness", "organic", "calm", "natural"]
+  },
+  {
+    "name": "Gaming Hexagon - Neon Power",
+    "description": "Bold, energetic, modern with animated elements - perfect for gaming and esports brands",
+    "preset": "smart-hexagon",
+    "params": {
+      "hexagonStyle": 2,
+      "cornerRadius": 15,
+      "aspectRatio": 1.1,
+      "strokeStyle": 4,
+      "strokeWeight": 4,
+      "fillStyle": 3,
+      "brandHue": 280,
+      "modernity": 0.95,
+      "surfaceSheen": 0.35
+    },
+    "tags": ["gaming", "energetic", "modern", "animated"]
+  },
+  {
+    "name": "Luxury Diamond - Premium Elegance",
+    "description": "Sophisticated, exclusive with brilliant effects - ideal for high-end luxury brands",
+    "preset": "dynamic-diamond",
+    "params": {
+      "diamondStyle": 2,
+      "carat": 1.3,
+      "cutPrecision": 0.98,
+      "facetStyle": 3,
+      "materialType": 1,
+      "brandHue": 45,
+      "luxury": 0.95,
+      "exclusivity": 0.9,
+      "brilliance": 0.85,
+      "scintillation": 0.4
+    },
+    "tags": ["luxury", "premium", "exclusive", "sophisticated"]
+  },
+  {
+    "name": "Startup Triangle - Bold Momentum",
+    "description": "Forward-leaning, dynamic energy with modern edge - perfect for disruptive startups",
+    "preset": "clean-triangle",
+    "params": {
+      "triangleType": 4,
+      "heightRatio": 1.3,
+      "baseWidth": 1.1,
+      "cornerRadius": 2,
+      "strokeWeight": 4,
+      "fillStyle": 2,
+      "brandHue": 25,
+      "brandSaturation": 0.9,
+      "brandLightness": 0.55,
+      "depth": 0.2,
+      "highlight": 0.3
+    },
+    "tags": ["startup", "bold", "momentum", "disruptive"]
+  },
+  {
+    "name": "Healthcare Circle - Caring Touch",
+    "description": "Gentle, nurturing, trustworthy with soft organic flow - ideal for healthcare brands",
+    "preset": "golden-circle",
+    "params": {
+      "circleStyle": 4,
+      "goldenProportion": 1.618,
+      "organicVariation": 0.15,
+      "fillType": 2,
+      "brandHue": 190,
+      "warmth": 0.6,
+      "sophistication": 0.8,
+      "breathingMotion": 0.12,
+      "innerGlow": 0.3
+    },
+    "tags": ["healthcare", "caring", "trustworthy", "gentle"]
+  },
+  {
+    "name": "Corporate Hexagon - Executive Precision",
+    "description": "Professional, structured, authoritative with corporate sophistication",
+    "preset": "smart-hexagon",
+    "params": {
+      "hexagonStyle": 0,
+      "cornerRadius": 4,
+      "aspectRatio": 1.0,
+      "strokeStyle": 2,
+      "strokeWeight": 2,
+      "fillStyle": 2,
+      "brandHue": 240,
+      "corporate": 0.9,
+      "modernity": 0.7,
+      "surfaceSheen": 0.15
+    },
+    "tags": ["corporate", "executive", "professional", "structured"]
+  },
+  {
+    "name": "Creative Diamond - Artistic Flair",
+    "description": "Unique, artistic, brilliant with creative energy - perfect for design agencies",
+    "preset": "dynamic-diamond",
+    "params": {
+      "diamondStyle": 1,
+      "carat": 1.1,
+      "cutPrecision": 0.85,
+      "facetStyle": 2,
+      "materialType": 4,
+      "brandHue": 320,
+      "luxury": 0.7,
+      "exclusivity": 0.75,
+      "brilliance": 0.9,
+      "fireDispersion": 0.35,
+      "scintillation": 0.5
+    },
+    "tags": ["creative", "artistic", "unique", "brilliant"]
+  },
+  {
+    "name": "Tech Triangle - Silicon Sharp",
+    "description": "Cutting-edge, precise, innovative with tech sophistication",
+    "preset": "clean-triangle",
+    "params": {
+      "triangleType": 3,
+      "heightRatio": 1.0,
+      "baseWidth": 0.95,
+      "cornerRadius": 0,
+      "strokeWeight": 2,
+      "fillStyle": 3,
+      "brandHue": 180,
+      "brandSaturation": 0.8,
+      "brandLightness": 0.5,
+      "depth": 0.08,
+      "highlight": 0.25
+    },
+    "tags": ["tech", "cutting-edge", "precise", "innovative"]
+  },
+  {
+    "name": "Eco Circle - Earth Harmony",
+    "description": "Sustainable, natural, balanced with environmental consciousness",
+    "preset": "golden-circle",
+    "params": {
+      "circleStyle": 2,
+      "goldenProportion": 1.618,
+      "organicVariation": 0.2,
+      "fillType": 3,
+      "brandHue": 120,
+      "warmth": 0.9,
+      "sophistication": 0.6,
+      "breathingMotion": 0.1,
+      "innerGlow": 0.2
+    },
+    "tags": ["eco", "sustainable", "natural", "balanced"]
+  },
+  {
+    "name": "Fashion Diamond - Haute Couture",
+    "description": "Elegant, refined, exclusive with fashion-forward sophistication",
+    "preset": "dynamic-diamond",
+    "params": {
+      "diamondStyle": 3,
+      "carat": 1.5,
+      "cutPrecision": 0.95,
+      "facetStyle": 3,
+      "materialType": 2,
+      "brandHue": 15,
+      "luxury": 0.9,
+      "exclusivity": 0.95,
+      "brilliance": 0.8,
+      "fireDispersion": 0.25,
+      "scintillation": 0.35
+    },
+    "tags": ["fashion", "elegant", "refined", "exclusive"]
+  },
+  {
+    "name": "Education Hexagon - Knowledge Structure",
+    "description": "Structured, reliable, growth-oriented with educational authority",
+    "preset": "smart-hexagon",
+    "params": {
+      "hexagonStyle": 1,
+      "cornerRadius": 12,
+      "aspectRatio": 0.9,
+      "strokeStyle": 1,
+      "strokeWeight": 3,
+      "fillStyle": 2,
+      "brandHue": 200,
+      "corporate": 0.8,
+      "modernity": 0.8,
+      "surfaceSheen": 0.2
+    },
+    "tags": ["education", "structured", "reliable", "growth"]
+  }
+]

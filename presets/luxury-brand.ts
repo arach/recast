@@ -241,9 +241,16 @@ export function draw(
       centerX, centerY, gradientRadius
     );
     
-    fillGradient.addColorStop(0, `${palette.accent}${Math.round(gradient * 255).toString(16).padStart(2, '0')}`);
-    fillGradient.addColorStop(0.6, `${palette.secondary}${Math.round(gradient * 0.7 * 255).toString(16).padStart(2, '0')}`);
-    fillGradient.addColorStop(1, `${palette.primary}${Math.round(gradient * 0.3 * 255).toString(16).padStart(2, '0')}`);
+    function hexToRgba(hex: string, alpha: number) {
+      const r = parseInt(hex.slice(1, 3), 16);
+      const g = parseInt(hex.slice(3, 5), 16);
+      const b = parseInt(hex.slice(5, 7), 16);
+      return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    }
+    
+    fillGradient.addColorStop(0, hexToRgba(palette.accent, gradient));
+    fillGradient.addColorStop(0.6, hexToRgba(palette.secondary, gradient * 0.7));
+    fillGradient.addColorStop(1, hexToRgba(palette.primary, gradient * 0.3));
     
     ctx.fillStyle = fillGradient;
     

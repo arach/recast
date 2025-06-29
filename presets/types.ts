@@ -5,9 +5,11 @@ export interface ParameterDefinition {
   min?: number;
   max?: number;
   step?: number;
-  options?: string[];
+  options?: Array<{ value: string; label: string }> | string[];
   default: any;
   label: string;
+  category?: string; // For grouping parameters in UI
+  showIf?: (params: any) => boolean; // Conditional visibility
 }
 
 export interface PresetMetadata {

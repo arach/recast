@@ -16,6 +16,9 @@ export interface VisualizationParams {
   color: string
   customParameters?: Record<string, any>
   time: number
+  sides?: number
+  rotation?: number
+  scale?: number
 }
 
 export const generateWaveLines = (
@@ -261,6 +264,142 @@ export const generateCircles = (
         ctx.beginPath()
         ctx.arc(cx, cy, r, 0, Math.PI * 2)
         ctx.stroke()
+      }
+      
+      ctx.restore()
+    }
+  })
+}
+
+export const generateTriangles = (
+  ctx: CanvasRenderingContext2D, 
+  width: number, 
+  height: number, 
+  params: VisualizationParams
+) => {
+  const generativeParams: GenerativeParameters = {
+    frequency: params.frequency,
+    amplitude: params.amplitude,
+    complexity: params.complexity,
+    chaos: params.chaos,
+    damping: params.damping,
+    layers: params.layers,
+    sides: params.sides || 3,
+    rotation: params.rotation || 0
+  }
+
+  const options: GenerationOptions = {
+    width,
+    height,
+    resolution: 50,
+    time: params.time,
+    seed: params.seed
+  }
+
+  const engine = new GenerativeEngine()
+  const elements = engine.generateSingle('triangle', generativeParams, options, params.seed)
+
+  // Render the generated triangle elements
+  elements.forEach(element => {
+    if (element.type === 'polygon') {
+      const { points, fill, stroke, strokeWidth, opacity } = element.props
+      
+      ctx.save()
+      ctx.globalAlpha = opacity || 1
+      
+      // Parse points string into coordinate pairs
+      const coords = points.split(' ').map((point: string) => {
+        const [x, y] = point.split(',').map(Number)
+        return { x, y }
+      })
+      
+      if (coords.length > 0) {
+        ctx.beginPath()
+        ctx.moveTo(coords[0].x, coords[0].y)
+        
+        for (let i = 1; i < coords.length; i++) {
+          ctx.lineTo(coords[i].x, coords[i].y)
+        }
+        
+        ctx.closePath()
+        
+        if (fill && fill !== 'none') {
+          ctx.fillStyle = fill
+          ctx.fill()
+        }
+        
+        if (stroke) {
+          ctx.strokeStyle = stroke
+          ctx.lineWidth = strokeWidth || 1
+          ctx.stroke()
+        }
+      }
+      
+      ctx.restore()
+    }
+  })
+}
+
+export const generateInfinity = (
+  ctx: CanvasRenderingContext2D, 
+  width: number, 
+  height: number, 
+  params: VisualizationParams
+) => {
+  const generativeParams: GenerativeParameters = {
+    frequency: params.frequency,
+    amplitude: params.amplitude,
+    complexity: params.complexity,
+    chaos: params.chaos,
+    damping: params.damping,
+    layers: params.layers,
+    scale: 1.0
+  }
+
+  const options: GenerationOptions = {
+    width,
+    height,
+    resolution: 120,
+    time: params.time,
+    seed: params.seed
+  }
+
+  const engine = new GenerativeEngine()
+  const elements = engine.generateSingle('infinity', generativeParams, options, params.seed)
+
+  // Render the generated infinity elements
+  elements.forEach(element => {
+    if (element.type === 'path') {
+      const { d, stroke, strokeWidth, opacity, strokeLinecap, strokeLinejoin } = element.props
+      
+      ctx.save()
+      ctx.globalAlpha = opacity || 1
+      
+      if (stroke) {
+        ctx.strokeStyle = stroke
+        ctx.lineWidth = strokeWidth || 1
+        
+        // Set line cap and join for smoother curves
+        if (strokeLinecap) ctx.lineCap = strokeLinecap as CanvasLineCap
+        if (strokeLinejoin) ctx.lineJoin = strokeLinejoin as CanvasLineJoin
+        
+        // Parse and draw SVG path
+        const path = new Path2D(d)
+        ctx.stroke(path)
+      }
+      
+      ctx.restore()
+    } else if (element.type === 'circle') {
+      const { cx, cy, r, fill, opacity } = element.props
+      
+      ctx.save()
+      ctx.globalAlpha = opacity || 1
+      
+      if (fill && fill !== 'none') {
+        ctx.fillStyle = fill
+        ctx.beginPath()
+        ctx.arc(cx, cy, r, 0, Math.PI * 2)
+        ctx.fill()
       }
       
       ctx.restore()

@@ -11,6 +11,8 @@ import { draw as audioBarsDraw } from '@/presets/audio-bars'
 import { draw as apexVercelDraw } from '@/presets/apex-vercel'
 import { draw as prismGoogleDraw } from '@/presets/prism-google'
 import { draw as pulseSpotifyDraw } from '@/presets/pulse-spotify'
+import { draw as spinningTrianglesDraw } from '@/presets/spinning-triangles'
+import { draw as infinityLoopsDraw } from '@/presets/infinity-loops'
 
 export type PresetDrawFunction = (
   ctx: CanvasRenderingContext2D,
@@ -27,7 +29,9 @@ export const presetDrawFunctions: Record<string, PresetDrawFunction> = {
   'audio-bars': audioBarsDraw,
   'apex-vercel': apexVercelDraw,
   'prism-google': prismGoogleDraw,
-  'pulse-spotify': pulseSpotifyDraw
+  'pulse-spotify': pulseSpotifyDraw,
+  'spinning-triangles': spinningTrianglesDraw,
+  'infinity-loops': infinityLoopsDraw
 }
 
 /**

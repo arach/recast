@@ -5,7 +5,11 @@
       "Bash(git add:*)",
       "Bash(git commit:*)",
       "Bash(rg:*)",
-      "Bash(pnpm build)"
+      "Bash(pnpm build)",
+      "Bash(ls:*)",
+      "Bash(git push:*)",
+      "WebFetch(domain:kit-forge.replit.app)",
+      "WebFetch(domain:github.com)"
     ],
     "deny": []
   }
