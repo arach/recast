@@ -98,6 +98,8 @@ export const useUIStore = create<UIStore>()(
       
       setDarkMode: (darkMode) => set({ darkMode }),
       
+      setRenderTrigger: (trigger) => set({ renderTrigger: trigger }),
+      
       // Complex actions
       showSaveDialog: (mode) => set({ 
         saveDialogOpen: true,

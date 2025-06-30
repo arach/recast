@@ -17,6 +17,7 @@ interface LogoStore {
   deleteLogo: (id: string) => void;
   duplicateLogo: (id: string) => string | null; // Returns new logo ID or null
   selectLogo: (id: string | null) => void;
+  randomizeLogo: (id: string) => void; // Randomize all parameters
   
   // Computed getters
   getSelectedLogo: () => Logo | null;
@@ -168,6 +169,39 @@ export const useLogoStore = create<LogoStore>()(
 
       selectLogo: (id) => {
         set({ selectedLogoId: id });
+      },
+      
+      randomizeLogo: (id) => {
+        const colorPalette = ['#0070f3', '#7c3aed', '#dc2626', '#059669', '#d97706', '#be185d', '#4338ca', '#0891b2'];
+        
+        const updates: Partial<Parameters> = {
+          core: {
+            frequency: Math.floor(Math.random() * 8) + 1,
+            amplitude: Math.floor(Math.random() * 80) + 20,
+            complexity: Math.random(),
+            chaos: Math.random() * 0.3,
+            damping: 0.5 + Math.random() * 0.5,
+            layers: Math.floor(Math.random() * 5) + 1,
+            radius: Math.floor(Math.random() * 100) + 50,
+          },
+          style: {
+            fillColor: colorPalette[Math.floor(Math.random() * colorPalette.length)],
+            strokeColor: colorPalette[Math.floor(Math.random() * colorPalette.length)],
+            backgroundColor: 'transparent',
+            backgroundType: 'transparent',
+            fillType: 'solid',
+            fillOpacity: 1,
+            strokeType: 'solid',
+            strokeWidth: 2,
+            strokeOpacity: 1,
+          },
+          custom: {
+            barCount: Math.floor(Math.random() * 40) + 20,
+            barSpacing: Math.floor(Math.random() * 4) + 1,
+          },
+        };
+        
+        get().updateLogoParameters(id, updates);
       },
 
       // Computed getters

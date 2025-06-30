@@ -14,8 +14,10 @@ import { exportCanvasAsPNG, exportAllSizes, getCanvasFromId } from '@/lib/export
 import { SaveDialog } from '@/components/save-dialog'
 import { SavedItemsDialog } from '@/components/saved-items-dialog'
 import { StudioHeader } from '@/components/studio/StudioHeader'
+import { StudioHeaderV2 } from '@/components/studio/StudioHeaderV2'
 import { CodeEditorPanel } from '@/components/studio/CodeEditorPanel'
 import { CanvasArea } from '@/components/studio/CanvasArea'
+import { CanvasAreaV2 } from '@/components/studio/CanvasAreaV2'
 import { ControlsPanel } from '@/components/studio/ControlsPanel'
 import { ControlsPanelV2 } from '@/components/studio/ControlsPanelV2'
 import { BrandPresetsPanel } from '@/components/studio/BrandPresetsPanel'
@@ -896,58 +898,91 @@ export default function Home() {
         darkMode={isDarkMode}
       />
       
-      <StudioHeader
-        onRandomize={randomizeParams}
-        onSavePreset={() => openSaveDialog('preset')}
-        onSaveShape={() => openSaveDialog('shape')}
-        onOpenLibrary={() => setSavedItemsOpen(true)}
-        onOpenIndustrySelector={() => setShowIndustrySelector(true)}
-        onShare={shareLink}
-        onExportPNG={exportAsPNG}
-        onExportAllSizes={exportAllSizes}
-        onExportSVG={exportAsSVG}
-        visualMode={selectedLogo.presetId ? 'preset' : 'custom'}
-      />
+      {/* Use new Zustand-based StudioHeader if feature flag is enabled */}
+      {FeatureFlags.isZustandCanvasEnabled() ? (
+        <>
+          {console.log('🎠 Rendering StudioHeaderV2')}
+          <StudioHeaderV2 />
+        </>
+      ) : (
+        <>
+          {console.log('📦 Rendering StudioHeader (legacy)')}
+          <StudioHeader
+            onRandomize={randomizeParams}
+            onSavePreset={() => openSaveDialog('preset')}
+            onSaveShape={() => openSaveDialog('shape')}
+            onOpenLibrary={() => setSavedItemsOpen(true)}
+            onOpenIndustrySelector={() => setShowIndustrySelector(true)}
+            onShare={shareLink}
+            onExportPNG={exportAsPNG}
+            onExportAllSizes={exportAllSizes}
+            onExportSVG={exportAsSVG}
+            visualMode={selectedLogo.presetId ? 'preset' : 'custom'}
+          />
+        </>
+      )}
 
       <div className="flex flex-1 overflow-hidden">
-        <CodeEditorPanel
-          collapsed={codeEditorCollapsed}
-          onSetCollapsed={setCodeEditorCollapsed}
-          presets={availablePresets}
-          onLoadPreset={loadPresetById}
-          currentShapeName={currentShapeName}
-          onSetCurrentShapeName={setCurrentShapeName}
-          currentShapeId={currentShapeId}
-          currentPresetName={selectedLogo.presetName}
-          codeError={codeError}
-          code={customCode}
-          onCodeChange={setCustomCode}
-          isDarkMode={isDarkMode}
-          isRendering={isRendering}
-          renderSuccess={renderSuccess}
-          onRunCode={handleRunCode}
-          onSaveShape={() => openSaveDialog('shape')}
-          onCloneToCustom={handleCloneToCustom}
-          getShapeNameForMode={getShapeNameForMode}
-        />
+        {/* Use new Zustand-based CodeEditor if feature flag is enabled */}
+        {FeatureFlags.isZustandCanvasEnabled() ? (
+          <>
+            {console.log('🔧 Rendering CodeEditorPanelV2')}
+            <CodeEditorPanelV2 />
+          </>
+        ) : (
+          <>
+            {console.log('📝 Rendering CodeEditorPanel (legacy)')}
+            <CodeEditorPanel
+              collapsed={codeEditorCollapsed}
+              onSetCollapsed={setCodeEditorCollapsed}
+              presets={availablePresets}
+              onLoadPreset={loadPresetById}
+              currentShapeName={currentShapeName}
+              onSetCurrentShapeName={setCurrentShapeName}
+              currentShapeId={currentShapeId}
+              currentPresetName={selectedLogo.presetName}
+              codeError={codeError}
+              code={customCode}
+              onCodeChange={setCustomCode}
+              isDarkMode={isDarkMode}
+              isRendering={isRendering}
+              renderSuccess={renderSuccess}
+              onRunCode={handleRunCode}
+              onSaveShape={() => openSaveDialog('shape')}
+              onCloneToCustom={handleCloneToCustom}
+              getShapeNameForMode={getShapeNameForMode}
+            />
+          </>
+        )}
 
-        <CanvasArea
-          logos={logos}
-          selectedLogoId={selectedLogoId}
-          onSelectLogo={setSelectedLogoId}
-          onDuplicateLogo={duplicateLogo}
-          onDeleteLogo={deleteLogo}
-          animating={animating}
-          zoom={zoom}
-          previewMode={previewMode}
-          isRendering={isRendering}
-          currentTime={timeRef.current}
-          onToggleAnimation={toggleAnimation}
-          onSetZoom={setZoom}
-          onTogglePreview={() => setPreviewMode(!previewMode)}
-          onCodeError={setCodeError}
-          forceRender={forceRender}
-        />
+        {/* Use new Zustand-based CanvasArea if feature flag is enabled */}
+        {FeatureFlags.isZustandCanvasEnabled() ? (
+          <>
+            {console.log('🎨 Rendering CanvasAreaV2')}
+            <CanvasAreaV2 />
+          </>
+        ) : (
+          <>
+            {console.log('📊 Rendering CanvasArea (legacy)')}
+            <CanvasArea
+              logos={logos}
+              selectedLogoId={selectedLogoId}
+              onSelectLogo={setSelectedLogoId}
+              onDuplicateLogo={duplicateLogo}
+              onDeleteLogo={deleteLogo}
+              animating={animating}
+              zoom={zoom}
+              previewMode={previewMode}
+              isRendering={isRendering}
+              currentTime={timeRef.current}
+              onToggleAnimation={toggleAnimation}
+              onSetZoom={setZoom}
+              onTogglePreview={() => setPreviewMode(!previewMode)}
+              onCodeError={setCodeError}
+              forceRender={forceRender}
+            />
+          </>
+        )}
 
         <div className="flex">
           {/* Use new Zustand-based ControlsPanel if feature flag is enabled */}
