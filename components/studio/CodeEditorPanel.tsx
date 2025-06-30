@@ -4,11 +4,13 @@ import React, { useState, useEffect, useCallback, useRef } from 'react'
 import dynamic from 'next/dynamic'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Code, Play, Copy, Check, ChevronLeft, ChevronRight, GripVertical, X, RotateCcw, PanelLeftClose, PanelLeft } from 'lucide-react'
+import { Code, Play, Copy, Check, ChevronLeft, ChevronRight, GripVertical, X, RotateCcw, PanelLeftClose, PanelLeft, Palette, Save, Sparkles } from 'lucide-react'
 import { useLogoStore } from '@/lib/stores/logoStore'
 import { useUIStore } from '@/lib/stores/uiStore'
 import { useSelectedLogo } from '@/lib/hooks/useSelectedLogo'
 import { visualizationTypes } from '@/lib/monaco-types'
+import { loadPresetAsLegacy, getAllPresetsAsLegacy } from '@/lib/preset-converter'
+import type { LoadedPreset } from '@/lib/preset-loader'
 import type { editor, languages } from 'monaco-editor'
 
 // Dynamically import Monaco to avoid SSR issues
@@ -36,6 +38,8 @@ export function CodeEditorPanel({ onClose }: CodeEditorPanelProps) {
   const [width, setWidth] = useState(500)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [isCollapsed, setIsCollapsed] = useState(true) // Start collapsed
+  const [availablePresets, setAvailablePresets] = useState<LoadedPreset[]>([])
+  const [loadingPresets, setLoadingPresets] = useState(true)
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null)
   const isDragging = useRef(false)
   const startX = useRef(0)
@@ -55,6 +59,22 @@ export function CodeEditorPanel({ onClose }: CodeEditorPanelProps) {
 
   const [localCode, setLocalCode] = useState(selectedLogo?.code || '')
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
+
+  // Load available presets
+  useEffect(() => {
+    const loadPresets = async () => {
+      try {
+        setLoadingPresets(true)
+        const presets = await getAllPresetsAsLegacy()
+        setAvailablePresets(presets)
+      } catch (error) {
+        console.error('Failed to load presets:', error)
+      } finally {
+        setLoadingPresets(false)
+      }
+    }
+    loadPresets()
+  }, [])
 
   // Update local code when selected logo changes
   useEffect(() => {
@@ -240,7 +260,57 @@ export function CodeEditorPanel({ onClose }: CodeEditorPanelProps) {
       </div>
 
       <Card className={`h-full flex flex-col border-0 rounded-none ${darkMode ? 'bg-gray-900 text-gray-100' : ''}`}>
-        <CardHeader className="flex-shrink-0 pb-3">
+        <CardHeader className="flex-shrink-0">
+          {/* Preset Selector */}
+          <div className="mb-4 p-3 rounded-lg bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-sm font-semibold flex items-center gap-2">
+                <Palette className="w-4 h-4" />
+                Visual Styles
+              </h3>
+              <span className="text-xs text-gray-500">Choose a starting point</span>
+            </div>
+            <select
+              value={selectedLogo?.templateId || 'custom'}
+              onChange={async (e) => {
+                const presetId = e.target.value
+                if (presetId && selectedLogo) {
+                  const preset = availablePresets.find(p => p.id === presetId)
+                  if (preset) {
+                    updateLogo(selectedLogo.id, {
+                      templateId: preset.id,
+                      templateName: preset.name,
+                      code: preset.code,
+                      parameters: {
+                        ...selectedLogo.parameters,
+                        custom: {
+                          ...selectedLogo.parameters.custom,
+                          ...preset.defaultParams
+                        }
+                      }
+                    })
+                    setLocalCode(preset.code)
+                    setHasUnsavedChanges(false)
+                  }
+                }
+              }}
+              className={`w-full px-3 py-2 text-sm rounded-lg border ${
+                darkMode
+                  ? 'bg-gray-800 border-gray-700 text-gray-100'
+                  : 'bg-white border-gray-300'
+              } focus:outline-none focus:ring-2 focus:ring-blue-500`}
+              disabled={loadingPresets}
+            >
+              <option value="custom">🎨 Custom Code</option>
+              {availablePresets.map((preset) => (
+                <option key={preset.id} value={preset.id}>
+                  {preset.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          
+          {/* Header */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Code className="w-5 h-5" />
@@ -293,6 +363,7 @@ export function CodeEditorPanel({ onClose }: CodeEditorPanelProps) {
                 variant="ghost"
                 onClick={handleCopy}
                 className="h-8 w-8 p-0"
+                title="Copy code"
               >
                 {copied ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4" />}
               </Button>
@@ -301,6 +372,7 @@ export function CodeEditorPanel({ onClose }: CodeEditorPanelProps) {
                 onClick={handleRunCode}
                 disabled={!hasUnsavedChanges}
                 className="h-8"
+                title="Run code (Ctrl+Enter)"
               >
                 <Play className="w-3 h-3 mr-1" />
                 Run
