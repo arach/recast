@@ -1,6 +1,6 @@
 'use client';
 
-import { ControlsPanelV2 } from '@/components/studio/ControlsPanelV2';
+import { ControlsPanel } from '@/components/studio/ControlsPanel';
 import { StoreInitializer } from '@/components/migration/StoreInitializer';
 import { FeatureFlags } from '@/lib/feature-flags';
 
@@ -20,7 +20,7 @@ export default function TestZustandPage() {
       </div>
       
       <div className="bg-white rounded-lg shadow">
-        <h2 className="text-lg font-semibold p-4 border-b">ControlsPanelV2 Test</h2>
+        <h2 className="text-lg font-semibold p-4 border-b">ControlsPanel Test</h2>
         <div className="flex">
           <StoreInitializer
             logos={[{
@@ -45,7 +45,7 @@ export default function TestZustandPage() {
             zoom={1}
             animating={false}
           />
-          <ControlsPanelV2 />
+          <ControlsPanel />
         </div>
       </div>
     </div>

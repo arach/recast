@@ -14,13 +14,9 @@ import { exportCanvasAsPNG, exportAllSizes, getCanvasFromId } from '@/lib/export
 import { SaveDialog } from '@/components/save-dialog'
 import { SavedItemsDialog } from '@/components/saved-items-dialog'
 import { StudioHeader } from '@/components/studio/StudioHeader'
-import { StudioHeaderV2 } from '@/components/studio/StudioHeaderV2'
 import { CodeEditorPanel } from '@/components/studio/CodeEditorPanel'
-import { CodeEditorPanelV2 } from '@/components/studio/CodeEditorPanelV2'
 import { CanvasArea } from '@/components/studio/CanvasArea'
-import { CanvasAreaV2 } from '@/components/studio/CanvasAreaV2'
 import { ControlsPanel } from '@/components/studio/ControlsPanel'
-import { ControlsPanelV2 } from '@/components/studio/ControlsPanelV2'
 import { BrandPresetsPanel } from '@/components/studio/BrandPresetsPanel'
 import { StoreInitializer } from '@/components/migration/StoreInitializer'
 import { FeatureFlags } from '@/lib/feature-flags'
@@ -66,12 +62,6 @@ interface LogoInstance {
 export default function Home() {
   const [mounted, setMounted] = useState(false)
   
-  // Debug feature flags
-  if (typeof window !== 'undefined') {
-    console.log('🎯 Client-side feature flags:', {
-      zustandControls: FeatureFlags.isZustandControlsEnabled(),
-    });
-  }
   const [availablePresets, setAvailablePresets] = useState<LoadedPreset[]>([])
   
   // Multi-logo state
@@ -899,40 +889,17 @@ export default function Home() {
         darkMode={isDarkMode}
       />
       
-      {/* Use new Zustand-based StudioHeader if feature flag is enabled */}
-      {FeatureFlags.isZustandCanvasEnabled() ? (
-        <>
-          {console.log('🎠 Rendering StudioHeaderV2')}
-          <StudioHeaderV2 />
-        </>
-      ) : (
-        <>
-          {console.log('📦 Rendering StudioHeader (legacy)')}
-          <StudioHeader
-            onRandomize={randomizeParams}
-            onSavePreset={() => openSaveDialog('preset')}
-            onSaveShape={() => openSaveDialog('shape')}
-            onOpenLibrary={() => setSavedItemsOpen(true)}
-            onOpenIndustrySelector={() => setShowIndustrySelector(true)}
-            onShare={shareLink}
-            onExportPNG={exportAsPNG}
-            onExportAllSizes={exportAllSizes}
-            onExportSVG={exportAsSVG}
-            visualMode={selectedLogo.presetId ? 'preset' : 'custom'}
-          />
-        </>
-      )}
+      <StudioHeader />
 
       <div className="flex flex-1 overflow-hidden">
         {/* Use new Zustand-based CodeEditor if feature flag is enabled */}
         {FeatureFlags.isZustandCanvasEnabled() ? (
           <>
             {console.log('🔧 Rendering CodeEditorPanelV2')}
-            <CodeEditorPanelV2 />
+            <CodeEditorPanel />
           </>
         ) : (
           <>
-            {console.log('📝 Rendering CodeEditorPanel (legacy)')}
             <CodeEditorPanel
               collapsed={codeEditorCollapsed}
               onSetCollapsed={setCodeEditorCollapsed}
@@ -960,7 +927,7 @@ export default function Home() {
         {FeatureFlags.isZustandCanvasEnabled() ? (
           <>
             {console.log('🎨 Rendering CanvasAreaV2')}
-            <CanvasAreaV2 />
+            <CanvasArea />
           </>
         ) : (
           <>
@@ -990,7 +957,7 @@ export default function Home() {
           {FeatureFlags.isZustandControlsEnabled() ? (
             <>
               {console.log('🎨 Rendering ControlsPanelV2')}
-              <ControlsPanelV2 />
+              <ControlsPanel />
             </>
           ) : (
             <>

@@ -1,227 +1,227 @@
 'use client'
 
-import React from 'react'
-import CodeMirror from '@uiw/react-codemirror'
-import { javascript } from '@codemirror/lang-javascript'
-import { oneDark } from '@codemirror/theme-one-dark'
+import React, { useState, useEffect, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
-import {
-  Play,
-  Save,
-  ChevronLeft,
-  ChevronRight,
-} from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Code, Play, Copy, Check, ChevronLeft, ChevronRight } from 'lucide-react'
+import { useLogoStore } from '@/lib/stores/logoStore'
+import { useUIStore } from '@/lib/stores/uiStore'
+import { useSelectedLogo } from '@/lib/hooks/useSelectedLogo'
 
-interface LoadedPreset {
-  id: string
-  name: string
-  description: string
-  defaultParams: Record<string, any>
-  code: string
-}
-
-interface CodeEditorPanelProps {
-  collapsed: boolean
-  onSetCollapsed: (collapsed: boolean) => void
-  presets: LoadedPreset[]
-  onLoadPreset: (presetId: string) => void
-  currentShapeName: string
-  onSetCurrentShapeName: (name: string) => void
-  currentShapeId?: string
-  currentPresetName?: string | null
-  codeError: string | null
-  code: string
-  onCodeChange: (code: string) => void
-  isDarkMode: boolean
-  isRendering: boolean
-  renderSuccess: boolean
-  onRunCode: () => void
-  onSaveShape: () => void
-  onCloneToCustom: () => void
-  getShapeNameForMode: () => string
-}
-
-export function CodeEditorPanel({
-  collapsed,
-  onSetCollapsed,
-  presets,
-  onLoadPreset,
-  currentShapeName,
-  onSetCurrentShapeName,
-  currentShapeId,
-  currentPresetName,
-  codeError,
-  code,
-  onCodeChange,
-  isDarkMode,
-  isRendering,
-  renderSuccess,
-  onRunCode,
-  onSaveShape,
-  onCloneToCustom,
-  getShapeNameForMode
-}: CodeEditorPanelProps) {
-  if (collapsed) {
+export function CodeEditorPanel() {
+  const { updateLogo } = useLogoStore()
+  const { codeEditorCollapsed, toggleCodeEditor, setRenderTrigger } = useUIStore()
+  const logo = useSelectedLogo()
+  
+  const [localCode, setLocalCode] = useState('')
+  const [isCodeDirty, setIsCodeDirty] = useState(false)
+  const [copiedCode, setCopiedCode] = useState(false)
+  const [renderSuccess, setRenderSuccess] = useState(false)
+  
+  // Initialize code from selected logo
+  useEffect(() => {
+    if (logo && logo.code !== localCode) {
+      setLocalCode(logo.code)
+      setIsCodeDirty(false)
+    }
+  }, [logo?.id, logo?.code])
+  
+  // Handle code change
+  const handleCodeChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setLocalCode(e.target.value)
+    setIsCodeDirty(true)
+    setRenderSuccess(false)
+  }
+  
+  // Run code and update logo
+  const handleRunCode = useCallback(() => {
+    if (!logo) return
+    
+    // Update the logo's code
+    updateLogo(logo.id, { code: localCode })
+    setIsCodeDirty(false)
+    
+    // Trigger a re-render in the canvas
+    setRenderTrigger(Date.now())
+    
+    // Show success feedback
+    setRenderSuccess(true)
+    setTimeout(() => {
+      setRenderSuccess(false)
+    }, 1500)
+  }, [logo, localCode, updateLogo, setRenderTrigger])
+  
+  // Handle keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Cmd/Ctrl + Enter to run code
+      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter' && isCodeDirty) {
+        e.preventDefault()
+        handleRunCode()
+      }
+    }
+    
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [handleRunCode, isCodeDirty])
+  
+  // Copy code to clipboard
+  const copyCode = () => {
+    navigator.clipboard.writeText(localCode)
+    setCopiedCode(true)
+    setTimeout(() => setCopiedCode(false), 2000)
+  }
+  
+  // Clone to custom
+  const handleCloneToCustom = () => {
+    if (!logo) return
+    
+    // Create a new logo with the current code as custom
+    const newId = useLogoStore.getState().addLogo('custom')
+    const newLogo = useLogoStore.getState().logos.find(l => l.id === newId)
+    if (newLogo) {
+      updateLogo(newId, { 
+        code: localCode,
+        templateName: `${logo.templateName} (Clone)`
+      })
+    }
+  }
+  
+  if (!logo) {
     return (
-      <div className="w-12 border-r border-gray-200 bg-gray-50/30 transition-all duration-300 flex flex-col overflow-hidden">
-        <div className="p-3 border-b border-gray-200 bg-white">
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => onSetCollapsed(false)}
-            className="w-full h-8 p-0"
-          >
-            <ChevronRight className="w-4 h-4" />
-          </Button>
+      <div className={`${codeEditorCollapsed ? 'w-12' : 'w-[500px]'} border-l bg-gray-50/50 transition-all duration-300`}>
+        <div className="p-4">
+          <div className="text-sm text-gray-500">No logo selected</div>
         </div>
       </div>
     )
   }
-
+  
   return (
-    <div className={cn(
-      "w-1/4 border-r border-gray-200 bg-gray-50/30 transition-all duration-300 flex flex-col overflow-hidden"
-    )}>
-      {/* Enhanced Preset Selection */}
-      <div className="p-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-purple-50">
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-gray-800">🎨 Visual Styles</h3>
-            <span className="text-xs text-gray-500">Choose a starting point</span>
+    <div className={`${codeEditorCollapsed ? 'w-12' : 'w-[500px]'} border-l bg-gray-50/50 transition-all duration-300 flex flex-col`}>
+      
+      <div className="p-4 flex-1 flex flex-col">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <Code className="w-4 h-4 text-gray-600" />
+            <h3 className="font-semibold text-sm">Code Editor</h3>
+            {isCodeDirty && !codeEditorCollapsed && (
+              <span className="text-xs text-orange-600 font-medium">• Unsaved</span>
+            )}
+            {renderSuccess && !codeEditorCollapsed && (
+              <span className="text-xs text-green-600 font-medium flex items-center gap-1">
+                <Check className="w-3 h-3" /> Applied
+              </span>
+            )}
           </div>
-          <div className="flex flex-col gap-2">
-            <select
-              onChange={(e) => {
-                const presetId = e.target.value
-                console.log('Dropdown selected preset ID:', presetId)
-                if (presetId) {
-                  onLoadPreset(presetId)
-                }
-                e.target.value = '' // Reset dropdown
-              }}
-              className="text-sm px-3 py-2 border-2 border-blue-200 rounded-lg bg-white hover:border-blue-300 focus:border-blue-400 focus:outline-none transition-colors"
-              defaultValue=""
-            >
-              <option value="" disabled>🚀 Load a preset style...</option>
-              {presets.map((preset) => (
-                <option key={preset.id} value={preset.id}>
-                  {preset.name} {preset.description ? `- ${preset.description.substring(0, 40)}...` : ''}
-                </option>
-              ))}
-            </select>
-            <p className="text-xs text-gray-600">
-              💡 Presets provide ready-made styles with custom controls. You can modify the code after loading.
-            </p>
-          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={toggleCodeEditor}
+            className="h-7 w-7 p-0"
+          >
+            {codeEditorCollapsed ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+          </Button>
         </div>
-      </div>
-
-      <div className="p-6 border-b border-gray-200 bg-white">
-        <div className="flex items-center justify-between">
-          <div className="flex-1">
-            <div className="flex items-center gap-3">
-              <input
-                type="text"
-                value={currentShapeName}
-                onChange={(e) => onSetCurrentShapeName(e.target.value)}
-                className="text-sm font-medium text-gray-900 bg-transparent border-b border-gray-300 hover:border-gray-400 focus:border-blue-500 focus:outline-none px-1 py-0.5"
-                placeholder="Shape name..."
-              />
-            </div>
-            <p className="text-xs text-gray-500 mt-1">
-              {currentShapeId ? 'Editing saved shape' : currentPresetName ? `Based on: ${currentPresetName}` : 'Custom visualization code'}
-            </p>
-          </div>
-          <div className="flex items-center space-x-2">
-            {/* Run Code Button - Always Visible */}
-            <Button
-              onClick={onRunCode}
-              disabled={isRendering}
-              size="sm"
-              className={`h-8 text-xs font-medium transition-colors ${
-                renderSuccess ? 'bg-green-600 hover:bg-green-700 text-white' : ''
-              }`}
-              title="Force refresh when changes don't apply automatically (Ctrl+Enter)"
-            >
-              {isRendering ? (
-                <>
-                  <div className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin mr-1" />
-                  Rendering
-                </>
-              ) : renderSuccess ? (
-                <>
-                  <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                  Rendered!
-                </>
-              ) : (
-                <>
-                  <Play className="w-3 h-3 mr-1" />
-                  Run Code
-                </>
-              )}
-            </Button>
+        
+        {!codeEditorCollapsed && (
+          <>
+            <Card className="flex-1 flex flex-col">
+              <CardHeader className="pb-2">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-sm">
+                    {logo.templateName || 'Custom'} Code
+                  </CardTitle>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={copyCode}
+                      className="h-7 px-2"
+                    >
+                      {copiedCode ? (
+                        <>
+                          <Check className="w-3 h-3 mr-1" />
+                          Copied
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-3 h-3 mr-1" />
+                          Copy
+                        </>
+                      )}
+                    </Button>
+                    {logo.templateId !== 'custom' && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleCloneToCustom}
+                        className="h-7 px-2 text-xs"
+                      >
+                        Clone to Custom
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="flex-1 flex flex-col p-3">
+                <div className="flex-1 relative">
+                  <textarea
+                    value={localCode}
+                    onChange={handleCodeChange}
+                    className="w-full h-full p-3 font-mono text-xs bg-gray-900 text-gray-100 rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    spellCheck={false}
+                    placeholder="// Enter your visualization code here..."
+                  />
+                </div>
+                
+                <div className="mt-3 flex items-center justify-between">
+                  <div className="text-xs text-gray-500">
+                    Press <kbd className="px-1 py-0.5 bg-gray-100 rounded text-xs">Cmd+Enter</kbd> to run
+                  </div>
+                  <Button
+                    size="sm"
+                    onClick={handleRunCode}
+                    disabled={!isCodeDirty}
+                    className="h-8"
+                  >
+                    <Play className="w-3 h-3 mr-1" />
+                    Run Code
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
             
-            {/* Save Button */}
-            <Button
-              size="sm"
-              onClick={onSaveShape}
-              variant="outline"
-              className="h-8 text-xs"
-              title="Save your shape"
-            >
-              <Save className="w-3 h-3 mr-1" />
-              Save
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => onSetCollapsed(true)}
-              className="h-8 w-8 p-0"
-            >
-              <ChevronLeft className="w-3 h-3" />
-            </Button>
-          </div>
-        </div>
-      </div>
-
-      <div className="flex-1 flex flex-col min-h-0">
-        {codeError && (
-          <div className="mx-4 mt-4 p-3 bg-red-100 text-red-700 rounded-lg text-sm">
-            Error: {codeError}
-          </div>
+            <div className="mt-4 space-y-2">
+              <details className="text-xs">
+                <summary className="cursor-pointer text-gray-600 hover:text-gray-800">
+                  Available Variables & Functions
+                </summary>
+                <div className="mt-2 p-3 bg-gray-100 rounded-md space-y-2">
+                  <div>
+                    <div className="font-semibold">Context:</div>
+                    <code className="text-gray-700">ctx</code> - Canvas 2D context<br />
+                    <code className="text-gray-700">width, height</code> - Canvas dimensions<br />
+                    <code className="text-gray-700">params</code> - All parameters<br />
+                    <code className="text-gray-700">generator</code> - Wave generator instance<br />
+                    <code className="text-gray-700">time</code> - Animation time
+                  </div>
+                  <div>
+                    <div className="font-semibold">Parameters:</div>
+                    <code className="text-gray-700">params.frequency</code><br />
+                    <code className="text-gray-700">params.amplitude</code><br />
+                    <code className="text-gray-700">params.complexity</code><br />
+                    <code className="text-gray-700">params.customParameters</code>
+                  </div>
+                  <div>
+                    <div className="font-semibold">Main Function:</div>
+                    <code className="text-gray-700">drawVisualization(ctx, width, height, params, generator, time)</code>
+                  </div>
+                </div>
+              </details>
+            </div>
+          </>
         )}
-        <div className="flex-1 overflow-hidden">
-          <CodeMirror
-            value={code}
-            height="100%"
-            width="100%"
-            theme={isDarkMode ? oneDark : undefined}
-            extensions={[javascript()]}
-            onChange={(value) => {
-              onCodeChange(value)
-            }}
-            editable={true}
-            basicSetup={{
-              lineNumbers: true,
-              foldGutter: true,
-              dropCursor: false,
-              allowMultipleSelections: false,
-              autocompletion: true,
-              bracketMatching: true,
-              closeBrackets: true,
-              highlightActiveLine: true,
-              highlightSelectionMatches: true,
-              searchKeymap: true,
-            }}
-            style={{
-              height: '100%',
-              overflow: 'auto'
-            }}
-          />
-        </div>
       </div>
     </div>
   )

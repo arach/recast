@@ -1,79 +1,94 @@
-'use client'
+'use client';
 
-import React from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Slider } from '@/components/ui/slider'
+import React from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Slider } from '@/components/ui/slider';
+import { useSelectedLogo } from '@/lib/hooks/useSelectedLogo';
+import { ParameterService } from '@/lib/services/parameterService';
 
-interface ControlsPanelProps {
-  currentPresetName?: string | null
-  seed: string
-  frequency: number
-  amplitude: number
-  complexity: number
-  chaos: number
-  damping: number
-  layers: number
-  barCount: number
-  barSpacing: number
-  radius: number
-  customCode: string
-  customParameters: Record<string, any>
-  onSeedChange: (seed: string) => void
-  onFrequencyChange: (frequency: number) => void
-  onAmplitudeChange: (amplitude: number) => void
-  onComplexityChange: (complexity: number) => void
-  onChaosChange: (chaos: number) => void
-  onDampingChange: (damping: number) => void
-  onLayersChange: (layers: number) => void
-  onBarCountChange: (barCount: number) => void
-  onBarSpacingChange: (barSpacing: number) => void
-  onRadiusChange: (radius: number) => void
-  onCustomParametersChange: (params: Record<string, any>) => void
-  getCurrentGeneratorMetadata: () => any
-  parseCustomParameters: (code: string) => Record<string, any> | null
-  forceRender: number
-  onForceRender: () => void
-}
-
-export function ControlsPanel({
-  currentPresetName,
-  seed,
-  frequency,
-  amplitude,
-  complexity,
-  chaos,
-  damping,
-  layers,
-  barCount,
-  barSpacing,
-  radius,
-  customCode,
-  customParameters,
-  onSeedChange,
-  onFrequencyChange,
-  onAmplitudeChange,
-  onComplexityChange,
-  onChaosChange,
-  onDampingChange,
-  onLayersChange,
-  onBarCountChange,
-  onBarSpacingChange,
-  onRadiusChange,
-  onCustomParametersChange,
-  getCurrentGeneratorMetadata,
-  parseCustomParameters,
-  forceRender,
-  onForceRender
-}: ControlsPanelProps) {
-  // Use the customCode prop directly for parsing
-  const codeToUse = customCode || '';
+/**
+ * Refactored ControlsPanel using Zustand stores
+ * No more prop drilling!
+ */
+export function ControlsPanel() {
   
+  const {
+    logo,
+    coreParams,
+    styleParams,
+    contentParams,
+    customParams,
+    updateCore,
+    updateStyle,
+    updateContent,
+    updateCustom,
+    setFrequency,
+    setAmplitude,
+    setComplexity,
+    setChaos,
+    setDamping,
+    setLayers,
+    setRadius,
+  } = useSelectedLogo();
+  
+  if (!logo) {
+    return (
+      <div className="w-96 border-l border-gray-200 bg-gray-50/30 overflow-y-auto">
+        <div className="p-6">
+          <div className="bg-yellow-100 border border-yellow-300 rounded-lg p-2 text-xs text-yellow-800">
+            ⚠️ No logo selected
+          </div>
+        </div>
+      </div>
+    );
+  }
+  
+  // Parse parameter definitions from code
+  const parsedParams = ParameterService.parseParametersFromCode(logo.code);
+  
+  // Debug logging
+  console.log('🔍 Parsing code for params. Code length:', logo.code?.length || 0);
+  console.log('📄 Code preview:', logo.code?.substring(0, 200) + '...');
+  if (parsedParams) {
+    console.log('📊 Parsed params:', Object.keys(parsedParams));
+  } else {
+    console.log('❌ No parameters found in code');
+  }
+  
+  // Universal control names to filter out
+  const universalControlNames = [
+    'backgroundColor', 'backgroundType', 'backgroundGradientStart', 'backgroundGradientEnd', 'backgroundGradientDirection',
+    'fillType', 'fillColor', 'fillGradientStart', 'fillGradientEnd', 'fillGradientDirection', 'fillOpacity',
+    'strokeType', 'strokeColor', 'strokeWidth', 'strokeOpacity'
+  ];
+  
+  // Get template-specific parameters
+  const templateParams = parsedParams 
+    ? Object.fromEntries(
+        Object.entries(parsedParams).filter(([key]) => !universalControlNames.includes(key))
+      )
+    : {};
+  
+  console.log('🎯 Template params:', Object.keys(templateParams));
+  console.log('📝 Current values:', { customParams, contentParams });
+  
+  // Filter visible parameters based on showIf conditions
+  const visibleTemplateParams = ParameterService.filterVisibleParameters(
+    templateParams,
+    { ...customParams, ...contentParams }
+  );
+  
+  console.log('👁️ Visible params after filtering:', Object.keys(visibleTemplateParams));
   
   return (
     <div className="w-96 border-l border-gray-200 bg-gray-50/30 overflow-y-auto">
       <div className="p-6 space-y-4">
-
-        {/* Brand Controls - Primary controls at the top */}
+        {/* Migration indicator */}
+        <div className="bg-green-100 border border-green-300 rounded-lg p-2 text-xs text-green-800">
+          🚀 Using Zustand-based Controls (V2)
+        </div>
+        
+        {/* Brand Controls - Universal */}
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-semibold">
@@ -81,475 +96,220 @@ export function ControlsPanel({
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            {(() => {
-              // Get universal controls from parsed parameters
-              const parsedParams = parseCustomParameters(customCode) || {};
-              const universalControlNames = [
-                'backgroundColor', 'backgroundType', 'backgroundGradientStart', 'backgroundGradientEnd', 'backgroundGradientDirection',
-                'fillType', 'fillColor', 'fillGradientStart', 'fillGradientEnd', 'fillGradientDirection', 'fillOpacity',
-                'strokeType', 'strokeColor', 'strokeWidth', 'strokeOpacity'
-              ];
-              
-              const universalParams = Object.fromEntries(
-                Object.entries(parsedParams).filter(([key]) => universalControlNames.includes(key))
-              );
-              
-              return (
-                <div className="space-y-3">
-                  {/* Background Section - Compact */}
-                  <div className="bg-gray-50 rounded-lg p-3 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-medium text-gray-700">Background</span>
-                      <select
-                        value={customParameters['backgroundType'] ?? 'transparent'}
-                        onChange={(e) => onCustomParametersChange({ ...customParameters, backgroundType: e.target.value })}
-                        className="text-xs p-1 border rounded bg-white min-w-0"
-                      >
-                        <option value="transparent">None</option>
-                        <option value="solid">Solid</option>
-                        <option value="gradient">Gradient</option>
-                      </select>
-                    </div>
-                    {(customParameters['backgroundType'] === 'solid' || customParameters['backgroundType'] === 'gradient') && (
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="color"
-                          value={customParameters['backgroundColor'] ?? '#ffffff'}
-                          onChange={(e) => onCustomParametersChange({ ...customParameters, backgroundColor: e.target.value })}
-                          className="w-8 h-6 border border-gray-300 rounded cursor-pointer"
-                        />
-                        {customParameters['backgroundType'] === 'gradient' && (
-                          <>
-                            <input
-                              type="color"
-                              value={customParameters['backgroundGradientEnd'] ?? '#f0f0f0'}
-                              onChange={(e) => onCustomParametersChange({ ...customParameters, backgroundGradientEnd: e.target.value })}
-                              className="w-8 h-6 border border-gray-300 rounded cursor-pointer"
-                            />
-                            <span className="text-xs text-gray-500">{Math.round(customParameters['backgroundGradientDirection'] ?? 0)}°</span>
-                          </>
-                        )}
-                      </div>
+            {/* Background Section */}
+            <div className="bg-gray-50 rounded-lg p-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-medium text-gray-700">Background</span>
+                <select
+                  value={styleParams?.backgroundType || 'transparent'}
+                  onChange={(e) => updateStyle({ backgroundType: e.target.value as any })}
+                  className="text-xs p-1 border rounded bg-white min-w-0"
+                >
+                  <option value="transparent">None</option>
+                  <option value="solid">Solid</option>
+                  <option value="gradient">Gradient</option>
+                </select>
+              </div>
+              {styleParams?.backgroundType !== 'transparent' && (
+                <div className="flex items-center gap-2">
+                  <input
+                    type="color"
+                    value={styleParams.backgroundColor}
+                    onChange={(e) => updateStyle({ backgroundColor: e.target.value })}
+                    className="w-8 h-6 border border-gray-300 rounded cursor-pointer"
+                  />
+                </div>
+              )}
+            </div>
+            
+            {/* Fill Section */}
+            <div className="bg-blue-50 rounded-lg p-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-medium text-gray-700">Fill</span>
+                <div className="flex items-center gap-2">
+                  <select
+                    value={styleParams?.fillType || 'solid'}
+                    onChange={(e) => updateStyle({ fillType: e.target.value as any })}
+                    className="text-xs p-1 border rounded bg-white min-w-0"
+                  >
+                    <option value="none">None</option>
+                    <option value="solid">Solid</option>
+                    <option value="gradient">Gradient</option>
+                  </select>
+                  {styleParams?.fillType !== 'none' && (
+                    <span className="text-xs text-gray-500">
+                      {Math.round((styleParams.fillOpacity || 1) * 100)}%
+                    </span>
+                  )}
+                </div>
+              </div>
+              {styleParams?.fillType !== 'none' && (
+                <div className="flex items-center gap-2">
+                  <input
+                    type="color"
+                    value={styleParams.fillColor}
+                    onChange={(e) => updateStyle({ fillColor: e.target.value })}
+                    className="w-8 h-6 border border-gray-300 rounded cursor-pointer"
+                  />
+                  <input
+                    type="range"
+                    min="0"
+                    max="1"
+                    step="0.05"
+                    value={styleParams.fillOpacity}
+                    onChange={(e) => updateStyle({ fillOpacity: parseFloat(e.target.value) })}
+                    className="flex-1 h-2"
+                  />
+                </div>
+              )}
+            </div>
+            
+            {/* Stroke Section */}
+            <div className="bg-purple-50 rounded-lg p-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-medium text-gray-700">Stroke</span>
+                <div className="flex items-center gap-2">
+                  <select
+                    value={styleParams?.strokeType || 'solid'}
+                    onChange={(e) => updateStyle({ strokeType: e.target.value as any })}
+                    className="text-xs p-1 border rounded bg-white min-w-0"
+                  >
+                    <option value="none">None</option>
+                    <option value="solid">Solid</option>
+                    <option value="dashed">Dashed</option>
+                    <option value="dotted">Dotted</option>
+                  </select>
+                  {styleParams?.strokeType !== 'none' && (
+                    <span className="text-xs text-gray-500">
+                      {styleParams.strokeWidth}px
+                    </span>
+                  )}
+                </div>
+              </div>
+              {styleParams?.strokeType !== 'none' && (
+                <div className="flex items-center gap-2">
+                  <input
+                    type="color"
+                    value={styleParams.strokeColor}
+                    onChange={(e) => updateStyle({ strokeColor: e.target.value })}
+                    className="w-8 h-6 border border-gray-300 rounded cursor-pointer"
+                  />
+                  <input
+                    type="range"
+                    min="0.5"
+                    max="10"
+                    step="0.5"
+                    value={styleParams.strokeWidth}
+                    onChange={(e) => updateStyle({ strokeWidth: parseFloat(e.target.value) })}
+                    className="flex-1 h-2"
+                  />
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+        
+        {/* Template-Specific Parameters */}
+        {Object.keys(visibleTemplateParams).length > 0 && (
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                {logo.templateName} Controls
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {Object.entries(visibleTemplateParams).map(([paramName, param]) => (
+                <div key={paramName} className="flex items-center justify-between">
+                  <label className="text-xs font-medium text-gray-600 flex-1">
+                    {param.label || paramName}
+                  </label>
+                  <div className="flex items-center gap-2 min-w-0">
+                    {param.type === 'text' && (
+                      <input
+                        type="text"
+                        value={contentParams?.[paramName] || customParams?.[paramName] || param.default || ''}
+                        onChange={(e) => {
+                          if (['text', 'letter'].includes(paramName)) {
+                            updateContent({ [paramName]: e.target.value });
+                          } else {
+                            updateCustom({ [paramName]: e.target.value });
+                          }
+                        }}
+                        className="text-xs p-1 border rounded bg-white min-w-0 w-20"
+                      />
                     )}
-                  </div>
-
-                  {/* Fill Section - Compact */}
-                  <div className="bg-blue-50 rounded-lg p-3 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-medium text-gray-700">Fill</span>
-                      <div className="flex items-center gap-2">
-                        <select
-                          value={customParameters['fillType'] ?? 'solid'}
-                          onChange={(e) => onCustomParametersChange({ ...customParameters, fillType: e.target.value })}
-                          className="text-xs p-1 border rounded bg-white min-w-0"
-                        >
-                          <option value="none">None</option>
-                          <option value="solid">Solid</option>
-                          <option value="gradient">Gradient</option>
-                        </select>
-                        {customParameters['fillType'] !== 'none' && (
-                          <span className="text-xs text-gray-500">
-                            {Math.round((customParameters['fillOpacity'] ?? 1) * 100)}%
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    {customParameters['fillType'] !== 'none' && (
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="color"
-                          value={customParameters['fillColor'] ?? '#3b82f6'}
-                          onChange={(e) => onCustomParametersChange({ ...customParameters, fillColor: e.target.value })}
-                          className="w-8 h-6 border border-gray-300 rounded cursor-pointer"
-                        />
-                        {customParameters['fillType'] === 'gradient' && (
-                          <input
-                            type="color"
-                            value={customParameters['fillGradientEnd'] ?? '#1d4ed8'}
-                            onChange={(e) => onCustomParametersChange({ ...customParameters, fillGradientEnd: e.target.value })}
-                            className="w-8 h-6 border border-gray-300 rounded cursor-pointer"
-                          />
-                        )}
+                    {param.type === 'slider' && (
+                      <>
                         <input
                           type="range"
-                          min="0"
-                          max="1"
-                          step="0.05"
-                          value={customParameters['fillOpacity'] ?? 1}
-                          onChange={(e) => onCustomParametersChange({ ...customParameters, fillOpacity: parseFloat(e.target.value) })}
-                          className="flex-1 h-2"
+                          min={param.min || 0}
+                          max={param.max || 100}
+                          step={param.step || 1}
+                          value={customParams?.[paramName] || param.default || 0}
+                          onChange={(e) => updateCustom({ [paramName]: parseFloat(e.target.value) })}
+                          className="w-20 h-2"
                         />
-                      </div>
+                        <span className="text-xs text-gray-500 w-12 text-right">
+                          {customParams?.[paramName] || param.default || 0}
+                        </span>
+                      </>
                     )}
-                  </div>
-
-                  {/* Stroke Section - Compact */}
-                  <div className="bg-purple-50 rounded-lg p-3 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-medium text-gray-700">Stroke</span>
-                      <div className="flex items-center gap-2">
-                        <select
-                          value={customParameters['strokeType'] ?? 'solid'}
-                          onChange={(e) => onCustomParametersChange({ ...customParameters, strokeType: e.target.value })}
-                          className="text-xs p-1 border rounded bg-white min-w-0"
-                        >
-                          <option value="none">None</option>
-                          <option value="solid">Solid</option>
-                          <option value="dashed">Dashed</option>
-                          <option value="dotted">Dotted</option>
-                        </select>
-                        {customParameters['strokeType'] !== 'none' && (
-                          <span className="text-xs text-gray-500">
-                            {customParameters['strokeWidth'] ?? 2}px
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    {customParameters['strokeType'] !== 'none' && (
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="color"
-                          value={customParameters['strokeColor'] ?? '#1e40af'}
-                          onChange={(e) => onCustomParametersChange({ ...customParameters, strokeColor: e.target.value })}
-                          className="w-8 h-6 border border-gray-300 rounded cursor-pointer"
-                        />
-                        <input
-                          type="range"
-                          min="0.5"
-                          max="10"
-                          step="0.5"
-                          value={customParameters['strokeWidth'] ?? 2}
-                          onChange={(e) => onCustomParametersChange({ ...customParameters, strokeWidth: parseFloat(e.target.value) })}
-                          className="flex-1 h-2"
-                        />
-                      </div>
-                    )}
+                    {/* Add other control types as needed */}
                   </div>
                 </div>
-              );
-            })()}
-          </CardContent>
-        </Card>
-
-        {/* Template-Specific Parameters - Grouped by Category */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm flex items-center gap-2">
-              <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-              {currentPresetName ? `${currentPresetName} Controls` : 'Template Parameters'}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {(() => {
-              const parsedParams = parseCustomParameters(customCode)
-              if (!parsedParams || Object.keys(parsedParams).length === 0) {
-                return (
-                  <div className="text-xs text-gray-500 p-3 bg-gray-50 rounded border-l-4 border-blue-200">
-                    Add a <code className="bg-gray-200 px-1 rounded">PARAMETERS</code> definition in your code to see controls here.
-                  </div>
-                )
-              }
-              
-              // Filter out universal controls - only show template-specific ones
-              const universalControlNames = [
-                'backgroundColor', 'backgroundType', 'backgroundGradientStart', 'backgroundGradientEnd', 'backgroundGradientDirection',
-                'fillType', 'fillColor', 'fillGradientStart', 'fillGradientEnd', 'fillGradientDirection', 'fillOpacity',
-                'strokeType', 'strokeColor', 'strokeWidth', 'strokeOpacity'
-              ];
-              
-              const templateParams = Object.fromEntries(
-                Object.entries(parsedParams).filter(([key]) => !universalControlNames.includes(key))
-              );
-              
-              if (Object.keys(templateParams).length === 0) {
-                return (
-                  <div className="text-xs text-gray-500 p-3 bg-gray-50 rounded">
-                    This template uses only universal controls.
-                  </div>
-                );
-              }
-              
-              // Group by category for professional layout
-              const visibleParams = Object.entries(templateParams).filter(([paramName, param]) => {
-                if (param.showIf && typeof param.showIf === 'function') {
-                  return param.showIf(customParameters);
-                }
-                return true;
-              });
-              
-              // Extract unique categories from parameters, plus uncategorized
-              const categoriesInParams = [...new Set(visibleParams.map(([_, param]) => param.category).filter(Boolean))];
-              const hasUncategorized = visibleParams.some(([_, param]) => !param.category);
-              const categories = [...categoriesInParams, ...(hasUncategorized ? [null] : [])];
-              
-              const result = categories.map(category => {
-                const categoryParams = visibleParams.filter(([_, param]) => {
-                  // For uncategorized items, check if category is null/undefined
-                  if (category === null) {
-                    return !param.category;
-                  }
-                  return param.category === category;
-                });
-                if (categoryParams.length === 0) return null;
-                
-                const categoryColor = {
-                  'Shape': 'bg-green-50 border-green-200',
-                  '3D': 'bg-purple-50 border-purple-200', 
-                  'Typography': 'bg-orange-50 border-orange-200',
-                  'Effects': 'bg-blue-50 border-blue-200'
-                }[category] || 'bg-gray-50 border-gray-200';
-                
-                return (
-                  <div key={category || 'uncategorized'} className={`${categoryColor} rounded-lg p-3 space-y-2`}>
-                    {category && <div className="text-xs font-medium text-gray-700 border-b pb-1" style={{borderColor: 'inherit'}}>{category}</div>}
-                    <div className="grid gap-2">
-                      {categoryParams.map(([paramName, param]) => (
-                        <div key={paramName} className="flex items-center justify-between">
-                          <label className="text-xs font-medium text-gray-600 flex-1">
-                            {param.label || paramName}
-                          </label>
-                          <div className="flex items-center gap-2 min-w-0">
-                            {param.type === 'color' ? (
-                              <>
-                                <input
-                                  type="color"
-                                  value={customParameters[paramName] ?? param.default ?? '#000000'}
-                                  onChange={(e) => onCustomParametersChange({ ...customParameters, [paramName]: e.target.value })}
-                                  className="w-8 h-6 border border-gray-300 rounded cursor-pointer"
-                                />
-                                <span className="text-xs text-gray-500 w-16 text-right">
-                                  {(customParameters[paramName] ?? param.default ?? '#000000').slice(1)}
-                                </span>
-                              </>
-                            ) : param.type === 'text' ? (
-                              <input
-                                type="text"
-                                value={customParameters[paramName] ?? param.default ?? ''}
-                                onChange={(e) => onCustomParametersChange({ ...customParameters, [paramName]: e.target.value })}
-                                className="text-xs p-1 border rounded bg-white min-w-0 w-20"
-                                placeholder={param.default}
-                              />
-                            ) : param.type === 'select' ? (
-                              <select
-                                value={customParameters[paramName] ?? param.default ?? ''}
-                                onChange={(e) => onCustomParametersChange({ ...customParameters, [paramName]: e.target.value })}
-                                className="text-xs p-1 border rounded bg-white min-w-0 max-w-20"
-                              >
-                                {param.options?.map((option: any) => {
-                                  const value = typeof option === 'string' ? option : option.value;
-                                  const label = typeof option === 'string' ? option : option.label;
-                                  return (
-                                    <option key={value} value={value}>
-                                      {label}
-                                    </option>
-                                  );
-                                })}
-                              </select>
-                            ) : param.type === 'toggle' ? (
-                              <input
-                                type="checkbox"
-                                checked={customParameters[paramName] ?? param.default ?? false}
-                                onChange={(e) => onCustomParametersChange({ ...customParameters, [paramName]: e.target.checked })}
-                                className="w-4 h-4 rounded"
-                              />
-                            ) : (
-                              <>
-                                <input
-                                  type="range"
-                                  min={param.min ?? 0}
-                                  max={param.max ?? 100}
-                                  step={param.step ?? 1}
-                                  value={customParameters[paramName] ?? param.default ?? 0}
-                                  onChange={(e) => onCustomParametersChange({ ...customParameters, [paramName]: parseFloat(e.target.value) })}
-                                  className="w-20 h-2"
-                                />
-                                <span className="text-xs text-gray-500 w-12 text-right">
-                                  {(() => {
-                                    const value = customParameters[paramName] ?? param.default ?? 0;
-                                    return typeof value === 'number' ? value.toFixed(param.step < 1 ? 2 : 0) : value;
-                                  })()}
-                                </span>
-                              </>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                );
-              }).filter(Boolean);
-              
-              return result;
-            })()
-            }
-          </CardContent>
-        </Card>
-
-        {/* Core Wave Parameters - Only show if not using preset with its own parameters */}
-        {(!currentPresetName || (parseCustomParameters(customCode) && Object.keys(parseCustomParameters(customCode) || {}).length === 0)) && (
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm">Core Wave Parameters</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {/* Frequency */}
-            <div>
-              <label className="text-xs font-medium">Frequency: {frequency}</label>
-              <Slider
-                value={[frequency]}
-                onValueChange={([v]) => onFrequencyChange(v)}
-                max={20}
-                min={0.1}
-                step={0.1}
-                className="mt-1"
-              />
-              <p className="text-xs text-gray-500 mt-1">Wave cycles</p>
-            </div>
-            
-            {/* Amplitude */}
-            <div>
-              <label className="text-xs font-medium">Amplitude: {amplitude}</label>
-              <Slider
-                value={[amplitude]}
-                onValueChange={([v]) => onAmplitudeChange(v)}
-                max={200}
-                min={0}
-                step={1}
-                className="mt-1"
-              />
-              <p className="text-xs text-gray-500 mt-1">Wave height</p>
-            </div>
-            
-            {/* Complexity */}
-            <div>
-              <label className="text-xs font-medium">Complexity: {complexity.toFixed(2)}</label>
-              <Slider
-                value={[complexity]}
-                onValueChange={([v]) => onComplexityChange(v)}
-                max={1}
-                min={0}
-                step={0.01}
-                className="mt-1"
-              />
-              <p className="text-xs text-gray-500 mt-1">Wave harmonics</p>
-            </div>
-          </CardContent>
-        </Card>
+              ))}
+            </CardContent>
+          </Card>
         )}
-
-        {/* Advanced Controls - Only show if not using preset */}
-        {(!currentPresetName || (parseCustomParameters(customCode) && Object.keys(parseCustomParameters(customCode) || {}).length === 0)) && (
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm">Advanced Controls</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {/* Chaos */}
-            <div>
-              <label className="text-xs font-medium">Chaos: {chaos.toFixed(2)}</label>
-              <Slider
-                value={[chaos]}
-                onValueChange={([v]) => onChaosChange(v)}
-                max={1}
-                min={0}
-                step={0.01}
-                className="mt-1"
-              />
-              <p className="text-xs text-gray-500 mt-1">Randomness factor</p>
-            </div>
-
-            {/* Damping */}
-            <div>
-              <label className="text-xs font-medium">Damping: {damping.toFixed(2)}</label>
-              <Slider
-                value={[damping]}
-                onValueChange={([v]) => onDampingChange(v)}
-                max={1}
-                min={0}
-                step={0.01}
-                className="mt-1"
-              />
-              <p className="text-xs text-gray-500 mt-1">Layer decay</p>
-            </div>
-
-            {/* Layers */}
-            <div>
-              <label className="text-xs font-medium">Layers: {layers}</label>
-              <Slider
-                value={[layers]}
-                onValueChange={([v]) => onLayersChange(v)}
-                max={8}
-                min={1}
-                step={1}
-                className="mt-1"
-              />
-              <p className="text-xs text-gray-500 mt-1">Wave layers</p>
-            </div>
-          </CardContent>
-        </Card>
+        
+        {/* Core Wave Parameters */}
+        {(!parsedParams || Object.keys(templateParams).length === 0) && (
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm">Core Wave Parameters</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <label className="text-xs font-medium">Frequency: {coreParams?.frequency}</label>
+                <Slider
+                  value={[coreParams?.frequency || 4]}
+                  onValueChange={([v]) => setFrequency(v)}
+                  max={20}
+                  min={0.1}
+                  step={0.1}
+                  className="mt-1"
+                />
+              </div>
+              
+              <div>
+                <label className="text-xs font-medium">Amplitude: {coreParams?.amplitude}</label>
+                <Slider
+                  value={[coreParams?.amplitude || 50]}
+                  onValueChange={([v]) => setAmplitude(v)}
+                  max={200}
+                  min={0}
+                  step={1}
+                  className="mt-1"
+                />
+              </div>
+              
+              <div>
+                <label className="text-xs font-medium">Complexity: {coreParams?.complexity?.toFixed(2)}</label>
+                <Slider
+                  value={[coreParams?.complexity || 0.5]}
+                  onValueChange={([v]) => setComplexity(v)}
+                  max={1}
+                  min={0}
+                  step={0.01}
+                  className="mt-1"
+                />
+              </div>
+            </CardContent>
+          </Card>
         )}
-
-        {/* Additional Parameters - Only show if not using preset */}
-        {(!currentPresetName || (parseCustomParameters(customCode) && Object.keys(parseCustomParameters(customCode) || {}).length === 0)) && (
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm">Additional Parameters</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <label className="text-xs font-medium">Bar Count: {barCount}</label>
-              <Slider
-                value={[barCount]}
-                onValueChange={([v]) => onBarCountChange(v)}
-                max={100}
-                min={20}
-                step={5}
-                className="mt-1"
-              />
-              <p className="text-xs text-gray-500 mt-1">Number of elements</p>
-            </div>
-            <div>
-              <label className="text-xs font-medium">Spacing: {barSpacing}px</label>
-              <Slider
-                value={[barSpacing]}
-                onValueChange={([v]) => onBarSpacingChange(v)}
-                max={5}
-                min={0}
-                step={1}
-                className="mt-1"
-              />
-              <p className="text-xs text-gray-500 mt-1">Element spacing</p>
-            </div>
-            <div>
-              <label className="text-xs font-medium">Radius: {radius}</label>
-              <Slider
-                value={[radius]}
-                onValueChange={([v]) => onRadiusChange(v)}
-                max={200}
-                min={10}
-                step={1}
-                className="mt-1"
-              />
-              <p className="text-xs text-gray-500 mt-1">Base size</p>
-            </div>
-          </CardContent>
-        </Card>
-        )}
-
-        {/* Seed - Minimized at bottom */}
-        <div className="pt-4 mt-4 border-t border-gray-200">
-          <div className="flex items-center gap-2">
-            <label className="text-xs text-gray-500">Seed:</label>
-            <input
-              type="text"
-              value={seed}
-              onChange={(e) => onSeedChange(e.target.value)}
-              className="flex-1 px-2 py-1 text-xs border rounded bg-gray-50"
-              placeholder="random-seed"
-            />
-          </div>
-        </div>
+        
       </div>
     </div>
-  )
+  );
 }
