@@ -113,7 +113,7 @@ export const generateAudioBars = (
     
     ctx.fillStyle = gradient
     
-    const radius = barWidth / 3
+    const radius = Math.max(0, barWidth / 3)
     ctx.beginPath()
     ctx.roundRect(x, centerY - barHeight/2, barWidth, barHeight, radius)
     ctx.fill()
@@ -191,7 +191,7 @@ export const generateWaveBars = (
     
     ctx.fillStyle = gradient
     
-    const radius = barWidth / 3
+    const radius = Math.max(0, barWidth / 3)
     ctx.beginPath()
     ctx.roundRect(x, waveCenterY - barHeight/2, barWidth, barHeight, radius)
     ctx.fill()
@@ -416,8 +416,8 @@ export const executeCustomCode = (
   height: number, 
   params: VisualizationParams,
   customCode: string,
-  onError: (error: string) => void
-) => {
+  onError?: (error: string) => void
+): { success: boolean; error?: string } => {
   try {
     // Check if this code references a preset from the registry
     const presetIdMatch = customCode.match(/\/\/ PRESET_ID: ([\w-]+)/)
@@ -425,7 +425,7 @@ export const executeCustomCode = (
       const presetId = presetIdMatch[1]
       const success = executePreset(presetId, ctx, width, height, params, params.time)
       if (success) {
-        return // Preset executed successfully
+        return { success: true } // Preset executed successfully
       }
     }
     const waveParams: WaveParameters = {
@@ -476,8 +476,13 @@ export const executeCustomCode = (
       params.time,
       WaveGenerator
     )
+    return { success: true }
   } catch (error) {
-    onError(error instanceof Error ? error.message : 'Unknown error')
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    if (onError) {
+      onError(errorMessage)
+    }
     console.error('Custom code execution error:', error)
+    return { success: false, error: errorMessage }
   }
 }

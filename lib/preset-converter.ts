@@ -11,6 +11,7 @@ import type { Preset } from '@/presets/types';
 export function convertPresetToLegacy(preset: Preset): string {
   // Convert parameters to the old PARAMETERS format
   const parametersCode = generateParametersCode(preset.parameters);
+  console.log('Generated parameters code:', parametersCode.substring(0, 300) + '...');
   
   // Convert the draw function to string
   const drawFunctionCode = preset.draw.toString();

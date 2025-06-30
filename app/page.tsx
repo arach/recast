@@ -10,20 +10,25 @@ import '@/core/triangle-generator' // Import to register
 import '@/core/infinity-generator' // Import to register
 import { SavedShape, SavedPreset } from '@/lib/storage'
 import { generateLogoPackage, generateReactComponent, ExportConfig } from '@/lib/svg-export'
+import { exportCanvasAsPNG, exportAllSizes, getCanvasFromId } from '@/lib/export-utils'
 import { SaveDialog } from '@/components/save-dialog'
 import { SavedItemsDialog } from '@/components/saved-items-dialog'
 import { StudioHeader } from '@/components/studio/StudioHeader'
 import { CodeEditorPanel } from '@/components/studio/CodeEditorPanel'
 import { CanvasArea } from '@/components/studio/CanvasArea'
 import { ControlsPanel } from '@/components/studio/ControlsPanel'
+import { ControlsPanelV2 } from '@/components/studio/ControlsPanelV2'
 import { BrandPresetsPanel } from '@/components/studio/BrandPresetsPanel'
+import { StoreInitializer } from '@/components/migration/StoreInitializer'
+import { FeatureFlags } from '@/lib/feature-flags'
+import { DebugFeatureFlags } from '@/components/DebugFeatureFlags'
 import { IndustrySelector } from '@/components/studio/IndustrySelector'
 import { ColorThemeSelector } from '@/components/studio/ColorThemeSelector'
 import { TemplatePresetsPanel } from '@/components/studio/TemplatePresetsPanel'
 import { AISuggestions } from '@/components/studio/AISuggestions'
 import { BrandPersonality } from '@/components/studio/BrandPersonality'
 import { AIBrandConsultant } from '@/components/studio/AIBrandConsultant'
-import { VisualizationParams } from '@/lib/visualization-generators'
+import { generateWaveBars, executeCustomCode, VisualizationParams } from '@/lib/visualization-generators'
 import { loadPresetAsLegacy, getAllPresetsAsLegacy } from '@/lib/preset-converter'
 import type { LoadedPreset } from '@/lib/preset-loader'
 
@@ -57,6 +62,13 @@ interface LogoInstance {
 
 export default function Home() {
   const [mounted, setMounted] = useState(false)
+  
+  // Debug feature flags
+  if (typeof window !== 'undefined') {
+    console.log('🎯 Client-side feature flags:', {
+      zustandControls: FeatureFlags.isZustandControlsEnabled(),
+    });
+  }
   const [availablePresets, setAvailablePresets] = useState<LoadedPreset[]>([])
   
   // Multi-logo state
@@ -505,6 +517,8 @@ export default function Home() {
         return
       }
       
+      console.log('Loaded preset code preview:', preset.code.substring(0, 500) + '...')
+      
       // Parse the preset code to get ALL parameter definitions (not just defaults)
       const parsedParams = parseCustomParameters(preset.code) || {};
       
@@ -681,12 +695,91 @@ export default function Home() {
   }
 
   const exportAsPNG = async (size?: number, filename?: string) => {
-    // Implementation would go here - simplified for brevity
-    alert(`Exporting PNG ${size ? `at ${size}x${size}` : ''}...`)
+    try {
+      const selectedLogo = logos.find(logo => logo.id === selectedLogoId);
+      if (!selectedLogo) {
+        console.error('No logo selected');
+        alert('Please select a logo to export');
+        return;
+      }
+      
+      // Create a canvas with the logo
+      const logoCanvas = document.createElement('canvas');
+      const targetSize = size || 600;
+      logoCanvas.width = targetSize;
+      logoCanvas.height = targetSize;
+      const ctx = logoCanvas.getContext('2d');
+      
+      if (!ctx) {
+        throw new Error('Failed to get canvas context');
+      }
+      
+      // Clear canvas with white background
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, targetSize, targetSize);
+      
+      // Execute the visualization code
+      try {
+        const execParams: VisualizationParams = {
+          ...selectedLogo.params,
+          customParameters: selectedLogo.params.customParameters || {},
+          time: 0 // Static frame for export
+        };
+        
+        // Try custom code first
+        if (selectedLogo.code && selectedLogo.code.trim()) {
+          const result = executeCustomCode(ctx, targetSize, targetSize, execParams, selectedLogo.code);
+          if (!result.success) {
+            console.error('Custom code execution failed:', result.error);
+            // Fall back to default visualization
+            generateWaveBars(ctx, targetSize, targetSize, execParams);
+          }
+        } else {
+          // No custom code, use default visualization
+          generateWaveBars(ctx, targetSize, targetSize, execParams);
+        }
+      } catch (error) {
+        console.error('Visualization generation failed:', error);
+        // Fall back to default visualization
+        generateWaveBars(ctx, targetSize, targetSize, execParams);
+      }
+      
+      const defaultFilename = filename || `reflow-${selectedLogo.params.seed || 'logo'}${size ? `-${size}x${size}` : ''}.png`;
+      await exportCanvasAsPNG(logoCanvas, defaultFilename);
+      console.log('PNG exported successfully');
+    } catch (error) {
+      console.error('Export failed:', error);
+      alert('Export failed. Please try again.');
+    }
   }
 
   const exportAllSizes = async () => {
-    alert('Exporting all sizes...')
+    try {
+      const selectedLogo = logos.find(logo => logo.id === selectedLogoId);
+      if (!selectedLogo) {
+        console.error('No logo selected');
+        alert('Please select a logo to export');
+        return;
+      }
+      
+      console.log('Starting export of all sizes...');
+      
+      const sizes = [16, 32, 64, 128, 256, 512, 1024];
+      const templateName = selectedLogo.presetName || selectedLogo.params.seed || 'logo';
+      const baseFilename = `reflow-${templateName.toLowerCase().replace(/\s+/g, '-')}`;
+      
+      for (const size of sizes) {
+        await exportAsPNG(size, `${baseFilename}-${size}x${size}.png`);
+        // Small delay between exports
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+      
+      console.log('All sizes exported successfully');
+      // alert('All sizes exported successfully!');  // Commented out per user feedback
+    } catch (error) {
+      console.error('Export failed:', error);
+      alert('Export failed. Please try again.');
+    }
   }
 
   const exportAsSVG = () => {
@@ -788,6 +881,21 @@ export default function Home() {
 
   return (
     <div className="h-screen overflow-hidden bg-gradient-to-br from-gray-50 to-white flex flex-col">
+      {/* Debug feature flags */}
+      <DebugFeatureFlags />
+      
+      {/* Bridge to Zustand stores */}
+      <StoreInitializer
+        logos={logos}
+        selectedLogoId={selectedLogoId}
+        onLogosChange={setLogos}
+        onSelectedLogoChange={setSelectedLogoId}
+        zoom={zoom}
+        animating={animating}
+        controlsPanelOpen={!codeEditorCollapsed}
+        darkMode={isDarkMode}
+      />
+      
       <StudioHeader
         onRandomize={randomizeParams}
         onSavePreset={() => openSaveDialog('preset')}
@@ -842,36 +950,47 @@ export default function Home() {
         />
 
         <div className="flex">
-          <ControlsPanel
-            currentPresetName={currentPresetName}
-            seed={seed}
-            frequency={frequency}
-            amplitude={amplitude}
-            complexity={complexity}
-            chaos={chaos}
-            damping={damping}
-            layers={layers}
-            barCount={barCount}
-            barSpacing={barSpacing}
-            radius={radius}
-            customCode={logos.find(l => l.id === selectedLogoId)?.code || customCode}
-            customParameters={logos.find(l => l.id === selectedLogoId)?.params.customParameters || customParameters}
-            onSeedChange={setSeed}
-            onFrequencyChange={setFrequency}
-            onAmplitudeChange={setAmplitude}
-            onComplexityChange={setComplexity}
-            onChaosChange={setChaos}
-            onDampingChange={setDamping}
-            onLayersChange={setLayers}
-            onBarCountChange={setBarCount}
-            onBarSpacingChange={setBarSpacing}
-            onRadiusChange={setRadius}
-            onCustomParametersChange={setCustomParameters}
-            getCurrentGeneratorMetadata={getCurrentGeneratorMetadata}
-            parseCustomParameters={parseCustomParameters}
-            forceRender={forceRender}
-            onForceRender={() => setForceRender(prev => prev + 1)}
-          />
+          {/* Use new Zustand-based ControlsPanel if feature flag is enabled */}
+          {FeatureFlags.isZustandControlsEnabled() ? (
+            <>
+              {console.log('🎨 Rendering ControlsPanelV2')}
+              <ControlsPanelV2 />
+            </>
+          ) : (
+            <>
+              {console.log('📊 Rendering ControlsPanel (legacy)')}
+            <ControlsPanel
+              currentPresetName={currentPresetName}
+              seed={seed}
+              frequency={frequency}
+              amplitude={amplitude}
+              complexity={complexity}
+              chaos={chaos}
+              damping={damping}
+              layers={layers}
+              barCount={barCount}
+              barSpacing={barSpacing}
+              radius={radius}
+              customCode={logos.find(l => l.id === selectedLogoId)?.code || customCode}
+              customParameters={logos.find(l => l.id === selectedLogoId)?.params.customParameters || customParameters}
+              onSeedChange={setSeed}
+              onFrequencyChange={setFrequency}
+              onAmplitudeChange={setAmplitude}
+              onComplexityChange={setComplexity}
+              onChaosChange={setChaos}
+              onDampingChange={setDamping}
+              onLayersChange={setLayers}
+              onBarCountChange={setBarCount}
+              onBarSpacingChange={setBarSpacing}
+              onRadiusChange={setRadius}
+              onCustomParametersChange={setCustomParameters}
+              getCurrentGeneratorMetadata={getCurrentGeneratorMetadata}
+              parseCustomParameters={parseCustomParameters}
+              forceRender={forceRender}
+              onForceRender={() => setForceRender(prev => prev + 1)}
+            />
+            </>
+          )}
           
           <div className="w-80 border-l bg-white/50 backdrop-blur-sm overflow-y-auto">
             <div className="p-4 space-y-4">

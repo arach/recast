@@ -8,6 +8,8 @@ interface LogoStore {
   selectedLogoId: string | null;
   
   // Actions
+  initializeLogos: (logos: Logo[]) => void; // Set initial logos
+  setSelectedLogoId: (id: string | null) => void; // Alias for selectLogo
   addLogo: (templateId: string) => string; // Returns new logo ID
   updateLogo: (id: string, updates: Partial<Logo>) => void;
   updateLogoParameters: (id: string, parameters: Partial<Parameters>) => void;
@@ -64,6 +66,14 @@ export const useLogoStore = create<LogoStore>()(
       selectedLogoId: 'main',
 
       // Actions
+      initializeLogos: (logos) => {
+        set({ logos, selectedLogoId: logos[0]?.id || null });
+      },
+      
+      setSelectedLogoId: (id) => {
+        set({ selectedLogoId: id });
+      },
+      
       addLogo: (templateId: string) => {
         const id = `logo-${Date.now()}`;
         const newLogo: Logo = {

@@ -7,6 +7,12 @@ export const PRESET_MODULES = {
   'apex-vercel': () => import('@/presets/apex-vercel'),
   'prism-google': () => import('@/presets/prism-google'),
   'pulse-spotify': () => import('@/presets/pulse-spotify'),
+  'wordmark': () => import('@/presets/wordmark'),
+  'letter-mark': () => import('@/presets/letter-mark'),
+  'minimal-shape': () => import('@/presets/minimal-shape'),
+  'clean-triangle': () => import('@/presets/clean-triangle'),
+  'golden-circle': () => import('@/presets/golden-circle'),
+  'simple-prism': () => import('@/presets/simple-prism'),
 } as const;
 
 export type PresetName = keyof typeof PRESET_MODULES;

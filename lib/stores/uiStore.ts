@@ -23,9 +23,12 @@ interface UIStore {
   
   // Actions
   setZoom: (zoom: number) => void;
+  setAnimating: (animating: boolean) => void;
   toggleAnimation: () => void;
   togglePreviewMode: () => void;
   toggleCodeEditor: () => void;
+  setCodeEditorCollapsed: (collapsed: boolean) => void;
+  setControlsPanelOpen: (open: boolean) => void;
   toggleSavedItems: () => void;
   toggleSaveDialog: () => void;
   toggleIndustryModal: () => void;
@@ -58,6 +61,8 @@ export const useUIStore = create<UIStore>()(
       // Actions
       setZoom: (zoom) => set({ zoom }),
       
+      setAnimating: (animating) => set({ animating }),
+      
       toggleAnimation: () => set((state) => ({ animating: !state.animating })),
       
       togglePreviewMode: () => set((state) => ({ previewMode: !state.previewMode })),
@@ -65,6 +70,13 @@ export const useUIStore = create<UIStore>()(
       toggleCodeEditor: () => set((state) => ({ 
         codeEditorCollapsed: !state.codeEditorCollapsed 
       })),
+      
+      setCodeEditorCollapsed: (collapsed) => set({ codeEditorCollapsed: collapsed }),
+      
+      setControlsPanelOpen: (open) => set({ 
+        // Since we don't have a specific controlsPanelOpen state, 
+        // we can use this as a placeholder or add it to the state
+      }),
       
       toggleSavedItems: () => set((state) => ({ 
         savedItemsOpen: !state.savedItemsOpen 
