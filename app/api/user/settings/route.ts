@@ -8,8 +8,9 @@ const db = new Database('./recast-auth.db');
 
 export async function POST(request: Request) {
   // Get session from Better Auth
+  const headersList = await headers();
   const session = await auth.api.getSession({
-    headers: await headers(),
+    headers: headersList,
   });
   
   if (!session) {
@@ -38,8 +39,9 @@ export async function POST(request: Request) {
 
 export async function GET() {
   // Get session from Better Auth
+  const headersList = await headers();
   const session = await auth.api.getSession({
-    headers: await headers(),
+    headers: headersList,
   });
   
   if (!session) {

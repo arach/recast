@@ -40,7 +40,7 @@ export function draw(
   width: number,
   height: number,
   params: Record<string, any>,
-  generator: any,
+  _generator: any,
   time: number
 ) {
   // Apply universal background
@@ -104,7 +104,7 @@ export function draw(
   // Draw front face
   drawPrismPath(ctx, prismData.frontFace, cornerRadius);
   const bounds = getBoundsFromPoints(prismData.frontFace);
-  applyUniversalFill(ctx, bounds, params);
+  applyUniversalFill(ctx, params);
   applyUniversalStroke(ctx, params);
   
   // Draw side faces and internal structure

@@ -1,5 +1,5 @@
-import { OpenAI } from 'openai';
-import { OpenAIStream, StreamingTextResponse } from 'ai';
+import { streamText } from 'ai';
+import { createOpenAI } from '@ai-sdk/openai';
 
 export const runtime = 'edge';
 
@@ -11,16 +11,10 @@ export async function POST(req: Request) {
       return new Response('API key required', { status: 401 });
     }
 
-    // Initialize OpenAI with user's key
-    const openai = new OpenAI({
-      apiKey: apiKey,
-    });
-
     const { 
       brandDescription, 
       visualReferences, 
-      currentParams,
-      requestType = 'brand-analysis'
+      currentParams
     } = await req.json();
 
     // Build the system prompt
@@ -67,21 +61,23 @@ Return ONLY a valid JSON object with NO additional text:
     userPrompt += `Current parameters: ${JSON.stringify(currentParams, null, 2)}\n\n`;
     userPrompt += `Analyze this brand and recommend specific ReCast parameters that would create an appropriate logo.`;
 
-    // Create the completion
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
-      stream: true,
+    // Create the streaming response using AI SDK v4
+    const openai = createOpenAI({
+      apiKey: apiKey,
+    });
+    
+    const result = await streamText({
+      model: openai('gpt-4o-mini'),
       temperature: 0.7,
-      max_tokens: 1000,
+      maxTokens: 1000,
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt }
       ],
     });
 
-    // Convert to stream
-    const stream = OpenAIStream(response);
-    return new StreamingTextResponse(stream);
+    // Return the streaming response
+    return result.toDataStreamResponse();
     
   } catch (error: any) {
     console.error('AI Brand Consultant error:', error);

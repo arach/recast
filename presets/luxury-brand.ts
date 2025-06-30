@@ -43,7 +43,7 @@ export function draw(
   width: number,
   height: number,
   params: Record<string, any>,
-  generator: any,
+  _generator: any,
   time: number
 ) {
   // Sophisticated background - subtle gradient instead of flat white

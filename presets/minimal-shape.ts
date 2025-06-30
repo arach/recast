@@ -84,8 +84,8 @@ export function draw(
   width: number,
   height: number,
   params: Record<string, any>,
-  generator: any,
-  time: number
+  _generator: any,
+  _time: number
 ) {
   // Apply universal background
   applyUniversalBackground(ctx, width, height, params);

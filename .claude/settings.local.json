@@ -9,7 +9,20 @@
       "Bash(ls:*)",
       "Bash(git push:*)",
       "WebFetch(domain:kit-forge.replit.app)",
-      "WebFetch(domain:github.com)"
+      "WebFetch(domain:github.com)",
+      "Bash(grep:*)",
+      "Bash(pnpm typecheck:*)",
+      "Bash(node:*)",
+      "Bash(pnpm rebuild:*)",
+      "Bash(npm run build-release:*)",
+      "Bash(pnpm ls:*)",
+      "Bash(pnpm tsc:*)",
+      "Bash(cat:*)",
+      "Bash(rm:*)",
+      "Bash(pnpm add:*)",
+      "Bash(sed:*)",
+      "Bash(chmod:*)",
+      "Bash(bash:*)"
     ],
     "deny": []
   }

@@ -1,20 +1,11 @@
 'use client'
 
 import React, { useState, useEffect, useRef, useCallback } from 'react'
-import JSZip from 'jszip'
-import { saveAs } from 'file-saver'
-import { WaveGenerator } from '@/core/wave-generator'
-import { GenerativeEngine, GeneratorRegistry } from '@/core/generative-engine'
-import '@/core/circle-generator' // Import to register
-import '@/core/triangle-generator' // Import to register
-import '@/core/infinity-generator' // Import to register
 import { SavedShape, SavedPreset } from '@/lib/storage'
-import { generateLogoPackage, generateReactComponent, ExportConfig } from '@/lib/svg-export'
-import { exportCanvasAsPNG, exportAllSizes, getCanvasFromId } from '@/lib/export-utils'
+import { exportCanvasAsPNG } from '@/lib/export-utils'
 import { SaveDialog } from '@/components/save-dialog'
 import { SavedItemsDialog } from '@/components/saved-items-dialog'
 import { StudioHeader } from '@/components/studio/StudioHeader'
-import { CodeEditorPanel } from '@/components/studio/CodeEditorPanel'
 import { CanvasArea } from '@/components/studio/CanvasArea'
 import { ControlsPanel } from '@/components/studio/ControlsPanel'
 import { BrandPresetsPanel } from '@/components/studio/BrandPresetsPanel'
@@ -25,11 +16,9 @@ import { TemplatePresetsPanel } from '@/components/studio/TemplatePresetsPanel'
 import { AISuggestions } from '@/components/studio/AISuggestions'
 import { BrandPersonality } from '@/components/studio/BrandPersonality'
 import { AIBrandConsultant } from '@/components/studio/AIBrandConsultant'
-import { generateWaveBars, executeCustomCode, VisualizationParams } from '@/lib/visualization-generators'
-import { loadPresetAsLegacy, getAllPresetsAsLegacy } from '@/lib/preset-converter'
-import type { LoadedPreset } from '@/lib/preset-loader'
+import { generateWaveBars, executeCustomCode, type VisualizationParams } from '@/lib/visualization-generators'
+import { loadPresetAsLegacy } from '@/lib/preset-converter'
 
-const colorPalette = ['#0070f3', '#7c3aed', '#dc2626', '#059669', '#d97706', '#be185d', '#4338ca', '#0891b2']
 
 interface LogoInstance {
   id: string
@@ -55,12 +44,13 @@ interface LogoInstance {
   code: string
   presetId?: string // Track which preset this logo is using
   presetName?: string
+  templateId?: string // For backward compatibility
+  templateName?: string
 }
 
 export default function Home() {
   const [mounted, setMounted] = useState(false)
   
-  const [availablePresets, setAvailablePresets] = useState<LoadedPreset[]>([])
   
   // Multi-logo state
   const [logos, setLogos] = useState<LogoInstance[]>([
@@ -93,19 +83,15 @@ export default function Home() {
   const [selectedLogoId, setSelectedLogoId] = useState('main')
   
   // UI state
-  const [animating, setAnimating] = useState(false)
-  const [codeError, setCodeError] = useState<string | null>(null)
-  const [zoom, setZoom] = useState(1)
+  const [animating] = useState(false)
+  const [zoom] = useState(1)
   const [isDarkMode, setIsDarkMode] = useState(false)
   const [saveDialogOpen, setSaveDialogOpen] = useState(false)
   const [saveMode, setSaveMode] = useState<'shape' | 'preset'>('preset')
   const [savedItemsOpen, setSavedItemsOpen] = useState(false)
   const [currentShapeId, setCurrentShapeId] = useState<string | undefined>()
   const [currentShapeName, setCurrentShapeName] = useState('Custom Shape')
-  const [previewMode, setPreviewMode] = useState(false)
   const [forceRender, setForceRender] = useState(0)
-  const [isRendering, setIsRendering] = useState(false)
-  const [renderSuccess, setRenderSuccess] = useState(false)
   const [showIndustrySelector, setShowIndustrySelector] = useState(false)
   const [currentIndustry, setCurrentIndustry] = useState<string | undefined>()
   const animationRef = useRef<number>()
@@ -128,24 +114,7 @@ export default function Home() {
   const color = selectedLogo.params.color
   const customCode = selectedLogo.code
   const customParameters = selectedLogo.params.customParameters
-  const currentPresetName = selectedLogo.presetName
 
-  // Load presets on mount
-  useEffect(() => {
-    const loadPresets = async () => {
-      try {
-        const presets = await getAllPresetsAsLegacy()
-        setAvailablePresets(presets)
-        console.log('Loaded presets:', presets.map(p => p.name))
-      } catch (error) {
-        console.error('Failed to load presets:', error)
-      }
-    }
-    
-    if (mounted) {
-      loadPresets()
-    }
-  }, [mounted])
 
   // Update functions for selected logo parameters
   const updateSelectedLogo = (updates: Partial<LogoInstance['params']>) => {
@@ -178,38 +147,6 @@ export default function Home() {
     ))
   }
 
-  // Logo management functions
-  const duplicateLogo = (logoId: string) => {
-    const logoToDuplicate = logos.find(logo => logo.id === logoId)
-    if (!logoToDuplicate) return
-    
-    const newId = `logo-${Date.now()}`
-    const newLogo: LogoInstance = {
-      id: newId,
-      x: logoToDuplicate.x + 700, // Place to the right with some spacing
-      y: logoToDuplicate.y,
-      params: { ...logoToDuplicate.params },
-      code: logoToDuplicate.code,
-      presetId: logoToDuplicate.presetId,
-      presetName: logoToDuplicate.presetName
-    }
-    setLogos(prev => [...prev, newLogo])
-    setSelectedLogoId(newId) // Auto-select the new logo
-  }
-
-  const deleteLogo = (logoId: string) => {
-    if (logos.length <= 1) return // Don't delete the last logo
-    
-    setLogos(prev => prev.filter(logo => logo.id !== logoId))
-    
-    // If we deleted the selected logo, select another one
-    if (logoId === selectedLogoId) {
-      const remainingLogos = logos.filter(logo => logo.id !== logoId)
-      if (remainingLogos.length > 0) {
-        setSelectedLogoId(remainingLogos[0].id)
-      }
-    }
-  }
 
   // Set mounted flag after hydration
   useEffect(() => {
@@ -243,7 +180,7 @@ export default function Home() {
         if (backgroundColorParam) updates.backgroundColor = backgroundColorParam;
         
         if (Object.keys(updates).length > 0) {
-          setCustomParameters(prev => ({ ...prev, ...updates }));
+          setCustomParameters((prev: Record<string, any>) => ({ ...prev, ...updates }));
           updateSelectedLogo({ customParameters: updates });
         }
       });
@@ -258,7 +195,7 @@ export default function Home() {
       if (backgroundColorParam) updates.backgroundColor = backgroundColorParam;
       
       if (Object.keys(updates).length > 0) {
-        setCustomParameters(prev => ({ ...prev, ...updates }));
+        setCustomParameters((prev: Record<string, any>) => ({ ...prev, ...updates }));
         updateSelectedLogo({ customParameters: updates });
       }
     }
@@ -308,16 +245,6 @@ export default function Home() {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [mounted])
 
-
-
-  // Get metadata for current generator (simplified - just use wave generator)
-  const getCurrentGeneratorMetadata = () => {
-    const generator = GeneratorRegistry.createGenerator('wave', {
-      frequency, amplitude, complexity, chaos, damping, layers, radius
-    }, seed)
-    return generator?.getMetadata()
-  }
-
   // Parse parameter definitions from custom code
   const parseCustomParameters = (code: string) => {
     try {
@@ -356,7 +283,6 @@ export default function Home() {
         // Split by commas at the top level only
         let currentPos = 0
         let braceDepth = 0
-        let currentParam = ''
         let inString = false
         let stringChar = ''
         
@@ -437,65 +363,14 @@ export default function Home() {
 
   // Manual refresh function
   const handleRunCode = useCallback(() => {
-    setIsRendering(true)
-    setRenderSuccess(false)
     setForceRender(prev => prev + 1)
     
     // Clear any animation state to force a clean render
     if (animationRef.current) {
       cancelAnimationFrame(animationRef.current)
     }
-    
-    // Give visual feedback
-    setTimeout(() => {
-      setIsRendering(false)
-      setRenderSuccess(true)
-      
-      // Hide success after a moment
-      setTimeout(() => {
-        setRenderSuccess(false)
-      }, 1500)
-    }, 300)
   }, [])
 
-  const handleCloneToCustom = () => {
-    const currentCode = selectedLogo.code
-    setCustomCode(currentCode)
-    setCurrentShapeId(undefined)
-    setCurrentShapeName((selectedLogo.presetName || 'Custom') + ' (Clone)')
-  }
-
-  const getShapeNameForMode = () => {
-    return selectedLogo.presetName || 'Custom'
-  }
-
-  const toggleAnimation = () => {
-    if (animating) {
-      setAnimating(false)
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current)
-      }
-    } else {
-      setAnimating(true)
-      const animate = () => {
-        timeRef.current += 0.05
-        setForceRender(prev => prev + 1) // We need this to trigger redraws
-        animationRef.current = requestAnimationFrame(animate)
-      }
-      animate()
-    }
-  }
-
-  const randomizeParams = () => {
-    setSeed(Math.random().toString(36).substring(7))
-    setFrequency(Math.floor(Math.random() * 8) + 1)
-    setAmplitude(Math.floor(Math.random() * 80) + 20)
-    setComplexity(Math.random())
-    setChaos(Math.random() * 0.3)
-    setDamping(0.5 + Math.random() * 0.5)
-    setLayers(Math.floor(Math.random() * 5) + 1)
-    setColor(colorPalette[Math.floor(Math.random() * colorPalette.length)])
-  }
 
   // Load preset by ID
   const loadPresetById = async (presetId: string, customDefaults?: Record<string, any>) => {
@@ -592,9 +467,9 @@ export default function Home() {
             params: {
               ...logo.params,
               // Apply color params at the root level
-              fillColor: themedParams.fillColor || logo.params.fillColor,
-              strokeColor: themedParams.strokeColor || logo.params.strokeColor,
-              backgroundColor: themedParams.backgroundColor || logo.params.backgroundColor,
+              fillColor: themedParams.fillColor || logo.params.customParameters?.fillColor,
+              strokeColor: themedParams.strokeColor || logo.params.customParameters?.strokeColor,
+              backgroundColor: themedParams.backgroundColor || logo.params.customParameters?.backgroundColor,
               customParameters: {
                 ...logo.params.customParameters,
                 // Also apply to custom parameters for templates that look there
@@ -635,7 +510,7 @@ export default function Home() {
           }
         : logo
     ))
-    setCustomParameters(prev => ({
+    setCustomParameters((prev: Record<string, any>) => ({
       ...prev,
       ...presetParams
     }))
@@ -676,7 +551,7 @@ export default function Home() {
       ))
       
       // Update custom parameters state for the controls panel
-      setCustomParameters(prev => ({
+      setCustomParameters((prev: Record<string, any>) => ({
         ...prev,
         ...filteredParams
       }))
@@ -689,99 +564,6 @@ export default function Home() {
       console.error('Failed to apply brand preset:', error)
     }
   }
-
-  const exportAsPNG = async (size?: number, filename?: string) => {
-    try {
-      const selectedLogo = logos.find(logo => logo.id === selectedLogoId);
-      if (!selectedLogo) {
-        console.error('No logo selected');
-        alert('Please select a logo to export');
-        return;
-      }
-      
-      // Create a canvas with the logo
-      const logoCanvas = document.createElement('canvas');
-      const targetSize = size || 600;
-      logoCanvas.width = targetSize;
-      logoCanvas.height = targetSize;
-      const ctx = logoCanvas.getContext('2d');
-      
-      if (!ctx) {
-        throw new Error('Failed to get canvas context');
-      }
-      
-      // Clear canvas with white background
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(0, 0, targetSize, targetSize);
-      
-      // Execute the visualization code
-      try {
-        const execParams: VisualizationParams = {
-          ...selectedLogo.params,
-          customParameters: selectedLogo.params.customParameters || {},
-          time: 0 // Static frame for export
-        };
-        
-        // Try custom code first
-        if (selectedLogo.code && selectedLogo.code.trim()) {
-          const result = executeCustomCode(ctx, targetSize, targetSize, execParams, selectedLogo.code);
-          if (!result.success) {
-            console.error('Custom code execution failed:', result.error);
-            // Fall back to default visualization
-            generateWaveBars(ctx, targetSize, targetSize, execParams);
-          }
-        } else {
-          // No custom code, use default visualization
-          generateWaveBars(ctx, targetSize, targetSize, execParams);
-        }
-      } catch (error) {
-        console.error('Visualization generation failed:', error);
-        // Fall back to default visualization
-        generateWaveBars(ctx, targetSize, targetSize, execParams);
-      }
-      
-      const defaultFilename = filename || `reflow-${selectedLogo.params.seed || 'logo'}${size ? `-${size}x${size}` : ''}.png`;
-      await exportCanvasAsPNG(logoCanvas, defaultFilename);
-      console.log('PNG exported successfully');
-    } catch (error) {
-      console.error('Export failed:', error);
-      alert('Export failed. Please try again.');
-    }
-  }
-
-  const exportAllSizes = async () => {
-    try {
-      const selectedLogo = logos.find(logo => logo.id === selectedLogoId);
-      if (!selectedLogo) {
-        console.error('No logo selected');
-        alert('Please select a logo to export');
-        return;
-      }
-      
-      console.log('Starting export of all sizes...');
-      
-      const sizes = [16, 32, 64, 128, 256, 512, 1024];
-      const templateName = selectedLogo.presetName || selectedLogo.params.seed || 'logo';
-      const baseFilename = `reflow-${templateName.toLowerCase().replace(/\s+/g, '-')}`;
-      
-      for (const size of sizes) {
-        await exportAsPNG(size, `${baseFilename}-${size}x${size}.png`);
-        // Small delay between exports
-        await new Promise(resolve => setTimeout(resolve, 100));
-      }
-      
-      console.log('All sizes exported successfully');
-      // alert('All sizes exported successfully!');  // Commented out per user feedback
-    } catch (error) {
-      console.error('Export failed:', error);
-      alert('Export failed. Please try again.');
-    }
-  }
-
-  const exportAsSVG = () => {
-    alert('SVG export coming soon!')
-  }
-
   // Update URL with current parameters (without page reload)
   const updateURLParams = () => {
     const params = new URLSearchParams();
@@ -811,17 +593,6 @@ export default function Home() {
     window.history.replaceState({}, '', newURL);
   };
 
-  const shareLink = () => {
-    // First update URL with current params
-    updateURLParams();
-    
-    // Then copy the URL
-    const url = window.location.href;
-    navigator.clipboard.writeText(url);
-    
-    // Show some feedback (you could add a toast here)
-    console.log('Link copied:', url);
-  }
 
   const handleLoadShape = (shape: SavedShape) => {
     setCustomCode(shape.code)
@@ -850,30 +621,8 @@ export default function Home() {
     setForceRender(prev => prev + 1)
   }
 
-  const openSaveDialog = (mode: 'shape' | 'preset') => {
-    setSaveMode(mode)
-    setSaveDialogOpen(true)
-  }
-
   // Show loading state during SSR and initial hydration
   if (!mounted) return null
-
-  // Create visualization params
-  const visualizationParams: VisualizationParams = {
-    seed,
-    frequency,
-    amplitude,
-    complexity,
-    chaos,
-    damping,
-    layers,
-    barCount,
-    barSpacing,
-    radius,
-    color,
-    customParameters,
-    time: timeRef.current
-  }
 
   return (
     <div className="h-screen overflow-hidden bg-gradient-to-br from-gray-50 to-white flex flex-col">

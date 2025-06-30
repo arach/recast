@@ -19,7 +19,7 @@ export function draw(
   width: number,
   height: number,
   params: Record<string, any>,
-  generator: any,
+  _generator: any,
   time: number
 ) {
   // Clear with deep space background
