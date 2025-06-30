@@ -453,17 +453,33 @@ export const executeCustomCode = (
       ...params.customParameters // Custom parameters from PARAMETERS definition override defaults
     }
 
-    // Create a safe execution environment with all variables defined
-    const safeCode = `
-      // Define all variables in scope to prevent reference errors
-      const seed = params.seed;
-      const barCount = params.barCount;
-      const barSpacing = params.barSpacing;
-      
-      ${customCode}
-      
-      drawVisualization(ctx, width, height, params, generator, time);
-    `
+    // Check if the code already defines drawVisualization
+    const hasDrawVisualization = customCode.includes('function drawVisualization');
+    
+    let safeCode: string;
+    
+    if (hasDrawVisualization) {
+      // Code already has drawVisualization, just execute it
+      safeCode = `
+        ${customCode}
+        
+        drawVisualization(ctx, width, height, params, generator, time);
+      `;
+    } else {
+      // Legacy code format - wrap it in drawVisualization
+      safeCode = `
+        // Define all variables in scope to prevent reference errors
+        const seed = params.seed;
+        const barCount = params.barCount;
+        const barSpacing = params.barSpacing;
+        
+        function drawVisualization(ctx, width, height, params, generator, time) {
+          ${customCode}
+        }
+        
+        drawVisualization(ctx, width, height, params, generator, time);
+      `;
+    }
 
     const executeFunction = new Function(
       'ctx', 'width', 'height', 'params', 'generator', 'time', 'WaveGenerator',
