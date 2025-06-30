@@ -17,6 +17,7 @@ interface UIStore {
   isRendering: boolean;
   renderSuccess: boolean;
   codeError: string | null;
+  renderTrigger: number;
   
   // Theme
   darkMode: boolean;
@@ -36,6 +37,7 @@ interface UIStore {
   setRenderSuccess: (success: boolean) => void;
   setCodeError: (error: string | null) => void;
   setDarkMode: (darkMode: boolean) => void;
+  setRenderTrigger: (trigger: number) => void;
   
   // Complex UI actions
   showSaveDialog: (mode: 'shape' | 'preset') => void;
@@ -49,7 +51,7 @@ export const useUIStore = create<UIStore>()(
       zoom: 1,
       animating: false,
       previewMode: false,
-      codeEditorCollapsed: false,
+      codeEditorCollapsed: true,
       savedItemsOpen: false,
       saveDialogOpen: false,
       industryModalOpen: false,
@@ -57,6 +59,7 @@ export const useUIStore = create<UIStore>()(
       renderSuccess: false,
       codeError: null,
       darkMode: false,
+      renderTrigger: 0,
       
       // Actions
       setZoom: (zoom) => set({ zoom }),

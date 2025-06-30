@@ -12,15 +12,83 @@ export class ParameterService {
   static parseParametersFromCode(code: string): Record<string, ParameterDefinition> | null {
     try {
       // Look for PARAMETERS = { ... } definition
-      const match = code.match(/const\s+PARAMETERS\s*=\s*({[\s\S]*?^});/m) || 
-                    code.match(/const\s+PARAMETERS\s*=\s*({[\s\S]*?});/);
-      
-      if (!match) {
+      // First try to find the start
+      const startMatch = code.match(/const\s+PARAMETERS\s*=\s*{/);
+      if (!startMatch) {
+        console.log('❌ No PARAMETERS start found');
         return null;
       }
       
+      // Find the matching closing brace
+      let braceCount = 0;
+      let inString = false;
+      let stringChar = '';
+      let escaped = false;
+      let endIndex = -1;
+      
+      for (let i = startMatch.index! + startMatch[0].length - 1; i < code.length; i++) {
+        const char = code[i];
+        
+        if (escaped) {
+          escaped = false;
+          continue;
+        }
+        
+        if (char === '\\') {
+          escaped = true;
+          continue;
+        }
+        
+        if (inString) {
+          if (char === stringChar) {
+            inString = false;
+          }
+          continue;
+        }
+        
+        if (char === '"' || char === "'" || char === '`') {
+          inString = true;
+          stringChar = char;
+          continue;
+        }
+        
+        if (char === '{') {
+          braceCount++;
+        } else if (char === '}') {
+          braceCount--;
+          if (braceCount === 0) {
+            endIndex = i;
+            break;
+          }
+        }
+      }
+      
+      if (endIndex === -1) {
+        console.log('❌ No matching closing brace found');
+        return null;
+      }
+      
+      const fullMatch = code.substring(startMatch.index!, endIndex + 1);
+      const match = fullMatch.match(/const\s+PARAMETERS\s*=\s*({[\s\S]*})/);
+      
+      if (!match) {
+        console.log('❌ No PARAMETERS match found in code');
+        return null;
+      }
+      
+      console.log('✅ Found PARAMETERS definition');
       const paramsCode = `(${match[1]})`;
-      const paramsObj = eval(paramsCode);
+      
+      // Create a safe environment for eval with arrow function support
+      const evalCode = `
+        (function() {
+          const params = ${paramsCode};
+          return params;
+        })()
+      `;
+      
+      const paramsObj = eval(evalCode);
+      console.log('📦 Evaluated params object keys:', Object.keys(paramsObj));
       
       // Convert to our expected format
       const parameters: Record<string, ParameterDefinition> = {};

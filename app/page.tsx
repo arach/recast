@@ -584,32 +584,37 @@ export default function Home() {
 
   // Handle color theme application
   const handleApplyColorTheme = (themedParams: Record<string, any>) => {
-    // Filter out text-based parameters that shouldn't be overridden
-    const textParams = ['text', 'letter', 'letters', 'brandName', 'words', 'title', 'subtitle'];
-    const filteredParams = Object.fromEntries(
-      Object.entries(themedParams).filter(([key]) => !textParams.includes(key))
-    );
-    
+    // Update the logo with new color parameters
     setLogos(prev => prev.map(logo => 
       logo.id === selectedLogoId 
         ? { 
             ...logo, 
             params: {
               ...logo.params,
-              // Apply color params at the root level for universal controls
-              ...filteredParams,
+              // Apply color params at the root level
+              fillColor: themedParams.fillColor || logo.params.fillColor,
+              strokeColor: themedParams.strokeColor || logo.params.strokeColor,
+              backgroundColor: themedParams.backgroundColor || logo.params.backgroundColor,
               customParameters: {
                 ...logo.params.customParameters,
-                ...filteredParams
+                // Also apply to custom parameters for templates that look there
+                fillColor: themedParams.fillColor || logo.params.customParameters?.fillColor,
+                strokeColor: themedParams.strokeColor || logo.params.customParameters?.strokeColor,
+                backgroundColor: themedParams.backgroundColor || logo.params.customParameters?.backgroundColor,
+                textColor: themedParams.textColor || logo.params.customParameters?.textColor,
+                // Include any other color-related params from the theme
+                ...Object.entries(themedParams).reduce((acc, [key, value]) => {
+                  if (key.includes('Color') || key.includes('color')) {
+                    acc[key] = value;
+                  }
+                  return acc;
+                }, {} as Record<string, any>)
               }
             }
           }
         : logo
     ))
-    setCustomParameters(prev => ({
-      ...prev,
-      ...filteredParams
-    }))
+    
     // Force re-render to apply the theme changes
     setForceRender(prev => prev + 1)
   }
@@ -888,8 +893,6 @@ export default function Home() {
       <StudioHeader />
 
       <div className="flex flex-1 overflow-hidden">
-        <CodeEditorPanel />
-
         <CanvasArea />
 
         <div className="flex">

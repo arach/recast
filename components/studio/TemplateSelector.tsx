@@ -97,7 +97,7 @@ export function TemplateSelector() {
           <ChevronDown className="w-4 h-4 opacity-50" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="w-[200px]">
+      <DropdownMenuContent align="start" className="w-[200px] bg-white/95 backdrop-blur-sm border-gray-200">
         <DropdownMenuLabel>Templates</DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={() => handleTemplateChange('custom')}>

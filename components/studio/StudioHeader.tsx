@@ -192,123 +192,48 @@ export function StudioHeader() {
           
           <div className="h-6 w-px bg-gray-200" />
           
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={toggleSavedItems}
-            className="h-9"
-          >
-            <FolderOpen className="w-4 h-4 mr-2" />
-            Library
-          </Button>
-
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={toggleIndustryModal}
-            className="h-9 bg-gradient-to-r from-blue-50 to-purple-50 hover:from-blue-100 hover:to-purple-100 border-blue-200"
-          >
-            <Sparkles className="w-4 h-4 mr-2" />
-            Industry Presets
-          </Button>
-
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={randomizeParams}
-            className="h-9"
-          >
-            <Shuffle className="w-4 h-4 mr-2" />
-            Randomize
-          </Button>
-
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => toggleSaveDialog()}
-            className="h-9"
-          >
-            <Settings className="w-4 h-4 mr-2" />
-            Save Preset
-          </Button>
-
-          {logo?.templateId === 'custom' && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => toggleSaveDialog()}
-              className="h-9"
-            >
-              <Package className="w-4 h-4 mr-2" />
-              Save Shape
-            </Button>
-          )}
-
-          <div className="h-6 w-px bg-gray-200" />
-
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={shareLink}
-            className="h-9"
-          >
-            <Copy className="w-4 h-4 mr-2" />
-            Share
-          </Button>
-
-          <div className="flex space-x-1">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  size="sm"
-                  className="h-9"
-                >
-                  <Download className="w-4 h-4 mr-2" />
-                  Export PNG
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={exportAllSizes} className="font-semibold">
-                  <Download className="w-4 h-4 mr-2" />
-                  Export All Sizes
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => exportAsPNG()}>
-                  Original (600×600)
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => exportAsPNG(1024)}>
-                  Large (1024×1024)
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => exportAsPNG(512)}>
-                  Medium (512×512)
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => exportAsPNG(256)}>
-                  Small (256×256)
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => exportAsPNG(128)}>
-                  Icon (128×128)
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => exportAsPNG(64)}>
-                  Tiny (64×64)
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => exportAsPNG(32)}>
-                  Favicon (32×32)
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => exportAsPNG(16)}>
-                  Micro (16×16)
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={exportAsSVG}
-              className="h-9"
-            >
-              <FileText className="w-4 h-4" />
-            </Button>
-          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                size="sm"
+                className="h-9"
+              >
+                <Download className="w-4 h-4 mr-2" />
+                Export PNG
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={exportAllSizes} className="font-semibold">
+                <Download className="w-4 h-4 mr-2" />
+                Export All Sizes
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => exportAsPNG()}>
+                Original (600×600)
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => exportAsPNG(1024)}>
+                Large (1024×1024)
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => exportAsPNG(512)}>
+                Medium (512×512)
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => exportAsPNG(256)}>
+                Small (256×256)
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => exportAsPNG(128)}>
+                Icon (128×128)
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => exportAsPNG(64)}>
+                Tiny (64×64)
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => exportAsPNG(32)}>
+                Favicon (32×32)
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => exportAsPNG(16)}>
+                Micro (16×16)
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
     </header>

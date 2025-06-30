@@ -51,6 +51,10 @@ export function ControlsPanel() {
   console.log('📄 Code preview:', logo.code?.substring(0, 200) + '...');
   if (parsedParams) {
     console.log('📊 Parsed params:', Object.keys(parsedParams));
+    console.log('🔍 Full parsed params:', parsedParams);
+    // Check specifically for frame parameters
+    const frameParams = Object.keys(parsedParams).filter(key => key.includes('frame') || key.includes('Frame'));
+    console.log('🖼️ Frame-related params found:', frameParams);
   } else {
     console.log('❌ No parameters found in code');
   }
@@ -79,15 +83,12 @@ export function ControlsPanel() {
   );
   
   console.log('👁️ Visible params after filtering:', Object.keys(visibleTemplateParams));
+  console.log('🔍 Current param values:', { customParams, contentParams });
+  console.log('🖼️ showFrame value:', customParams?.showFrame);
   
   return (
     <div className="w-96 border-l border-gray-200 bg-gray-50/30 overflow-y-auto">
       <div className="p-6 space-y-4">
-        {/* Migration indicator */}
-        <div className="bg-green-100 border border-green-300 rounded-lg p-2 text-xs text-green-800">
-          🚀 Using Zustand-based Controls (V2)
-        </div>
-        
         {/* Brand Controls - Universal */}
         <Card>
           <CardHeader className="pb-2">
@@ -228,15 +229,11 @@ export function ControlsPanel() {
                     {param.type === 'text' && (
                       <input
                         type="text"
-                        value={contentParams?.[paramName] || customParams?.[paramName] || param.default || ''}
+                        value={customParams?.[paramName] || contentParams?.[paramName] || param.default || ''}
                         onChange={(e) => {
-                          if (['text', 'letter'].includes(paramName)) {
-                            updateContent({ [paramName]: e.target.value });
-                          } else {
-                            updateCustom({ [paramName]: e.target.value });
-                          }
+                          updateCustom({ [paramName]: e.target.value });
                         }}
-                        className="text-xs p-1 border rounded bg-white min-w-0 w-20"
+                        className="text-xs p-1 border rounded bg-white min-w-0 w-32"
                       />
                     )}
                     {param.type === 'slider' && (
@@ -255,7 +252,49 @@ export function ControlsPanel() {
                         </span>
                       </>
                     )}
-                    {/* Add other control types as needed */}
+                    {param.type === 'select' && (
+                      <select
+                        value={customParams?.[paramName] || param.default || ''}
+                        onChange={(e) => updateCustom({ [paramName]: e.target.value })}
+                        className="text-xs p-1 border rounded bg-white min-w-0 w-32"
+                      >
+                        {param.options?.map((opt: any) => (
+                          <option key={typeof opt === 'string' ? opt : opt.value} value={typeof opt === 'string' ? opt : opt.value}>
+                            {typeof opt === 'string' ? opt : opt.label}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                    {param.type === 'toggle' && (
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={customParams?.[paramName] || param.default || false}
+                          onChange={(e) => updateCustom({ [paramName]: e.target.checked })}
+                          className="sr-only peer"
+                        />
+                        <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
+                      </label>
+                    )}
+                    {param.type === 'color' && (
+                      <input
+                        type="color"
+                        value={customParams?.[paramName] || param.default || '#000000'}
+                        onChange={(e) => updateCustom({ [paramName]: e.target.value })}
+                        className="w-8 h-6 border border-gray-300 rounded cursor-pointer"
+                      />
+                    )}
+                    {param.type === 'number' && (
+                      <input
+                        type="number"
+                        min={param.min}
+                        max={param.max}
+                        step={param.step || 1}
+                        value={customParams?.[paramName] || param.default || 0}
+                        onChange={(e) => updateCustom({ [paramName]: parseFloat(e.target.value) })}
+                        className="text-xs p-1 border rounded bg-white min-w-0 w-20"
+                      />
+                    )}
                   </div>
                 </div>
               ))}

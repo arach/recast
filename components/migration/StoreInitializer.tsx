@@ -108,50 +108,47 @@ export function StoreInitializer({
     }
   }, []); // Only run once on mount
   
-  // Sync prop changes to stores
+  // Sync prop changes to stores (including color updates)
   useEffect(() => {
     if (!isInitialized.current) return;
     
-    const currentLogos = useLogoStore.getState().logos;
-    if (logos.length !== currentLogos.length) {
-      // Handle logo additions/deletions
-      // This is a simplified version - in production we'd do a proper diff
-      initializeLogos(logos.map(logo => ({
-        id: logo.id,
-        templateId: logo.presetId || logo.templateId || 'wave-bars',
-        templateName: logo.presetName || logo.templateName || 'Wave Bars',
-        parameters: {
-          core: {
-            frequency: logo.params?.frequency || 4,
-            amplitude: logo.params?.amplitude || 50,
-            complexity: logo.params?.complexity || 0.5,
-            chaos: logo.params?.chaos || 0,
-            damping: logo.params?.damping || 0,
-            layers: logo.params?.layers || 3,
-            radius: logo.params?.radius || 100,
-          },
-          style: {
-            backgroundColor: logo.params?.backgroundColor || 'transparent',
-            backgroundType: logo.params?.backgroundType || 'transparent',
-            fillColor: logo.params?.fillColor || '#3b82f6',
-            fillType: logo.params?.fillType || 'solid',
-            fillOpacity: logo.params?.fillOpacity || 1,
-            strokeColor: logo.params?.strokeColor || '#1e40af',
-            strokeType: logo.params?.strokeType || 'solid',
-            strokeWidth: logo.params?.strokeWidth || 2,
-            strokeOpacity: logo.params?.strokeOpacity || 1,
-          },
-          content: {
-            text: logo.params?.customParameters?.text || logo.params?.text || '',
-            letter: logo.params?.customParameters?.letter || logo.params?.letter || '',
-          },
-          custom: logo.params?.customParameters || {},
-        },
-        position: logo.position || { x: 400, y: 300 },
-        code: logo.code || '',
-      })));
-    }
-  }, [logos, initializeLogos]);
+    // Update each logo with latest props
+    logos.forEach(propLogo => {
+      const storeLogos = useLogoStore.getState().logos;
+      const existingLogo = storeLogos.find(l => l.id === propLogo.id);
+      
+      if (existingLogo) {
+        // Check if colors have changed
+        const colorChanged = 
+          propLogo.params?.fillColor !== existingLogo.parameters.style.fillColor ||
+          propLogo.params?.strokeColor !== existingLogo.parameters.style.strokeColor ||
+          propLogo.params?.backgroundColor !== existingLogo.parameters.style.backgroundColor ||
+          propLogo.params?.customParameters?.fillColor !== existingLogo.parameters.custom.fillColor ||
+          propLogo.params?.customParameters?.strokeColor !== existingLogo.parameters.custom.strokeColor ||
+          propLogo.params?.customParameters?.backgroundColor !== existingLogo.parameters.custom.backgroundColor;
+        
+        if (colorChanged) {
+          // Update colors in the store
+          const updates = {
+            style: {
+              fillColor: propLogo.params?.fillColor || propLogo.params?.customParameters?.fillColor || existingLogo.parameters.style.fillColor,
+              strokeColor: propLogo.params?.strokeColor || propLogo.params?.customParameters?.strokeColor || existingLogo.parameters.style.strokeColor,
+              backgroundColor: propLogo.params?.backgroundColor || propLogo.params?.customParameters?.backgroundColor || existingLogo.parameters.style.backgroundColor,
+            },
+            custom: {
+              ...existingLogo.parameters.custom,
+              fillColor: propLogo.params?.customParameters?.fillColor || propLogo.params?.fillColor,
+              strokeColor: propLogo.params?.customParameters?.strokeColor || propLogo.params?.strokeColor,
+              backgroundColor: propLogo.params?.customParameters?.backgroundColor || propLogo.params?.backgroundColor,
+              textColor: propLogo.params?.customParameters?.textColor,
+            }
+          };
+          
+          useLogoStore.getState().updateLogoParameters(propLogo.id, updates);
+        }
+      }
+    });
+  }, [logos]);
   
   useEffect(() => {
     if (!isInitialized.current) return;
@@ -186,9 +183,17 @@ export function StoreInitializer({
             // Flatten all parameters for old format
             ...logo.parameters.core,
             ...logo.parameters.style,
+            // Include color params at root level for old system
+            fillColor: logo.parameters.style.fillColor,
+            strokeColor: logo.parameters.style.strokeColor,
+            backgroundColor: logo.parameters.style.backgroundColor,
             customParameters: {
               ...logo.parameters.custom,
               ...logo.parameters.content,
+              // Also include colors in customParameters for templates
+              fillColor: logo.parameters.style.fillColor,
+              strokeColor: logo.parameters.style.strokeColor,
+              backgroundColor: logo.parameters.style.backgroundColor,
             },
           },
           position: logo.position,

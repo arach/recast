@@ -31,6 +31,7 @@ import {
 import { useLogoStore } from '@/lib/stores/logoStore'
 import { useUIStore } from '@/lib/stores/uiStore'
 import { exportCanvasAsPNG } from '@/lib/export-utils'
+import { CodeEditorPanel } from './CodeEditorPanel'
 
 export function CanvasArea() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -131,8 +132,37 @@ export function CanvasArea() {
            y >= position.y && y <= position.y + logoSize
   }
 
-  // Center view to fit all logos
+  // Center view without changing zoom
   const centerView = useCallback(() => {
+    const canvas = canvasRef.current
+    if (!canvas || logos.length === 0) return
+
+    const rect = canvas.getBoundingClientRect()
+    const logoSize = 600
+    
+    // Calculate bounding box of all logos
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity
+    
+    logos.forEach(logo => {
+      const position = logo.position || { x: 0, y: 0 }
+      minX = Math.min(minX, position.x)
+      maxX = Math.max(maxX, position.x + logoSize)
+      minY = Math.min(minY, position.y)
+      maxY = Math.max(maxY, position.y + logoSize)
+    })
+    
+    const centerX = (minX + maxX) / 2
+    const centerY = (minY + maxY) / 2
+    
+    // Center all logos in view without changing zoom
+    setCanvasOffset({
+      x: (rect.width / 2) / zoom - centerX,
+      y: (rect.height / 2) / zoom - centerY
+    })
+  }, [zoom, logos])
+
+  // Fit view to show all logos
+  const fitToView = useCallback(() => {
     const canvas = canvasRef.current
     if (!canvas || logos.length === 0) return
 
@@ -172,11 +202,14 @@ export function CanvasArea() {
     })
   }, [setZoom, logos])
 
-  // Center view on initial load
+  // Center view on initial load at 100% zoom - only once
   useEffect(() => {
-    const timer = setTimeout(centerView, 100) // Small delay to ensure canvas is ready
+    const timer = setTimeout(() => {
+      setZoom(1) // Ensure 100% zoom
+      centerView()
+    }, 100) // Small delay to ensure canvas is ready
     return () => clearTimeout(timer)
-  }, [])
+  }, []) // Empty deps - only run once on mount
 
   const drawInfiniteCanvas = useCallback(() => {
     const canvas = canvasRef.current
@@ -524,7 +557,7 @@ export function CanvasArea() {
   return (
     <div 
       ref={containerRef}
-      className="flex-1 relative transition-all duration-300 overflow-hidden"
+      className="flex-1 relative transition-all duration-300 overflow-hidden canvas-container"
       style={{
         background: `
           radial-gradient(circle, #d1d5db 0.8px, transparent 0.8px)
@@ -533,74 +566,95 @@ export function CanvasArea() {
         backgroundColor: '#f9fafb'
       }}
     >
+      {/* Code Editor Panel - positioned relative to canvas container */}
+      <CodeEditorPanel />
       
       {/* Preview Toggle */}
-      <div className="absolute top-6 left-48 z-20">
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20">
         <Button
           variant={previewMode ? "default" : "outline"}
           size="sm"
-          onClick={togglePreviewMode}
+          onClick={() => {
+            togglePreviewMode()
+            // Re-center canvas when exiting preview mode
+            if (previewMode) {
+              setTimeout(centerView, 100)
+            }
+          }}
           className="gap-2 bg-white/90 backdrop-blur-sm shadow-lg border"
         >
           {previewMode ? <Grid3x3 className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-          {previewMode ? "Canvas" : "Preview"}
+          {previewMode ? "Back to Canvas" : "Preview Sizes"}
         </Button>
       </div>
 
-      {/* Floating Logo Toolbar */}
+      {/* Play/Pause Button - Separate circular button */}
+      {!previewMode && (
+        <Button
+          onClick={toggleAnimation}
+          className="absolute top-6 right-6 h-10 w-10 rounded-full shadow-lg bg-white/90 backdrop-blur-sm border hover:bg-white z-20"
+          size="sm"
+          variant="outline"
+          title={animating ? "Pause Animation" : "Play Animation"}
+        >
+          {animating ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+        </Button>
+      )}
+      
+      {/* Logo Action Toolbar */}
       {!previewMode && selectedLogoId && (
         <div className="absolute top-6 right-20 z-20">
           <div className="bg-white/95 backdrop-blur-sm rounded-lg border shadow-lg p-1 flex items-center gap-1">
             <Button
-              size="sm"
-              variant="ghost"
-              onClick={copyLogoImage}
-              className="h-8 w-8 p-0"
-              title="Copy image to clipboard"
-            >
-              <Clipboard className="w-4 h-4" />
-            </Button>
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={downloadLogoImage}
-              className="h-8 w-8 p-0"
-              title="Download as PNG"
-            >
-              <Download className="w-4 h-4" />
-            </Button>
-            <div className="h-4 w-px bg-gray-200 mx-1" />
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => duplicateLogo(selectedLogoId)}
-              className="h-8 w-8 p-0"
-              title="Duplicate this logo"
-            >
-              <CopyPlus className="w-4 h-4" />
-            </Button>
-            {logos.length > 1 && (
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => {
-                  if (confirm('Delete this logo?')) {
-                    deleteLogo(selectedLogoId)
-                  }
-                }}
-                className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
-                title="Delete this logo"
-              >
-                <Trash2 className="w-4 h-4" />
-              </Button>
-            )}
+                  size="sm"
+                  variant="ghost"
+                  onClick={copyLogoImage}
+                  className="h-8 w-8 p-0"
+                  title="Copy image to clipboard"
+                >
+                  <Clipboard className="w-4 h-4" />
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={downloadLogoImage}
+                  className="h-8 w-8 p-0"
+                  title="Download as PNG"
+                >
+                  <Download className="w-4 h-4" />
+                </Button>
+                <div className="h-4 w-px bg-gray-200 mx-1" />
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => duplicateLogo(selectedLogoId)}
+                  className="h-8 w-8 p-0"
+                  title="Duplicate this logo"
+                >
+                  <CopyPlus className="w-4 h-4" />
+                </Button>
+                {logos.length > 1 && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => {
+                      if (confirm('Delete this logo?')) {
+                        deleteLogo(selectedLogoId)
+                      }
+                    }}
+                    className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                    title="Delete this logo"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                )}
           </div>
         </div>
       )}
 
       {/* Copy Feedback */}
       {showCopyFeedback && (
-        <div className="absolute top-20 right-20 z-30 animate-in fade-in-0 duration-200">
+        <div className="absolute top-20 right-6 z-30 animate-in fade-in-0 duration-200">
           <div className="bg-green-50 border border-green-200 text-green-800 px-3 py-2 rounded-lg shadow-lg text-sm font-medium">
             📋 Copied to clipboard!
           </div>
@@ -681,18 +735,6 @@ export function CanvasArea() {
         </div>
       )}
 
-      {/* Play/Pause Button */}
-      {!previewMode && (
-        <Button
-          onClick={toggleAnimation}
-          className="absolute top-6 right-6 h-10 w-10 rounded-full shadow-lg bg-white/90 backdrop-blur-sm border hover:bg-white z-20"
-          size="sm"
-          variant="outline"
-          title={animating ? "Pause Animation" : "Play Animation"}
-        >
-          {animating ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-        </Button>
-      )}
 
       {/* Help Text */}
       {!previewMode && (

@@ -17,7 +17,10 @@ export const parameters: Record<string, ParameterDefinition> = {
       { value: 'tech', label: 'Tech/Mono' },
       { value: 'elegant', label: 'Elegant' },
       { value: 'bold', label: 'Bold Display' },
-      { value: 'minimal', label: 'Minimal' }
+      { value: 'minimal', label: 'Minimal' },
+      { value: 'silkscreen', label: 'Silkscreen' },
+      { value: 'orbitron', label: 'Orbitron' },
+      { value: 'doto', label: 'DOTO' }
     ],
     default: 'modern',
     label: 'Font Style'
@@ -103,6 +106,68 @@ export const parameters: Record<string, ParameterDefinition> = {
     default: 5,
     label: 'Underline Offset',
     showIf: (params) => params.underline
+  },
+  
+  // Frame/Box options
+  showFrame: {
+    type: 'toggle',
+    default: false,
+    label: 'Show Frame'
+  },
+  
+  frameStyle: {
+    type: 'select',
+    options: [
+      { value: 'outline', label: 'Outline' },
+      { value: 'filled', label: 'Filled' },
+      { value: 'filled-inverse', label: 'Filled (Inverse)' }
+    ],
+    default: 'outline',
+    label: 'Frame Style',
+    showIf: (params) => params.showFrame
+  },
+  
+  frameStrokeStyle: {
+    type: 'select',
+    options: [
+      { value: 'solid', label: 'Solid' },
+      { value: 'dashed', label: 'Dashed' },
+      { value: 'dotted', label: 'Dotted' },
+      { value: 'double', label: 'Double' }
+    ],
+    default: 'solid',
+    label: 'Frame Border Style',
+    showIf: (params) => params.showFrame && params.frameStyle === 'outline'
+  },
+  
+  frameStrokeWidth: {
+    type: 'slider',
+    min: 1,
+    max: 10,
+    step: 1,
+    default: 3,
+    label: 'Frame Border Width',
+    showIf: (params) => params.showFrame && params.frameStyle === 'outline'
+  },
+  
+  framePadding: {
+    type: 'slider',
+    min: 10,
+    max: 100,
+    step: 5,
+    default: 40,
+    label: 'Frame Padding',
+    showIf: (params) => params.showFrame
+  },
+  
+  frameRadius: {
+    type: 'slider',
+    min: 0,
+    max: 50,
+    step: 2,
+    default: 0,
+    label: 'Frame Corner Radius',
+    showIf: (params) => params.showFrame
   }
 };
 
@@ -132,6 +197,14 @@ export function draw(
   const underline = params.underline || false;
   const underlineWeight = params.underlineWeight || 3;
   const underlineOffset = params.underlineOffset || 5;
+  
+  // Frame parameters
+  const showFrame = params.showFrame || false;
+  const frameStyle = params.frameStyle || 'outline';
+  const frameStrokeStyle = params.frameStrokeStyle || 'solid';
+  const frameStrokeWidth = params.frameStrokeWidth || 3;
+  const framePadding = params.framePadding || 40;
+  const frameRadius = params.frameRadius || 0;
   
   // Helper function for text transform
   function applyTextTransform(text: string, transform: string): string {
@@ -171,6 +244,15 @@ export function draw(
     case 'minimal':
       fontFamily = 'Helvetica, Arial, sans-serif';
       break;
+    case 'silkscreen':
+      fontFamily = 'Silkscreen, monospace';
+      break;
+    case 'orbitron':
+      fontFamily = 'Orbitron, sans-serif';
+      break;
+    case 'doto':
+      fontFamily = '"DotGothic16", monospace';
+      break;
   }
   
   ctx.font = `${fontWeight} ${fontSize}px ${fontFamily}`;
@@ -181,6 +263,88 @@ export function draw(
   const lines = displayText.split('\n');
   const totalHeight = lines.length * fontSize * lineHeight;
   const startY = height / 2 - totalHeight / 2 + fontSize / 2;
+  
+  // Draw frame/box if enabled - BEFORE drawing the text
+  if (showFrame) {
+    // Save context state
+    ctx.save();
+    
+    // Pre-calculate text bounds to draw frame first
+    let maxWidth = 0;
+    lines.forEach(line => {
+      const metrics = ctx.measureText(line);
+      maxWidth = Math.max(maxWidth, metrics.width);
+    });
+    
+    // Calculate frame dimensions
+    const frameX = width / 2 - maxWidth / 2 - framePadding;
+    const frameY = startY - fontSize / 2 - framePadding;
+    const frameWidth = maxWidth + framePadding * 2;
+    const frameHeight = totalHeight + framePadding * 2;
+    
+    // Draw based on frame style
+    if (frameStyle === 'filled' || frameStyle === 'filled-inverse') {
+      // Filled rectangle
+      ctx.fillStyle = frameStyle === 'filled' ? strokeColor : fillColor;
+      if (frameRadius > 0) {
+        ctx.beginPath();
+        ctx.roundRect(frameX, frameY, frameWidth, frameHeight, frameRadius);
+        ctx.fill();
+      } else {
+        ctx.fillRect(frameX, frameY, frameWidth, frameHeight);
+      }
+      
+      // Swap text color for filled-inverse
+      if (frameStyle === 'filled-inverse') {
+        // Text will be drawn in strokeColor (usually lighter) on dark background
+        // Don't restore yet - we need to keep this color for text drawing
+      } else {
+        ctx.restore();
+      }
+    } else {
+      // Outline rectangle
+      ctx.strokeStyle = strokeColor;
+      ctx.lineWidth = frameStrokeWidth;
+      
+      // Apply stroke style patterns
+      switch (frameStrokeStyle) {
+        case 'dashed':
+          ctx.setLineDash([frameStrokeWidth * 3, frameStrokeWidth * 2]);
+          break;
+        case 'dotted':
+          ctx.setLineDash([frameStrokeWidth, frameStrokeWidth * 1.5]);
+          break;
+        case 'double':
+          // Draw double border
+          const gap = frameStrokeWidth * 1.5;
+          if (frameRadius > 0) {
+            ctx.beginPath();
+            ctx.roundRect(frameX - gap, frameY - gap, frameWidth + gap * 2, frameHeight + gap * 2, frameRadius);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.roundRect(frameX, frameY, frameWidth, frameHeight, frameRadius);
+            ctx.stroke();
+          } else {
+            ctx.strokeRect(frameX - gap, frameY - gap, frameWidth + gap * 2, frameHeight + gap * 2);
+            ctx.strokeRect(frameX, frameY, frameWidth, frameHeight);
+          }
+          break;
+        default:
+          // Solid
+          if (frameRadius > 0) {
+            ctx.beginPath();
+            ctx.roundRect(frameX, frameY, frameWidth, frameHeight, frameRadius);
+            ctx.stroke();
+          } else {
+            ctx.strokeRect(frameX, frameY, frameWidth, frameHeight);
+          }
+      }
+      
+      // Reset line dash and restore
+      ctx.setLineDash([]);
+      ctx.restore();
+    }
+  }
   
   // Draw each line
   lines.forEach((line, index) => {
@@ -195,14 +359,14 @@ export function draw(
       
       ctx.textAlign = 'left';
       chars.forEach((char) => {
-        ctx.fillStyle = fillColor;
+        ctx.fillStyle = (showFrame && frameStyle === 'filled-inverse') ? strokeColor : fillColor;
         ctx.fillText(char, x, y);
         x += ctx.measureText(char).width + fontSize * letterSpacing;
       });
       ctx.textAlign = 'center';
     } else {
       // Normal rendering
-      ctx.fillStyle = fillColor;
+      ctx.fillStyle = (showFrame && frameStyle === 'filled-inverse') ? strokeColor : fillColor;
       ctx.fillText(line, width / 2, y);
     }
     
@@ -233,6 +397,11 @@ export function draw(
       ctx.strokeText(line, width / 2, y);
     });
   }
+  
+  // Restore context if we were in filled-inverse mode
+  if (showFrame && frameStyle === 'filled-inverse') {
+    ctx.restore();
+  }
 }
 
 export const metadata: PresetMetadata = {
@@ -249,6 +418,12 @@ export const metadata: PresetMetadata = {
     textTransform: 'uppercase',
     underline: false,
     underlineWeight: 3,
-    underlineOffset: 5
+    underlineOffset: 5,
+    showFrame: false,
+    frameStyle: 'outline',
+    frameStrokeStyle: 'solid',
+    frameStrokeWidth: 3,
+    framePadding: 40,
+    frameRadius: 0
   }
 };

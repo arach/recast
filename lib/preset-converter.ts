@@ -11,7 +11,8 @@ import type { Preset } from '@/presets/types';
 export function convertPresetToLegacy(preset: Preset): string {
   // Convert parameters to the old PARAMETERS format
   const parametersCode = generateParametersCode(preset.parameters);
-  console.log('Generated parameters code:', parametersCode.substring(0, 300) + '...');
+  console.log('🔧 Generated parameters code length:', parametersCode.length);
+  console.log('🔍 Generated parameters preview:', parametersCode.substring(0, 500) + '...');
   
   // Convert the draw function to string
   const drawFunctionCode = preset.draw.toString();
@@ -36,6 +37,13 @@ function drawVisualization(ctx, width, height, params, generator, time) {
     params.strokeColor = params.strokeColor || params.customParameters.strokeColor;
     params.backgroundColor = params.backgroundColor || params.customParameters.backgroundColor;
     params.textColor = params.textColor || params.customParameters.textColor;
+    
+    // Also make sure all custom parameters are available at root level for convenience
+    Object.keys(params.customParameters).forEach(key => {
+      if (params[key] === undefined) {
+        params[key] = params.customParameters[key];
+      }
+    });
   }
 ${functionBody}}`;
 }
@@ -46,9 +54,14 @@ ${functionBody}}`;
 function generateParametersCode(parameters: Preset['parameters']): string {
   const lines = ['const PARAMETERS = {'];
   
+  console.log('📦 Input parameters:', Object.keys(parameters));
+  
   // First, add universal controls parameters
   const universalParams = getUniversalParameterDefinitions();
-  Object.entries(universalParams).forEach(([key, param], index) => {
+  console.log('🌐 Universal params:', Object.keys(universalParams));
+  
+  const universalEntries = Object.entries(universalParams);
+  universalEntries.forEach(([key, param], index) => {
     let paramLine = `  ${key}: { `;
     
     paramLine += `type: '${param.type}'`;
@@ -74,6 +87,7 @@ function generateParametersCode(parameters: Preset['parameters']): string {
   
   // Then add template-specific parameters
   const templateParamEntries = Object.entries(parameters).filter(([key]) => !getUniversalParameterDefinitions()[key]);
+  console.log('🎯 Template-specific params:', templateParamEntries.map(([key]) => key));
   
   templateParamEntries.forEach(([key, param], index) => {
     let paramLine = `  ${key}: { `;
