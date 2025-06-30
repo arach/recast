@@ -47,7 +47,10 @@ const defaultParameters: Parameters = {
     backgroundType: 'transparent',
   },
   content: {},
-  custom: {},
+  custom: {
+    barCount: 40,
+    barSpacing: 2
+  },
 };
 
 export const useLogoStore = create<LogoStore>()(
@@ -61,7 +64,43 @@ export const useLogoStore = create<LogoStore>()(
           templateName: 'Wave Bars',
           parameters: defaultParameters,
           position: { x: 0, y: 0 },
-          code: '// Default wave visualization',
+          code: `// Default ReCast Logo
+const PARAMETERS = {
+  barCount: { type: 'slider', min: 20, max: 100, step: 5, default: 40, label: 'Number of Bars' },
+  barSpacing: { type: 'slider', min: 0, max: 10, step: 1, default: 2, label: 'Bar Spacing' }
+};
+
+function drawVisualization(ctx, width, height, params, generator, time) {
+  // Clear background
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, width, height);
+  
+  // Draw wave bars
+  const barWidth = (width - params.barSpacing * (params.barCount - 1)) / params.barCount;
+  
+  for (let i = 0; i < params.barCount; i++) {
+    const x = i * (barWidth + params.barSpacing);
+    const t = i / params.barCount;
+    const waveY = height / 2 + Math.sin((t * params.frequency * Math.PI * 2) + time) * params.amplitude;
+    
+    // Calculate bar height with layering
+    let barHeight = 0;
+    for (let layer = 0; layer < params.layers; layer++) {
+      const layerFreq = params.frequency * (layer + 1);
+      const layerAmp = params.amplitude * Math.pow(params.damping, layer);
+      barHeight += Math.sin((t * layerFreq * Math.PI * 2) + time) * layerAmp;
+    }
+    
+    barHeight = Math.abs(barHeight) + 20;
+    
+    // Rainbow spectrum color
+    const hue = (i / params.barCount) * 360;
+    ctx.fillStyle = \`hsl(\${hue}, 70%, 50%)\`;
+    
+    // Draw bar
+    ctx.fillRect(x, waveY - barHeight / 2, barWidth, barHeight);
+  }
+}`,
         },
       ],
       selectedLogoId: 'main',

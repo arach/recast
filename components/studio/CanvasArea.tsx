@@ -65,6 +65,10 @@ export function CanvasArea() {
   // Copy feedback state
   const [showCopyFeedback, setShowCopyFeedback] = useState(false)
   
+  // Hover state for "Make it yours" CTA
+  const [hoveredLogoId, setHoveredLogoId] = useState<string | null>(null)
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
+  
   // Logo canvas cache - CRITICAL FOR PERFORMANCE
   const logoCanvasCache = useRef<Map<string, { canvas: HTMLCanvasElement, paramHash: string }>>(new Map())
   
@@ -371,16 +375,41 @@ export function CanvasArea() {
   }, [previewMode, canvasOffset, zoom, logos, selectLogo])
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    if (!isDragging || previewMode) return
-
-    const deltaX = (e.clientX - dragStart.x) / zoom
-    const deltaY = (e.clientY - dragStart.y) / zoom
+    const rect = canvasRef.current?.getBoundingClientRect()
+    if (!rect) return
     
-    setCanvasOffset({
-      x: lastPanPoint.x + deltaX,
-      y: lastPanPoint.y + deltaY
-    })
-  }, [isDragging, dragStart, lastPanPoint, zoom, previewMode])
+    // Update mouse position
+    const mouseX = e.clientX - rect.left
+    const mouseY = e.clientY - rect.top
+    setMousePosition({ x: mouseX, y: mouseY })
+    
+    // Check for hover over logos
+    if (!isDragging && !previewMode) {
+      const canvasX = (mouseX / zoom) - canvasOffset.x
+      const canvasY = (mouseY / zoom) - canvasOffset.y
+      
+      let hoveredLogo = null
+      for (let i = logos.length - 1; i >= 0; i--) {
+        if (isPointInLogo(canvasX, canvasY, logos[i])) {
+          hoveredLogo = logos[i]
+          break
+        }
+      }
+      
+      setHoveredLogoId(hoveredLogo?.id || null)
+    }
+    
+    // Handle dragging
+    if (isDragging && !previewMode) {
+      const deltaX = (e.clientX - dragStart.x) / zoom
+      const deltaY = (e.clientY - dragStart.y) / zoom
+      
+      setCanvasOffset({
+        x: lastPanPoint.x + deltaX,
+        y: lastPanPoint.y + deltaY
+      })
+    }
+  }, [isDragging, dragStart, lastPanPoint, zoom, previewMode, canvasOffset, logos])
 
   const handleMouseUp = useCallback(() => {
     setIsDragging(false)
@@ -660,6 +689,26 @@ export function CanvasArea() {
           </div>
         </div>
       )}
+      
+      {/* Make it yours CTA */}
+      {hoveredLogoId && !isDragging && !previewMode && (
+        <div 
+          className="absolute z-30 pointer-events-none animate-in fade-in-0 duration-200"
+          style={{
+            left: `${mousePosition.x}px`,
+            top: `${mousePosition.y - 60}px`,
+          }}
+        >
+          <div className="bg-gray-900 text-white px-4 py-2 rounded-lg shadow-xl text-sm font-medium relative">
+            <span className="flex items-center gap-2">
+              ✨ Make it yours
+            </span>
+            <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-full">
+              <div className="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[6px] border-t-gray-900"></div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Infinite Canvas */}
       {!previewMode ? (
@@ -670,7 +719,10 @@ export function CanvasArea() {
           onMouseDown={handleMouseDown}
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
-          onMouseLeave={handleMouseUp}
+          onMouseLeave={() => {
+            handleMouseUp()
+            setHoveredLogoId(null)
+          }}
         />
       ) : (
         <div className="h-full flex items-center justify-center p-8">

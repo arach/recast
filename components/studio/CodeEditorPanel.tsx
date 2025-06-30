@@ -1,370 +1,399 @@
 'use client'
 
 import React, { useState, useEffect, useCallback, useRef } from 'react'
+import dynamic from 'next/dynamic'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Code, Play, Copy, Check, ChevronLeft, ChevronRight, GripVertical, X } from 'lucide-react'
+import { Code, Play, Copy, Check, ChevronLeft, ChevronRight, GripVertical, X, RotateCcw, PanelLeftClose, PanelLeft } from 'lucide-react'
 import { useLogoStore } from '@/lib/stores/logoStore'
 import { useUIStore } from '@/lib/stores/uiStore'
 import { useSelectedLogo } from '@/lib/hooks/useSelectedLogo'
+import { visualizationTypes } from '@/lib/monaco-types'
+import type { editor, languages } from 'monaco-editor'
 
-// Simple syntax highlighting for JavaScript
-function highlightCode(code: string): string {
-  // Keywords
-  code = code.replace(
-    /\b(function|const|let|var|if|else|for|while|return|new|this|true|false|null|undefined)\b/g,
-    '<span class="text-purple-600 font-medium">$1</span>'
-  )
-  
-  // Strings
-  code = code.replace(
-    /('([^'\\]|\\.)*'|"([^"\\]|\\.)*")/g,
-    '<span class="text-green-600">$1</span>'
-  )
-  
-  // Comments
-  code = code.replace(
-    /(\/\/[^\n]*)/g,
-    '<span class="text-gray-500 italic">$1</span>'
-  )
-  
-  // Numbers
-  code = code.replace(
-    /\b(\d+(\.\d+)?)\b/g,
-    '<span class="text-blue-600">$1</span>'
-  )
-  
-  // Function names
-  code = code.replace(
-    /\b([a-zA-Z_]\w*)\s*\(/g,
-    '<span class="text-blue-700">$1</span>('
-  )
-  
-  // Objects/properties
-  code = code.replace(
-    /\.([a-zA-Z_]\w*)/g,
-    '.<span class="text-indigo-600">$1</span>'
-  )
-  
-  return code
+// Dynamically import Monaco to avoid SSR issues
+const MonacoEditor = dynamic(
+  () => import('@monaco-editor/react').then((mod) => mod.default),
+  { 
+    ssr: false,
+    loading: () => (
+      <div className="flex items-center justify-center h-full text-gray-500">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mb-2"></div>
+          <p>Loading editor...</p>
+        </div>
+      </div>
+    )
+  }
+)
+
+interface CodeEditorPanelProps {
+  onClose?: () => void
 }
 
-export function CodeEditorPanel() {
-  const { updateLogo } = useLogoStore()
-  const { codeEditorCollapsed, toggleCodeEditor, setRenderTrigger } = useUIStore()
-  const { logo } = useSelectedLogo()
+export function CodeEditorPanel({ onClose }: CodeEditorPanelProps) {
+  const [copied, setCopied] = useState(false)
+  const [width, setWidth] = useState(500)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [isCollapsed, setIsCollapsed] = useState(true) // Start collapsed
+  const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null)
+  const isDragging = useRef(false)
+  const startX = useRef(0)
+  const startWidth = useRef(0)
   
-  const [localCode, setLocalCode] = useState('')
-  const [isCodeDirty, setIsCodeDirty] = useState(false)
-  const [copiedCode, setCopiedCode] = useState(false)
-  const [renderSuccess, setRenderSuccess] = useState(false)
-  const [panelWidth, setPanelWidth] = useState(600)
-  const [isResizing, setIsResizing] = useState(false)
-  const editorRef = useRef<HTMLTextAreaElement>(null)
-  const highlightRef = useRef<HTMLDivElement>(null)
+  const { selectedLogo, updateSelectedLogoCode } = useSelectedLogo()
+  const darkMode = useUIStore(state => state.darkMode)
+  const updateLogo = useLogoStore(state => state.updateLogo)
+  const logos = useLogoStore(state => state.logos)
+  const selectedLogoId = useLogoStore(state => state.selectedLogoId)
   
-  // Initialize code from selected logo
+  // Debug log
   useEffect(() => {
-    if (logo && logo.code !== localCode) {
-      setLocalCode(logo.code)
-      setIsCodeDirty(false)
+    console.log('🎨 CodeEditorPanel mounted, isCollapsed:', isCollapsed, 'selectedLogo:', selectedLogo?.id, 'darkMode:', darkMode)
+    return () => console.log('🎨 CodeEditorPanel unmounted')
+  }, [isCollapsed, selectedLogo, darkMode])
+
+  const [localCode, setLocalCode] = useState(selectedLogo?.code || '')
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
+
+  // Update local code when selected logo changes
+  useEffect(() => {
+    if (selectedLogo) {
+      setLocalCode(selectedLogo.code)
+      setHasUnsavedChanges(false)
     }
-  }, [logo?.id, logo?.code, logo?.templateId])
-  
-  // Handle code change
-  const handleCodeChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setLocalCode(e.target.value)
-    setIsCodeDirty(true)
-    setRenderSuccess(false)
+  }, [selectedLogo?.id])
+
+  const handleEditorMount = (editor: editor.IStandaloneCodeEditor, monaco: typeof import('monaco-editor')) => {
+    editorRef.current = editor
     
-    // Sync scroll position with highlight layer
-    if (highlightRef.current && editorRef.current) {
-      highlightRef.current.scrollTop = editorRef.current.scrollTop
-      highlightRef.current.scrollLeft = editorRef.current.scrollLeft
+    // Add type definitions for better IntelliSense
+    monaco.languages.typescript.javascriptDefaults.addExtraLib(
+      visualizationTypes,
+      'visualization.d.ts'
+    )
+    
+    // Configure JavaScript language features
+    monaco.languages.typescript.javascriptDefaults.setCompilerOptions({
+      target: monaco.languages.typescript.ScriptTarget.ES2020,
+      allowNonTsExtensions: true,
+      moduleResolution: monaco.languages.typescript.ModuleResolutionKind.NodeJs,
+      module: monaco.languages.typescript.ModuleKind.CommonJS,
+      noEmit: true,
+      esModuleInterop: true,
+      jsx: monaco.languages.typescript.JsxEmit.React,
+      allowJs: true,
+      typeRoots: ["node_modules/@types"]
+    })
+    
+    // Focus the editor
+    editor.focus()
+    
+    // Set up keyboard shortcuts
+    editor.addCommand(
+      // Ctrl/Cmd + Enter to run code
+      2051, // KeyMod.CtrlCmd | KeyCode.Enter
+      () => handleRunCode()
+    )
+    
+    editor.addCommand(
+      // Ctrl/Cmd + S to save (just runs the code)
+      2065, // KeyMod.CtrlCmd | KeyCode.KEY_S
+      () => handleRunCode()
+    )
+  }
+
+  const handleCodeChange = (value: string | undefined) => {
+    if (value !== undefined) {
+      setLocalCode(value)
+      setHasUnsavedChanges(value !== selectedLogo?.code)
+      setErrorMessage(null)
     }
   }
-  
-  // Sync scroll between textarea and highlight div
-  const handleScroll = () => {
-    if (highlightRef.current && editorRef.current) {
-      highlightRef.current.scrollTop = editorRef.current.scrollTop
-      highlightRef.current.scrollLeft = editorRef.current.scrollLeft
-    }
-  }
-  
-  // Run code and update logo
+
   const handleRunCode = useCallback(() => {
-    if (!logo) return
+    if (!selectedLogo) return
     
-    // Update the logo's code
-    updateLogo(logo.id, { code: localCode })
-    setIsCodeDirty(false)
-    
-    // Trigger a re-render in the canvas
-    setRenderTrigger(Date.now())
-    
-    // Show success feedback
-    setRenderSuccess(true)
-    setTimeout(() => {
-      setRenderSuccess(false)
-    }, 1500)
-  }, [logo, localCode, updateLogo, setRenderTrigger])
-  
-  // Handle keyboard shortcuts
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Cmd/Ctrl + Enter to run code
-      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter' && isCodeDirty) {
-        e.preventDefault()
-        handleRunCode()
+    try {
+      // Basic validation - check if drawVisualization function exists
+      if (!localCode.includes('function drawVisualization')) {
+        throw new Error('Code must contain a drawVisualization function')
       }
+      
+      // Update the logo code
+      updateSelectedLogoCode(localCode)
+      setHasUnsavedChanges(false)
+      setErrorMessage(null)
+      
+      // Force canvas re-render
+      window.dispatchEvent(new Event('logo-updated'))
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : 'Invalid code')
     }
-    
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [handleRunCode, isCodeDirty])
-  
-  // Copy code to clipboard
-  const copyCode = () => {
-    navigator.clipboard.writeText(localCode)
-    setCopiedCode(true)
-    setTimeout(() => setCopiedCode(false), 2000)
-  }
-  
-  // Clone to custom
-  const handleCloneToCustom = () => {
-    if (!logo) return
-    
-    // Create a new logo with the current code as custom
-    const newId = useLogoStore.getState().addLogo('custom')
-    const newLogo = useLogoStore.getState().logos.find(l => l.id === newId)
-    if (newLogo) {
-      updateLogo(newId, { 
-        code: localCode,
-        templateName: `${logo.templateName} (Clone)`
-      })
+  }, [localCode, selectedLogo, updateSelectedLogoCode])
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(localCode)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch (error) {
+      console.error('Failed to copy:', error)
     }
   }
-  
-  // Handle resize
-  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+
+  const handleReset = () => {
+    if (selectedLogo && selectedLogo.code !== localCode) {
+      setLocalCode(selectedLogo.code)
+      setHasUnsavedChanges(false)
+      setErrorMessage(null)
+    }
+  }
+
+  // Mouse event handlers for resizing
+  const handleMouseDown = (e: React.MouseEvent) => {
+    isDragging.current = true
+    startX.current = e.clientX
+    startWidth.current = width
+    document.body.style.cursor = 'col-resize'
     e.preventDefault()
-    setIsResizing(true)
-  }, [])
+  }
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
-      if (!isResizing) return
-      // Calculate width from left edge plus initial offset
-      const rect = document.querySelector('.canvas-container')?.getBoundingClientRect()
-      const containerLeft = rect?.left || 0
-      const newWidth = e.clientX - containerLeft - 24 // Account for left margin
-      setPanelWidth(Math.max(400, Math.min(800, newWidth)))
+      if (!isDragging.current) return
+      
+      const diff = e.clientX - startX.current
+      const newWidth = Math.max(400, Math.min(1200, startWidth.current + diff))
+      setWidth(newWidth)
     }
 
     const handleMouseUp = () => {
-      setIsResizing(false)
+      isDragging.current = false
+      document.body.style.cursor = ''
     }
 
-    if (isResizing) {
-      document.addEventListener('mousemove', handleMouseMove)
-      document.addEventListener('mouseup', handleMouseUp)
-      document.body.style.cursor = 'ew-resize'
-    }
+    document.addEventListener('mousemove', handleMouseMove)
+    document.addEventListener('mouseup', handleMouseUp)
 
     return () => {
       document.removeEventListener('mousemove', handleMouseMove)
       document.removeEventListener('mouseup', handleMouseUp)
-      document.body.style.cursor = 'auto'
     }
-  }, [isResizing])
-  
-  if (!logo) {
-    return (
-      <div className="absolute top-6 left-6 z-40">
-        <div className="bg-yellow-100 border border-yellow-300 rounded-lg p-2 text-xs text-yellow-800">
-          ⚠️ No logo selected
-        </div>
-      </div>
-    )
+  }, [])
+
+  const handlePrevLogo = () => {
+    const currentIndex = logos.findIndex(l => l.id === selectedLogoId)
+    if (currentIndex > 0) {
+      useLogoStore.getState().setSelectedLogoId(logos[currentIndex - 1].id)
+    }
   }
-  
-  // Collapsed overlay view
-  if (codeEditorCollapsed) {
+
+  const handleNextLogo = () => {
+    const currentIndex = logos.findIndex(l => l.id === selectedLogoId)
+    if (currentIndex < logos.length - 1) {
+      useLogoStore.getState().setSelectedLogoId(logos[currentIndex + 1].id)
+    }
+  }
+
+  const currentIndex = logos.findIndex(l => l.id === selectedLogoId)
+
+  // Collapsed state - just show a button
+  if (isCollapsed) {
     return (
-      <div className="absolute top-6 left-6 z-40 animate-in fade-in slide-in-from-left-2 duration-300">
-        <Button
-          onClick={toggleCodeEditor}
-          variant="default"
-          size="lg"
-          className="shadow-lg hover:shadow-xl transition-all duration-200 bg-white hover:bg-gray-50 text-gray-900 border-2 border-gray-200"
-        >
-          <Code className="w-5 h-5 mr-2" />
-          <span className="font-medium">Make it your own</span>
-          <ChevronRight className="w-4 h-4 ml-2 opacity-60" />
-        </Button>
-        {isCodeDirty && (
-          <div className="absolute -top-2 -right-2 w-3 h-3 bg-orange-500 rounded-full animate-pulse" />
-        )}
-      </div>
+      <Button
+        onClick={() => setIsCollapsed(false)}
+        className={`absolute top-6 left-6 z-50 shadow-lg border-2 ${
+          darkMode 
+            ? 'bg-gray-800 hover:bg-gray-700 text-white border-gray-600' 
+            : 'bg-white hover:bg-gray-50 text-gray-900 border-gray-300'
+        }`}
+        size="sm"
+        variant="outline"
+        title="Open Code Editor"
+      >
+        <Code className="w-4 h-4 mr-2" />
+        Code
+      </Button>
     )
   }
 
-  // Expanded panel view - now as a floating overlay
+  // If no logo selected, return null for expanded state
+  if (!selectedLogo) return null
+
+  // Expanded state - full panel
   return (
     <div 
-      className="absolute top-0 left-0 bottom-0 z-40 flex animate-in fade-in slide-in-from-left duration-300"
-      style={{ 
-        width: `${panelWidth}px`,
-        maxWidth: 'calc(50vw - 48px)',
-        transition: isResizing ? 'none' : 'width 300ms cubic-bezier(0.4, 0, 0.2, 1)'
-      }}
+      className={`absolute top-0 left-0 h-full shadow-lg flex flex-col ${darkMode ? 'bg-gray-900' : 'bg-white'} z-30 transition-all duration-300`}
+      style={{ width: `${width}px` }}
     >
-      <div className="flex-1 bg-white shadow-2xl border-r border-gray-200 overflow-hidden flex flex-col">
-        <div className="p-4 flex-1 flex flex-col">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <Code className="w-4 h-4 text-gray-600" />
-              <h3 className="font-semibold text-sm">Code Editor</h3>
-              {isCodeDirty && (
-                <span className="text-xs text-orange-600 font-medium animate-pulse">• Unsaved</span>
-              )}
-              {renderSuccess && (
-                <span className="text-xs text-green-600 font-medium flex items-center gap-1 animate-in fade-in">
-                  <Check className="w-3 h-3" /> Applied
-                </span>
-              )}
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={toggleCodeEditor}
-              className="h-7 w-7 p-0"
-            >
-              <X className="w-4 h-4" />
-            </Button>
-          </div>
-          
-          <Card className="flex-1 flex flex-col overflow-hidden">
-            <CardHeader className="pb-2">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-sm">
-                  {logo.templateName || 'Custom'} Code
-                </CardTitle>
-                <div className="flex items-center gap-1">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={copyCode}
-                    className="h-7 px-2"
-                  >
-                    {copiedCode ? (
-                      <>
-                        <Check className="w-3 h-3 mr-1" />
-                        Copied
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="w-3 h-3 mr-1" />
-                        Copy
-                      </>
-                    )}
-                  </Button>
-                  {logo.templateId !== 'custom' && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={handleCloneToCustom}
-                      className="h-7 px-2 text-xs"
-                    >
-                      Clone to Custom
-                    </Button>
-                  )}
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="flex-1 flex flex-col p-3 overflow-hidden">
-              <div className="flex-1 relative overflow-hidden rounded-md border border-gray-200 bg-white">
-                {/* Syntax highlighted preview */}
-                <div
-                  ref={highlightRef}
-                  className="absolute inset-0 p-3 font-mono text-xs leading-relaxed overflow-auto pointer-events-none whitespace-pre-wrap break-words select-none"
-                  style={{ tabSize: 2 }}
-                  dangerouslySetInnerHTML={{ __html: highlightCode(localCode) }}
-                />
-                {/* Actual textarea */}
-                <textarea
-                  ref={editorRef}
-                  value={localCode}
-                  onChange={handleCodeChange}
-                  onScroll={handleScroll}
-                  className="relative w-full h-full p-3 font-mono text-xs bg-transparent caret-black resize-none focus:outline-none leading-relaxed"
-                  spellCheck={false}
-                  placeholder="// Enter your visualization code here..."
-                  style={{
-                    tabSize: 2,
-                    caretColor: '#000',
-                    color: 'transparent',
-                    WebkitTextFillColor: 'transparent'
-                  }}
-                />
-              </div>
-              
-              <div className="mt-3 flex items-center justify-between">
-                <div className="text-xs text-gray-500">
-                  Press <kbd className="px-1 py-0.5 bg-gray-100 rounded text-xs">Cmd+Enter</kbd> to run
-                </div>
-                <Button
-                  size="sm"
-                  onClick={handleRunCode}
-                  disabled={!isCodeDirty}
-                  className="h-8 transition-all"
-                >
-                  <Play className="w-3 h-3 mr-1" />
-                  Run Code
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <div className="mt-4 space-y-2">
-            <details className="text-xs">
-              <summary className="cursor-pointer text-gray-600 hover:text-gray-800 transition-colors">
-                Available Variables & Functions
-              </summary>
-              <div className="mt-2 p-3 bg-gray-50 border border-gray-200 rounded-md space-y-2">
-                <div>
-                  <div className="font-semibold text-gray-900">Context:</div>
-                  <code className="text-blue-600 bg-blue-50 px-1 rounded">ctx</code> - Canvas 2D context<br />
-                  <code className="text-blue-600 bg-blue-50 px-1 rounded">width, height</code> - Canvas dimensions<br />
-                  <code className="text-blue-600 bg-blue-50 px-1 rounded">params</code> - All parameters<br />
-                  <code className="text-blue-600 bg-blue-50 px-1 rounded">generator</code> - Wave generator instance<br />
-                  <code className="text-blue-600 bg-blue-50 px-1 rounded">time</code> - Animation time
-                </div>
-                <div>
-                  <div className="font-semibold text-gray-900">Parameters:</div>
-                  <code className="text-blue-600 bg-blue-50 px-1 rounded">params.frequency</code><br />
-                  <code className="text-blue-600 bg-blue-50 px-1 rounded">params.amplitude</code><br />
-                  <code className="text-blue-600 bg-blue-50 px-1 rounded">params.complexity</code><br />
-                  <code className="text-blue-600 bg-blue-50 px-1 rounded">params.customParameters</code>
-                </div>
-                <div>
-                  <div className="font-semibold text-gray-900">Main Function:</div>
-                  <code className="text-purple-600 bg-purple-50 px-1 rounded text-xs">drawVisualization(ctx, width, height, params, generator, time)</code>
-                </div>
-              </div>
-            </details>
-          </div>
+      {/* Resize Handle - on the right side for left panel */}
+      <div
+        className={`absolute right-0 top-0 bottom-0 w-1 hover:w-2 cursor-col-resize transition-all ${
+          darkMode ? 'bg-gray-700 hover:bg-blue-600' : 'bg-gray-200 hover:bg-blue-500'
+        }`}
+        onMouseDown={handleMouseDown}
+      >
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+          <GripVertical className={`w-4 h-4 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`} />
         </div>
       </div>
-      
-      {/* Resize handle on the right */}
-      <div
-        onMouseDown={handleMouseDown}
-        className="w-1 bg-gray-300 hover:bg-blue-500 cursor-ew-resize transition-colors flex items-center justify-center group relative"
-      >
-        <GripVertical className="absolute w-4 h-4 text-gray-500 group-hover:text-white opacity-0 group-hover:opacity-100 transition-opacity" />
-      </div>
+
+      <Card className={`h-full flex flex-col border-0 rounded-none ${darkMode ? 'bg-gray-900 text-gray-100' : ''}`}>
+        <CardHeader className="flex-shrink-0 pb-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Code className="w-5 h-5" />
+              <CardTitle className="text-lg">Code Editor</CardTitle>
+              {hasUnsavedChanges && (
+                <span className="text-xs text-orange-500 font-medium">• Unsaved</span>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              {/* Logo Navigation */}
+              {logos.length > 1 && (
+                <div className="flex items-center gap-1 mr-2">
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={handlePrevLogo}
+                    disabled={currentIndex === 0}
+                    className="h-8 w-8 p-0"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </Button>
+                  <span className="text-xs text-gray-500 min-w-[3rem] text-center">
+                    {currentIndex + 1} / {logos.length}
+                  </span>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={handleNextLogo}
+                    disabled={currentIndex === logos.length - 1}
+                    className="h-8 w-8 p-0"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </Button>
+                </div>
+              )}
+              
+              {/* Action Buttons */}
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={handleReset}
+                disabled={!hasUnsavedChanges}
+                className="h-8 w-8 p-0"
+                title="Reset changes"
+              >
+                <RotateCcw className="w-4 h-4" />
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={handleCopy}
+                className="h-8 w-8 p-0"
+              >
+                {copied ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4" />}
+              </Button>
+              <Button
+                size="sm"
+                onClick={handleRunCode}
+                disabled={!hasUnsavedChanges}
+                className="h-8"
+              >
+                <Play className="w-3 h-3 mr-1" />
+                Run
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => setIsCollapsed(true)}
+                className="h-8 w-8 p-0"
+                title="Collapse editor"
+              >
+                <PanelLeftClose className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+        </CardHeader>
+        
+        <CardContent className="flex-1 p-0 overflow-hidden">
+          <div className="h-full flex flex-col">
+            {/* Error Message */}
+            {errorMessage && (
+              <div className={`px-4 py-2 border-b text-sm ${
+                darkMode 
+                  ? 'bg-red-900/20 border-red-800 text-red-400' 
+                  : 'bg-red-50 border-red-200 text-red-700'
+              }`}>
+                {errorMessage}
+              </div>
+            )}
+            
+            {/* Monaco Editor */}
+            <div className="flex-1">
+              <MonacoEditor
+                value={localCode}
+                onChange={handleCodeChange}
+                onMount={handleEditorMount}
+                language="javascript"
+                theme={darkMode ? "vs-dark" : "vs"}
+                options={{
+                  minimap: { enabled: false },
+                  fontSize: 13,
+                  lineNumbers: 'on',
+                  scrollBeyondLastLine: false,
+                  wordWrap: 'on',
+                  automaticLayout: true,
+                  tabSize: 2,
+                  insertSpaces: true,
+                  folding: true,
+                  suggestOnTriggerCharacters: true,
+                  quickSuggestions: {
+                    other: true,
+                    comments: false,
+                    strings: false
+                  },
+                  parameterHints: {
+                    enabled: true
+                  },
+                  suggestSelection: 'first',
+                  tabCompletion: 'on',
+                  wordBasedSuggestions: true,
+                  contextmenu: true,
+                  mouseWheelZoom: true,
+                  formatOnPaste: true,
+                  formatOnType: true,
+                  scrollbar: {
+                    verticalScrollbarSize: 10,
+                    horizontalScrollbarSize: 10
+                  }
+                }}
+              />
+            </div>
+            
+            {/* Status Bar */}
+            <div className={`px-4 py-2 border-t text-xs flex items-center justify-between ${
+              darkMode 
+                ? 'bg-gray-800 text-gray-400 border-gray-700' 
+                : 'bg-gray-100 text-gray-600 border-gray-200'
+            }`}>
+              <div>
+                JavaScript • {localCode.split('\n').length} lines
+              </div>
+              <div className="flex items-center gap-4">
+                {hasUnsavedChanges && (
+                  <span className={darkMode ? 'text-orange-400' : 'text-orange-600'}>Modified</span>
+                )}
+                <kbd className={`px-2 py-1 rounded text-xs ${
+                  darkMode ? 'bg-gray-700' : 'bg-gray-200'
+                }`}>Ctrl+Enter</kbd> to run
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   )
 }
