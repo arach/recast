@@ -65,68 +65,19 @@ export function ControlsPanel({
   forceRender,
   onForceRender
 }: ControlsPanelProps) {
+  // Use the customCode prop directly for parsing
+  const codeToUse = customCode || '';
+  
+  
   return (
     <div className="w-96 border-l border-gray-200 bg-gray-50/30 overflow-y-auto">
       <div className="p-6 space-y-4">
-        {/* Current Preset - Enhanced with Clear Visual Indicator */}
-        <Card className={`${currentPresetName ? 'ring-2 ring-blue-200 bg-blue-50/30' : 'bg-gray-50/30'}`}>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm flex items-center gap-2">
-              {currentPresetName ? (
-                <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-              ) : (
-                <span className="w-2 h-2 bg-orange-500 rounded-full"></span>
-              )}
-              Active Style
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className={`text-sm font-medium p-3 rounded-lg border-2 ${
-              currentPresetName 
-                ? 'text-blue-900 bg-blue-100 border-blue-200' 
-                : 'text-gray-900 bg-gray-100 border-gray-300'
-            }`}>
-              <div className="flex items-center justify-between">
-                <span>{currentPresetName || 'Custom Code'}</span>
-                {currentPresetName && (
-                  <span className="text-xs px-2 py-1 bg-blue-200 text-blue-800 rounded-full">PRESET</span>
-                )}
-              </div>
-            </div>
-            <p className="text-xs text-gray-600 mt-2">
-              {currentPresetName 
-                ? `Using preset: ${currentPresetName}` 
-                : 'Using custom visualization code'}
-            </p>
-          </CardContent>
-        </Card>
 
-        {/* Main Controls */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm">Core Parameters</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <label className="text-xs font-medium">
-                Seed (Your Signature)
-              </label>
-              <input
-                type="text"
-                value={seed}
-                onChange={(e) => onSeedChange(e.target.value)}
-                className="w-full mt-1 p-2 border rounded-lg text-sm"
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Universal Controls - Compact Professional Layout */}
+        {/* Brand Controls - Primary controls at the top */}
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm flex items-center gap-2">
-              <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
-              Universal Controls
+            <CardTitle className="text-sm font-semibold">
+              Brand Identity
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
@@ -319,7 +270,6 @@ export function ControlsPanel({
               }
               
               // Group by category for professional layout
-              const categories = ['Shape', '3D', 'Typography', 'Effects'];
               const visibleParams = Object.entries(templateParams).filter(([paramName, param]) => {
                 if (param.showIf && typeof param.showIf === 'function') {
                   return param.showIf(customParameters);
@@ -327,8 +277,19 @@ export function ControlsPanel({
                 return true;
               });
               
-              return categories.map(category => {
-                const categoryParams = visibleParams.filter(([_, param]) => param.category === category);
+              // Extract unique categories from parameters, plus uncategorized
+              const categoriesInParams = [...new Set(visibleParams.map(([_, param]) => param.category).filter(Boolean))];
+              const hasUncategorized = visibleParams.some(([_, param]) => !param.category);
+              const categories = [...categoriesInParams, ...(hasUncategorized ? [null] : [])];
+              
+              const result = categories.map(category => {
+                const categoryParams = visibleParams.filter(([_, param]) => {
+                  // For uncategorized items, check if category is null/undefined
+                  if (category === null) {
+                    return !param.category;
+                  }
+                  return param.category === category;
+                });
                 if (categoryParams.length === 0) return null;
                 
                 const categoryColor = {
@@ -339,8 +300,8 @@ export function ControlsPanel({
                 }[category] || 'bg-gray-50 border-gray-200';
                 
                 return (
-                  <div key={category} className={`${categoryColor} rounded-lg p-3 space-y-2`}>
-                    <div className="text-xs font-medium text-gray-700 border-b pb-1" style={{borderColor: 'inherit'}}>{category}</div>
+                  <div key={category || 'uncategorized'} className={`${categoryColor} rounded-lg p-3 space-y-2`}>
+                    {category && <div className="text-xs font-medium text-gray-700 border-b pb-1" style={{borderColor: 'inherit'}}>{category}</div>}
                     <div className="grid gap-2">
                       {categoryParams.map(([paramName, param]) => (
                         <div key={paramName} className="flex items-center justify-between">
@@ -417,6 +378,8 @@ export function ControlsPanel({
                   </div>
                 );
               }).filter(Boolean);
+              
+              return result;
             })()
             }
           </CardContent>
@@ -572,6 +535,20 @@ export function ControlsPanel({
           </CardContent>
         </Card>
         )}
+
+        {/* Seed - Minimized at bottom */}
+        <div className="pt-4 mt-4 border-t border-gray-200">
+          <div className="flex items-center gap-2">
+            <label className="text-xs text-gray-500">Seed:</label>
+            <input
+              type="text"
+              value={seed}
+              onChange={(e) => onSeedChange(e.target.value)}
+              className="flex-1 px-2 py-1 text-xs border rounded bg-gray-50"
+              placeholder="random-seed"
+            />
+          </div>
+        </div>
       </div>
     </div>
   )

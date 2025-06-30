@@ -44,7 +44,16 @@ export const parameters: Record<string, ParameterDefinition> = {
   },
   
   // Professional color system
-  brandHue: { type: 'slider', min: 0, max: 360, step: 10, default: 25, label: 'Brand Hue' },
+  colorMode: { 
+    type: 'select', 
+    options: [
+      { value: 'theme', label: 'Use Theme Colors' },
+      { value: 'golden', label: 'Golden Palette' },
+      { value: 'custom', label: 'Custom Colors' }
+    ],
+    default: 'theme',
+    label: 'Color Mode'
+  },
   warmth: { type: 'slider', min: 0.3, max: 1, step: 0.05, default: 0.7, label: 'Color Warmth' },
   sophistication: { type: 'slider', min: 0.4, max: 0.9, step: 0.05, default: 0.6, label: 'Color Sophistication' },
   
@@ -61,12 +70,13 @@ export function draw(
   generator: any,
   time: number
 ) {
-  // Clean, warm background for organic sophistication
-  const bgGradient = ctx.createLinearGradient(0, 0, width, height);
-  bgGradient.addColorStop(0, '#fefefe');
-  bgGradient.addColorStop(1, '#fafafa');
-  ctx.fillStyle = bgGradient;
-  ctx.fillRect(0, 0, width, height);
+  // Apply universal background
+  applyUniversalBackground(ctx, width, height, params);
+  
+  // Get theme colors with fallbacks
+  const fillColor = params.fillColor || '#d4a574'; // Golden color default
+  const strokeColor = params.strokeColor || '#b8935f';
+  const backgroundColor = params.backgroundColor || '#fefefe';
 
   // Extract parameters
   const centerX = width / 2;
@@ -81,7 +91,7 @@ export function draw(
   const borderStyleNum = Math.round(params.borderStyle || 0);
   const borderWeight = params.borderWeight || 2;
   const fillTypeNum = Math.round(params.fillType || 2);
-  const brandHue = params.brandHue || 25;
+  const colorMode = params.colorMode || 'theme';
   const warmth = params.warmth || 0.7;
   const sophistication = params.sophistication || 0.6;
   const innerGlow = params.innerGlow || 0.15;
@@ -98,7 +108,7 @@ export function draw(
   const animatedRadius = baseRadius * breathingPulse;
 
   // Create sophisticated color palette
-  const brandColors = createSophisticatedPalette(brandHue, warmth, sophistication);
+  const brandColors = createSophisticatedPalette(fillColor, strokeColor, colorMode, warmth, sophistication);
 
   // Generate circle path based on style
   const circlePath = generateGoldenCircle(
@@ -219,18 +229,80 @@ export function draw(
     return points;
   }
 
-  function createSophisticatedPalette(hue: number, warmth: number, sophistication: number) {
-    const sat = sophistication * 80;
-    const lightBase = 45 + warmth * 20;
-    
-    return {
-      primary: `hsl(${hue}, ${sat}%, ${lightBase}%)`,
-      secondary: `hsl(${hue + 20}, ${sat * 0.8}%, ${lightBase + 15}%)`,
-      accent: `hsl(${hue - 15}, ${sat * 1.2}%, ${lightBase - 10}%)`,
-      warm: `hsl(${hue + 30}, ${sat * 0.6}%, ${lightBase + 25}%)`,
-      sophisticated: `hsl(${hue}, ${sat * 0.4}%, ${lightBase + 35}%)`,
-      depth: `hsl(${hue - 10}, ${sat * 1.4}%, ${lightBase - 20}%)`
+  function createSophisticatedPalette(fillColor: string, strokeColor: string, colorMode: string, warmth: number, sophistication: number) {
+    // Helper to convert hex to HSL
+    const hexToHsl = (hex: string): [number, number, number] => {
+      const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+      if (!result) return [0, 0, 50];
+      
+      let r = parseInt(result[1], 16) / 255;
+      let g = parseInt(result[2], 16) / 255;
+      let b = parseInt(result[3], 16) / 255;
+      
+      const max = Math.max(r, g, b), min = Math.min(r, g, b);
+      let h, s, l = (max + min) / 2;
+      
+      if (max === min) {
+        h = s = 0;
+      } else {
+        const d = max - min;
+        s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+        switch (max) {
+          case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
+          case g: h = ((b - r) / d + 2) / 6; break;
+          case b: h = ((r - g) / d + 4) / 6; break;
+          default: h = 0;
+        }
+      }
+      
+      return [h * 360, s * 100, l * 100];
     };
+    
+    if (colorMode === 'theme') {
+      // Use theme colors as base
+      const [fillHue, fillSat, fillLum] = hexToHsl(fillColor);
+      const [strokeHue, strokeSat, strokeLum] = hexToHsl(strokeColor);
+      
+      const sat = fillSat * sophistication;
+      const lightBase = fillLum;
+      
+      return {
+        primary: fillColor,
+        secondary: strokeColor,
+        accent: `hsl(${fillHue}, ${sat * 1.2}%, ${Math.max(20, lightBase - 15)}%)`,
+        warm: `hsl(${fillHue + 15}, ${sat * 0.8}%, ${Math.min(90, lightBase + warmth * 20)}%)`,
+        sophisticated: `hsl(${fillHue}, ${sat * 0.6}%, ${Math.min(85, lightBase + 25)}%)`,
+        depth: `hsl(${fillHue}, ${sat * 1.4}%, ${Math.max(15, lightBase - 25)}%)`
+      };
+    } else if (colorMode === 'golden') {
+      // Classic golden palette
+      const hue = 38; // Golden hue
+      const sat = sophistication * 80;
+      const lightBase = 45 + warmth * 20;
+      
+      return {
+        primary: `hsl(${hue}, ${sat}%, ${lightBase}%)`,
+        secondary: `hsl(${hue + 20}, ${sat * 0.8}%, ${lightBase + 15}%)`,
+        accent: `hsl(${hue - 15}, ${sat * 1.2}%, ${lightBase - 10}%)`,
+        warm: `hsl(${hue + 30}, ${sat * 0.6}%, ${lightBase + 25}%)`,
+        sophisticated: `hsl(${hue}, ${sat * 0.4}%, ${lightBase + 35}%)`,
+        depth: `hsl(${hue - 10}, ${sat * 1.4}%, ${lightBase - 20}%)`
+      };
+    } else {
+      // Custom mode - use fill color as base hue
+      const [baseHue] = hexToHsl(fillColor);
+      const sat = sophistication * 80;
+      const lightBase = 45 + warmth * 20;
+      
+      return {
+        primary: `hsl(${baseHue}, ${sat}%, ${lightBase}%)`,
+        secondary: `hsl(${baseHue + 20}, ${sat * 0.8}%, ${lightBase + 15}%)`,
+        accent: `hsl(${baseHue - 15}, ${sat * 1.2}%, ${lightBase - 10}%)`,
+        warm: `hsl(${baseHue + 30}, ${sat * 0.6}%, ${lightBase + 25}%)`,
+        sophisticated: `hsl(${baseHue}, ${sat * 0.4}%, ${lightBase + 35}%)`,
+        depth: `hsl(${baseHue - 10}, ${sat * 1.4}%, ${lightBase - 20}%)`
+      };
+    }
   }
 
   function renderInnerGlow(ctx: CanvasRenderingContext2D, points: any[], colors: any, glow: number, radius: number) {
@@ -391,7 +463,7 @@ export function draw(
 
 export const metadata: PresetMetadata = {
   name: "◯ Golden Circle",
-  description: "Fibonacci-based proportions with organic sophistication - perfect for warm, approachable brands",
+  description: "Fibonacci-based proportions with theme-aware colors and organic sophistication",
   defaultParams: {
     seed: "golden-circle-brand",
     circleStyle: 0,
@@ -404,7 +476,7 @@ export const metadata: PresetMetadata = {
     borderStyle: 0,
     borderWeight: 2,
     fillType: 2,
-    brandHue: 25,
+    colorMode: 'theme',
     warmth: 0.7,
     sophistication: 0.6,
     innerGlow: 0.15,

@@ -19,6 +19,7 @@ import { ControlsPanel } from '@/components/studio/ControlsPanel'
 import { BrandPresetsPanel } from '@/components/studio/BrandPresetsPanel'
 import { IndustrySelector } from '@/components/studio/IndustrySelector'
 import { ColorThemeSelector } from '@/components/studio/ColorThemeSelector'
+import { TemplatePresetsPanel } from '@/components/studio/TemplatePresetsPanel'
 import { AISuggestions } from '@/components/studio/AISuggestions'
 import { BrandPersonality } from '@/components/studio/BrandPersonality'
 import { AIBrandConsultant } from '@/components/studio/AIBrandConsultant'
@@ -212,6 +213,67 @@ export default function Home() {
     setMounted(true)
   }, [])
 
+  // Handle URL parameters on mount
+  useEffect(() => {
+    if (!mounted) return;
+    
+    // Parse URL parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const templateParam = urlParams.get('template');
+    const textParam = urlParams.get('text');
+    const letterParam = urlParams.get('letter');
+    const fillColorParam = urlParams.get('fillColor');
+    const strokeColorParam = urlParams.get('strokeColor');
+    const backgroundColorParam = urlParams.get('backgroundColor');
+    
+    // Load template if specified
+    if (templateParam) {
+      console.log('Loading template from URL:', templateParam);
+      loadPresetById(templateParam).then(() => {
+        // After template loads, apply text and color params
+        const updates: Record<string, any> = {};
+        
+        if (textParam) updates.text = textParam;
+        if (letterParam) updates.letter = letterParam;
+        if (fillColorParam) updates.fillColor = fillColorParam;
+        if (strokeColorParam) updates.strokeColor = strokeColorParam;
+        if (backgroundColorParam) updates.backgroundColor = backgroundColorParam;
+        
+        if (Object.keys(updates).length > 0) {
+          setCustomParameters(prev => ({ ...prev, ...updates }));
+          updateSelectedLogo({ customParameters: updates });
+        }
+      });
+    } else {
+      // If no template, still apply text/color params if present
+      const updates: Record<string, any> = {};
+      
+      if (textParam) updates.text = textParam;
+      if (letterParam) updates.letter = letterParam;
+      if (fillColorParam) updates.fillColor = fillColorParam;
+      if (strokeColorParam) updates.strokeColor = strokeColorParam;
+      if (backgroundColorParam) updates.backgroundColor = backgroundColorParam;
+      
+      if (Object.keys(updates).length > 0) {
+        setCustomParameters(prev => ({ ...prev, ...updates }));
+        updateSelectedLogo({ customParameters: updates });
+      }
+    }
+  }, [mounted]); // Only run once after mount
+
+  // Update URL when key parameters change
+  useEffect(() => {
+    if (!mounted) return;
+    
+    // Debounce URL updates to avoid too many history entries
+    const timeoutId = setTimeout(() => {
+      updateURLParams();
+    }, 1000);
+    
+    return () => clearTimeout(timeoutId);
+  }, [selectedLogo.presetId, customParameters.text, customParameters.letter, 
+      customParameters.fillColor, customParameters.strokeColor, customParameters.backgroundColor]);
+
   // Theme detection
   useEffect(() => {
     if (!mounted) return
@@ -243,21 +305,7 @@ export default function Home() {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [mounted])
 
-  // Parse custom parameters when code changes
-  useEffect(() => {
-    const parsedParams = parseCustomParameters(customCode)
-    if (parsedParams) {
-      // Initialize custom parameter values with defaults, preserving existing values
-      const paramValues: Record<string, any> = { ...customParameters }
-      Object.entries(parsedParams).forEach(([key, param]) => {
-        // Only set if the parameter doesn't exist yet
-        if (!(key in paramValues)) {
-          paramValues[key] = param.default ?? 0
-        }
-      })
-      setCustomParameters(paramValues)
-    }
-  }, [customCode])
+
 
   // Get metadata for current generator (simplified - just use wave generator)
   const getCurrentGeneratorMetadata = () => {
@@ -271,8 +319,12 @@ export default function Home() {
   const parseCustomParameters = (code: string) => {
     try {
       // Look for PARAMETERS = { ... } definition - use a more robust approach
-      const match = code.match(/const\s+PARAMETERS\s*=\s*({[\s\S]*?^});/m)
-      if (!match) return null
+      // Updated regex to handle multi-line objects better
+      const match = code.match(/const\s+PARAMETERS\s*=\s*({[\s\S]*?^});/m) || 
+                    code.match(/const\s+PARAMETERS\s*=\s*({[\s\S]*?});/);
+      if (!match) {
+        return null
+      }
       
       const fullParamsBlock = match[1]
       
@@ -287,7 +339,6 @@ export default function Home() {
         for (const [paramName, paramDef] of Object.entries(paramsObj)) {
           parameters[paramName] = paramDef
         }
-        
         return parameters
       } catch (evalError) {
         console.warn('Failed to eval parameters, falling back to regex:', evalError)
@@ -360,6 +411,7 @@ export default function Home() {
     const stepMatch = paramDefString.match(/step:\s*([\d.]+)/);
     const defaultMatch = paramDefString.match(/default:\s*(['"]?)([^'",\s}]+)\1/);
     const labelMatch = paramDefString.match(/label:\s*['"]([^'"]*)['"]/);
+    const categoryMatch = paramDefString.match(/category:\s*['"]([^'"]*)['"]/);
     const optionsMatch = paramDefString.match(/options:\s*\[([^\]]*)\]/);
     
     if (typeMatch) param.type = typeMatch[1];
@@ -371,6 +423,7 @@ export default function Home() {
       param.default = isNaN(Number(defaultValue)) ? defaultValue : parseFloat(defaultValue);
     }
     if (labelMatch) param.label = labelMatch[1];
+    if (categoryMatch) param.category = categoryMatch[1];
     if (optionsMatch) {
       const optionsStr = optionsMatch[1];
       param.options = optionsStr.split(',').map(opt => opt.trim().replace(/['"]/g, ''));
@@ -452,33 +505,61 @@ export default function Home() {
         return
       }
       
-      console.log('Loaded preset:', preset.name, 'Code length:', preset.code.length)
+      // Parse the preset code to get ALL parameter definitions (not just defaults)
+      const parsedParams = parseCustomParameters(preset.code) || {};
       
-      // Merge preset defaults with custom defaults (industry-specific or otherwise)
-      const mergedParams = {
-        ...preset.defaultParams,
-        ...customDefaults
-      }
+      // Text parameters that should be preserved
+      const textParams = ['text', 'letter', 'letters', 'brandName', 'words', 'title', 'subtitle'];
+      
+      // Build complete parameters from definitions and defaults
+      const completeParams: Record<string, any> = {};
+      Object.entries(parsedParams).forEach(([key, paramDef]) => {
+        if (paramDef.default !== undefined) {
+          completeParams[key] = paramDef.default;
+        }
+      });
       
       // Update the selected logo with preset data
-      setLogos(prev => prev.map(logo => 
-        logo.id === selectedLogoId 
-          ? { 
-              ...logo, 
-              params: { 
-                ...logo.params,
-                ...mergedParams, // Apply merged parameters
-                customParameters: {
-                  ...logo.params.customParameters, // Preserve existing parameters
-                  ...mergedParams // Then apply new ones
-                }
-              },
-              code: preset.code, // Set the preset code
-              presetId: preset.id,
-              presetName: preset.name
+      setLogos(prev => prev.map(logo => {
+        if (logo.id !== selectedLogoId) return logo;
+        
+        // Get current text values to preserve
+        const currentTextValues: Record<string, any> = {};
+        textParams.forEach(param => {
+          if (logo.params.customParameters?.[param] !== undefined) {
+            currentTextValues[param] = logo.params.customParameters[param];
+          }
+        });
+        
+        // Merge preset defaults with custom defaults (industry-specific or otherwise)
+        const mergedParams = {
+          ...completeParams,
+          ...preset.defaultParams,
+          ...customDefaults,
+          ...currentTextValues // Preserve text values
+        };
+        
+        return { 
+          ...logo, 
+          params: { 
+            ...logo.params,
+            ...mergedParams, // Apply merged parameters
+            // Preserve any existing color theme
+            fillColor: logo.params.customParameters?.fillColor || mergedParams.fillColor,
+            strokeColor: logo.params.customParameters?.strokeColor || mergedParams.strokeColor,
+            backgroundColor: logo.params.customParameters?.backgroundColor || mergedParams.backgroundColor,
+            customParameters: {
+              ...completeParams, // First apply ALL parameter defaults from definitions
+              ...mergedParams, // Then apply preset defaults
+              ...logo.params.customParameters, // Then preserve existing parameters (including colors)
+              ...currentTextValues // Ensure text values are preserved
             }
-          : logo
-      ))
+          },
+          code: preset.code, // Set the preset code
+          presetId: preset.id,
+          presetName: preset.name
+        }
+      }))
       
       // Force re-render
       setForceRender(prev => prev + 1)
@@ -498,15 +579,23 @@ export default function Home() {
 
   // Handle color theme application
   const handleApplyColorTheme = (themedParams: Record<string, any>) => {
+    // Filter out text-based parameters that shouldn't be overridden
+    const textParams = ['text', 'letter', 'letters', 'brandName', 'words', 'title', 'subtitle'];
+    const filteredParams = Object.fromEntries(
+      Object.entries(themedParams).filter(([key]) => !textParams.includes(key))
+    );
+    
     setLogos(prev => prev.map(logo => 
       logo.id === selectedLogoId 
         ? { 
             ...logo, 
             params: {
               ...logo.params,
+              // Apply color params at the root level for universal controls
+              ...filteredParams,
               customParameters: {
                 ...logo.params.customParameters,
-                ...themedParams
+                ...filteredParams
               }
             }
           }
@@ -514,9 +603,33 @@ export default function Home() {
     ))
     setCustomParameters(prev => ({
       ...prev,
-      ...themedParams
+      ...filteredParams
     }))
     // Force re-render to apply the theme changes
+    setForceRender(prev => prev + 1)
+  }
+
+  // Apply template preset (style parameters only, no colors)
+  const handleApplyTemplatePreset = (presetParams: Record<string, any>) => {
+    setLogos(prev => prev.map(logo => 
+      logo.id === selectedLogoId 
+        ? { 
+            ...logo, 
+            params: { 
+              ...logo.params,
+              customParameters: {
+                ...logo.params.customParameters,
+                ...presetParams
+              }
+            }
+          }
+        : logo
+    ))
+    setCustomParameters(prev => ({
+      ...prev,
+      ...presetParams
+    }))
+    // Force re-render
     setForceRender(prev => prev + 1)
   }
 
@@ -530,6 +643,12 @@ export default function Home() {
         await loadPresetById(brandPreset.preset)
       }
       
+      // Filter out text-based parameters that shouldn't be overridden
+      const textParams = ['text', 'letter', 'letters', 'brandName', 'words', 'title', 'subtitle'];
+      const filteredParams = Object.fromEntries(
+        Object.entries(brandPreset.params).filter(([key]) => !textParams.includes(key))
+      );
+      
       // Then apply the custom parameters
       setLogos(prev => prev.map(logo => 
         logo.id === selectedLogoId 
@@ -539,7 +658,7 @@ export default function Home() {
                 ...logo.params,
                 customParameters: {
                   ...logo.params.customParameters,
-                  ...brandPreset.params
+                  ...filteredParams
                 }
               }
             }
@@ -549,7 +668,7 @@ export default function Home() {
       // Update custom parameters state for the controls panel
       setCustomParameters(prev => ({
         ...prev,
-        ...brandPreset.params
+        ...filteredParams
       }))
       
       // Force re-render
@@ -574,20 +693,45 @@ export default function Home() {
     alert('SVG export coming soon!')
   }
 
+  // Update URL with current parameters (without page reload)
+  const updateURLParams = () => {
+    const params = new URLSearchParams();
+    
+    // Add template if using a preset
+    if (selectedLogo.presetId) {
+      params.set('template', selectedLogo.presetId);
+    }
+    
+    // Add text parameters if they exist
+    if (customParameters.text) params.set('text', customParameters.text);
+    if (customParameters.letter) params.set('letter', customParameters.letter);
+    
+    // Add color parameters if they differ from defaults
+    if (customParameters.fillColor && customParameters.fillColor !== '#3b82f6') {
+      params.set('fillColor', customParameters.fillColor);
+    }
+    if (customParameters.strokeColor && customParameters.strokeColor !== '#1e40af') {
+      params.set('strokeColor', customParameters.strokeColor);
+    }
+    if (customParameters.backgroundColor && customParameters.backgroundColor !== '#ffffff') {
+      params.set('backgroundColor', customParameters.backgroundColor);
+    }
+    
+    // Update URL without reload
+    const newURL = `${window.location.pathname}${params.toString() ? '?' + params.toString() : ''}`;
+    window.history.replaceState({}, '', newURL);
+  };
+
   const shareLink = () => {
-    const params = new URLSearchParams({
-      seed,
-      frequency: frequency.toString(),
-      amplitude: amplitude.toString(),
-      complexity: complexity.toString(),
-      chaos: chaos.toString(),
-      damping: damping.toString(),
-      layers: layers.toString(),
-      barCount: barCount.toString(),
-      barSpacing: barSpacing.toString(),
-    })
-    const url = `${window.location.origin}${window.location.pathname}?${params.toString()}`
-    navigator.clipboard.writeText(url)
+    // First update URL with current params
+    updateURLParams();
+    
+    // Then copy the URL
+    const url = window.location.href;
+    navigator.clipboard.writeText(url);
+    
+    // Show some feedback (you could add a toast here)
+    console.log('Link copied:', url);
   }
 
   const handleLoadShape = (shape: SavedShape) => {
@@ -710,8 +854,8 @@ export default function Home() {
             barCount={barCount}
             barSpacing={barSpacing}
             radius={radius}
-            customCode={customCode}
-            customParameters={customParameters}
+            customCode={logos.find(l => l.id === selectedLogoId)?.code || customCode}
+            customParameters={logos.find(l => l.id === selectedLogoId)?.params.customParameters || customParameters}
             onSeedChange={setSeed}
             onFrequencyChange={setFrequency}
             onAmplitudeChange={setAmplitude}
@@ -739,6 +883,11 @@ export default function Home() {
                 currentIndustry={currentIndustry}
                 currentParams={customParameters}
                 onApplyTheme={handleApplyColorTheme}
+              />
+              <TemplatePresetsPanel
+                currentTemplate={selectedLogo.presetId || 'custom'}
+                currentParams={customParameters}
+                onApplyPreset={handleApplyTemplatePreset}
               />
               <AISuggestions
                 currentIndustry={currentIndustry}

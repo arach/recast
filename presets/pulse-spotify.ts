@@ -13,7 +13,18 @@ export const parameters: Record<string, ParameterDefinition> = {
   // Circle-specific parameters
   radius: { type: 'slider', min: 10, max: 200, step: 1, default: 50, label: 'Base Radius' },
   strokeWidth: { type: 'slider', min: 1, max: 10, step: 1, default: 3, label: 'Stroke Width' },
-  colorVariation: { type: 'slider', min: 0, max: 1, step: 0.01, default: 0.5, label: 'Color Variation' }
+  colorVariation: { type: 'slider', min: 0, max: 1, step: 0.01, default: 0.5, label: 'Color Variation' },
+  
+  // Color mode
+  colorMode: { 
+    type: 'select', 
+    options: [
+      { value: 'spotify', label: 'Spotify Green' },
+      { value: 'theme', label: 'Use Theme Colors' }
+    ],
+    default: 'theme',
+    label: 'Color Mode'
+  }
 };
 
 export function draw(
@@ -24,12 +35,41 @@ export function draw(
   generator: any,
   time: number
 ) {
-  // Clear canvas with gradient background
-  const bgGradient = ctx.createRadialGradient(width/2, height/2, 0, width/2, height/2, Math.max(width, height)/2);
-  bgGradient.addColorStop(0, '#fafafa');
-  bgGradient.addColorStop(1, '#f0f0f0');
-  ctx.fillStyle = bgGradient;
-  ctx.fillRect(0, 0, width, height);
+  // Apply universal background
+  applyUniversalBackground(ctx, width, height, params);
+  
+  // Get theme colors with fallbacks
+  const fillColor = params.fillColor || '#1DB954'; // Spotify green
+  const strokeColor = params.strokeColor || '#1ED760'; // Lighter Spotify green
+  const colorMode = params.colorMode || 'theme';
+  
+  // Helper to convert hex to HSL
+  const hexToHsl = (hex: string): [number, number, number] => {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    if (!result) return [0, 0, 50];
+    
+    let r = parseInt(result[1], 16) / 255;
+    let g = parseInt(result[2], 16) / 255;
+    let b = parseInt(result[3], 16) / 255;
+    
+    const max = Math.max(r, g, b), min = Math.min(r, g, b);
+    let h, s, l = (max + min) / 2;
+    
+    if (max === min) {
+      h = s = 0;
+    } else {
+      const d = max - min;
+      s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+      switch (max) {
+        case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
+        case g: h = ((b - r) / d + 2) / 6; break;
+        case b: h = ((r - g) / d + 4) / 6; break;
+        default: h = 0;
+      }
+    }
+    
+    return [h * 360, s * 100, l * 100];
+  };
 
   const centerX = width / 2;
   const centerY = height / 2;
@@ -43,10 +83,21 @@ export function draw(
     const radiusVariation = (params.amplitude || 25) * Math.sin(layerPhase + time);
     const finalRadius = Math.max(10, layerRadius + radiusVariation);
     
-    // Spotify-inspired green color palette
-    const hue = 140 + (layer / layers) * 20 + (params.colorVariation || 0.5) * 15 * Math.sin(time + layer);
-    const saturation = 70 - layer * 5;
-    const lightness = 50 + layer * 5;
+    // Color based on mode
+    let hue, saturation, lightness;
+    
+    if (colorMode === 'spotify') {
+      // Spotify-inspired green color palette
+      hue = 140 + (layer / layers) * 20 + (params.colorVariation || 0.5) * 15 * Math.sin(time + layer);
+      saturation = 70 - layer * 5;
+      lightness = 50 + layer * 5;
+    } else {
+      // Theme colors with layer variations
+      const [baseHue, baseSat, baseLum] = hexToHsl(layer % 2 === 0 ? fillColor : strokeColor);
+      hue = baseHue + (layer / layers) * 30 + (params.colorVariation || 0.5) * 20 * Math.sin(time + layer);
+      saturation = baseSat - layer * 5;
+      lightness = baseLum + layer * 10;
+    }
     
     ctx.beginPath();
     ctx.strokeStyle = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
@@ -65,7 +116,7 @@ export function draw(
         const orbitRadius = 5 + layer * 2;
         
         ctx.beginPath();
-        ctx.fillStyle = `hsl(${hue + 10}, ${saturation}%, ${lightness + 20}%)`;
+        ctx.fillStyle = `hsl(${(hue + 10) % 360}, ${Math.min(100, saturation + 10)}%, ${Math.min(90, lightness + 20)}%)`;
         ctx.globalAlpha = 0.6;
         ctx.arc(orbitX, orbitY, orbitRadius, 0, Math.PI * 2);
         ctx.fill();
@@ -78,7 +129,7 @@ export function draw(
 
 export const metadata: PresetMetadata = {
   name: "● Pulse (Spotify-style)",
-  description: "Pulsing concentric circles with Spotify's signature green palette",
+  description: "Pulsing concentric circles with theme colors or Spotify's signature green palette",
   defaultParams: {
     seed: "pulse-spotify",
     frequency: 3,
@@ -89,6 +140,7 @@ export const metadata: PresetMetadata = {
     layers: 4,
     radius: 80,
     strokeWidth: 3,
-    colorVariation: 0.5
+    colorVariation: 0.5,
+    colorMode: 'theme'
   }
 };

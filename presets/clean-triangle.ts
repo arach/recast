@@ -34,9 +34,7 @@ export const parameters: Record<string, ParameterDefinition> = {
   },
   
   // Color system - professional brand palette
-  brandHue: { type: 'slider', min: 0, max: 360, step: 10, default: 210, label: 'Brand Hue' },
-  brandSaturation: { type: 'slider', min: 0.2, max: 1, step: 0.05, default: 0.8, label: 'Brand Saturation' },
-  brandLightness: { type: 'slider', min: 0.3, max: 0.7, step: 0.05, default: 0.5, label: 'Brand Lightness' },
+  colorIntensity: { type: 'slider', min: 0.5, max: 1, step: 0.05, default: 0.8, label: 'Color Intensity' },
   
   // Subtle enhancements for larger sizes
   depth: { type: 'slider', min: 0, max: 0.5, step: 0.05, default: 0.1, label: 'Subtle Depth' },
@@ -51,9 +49,13 @@ export function draw(
   generator: any,
   time: number
 ) {
-  // Clean professional background
-  ctx.fillStyle = '#ffffff';
-  ctx.fillRect(0, 0, width, height);
+  // Apply universal background
+  applyUniversalBackground(ctx, width, height, params);
+  
+  // Get theme colors with fallbacks
+  const fillColor = params.fillColor || '#3b82f6';
+  const strokeColor = params.strokeColor || '#1e40af';
+  const backgroundColor = params.backgroundColor || '#ffffff';
 
   // Extract parameters
   const centerX = width / 2;
@@ -67,9 +69,7 @@ export function draw(
   const symmetryPerfection = params.symmetryPerfection || 1.0;
   const strokeWeight = params.strokeWeight || 0;
   const fillStyleNum = Math.round(params.fillStyle || 1);
-  const brandHue = params.brandHue || 210;
-  const brandSaturation = params.brandSaturation || 0.8;
-  const brandLightness = params.brandLightness || 0.5;
+  const colorIntensity = params.colorIntensity || 0.8;
   const depth = params.depth || 0.1;
   const highlight = params.highlight || 0.15;
 
@@ -91,7 +91,7 @@ export function draw(
   );
 
   // Brand color system
-  const brandColors = createBrandColors(brandHue, brandSaturation, brandLightness);
+  const brandColors = createBrandColors(fillColor, strokeColor, colorIntensity);
 
   // Apply subtle depth first (for larger sizes)
   if (depth > 0.05 && Math.min(width, height) > 100) {
@@ -167,16 +167,44 @@ export function draw(
     return points;
   }
 
-  function createBrandColors(hue: number, saturation: number, lightness: number) {
-    const sat = saturation * 100;
-    const light = lightness * 100;
+  function createBrandColors(fillColor: string, strokeColor: string, intensity: number) {
+    // Helper to convert hex to HSL
+    const hexToHsl = (hex: string): [number, number, number] => {
+      const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+      if (!result) return [0, 0, 50];
+      
+      let r = parseInt(result[1], 16) / 255;
+      let g = parseInt(result[2], 16) / 255;
+      let b = parseInt(result[3], 16) / 255;
+      
+      const max = Math.max(r, g, b), min = Math.min(r, g, b);
+      let h, s, l = (max + min) / 2;
+      
+      if (max === min) {
+        h = s = 0;
+      } else {
+        const d = max - min;
+        s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+        switch (max) {
+          case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
+          case g: h = ((b - r) / d + 2) / 6; break;
+          case b: h = ((r - g) / d + 4) / 6; break;
+          default: h = 0;
+        }
+      }
+      
+      return [h * 360, s * 100, l * 100];
+    };
+    
+    const [hue, sat, light] = hexToHsl(fillColor);
+    const adjustedSat = sat * intensity;
     
     return {
-      primary: `hsl(${hue}, ${sat}%, ${light}%)`,
-      secondary: `hsl(${hue}, ${sat * 0.7}%, ${light + 15}%)`,
-      accent: `hsl(${hue + 15}, ${sat * 0.9}%, ${light - 10}%)`,
-      highlight: `hsl(${hue}, ${sat * 0.5}%, ${Math.min(light + 30, 90)}%)`,
-      depth: `hsl(${hue}, ${sat * 1.2}%, ${Math.max(light - 20, 10)}%)`
+      primary: fillColor,
+      secondary: strokeColor,
+      accent: `hsl(${hue + 15}, ${adjustedSat * 0.9}%, ${Math.max(20, light - 10)}%)`,
+      highlight: `hsl(${hue}, ${adjustedSat * 0.5}%, ${Math.min(90, light + 30)}%)`,
+      depth: `hsl(${hue}, ${adjustedSat * 1.2}%, ${Math.max(10, light - 20)}%)`
     };
   }
 
@@ -366,7 +394,7 @@ export function draw(
 
 export const metadata: PresetMetadata = {
   name: "▲ Clean Triangle",
-  description: "Perfect geometric triangles with mathematical precision - ideal for tech and modern brands",
+  description: "Perfect geometric triangles with theme-aware colors and mathematical precision",
   defaultParams: {
     seed: "clean-triangle-brand",
     triangleType: 0,
@@ -378,9 +406,7 @@ export const metadata: PresetMetadata = {
     symmetryPerfection: 1.0,
     strokeWeight: 0,
     fillStyle: 1,
-    brandHue: 210,
-    brandSaturation: 0.8,
-    brandLightness: 0.5,
+    colorIntensity: 0.8,
     depth: 0.1,
     highlight: 0.15
   }

@@ -28,7 +28,15 @@ ${parametersCode}
 
 ${universalControlsCode}
 
-function drawVisualization(ctx, width, height, params, generator, time) {${functionBody}}`;
+function drawVisualization(ctx, width, height, params, generator, time) {
+  // Ensure color parameters are available at the root level
+  if (params.customParameters) {
+    params.fillColor = params.fillColor || params.customParameters.fillColor;
+    params.strokeColor = params.strokeColor || params.customParameters.strokeColor;
+    params.backgroundColor = params.backgroundColor || params.customParameters.backgroundColor;
+    params.textColor = params.textColor || params.customParameters.textColor;
+  }
+${functionBody}}`;
 }
 
 /**
@@ -52,16 +60,21 @@ function generateParametersCode(parameters: Preset['parameters']): string {
     paramLine += `, label: '${param.label}'`;
     if (param.category) paramLine += `, category: '${param.category}'`;
     
+    // Handle showIf function - convert to string that can be eval'd
+    if (param.showIf && typeof param.showIf === 'function') {
+      const funcStr = param.showIf.toString();
+      paramLine += `, showIf: ${funcStr}`;
+    }
+    
     paramLine += ' },';
     
     lines.push(paramLine);
   });
   
   // Then add template-specific parameters
-  Object.entries(parameters).forEach(([key, param], index, array) => {
-    // Skip universal controls if they're already defined
-    if (getUniversalParameterDefinitions()[key]) return;
-    
+  const templateParamEntries = Object.entries(parameters).filter(([key]) => !getUniversalParameterDefinitions()[key]);
+  
+  templateParamEntries.forEach(([key, param], index) => {
     let paramLine = `  ${key}: { `;
     
     paramLine += `type: '${param.type}'`;
@@ -74,11 +87,16 @@ function generateParametersCode(parameters: Preset['parameters']): string {
     paramLine += `, label: '${param.label}'`;
     if (param.category) paramLine += `, category: '${param.category}'`;
     
+    // Handle showIf function - convert to string that can be eval'd
+    if (param.showIf && typeof param.showIf === 'function') {
+      const funcStr = param.showIf.toString();
+      paramLine += `, showIf: ${funcStr}`;
+    }
+    
     paramLine += ' }';
     
-    // Check if this is the last non-universal parameter
-    const remainingParams = Object.keys(parameters).slice(index + 1).filter(k => !getUniversalParameterDefinitions()[k]);
-    if (remainingParams.length > 0) paramLine += ',';
+    // Add comma if not the last parameter
+    if (index < templateParamEntries.length - 1) paramLine += ',';
     
     lines.push(paramLine);
   });
@@ -94,8 +112,14 @@ function generateParametersCode(parameters: Preset['parameters']): string {
 function getUniversalControlsCode(): string {
   return `
 // Universal Controls Functions (injected automatically)
+
+// Helper to get color from params (checks both root and customParameters)
+function getColor(params, colorName, defaultValue) {
+  return params[colorName] || params.customParameters?.[colorName] || defaultValue;
+}
+
 function applyUniversalBackground(ctx, width, height, controls) {
-  const backgroundColor = controls.backgroundColor || '#ffffff';
+  const backgroundColor = getColor(controls, 'backgroundColor', '#ffffff');
   const backgroundType = controls.backgroundType || 'solid';
   const backgroundGradientStart = controls.backgroundGradientStart || '#ffffff';
   const backgroundGradientEnd = controls.backgroundGradientEnd || '#f0f0f0';
@@ -404,6 +428,12 @@ export async function loadPresetAsLegacy(presetName: string): Promise<{
  */
 export async function getAllPresetsAsLegacy() {
   const presetNames = [
+    // Accessible brand-focused templates (new)
+    'letter-mark',
+    'wordmark',
+    'minimal-shape',
+    
+    // Original creative templates
     'wave-bars',
     'audio-bars', 
     'apex-vercel',

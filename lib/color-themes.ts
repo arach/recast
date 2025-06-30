@@ -200,7 +200,7 @@ export function applyColorTheme(theme: ColorTheme, currentParams: Record<string,
     textColor: isLightColor(theme.colors.background) ? '#000000' : '#ffffff'
   };
   
-  // Only update parameters that already exist in currentParams or are universal controls
+  // Always update universal controls regardless of whether they exist in currentParams
   const universalControls = ['fillColor', 'strokeColor', 'backgroundColor'];
   
   for (const [param, value] of Object.entries(colorMappings)) {

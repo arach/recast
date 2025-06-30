@@ -14,6 +14,9 @@ export interface VisualizationParams {
   barSpacing?: number
   radius?: number
   color: string
+  fillColor?: string
+  strokeColor?: string
+  backgroundColor?: string
   customParameters?: Record<string, any>
   time: number
   sides?: number
@@ -444,6 +447,9 @@ export const executeCustomCode = (
       barCount: params.barCount,
       barSpacing: params.barSpacing,
       radius: params.radius,
+      fillColor: params.fillColor,
+      strokeColor: params.strokeColor,
+      backgroundColor: params.backgroundColor,
       ...params.customParameters // Custom parameters from PARAMETERS definition override defaults
     }
 

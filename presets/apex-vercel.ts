@@ -24,12 +24,49 @@ export function draw(
   generator: any,
   time: number
 ) {
-  // Clean gradient background 
-  const bgGradient = ctx.createLinearGradient(0, 0, 0, height);
-  bgGradient.addColorStop(0, '#000000');
-  bgGradient.addColorStop(1, '#111111');
-  ctx.fillStyle = bgGradient;
-  ctx.fillRect(0, 0, width, height);
+  // Apply universal background
+  applyUniversalBackground(ctx, width, height, params);
+  
+  // Get theme colors with fallbacks
+  const fillColor = params.fillColor || '#0070f3';
+  const strokeColor = params.strokeColor || '#0051cc';
+  const backgroundColor = params.backgroundColor || '#000000';
+  
+  // Helper to convert hex to RGB
+  const hexToRgb = (hex: string): { r: number, g: number, b: number } => {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? {
+      r: parseInt(result[1], 16),
+      g: parseInt(result[2], 16),
+      b: parseInt(result[3], 16)
+    } : { r: 0, g: 0, b: 0 };
+  };
+  
+  // Helper to convert hex to HSL
+  const hexToHsl = (hex: string): [number, number, number] => {
+    const rgb = hexToRgb(hex);
+    const r = rgb.r / 255;
+    const g = rgb.g / 255;
+    const b = rgb.b / 255;
+    
+    const max = Math.max(r, g, b), min = Math.min(r, g, b);
+    let h, s, l = (max + min) / 2;
+    
+    if (max === min) {
+      h = s = 0;
+    } else {
+      const d = max - min;
+      s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+      switch (max) {
+        case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
+        case g: h = ((b - r) / d + 2) / 6; break;
+        case b: h = ((r - g) / d + 4) / 6; break;
+        default: h = 0;
+      }
+    }
+    
+    return [h * 360, s * 100, l * 100];
+  };
 
   const barCount = params.barCount || 30;
   const barSpacing = params.barSpacing || 5;
@@ -52,11 +89,17 @@ export function draw(
     const combinedHeight = Math.abs(primaryWave + secondaryWave * params.complexity);
     const barHeight = Math.max(10, combinedHeight);
     
-    // Dynamic color based on position and time
-    const hue = (i / barCount) * 60 + time * 30; // Blue to cyan spectrum
+    // Use theme colors with intensity variations
+    const [baseHue, baseSat, baseLum] = hexToHsl(fillColor);
     const intensity = (barHeight / params.amplitude);
-    const saturation = 80 + intensity * 20;
-    const lightness = 40 + intensity * 40;
+    
+    // Subtle hue shift based on position for visual interest
+    const hueShift = (i / barCount) * 20 - 10; // ±10 degree shift
+    const hue = (baseHue + hueShift + 360) % 360;
+    
+    // Dynamic saturation and lightness based on bar height
+    const saturation = baseSat + intensity * 20;
+    const lightness = baseLum + intensity * 30;
     
     // Create dynamic gradient per bar
     const gradient = ctx.createLinearGradient(x, height - barHeight, x, height);
@@ -91,7 +134,9 @@ export function draw(
   
   // Add subtle wave guide line
   ctx.beginPath();
-  ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+  // Use stroke color with reduced opacity
+  const strokeRgb = hexToRgb(strokeColor);
+  ctx.strokeStyle = `rgba(${strokeRgb.r}, ${strokeRgb.g}, ${strokeRgb.b}, 0.2)`;
   ctx.lineWidth = 1;
   for (let i = 0; i < barCount; i++) {
     const x = startX + i * (barWidth + barSpacing) + barWidth / 2;
@@ -109,7 +154,7 @@ export function draw(
 
 export const metadata: PresetMetadata = {
   name: "🌊 Apex (Modern)",
-  description: "Dynamic animated bars with glowing gradients and smooth wave motion",
+  description: "Dynamic animated bars with theme-aware glowing gradients and smooth wave motion",
   defaultParams: {
     seed: "apex-modern",
     frequency: 7,

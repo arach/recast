@@ -11,16 +11,21 @@ export const parameters: Record<string, ParameterDefinition> = {
   radius: { type: 'slider', min: 10, max: 200, step: 1, default: 50, label: 'Base Radius' },
   symmetry: { type: 'slider', min: 1, max: 12, step: 1, default: 6, label: 'Symmetry Segments' },
   strokeWidth: { type: 'slider', min: 1, max: 10, step: 1, default: 3, label: 'Stroke Width' },
-  colorMode: { type: 'select', options: ['duotone', 'layered HSL', 'monochrome'], default: 'duotone', label: 'Color Mode' },
-  primaryColor: { type: 'color', default: '#4285F4', label: 'Primary Color' },
-  secondaryColor: { type: 'color', default: '#EA4335', label: 'Secondary Color' }
+  colorMode: { type: 'select', options: ['duotone', 'layered HSL', 'monochrome', 'theme'], default: 'theme', label: 'Color Mode' }
 };
 
 function getColor(params: Record<string, any>, layer: number, time: number): string {
-  if (params.colorMode === 'duotone') {
-    return layer % 2 === 0 ? params.primaryColor : params.secondaryColor;
+  // Use theme colors as defaults
+  const primaryColor = params.primaryColor || params.fillColor || '#4285F4';
+  const secondaryColor = params.secondaryColor || params.strokeColor || '#EA4335';
+  
+  if (params.colorMode === 'theme') {
+    // Use theme colors directly
+    return layer % 2 === 0 ? (params.fillColor || '#4285F4') : (params.strokeColor || '#EA4335');
+  } else if (params.colorMode === 'duotone') {
+    return layer % 2 === 0 ? primaryColor : secondaryColor;
   } else if (params.colorMode === 'monochrome') {
-    return params.primaryColor;
+    return primaryColor;
   } else {
     const hue = (layer / params.layers) * 360;
     return `hsl(${hue}, 70%, 50%)`;
@@ -35,9 +40,8 @@ export function draw(
   generator: any,
   time: number
 ) {
-  ctx.clearRect(0, 0, width, height);
-  ctx.fillStyle = '#fff';
-  ctx.fillRect(0, 0, width, height);
+  // Apply universal background
+  applyUniversalBackground(ctx, width, height, params);
 
   const centerX = width / 2;
   const centerY = height / 2;
@@ -70,7 +74,7 @@ export function draw(
 
 export const metadata: PresetMetadata = {
   name: "◆ Prism (Google-style)",
-  description: "Structured geometric layers with controlled symmetry and color palette",
+  description: "Structured geometric layers with theme-aware colors and controlled symmetry",
   defaultParams: {
     seed: "prism-geometry",
     frequency: 1,
@@ -81,8 +85,6 @@ export const metadata: PresetMetadata = {
     layers: 4,
     radius: 80,
     symmetry: 6,
-    colorMode: "duotone",
-    primaryColor: "#4285F4",
-    secondaryColor: "#EA4335"
+    colorMode: "theme"
   }
 };

@@ -263,9 +263,14 @@ export function CanvasArea({
             barSpacing: logo.params.barSpacing,
             radius: logo.params.radius,
             color: logo.params.color,
+            // Include color params at root level if they exist in customParameters
+            fillColor: logo.params.fillColor || logo.params.customParameters?.fillColor,
+            strokeColor: logo.params.strokeColor || logo.params.customParameters?.strokeColor,
+            backgroundColor: logo.params.backgroundColor || logo.params.customParameters?.backgroundColor,
             customParameters: logo.params.customParameters,
             time: currentTime
           }
+          
 
           // Generate logo content using the code
           if (logo.code && logo.code.trim()) {
