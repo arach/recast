@@ -27,6 +27,7 @@ import { useExportStore } from '@/lib/stores/exportStore'
 import { useSelectedLogo } from '@/lib/hooks/useSelectedLogo'
 import { exportCanvasAsPNG } from '@/lib/export-utils'
 import { generateWaveBars, executeCustomCode, VisualizationParams } from '@/lib/visualization-generators'
+import { TemplateSelector } from '@/components/studio/TemplateSelector'
 
 export function StudioHeader() {
   const { toggleSavedItems, toggleSaveDialog, toggleIndustryModal } = useUIStore()
@@ -187,6 +188,10 @@ export function StudioHeader() {
         </div>
 
         <div className="flex items-center space-x-3">
+          <TemplateSelector />
+          
+          <div className="h-6 w-px bg-gray-200" />
+          
           <Button
             variant="outline"
             size="sm"

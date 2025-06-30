@@ -19,8 +19,6 @@ import { CanvasArea } from '@/components/studio/CanvasArea'
 import { ControlsPanel } from '@/components/studio/ControlsPanel'
 import { BrandPresetsPanel } from '@/components/studio/BrandPresetsPanel'
 import { StoreInitializer } from '@/components/migration/StoreInitializer'
-import { FeatureFlags } from '@/lib/feature-flags'
-import { DebugFeatureFlags } from '@/components/DebugFeatureFlags'
 import { IndustrySelector } from '@/components/studio/IndustrySelector'
 import { ColorThemeSelector } from '@/components/studio/ColorThemeSelector'
 import { TemplatePresetsPanel } from '@/components/studio/TemplatePresetsPanel'
@@ -96,7 +94,6 @@ export default function Home() {
   // UI state
   const [animating, setAnimating] = useState(false)
   const [codeError, setCodeError] = useState<string | null>(null)
-  const [codeEditorCollapsed, setCodeEditorCollapsed] = useState(false)
   const [zoom, setZoom] = useState(1)
   const [isDarkMode, setIsDarkMode] = useState(false)
   const [saveDialogOpen, setSaveDialogOpen] = useState(false)
@@ -874,8 +871,6 @@ export default function Home() {
 
   return (
     <div className="h-screen overflow-hidden bg-gradient-to-br from-gray-50 to-white flex flex-col">
-      {/* Debug feature flags */}
-      <DebugFeatureFlags />
       
       {/* Bridge to Zustand stores */}
       <StoreInitializer
@@ -885,115 +880,19 @@ export default function Home() {
         onSelectedLogoChange={setSelectedLogoId}
         zoom={zoom}
         animating={animating}
-        controlsPanelOpen={!codeEditorCollapsed}
+        controlsPanelOpen={true}
         darkMode={isDarkMode}
       />
       
       <StudioHeader />
 
       <div className="flex flex-1 overflow-hidden">
-        {/* Use new Zustand-based CodeEditor if feature flag is enabled */}
-        {FeatureFlags.isZustandCanvasEnabled() ? (
-          <>
-            {console.log('🔧 Rendering CodeEditorPanelV2')}
-            <CodeEditorPanel />
-          </>
-        ) : (
-          <>
-            <CodeEditorPanel
-              collapsed={codeEditorCollapsed}
-              onSetCollapsed={setCodeEditorCollapsed}
-              presets={availablePresets}
-              onLoadPreset={loadPresetById}
-              currentShapeName={currentShapeName}
-              onSetCurrentShapeName={setCurrentShapeName}
-              currentShapeId={currentShapeId}
-              currentPresetName={selectedLogo.presetName}
-              codeError={codeError}
-              code={customCode}
-              onCodeChange={setCustomCode}
-              isDarkMode={isDarkMode}
-              isRendering={isRendering}
-              renderSuccess={renderSuccess}
-              onRunCode={handleRunCode}
-              onSaveShape={() => openSaveDialog('shape')}
-              onCloneToCustom={handleCloneToCustom}
-              getShapeNameForMode={getShapeNameForMode}
-            />
-          </>
-        )}
+        <CodeEditorPanel />
 
-        {/* Use new Zustand-based CanvasArea if feature flag is enabled */}
-        {FeatureFlags.isZustandCanvasEnabled() ? (
-          <>
-            {console.log('🎨 Rendering CanvasAreaV2')}
-            <CanvasArea />
-          </>
-        ) : (
-          <>
-            {console.log('📊 Rendering CanvasArea (legacy)')}
-            <CanvasArea
-              logos={logos}
-              selectedLogoId={selectedLogoId}
-              onSelectLogo={setSelectedLogoId}
-              onDuplicateLogo={duplicateLogo}
-              onDeleteLogo={deleteLogo}
-              animating={animating}
-              zoom={zoom}
-              previewMode={previewMode}
-              isRendering={isRendering}
-              currentTime={timeRef.current}
-              onToggleAnimation={toggleAnimation}
-              onSetZoom={setZoom}
-              onTogglePreview={() => setPreviewMode(!previewMode)}
-              onCodeError={setCodeError}
-              forceRender={forceRender}
-            />
-          </>
-        )}
+        <CanvasArea />
 
         <div className="flex">
-          {/* Use new Zustand-based ControlsPanel if feature flag is enabled */}
-          {FeatureFlags.isZustandControlsEnabled() ? (
-            <>
-              {console.log('🎨 Rendering ControlsPanelV2')}
-              <ControlsPanel />
-            </>
-          ) : (
-            <>
-              {console.log('📊 Rendering ControlsPanel (legacy)')}
-            <ControlsPanel
-              currentPresetName={currentPresetName}
-              seed={seed}
-              frequency={frequency}
-              amplitude={amplitude}
-              complexity={complexity}
-              chaos={chaos}
-              damping={damping}
-              layers={layers}
-              barCount={barCount}
-              barSpacing={barSpacing}
-              radius={radius}
-              customCode={logos.find(l => l.id === selectedLogoId)?.code || customCode}
-              customParameters={logos.find(l => l.id === selectedLogoId)?.params.customParameters || customParameters}
-              onSeedChange={setSeed}
-              onFrequencyChange={setFrequency}
-              onAmplitudeChange={setAmplitude}
-              onComplexityChange={setComplexity}
-              onChaosChange={setChaos}
-              onDampingChange={setDamping}
-              onLayersChange={setLayers}
-              onBarCountChange={setBarCount}
-              onBarSpacingChange={setBarSpacing}
-              onRadiusChange={setRadius}
-              onCustomParametersChange={setCustomParameters}
-              getCurrentGeneratorMetadata={getCurrentGeneratorMetadata}
-              parseCustomParameters={parseCustomParameters}
-              forceRender={forceRender}
-              onForceRender={() => setForceRender(prev => prev + 1)}
-            />
-            </>
-          )}
+          <ControlsPanel />
           
           <div className="w-80 border-l bg-white/50 backdrop-blur-sm overflow-y-auto">
             <div className="p-4 space-y-4">

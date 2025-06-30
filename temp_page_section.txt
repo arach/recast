@@ -1,6 +1,0 @@
-        <CodeEditorPanel />
-
-        <CanvasArea />
-
-        <div className="flex">
-          <ControlsPanel />
