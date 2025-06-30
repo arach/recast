@@ -243,8 +243,14 @@ export default function Home() {
       // Initialize custom parameter values with defaults
       const paramValues: Record<string, any> = {}
       Object.entries(parsedParams).forEach(([key, param]) => {
-        paramValues[key] = customParameters[key] ?? param.default ?? 0
+        // Use existing value if available, otherwise use default
+        if (customParameters[key] !== undefined) {
+          paramValues[key] = customParameters[key]
+        } else {
+          paramValues[key] = param.default ?? 0
+        }
       })
+      console.log('📝 Initializing custom parameters:', paramValues)
       setCustomParameters(paramValues)
     }
   }, [customCode])
@@ -445,13 +451,29 @@ export default function Home() {
       console.log('Loaded preset:', preset.name, 'Code length:', preset.code.length)
       
       // Update the selected logo with preset data
+      // Separate core params from custom params
+      const { seed, frequency, amplitude, complexity, chaos, damping, layers, barCount, barSpacing, radius, color, ...customParams } = preset.defaultParams;
+      
       setLogos(prev => prev.map(logo => 
         logo.id === selectedLogoId 
           ? { 
               ...logo, 
               params: { 
                 ...logo.params,
-                ...preset.defaultParams, // Apply all default parameters
+                // Apply core parameters
+                seed: seed || logo.params.seed,
+                frequency: frequency || logo.params.frequency,
+                amplitude: amplitude || logo.params.amplitude,
+                complexity: complexity || logo.params.complexity,
+                chaos: chaos || logo.params.chaos,
+                damping: damping || logo.params.damping,
+                layers: layers || logo.params.layers,
+                barCount: barCount || logo.params.barCount,
+                barSpacing: barSpacing || logo.params.barSpacing,
+                radius: radius || logo.params.radius,
+                color: color || logo.params.color,
+                // Put all other params in customParameters
+                customParameters: customParams
               },
               code: preset.code, // Set the preset code
               presetId: preset.id,
@@ -460,9 +482,12 @@ export default function Home() {
           : logo
       ))
       
+      // Also update the customParameters state
+      setCustomParameters(customParams)
+      
       // Force re-render
       setForceRender(prev => prev + 1)
-      console.log('Preset loaded successfully:', preset.name)
+      console.log('Preset loaded successfully:', preset.name, 'Custom params:', customParams)
       
     } catch (error) {
       console.error('Failed to load preset:', error)

@@ -322,7 +322,10 @@ export function ControlsPanel({
               const categories = ['Shape', '3D', 'Typography', 'Effects'];
               const visibleParams = Object.entries(templateParams).filter(([paramName, param]) => {
                 if (param.showIf && typeof param.showIf === 'function') {
-                  return param.showIf(customParameters);
+                  // Debug log for showIf evaluation
+                  const shouldShow = param.showIf(customParameters);
+                  console.log(`🔍 showIf for ${paramName}:`, shouldShow, 'customParams:', customParameters);
+                  return shouldShow;
                 }
                 return true;
               });
