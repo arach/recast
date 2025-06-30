@@ -404,6 +404,10 @@ export async function loadPresetAsLegacy(presetName: string): Promise<{
  */
 export async function getAllPresetsAsLegacy() {
   const presetNames = [
+    // Text-based presets
+    'wordmark',
+    
+    // Visual presets
     'wave-bars',
     'audio-bars', 
     'apex-vercel',
