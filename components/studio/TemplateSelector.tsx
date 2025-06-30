@@ -20,7 +20,7 @@ import type { LoadedPreset } from '@/lib/preset-loader'
 export function TemplateSelector() {
   const [availablePresets, setAvailablePresets] = useState<LoadedPreset[]>([])
   const { updateLogo } = useLogoStore()
-  const logo = useSelectedLogo()
+  const { logo } = useSelectedLogo()
   
   // Load all available presets
   useEffect(() => {
