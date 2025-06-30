@@ -39,19 +39,43 @@ export function TemplateSelector() {
     if (!logo) return
     
     try {
-      const preset = availablePresets.find(p => p.id === presetId)
-      if (!preset) return
-      
-      // Update the logo with the new preset
-      updateLogo(logo.id, {
-        templateId: preset.id,
-        templateName: preset.name,
-        code: preset.code,
-        parameters: {
-          ...logo.parameters,
-          custom: preset.defaultParams || {}
+      if (presetId === 'custom') {
+        // Reset to custom code (empty template)
+        console.log('Switching to custom code')
+        updateLogo(logo.id, {
+          templateId: 'custom',
+          templateName: 'Custom',
+          code: logo.code || '// Custom code\nfunction drawVisualization(ctx, width, height, params, generator, time) {\n  // Your custom code here\n}',
+          parameters: {
+            ...logo.parameters,
+            custom: {}
+          }
+        })
+      } else {
+        // Load the selected preset
+        const preset = availablePresets.find(p => p.id === presetId)
+        if (!preset) {
+          console.error('Preset not found:', presetId)
+          return
         }
-      })
+        
+        console.log('Applying preset:', preset.name, preset)
+        console.log('Preset code length:', preset.code?.length)
+        console.log('Preset defaultParams:', preset.defaultParams)
+        
+        // Update the logo with the new preset
+        const updatedLogo = {
+          templateId: preset.id,
+          templateName: preset.name,
+          code: preset.code,
+          parameters: {
+            ...logo.parameters,
+            custom: preset.defaultParams || {}
+          }
+        }
+        console.log('Updating logo with:', updatedLogo)
+        updateLogo(logo.id, updatedLogo)
+      }
     } catch (error) {
       console.error('Failed to apply template:', error)
     }
@@ -59,6 +83,7 @@ export function TemplateSelector() {
   
   if (!logo) return null
   
+  console.log('Current logo state:', { templateId: logo.templateId, templateName: logo.templateName })
   const currentTemplate = availablePresets.find(p => p.id === logo.templateId)
   
   return (

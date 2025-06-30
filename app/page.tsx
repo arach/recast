@@ -86,7 +86,8 @@ export default function Home() {
         customParameters: {}
       },
       code: '// Default wave visualization\nfunction drawVisualization(ctx, width, height, params, generator, time) {\n  ctx.fillStyle = "#ffffff";\n  ctx.fillRect(0, 0, width, height);\n  \n  // Simple wave drawing\n  ctx.strokeStyle = "#0070f3";\n  ctx.lineWidth = 2;\n  ctx.beginPath();\n  \n  for (let x = 0; x < width; x++) {\n    const y = height/2 + Math.sin(x * 0.01 + time) * 50;\n    if (x === 0) ctx.moveTo(x, y);\n    else ctx.lineTo(x, y);\n  }\n  \n  ctx.stroke();\n}',
-      presetName: 'Default Wave'
+      templateId: 'custom',
+      templateName: 'Custom'
     }
   ])
   const [selectedLogoId, setSelectedLogoId] = useState('main')
