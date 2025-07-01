@@ -17,7 +17,7 @@ import { AISuggestions } from '@/components/studio/AISuggestions'
 import { BrandPersonality } from '@/components/studio/BrandPersonality'
 import { AIBrandConsultant } from '@/components/studio/AIBrandConsultant'
 import { generateWaveBars, executeCustomCode, type VisualizationParams } from '@/lib/visualization-generators'
-import { loadTemplateAsLegacy } from '@/lib/theme-converter'
+import { loadTemplateAsLegacy, loadThemeAsLegacy } from '@/lib/theme-converter'
 
 
 interface LogoInstance {
@@ -79,6 +79,9 @@ export default function Home() {
         customParameters: {}
       },
       code: '// Default wave visualization\nfunction drawVisualization(ctx, width, height, params, generator, time) {\n  ctx.fillStyle = "#ffffff";\n  ctx.fillRect(0, 0, width, height);\n  \n  // Simple wave drawing\n  ctx.strokeStyle = "#0070f3";\n  ctx.lineWidth = 2;\n  ctx.beginPath();\n  \n  for (let x = 0; x < width; x++) {\n    const y = height/2 + Math.sin(x * 0.01 + time) * 50;\n    if (x === 0) ctx.moveTo(x, y);\n    else ctx.lineTo(x, y);\n  }\n  \n  ctx.stroke();\n}',
+      themeId: 'custom',
+      themeName: 'Custom',
+      // Legacy fields for compatibility
       templateId: 'custom',
       templateName: 'Custom'
     }
@@ -251,11 +254,30 @@ export default function Home() {
   // Parse parameter definitions from custom code
   const parseCustomParameters = (code: string) => {
     try {
+      console.log('🔍 Parsing custom parameters from code length:', code.length);
+      console.log('🔍 Code preview:', code.substring(0, 200) + '...');
+      
       // Look for PARAMETERS = { ... } definition - use a more robust approach
-      // Updated regex to handle multi-line objects better
-      const match = code.match(/const\s+PARAMETERS\s*=\s*({[\s\S]*?^});/m) || 
-                    code.match(/const\s+PARAMETERS\s*=\s*({[\s\S]*?});/);
+      // Try multiple patterns to catch different formatting
+      const patterns = [
+        /const\s+PARAMETERS\s*=\s*({[\s\S]*?}\s*});/m,  // Multi-line with nested objects
+        /const\s+PARAMETERS\s*=\s*({[\s\S]*?});/m,      // Multi-line simple
+        /const\s+PARAMETERS\s*=\s*({[^}]+});/,          // Single line
+        /const\s+PARAMETERS\s*=\s*\{([\s\S]*?)\};/m     // Alternative syntax
+      ];
+      
+      let match = null;
+      for (const pattern of patterns) {
+        match = code.match(pattern);
+        if (match) {
+          console.log('✅ Found PARAMETERS with pattern:', pattern);
+          break;
+        }
+      }
+      
       if (!match) {
+        console.log('❌ No PARAMETERS match found in code');
+        console.log('🔍 Code includes "const PARAMETERS"?', code.includes('const PARAMETERS'));
         return null
       }
       
@@ -263,9 +285,21 @@ export default function Home() {
       
       // Try to parse as actual JavaScript object (safer approach)
       try {
+        console.log('📝 Full params block to parse:', fullParamsBlock.substring(0, 200) + '...');
+        
+        // Replace arrow functions with regular functions for safer evaluation
+        const safeParamsBlock = fullParamsBlock.replace(
+          /showIf:\s*\(([^)]*)\)\s*=>\s*([^,}]+)/g,
+          'showIf: function($1) { return $2; }'
+        );
+        
         // Replace the object with a safer evaluation
-        const paramsCode = `(${fullParamsBlock})`
+        const paramsCode = `(${safeParamsBlock})`
+        console.log('🔧 Safe params code preview:', paramsCode.substring(0, 300) + '...');
+        
         const paramsObj = eval(paramsCode)
+        
+        console.log('✅ Successfully parsed params object:', Object.keys(paramsObj));
         
         // Convert to our expected format
         const parameters: Record<string, any> = {}
@@ -274,7 +308,8 @@ export default function Home() {
         }
         return parameters
       } catch (evalError) {
-        console.warn('Failed to eval parameters, falling back to regex:', evalError)
+        console.error('Failed to evaluate PARAMETERS object:', evalError)
+        console.error('Problematic code:', fullParamsBlock.substring(0, 500) + '...')
         
         // Fallback to improved regex parsing
         const paramsString = fullParamsBlock.slice(1, -1) // Remove outer braces
@@ -387,9 +422,13 @@ export default function Home() {
       }
       
       console.log('Loaded theme code preview:', theme.code.substring(0, 500) + '...')
+      console.log('🎯 Theme name:', theme.name);
+      console.log('🎯 Theme ID:', theme.id);
+      console.log('🎯 Theme defaultParams:', theme.defaultParams);
       
       // Parse the theme code to get ALL parameter definitions (not just defaults)
       const parsedParams = parseCustomParameters(theme.code) || {};
+      console.log('📦 Parsed params from code:', Object.keys(parsedParams));
       
       // Text parameters that should be preserved
       const textParams = ['text', 'letter', 'letters', 'brandName', 'words', 'title', 'subtitle'];
@@ -401,6 +440,7 @@ export default function Home() {
           completeParams[key] = paramDef.default;
         }
       });
+      console.log('🔧 Complete params built:', Object.keys(completeParams));
       
       // Update the selected logo with theme data
       setLogos(prev => prev.map(logo => {
@@ -438,18 +478,18 @@ export default function Home() {
               ...currentTextValues // Ensure text values are preserved
             }
           },
-          code: preset.code, // Set the preset code
-          presetId: preset.id,
-          presetName: preset.name
+          code: theme.code, // Set the theme code
+          themeId: theme.id,
+          themeName: theme.name
         }
       }))
       
       // Force re-render
       setForceRender(prev => prev + 1)
-      console.log('Preset loaded successfully:', preset.name)
+      console.log('Theme loaded successfully:', theme.name)
       
     } catch (error) {
-      console.error('Failed to load preset:', error)
+      console.error('Failed to load theme:', error)
     }
   }
   
@@ -524,11 +564,17 @@ export default function Home() {
   // Apply brand preset from AI or examples
   const handleApplyBrandPreset = async (brandPreset: any) => {
     try {
-      console.log('Applying brand preset:', brandPreset.name)
+      console.log('🎨 Applying brand preset:', brandPreset.name)
+      console.log('🎯 Brand preset data:', brandPreset);
+      console.log('📋 Current selectedLogo.themeId:', selectedLogo.themeId);
+      console.log('🆔 Selected logo ID:', selectedLogoId);
       
       // First load the base preset if it's different from current
       if (brandPreset.preset !== selectedLogo.themeId) {
+        console.log('🔄 Loading different theme:', brandPreset.preset);
         await loadThemeById(brandPreset.preset)
+      } else {
+        console.log('✅ Same theme, skipping load');
       }
       
       // Filter out text-based parameters that shouldn't be overridden
@@ -536,32 +582,39 @@ export default function Home() {
       const filteredParams = Object.fromEntries(
         Object.entries(brandPreset.params).filter(([key]) => !textParams.includes(key))
       );
+      console.log('🔧 Filtered params to apply:', Object.keys(filteredParams));
       
       // Then apply the custom parameters
-      setLogos(prev => prev.map(logo => 
-        logo.id === selectedLogoId 
-          ? { 
-              ...logo, 
-              params: { 
-                ...logo.params,
-                customParameters: {
-                  ...logo.params.customParameters,
-                  ...filteredParams
-                }
+      setLogos(prev => prev.map(logo => {
+        if (logo.id === selectedLogoId) {
+          console.log('🎯 Updating logo with ID:', logo.id);
+          return { 
+            ...logo, 
+            params: { 
+              ...logo.params,
+              customParameters: {
+                ...logo.params.customParameters,
+                ...filteredParams
               }
             }
-          : logo
-      ))
+          };
+        }
+        return logo;
+      }))
       
       // Update custom parameters state for the controls panel
-      setCustomParameters((prev: Record<string, any>) => ({
-        ...prev,
-        ...filteredParams
-      }))
+      setCustomParameters((prev: Record<string, any>) => {
+        const newParams = {
+          ...prev,
+          ...filteredParams
+        };
+        console.log('📦 Updated custom parameters:', Object.keys(newParams));
+        return newParams;
+      })
       
       // Force re-render
       setForceRender(prev => prev + 1)
-      console.log('Brand preset applied successfully:', brandPreset.name)
+      console.log('✅ Brand preset applied successfully:', brandPreset.name)
       
     } catch (error) {
       console.error('Failed to apply brand preset:', error)

@@ -26,7 +26,11 @@
       "Bash(git mv:*)",
       "Bash(git rm:*)",
       "Bash(pnpm dev:clean:*)",
-      "Bash(mv:*)"
+      "Bash(mv:*)",
+      "Bash(pnpm dev:*)",
+      "Bash(pnpm tsx:*)",
+      "Bash(pkill:*)",
+      "Bash(true)"
     ],
     "deny": []
   }

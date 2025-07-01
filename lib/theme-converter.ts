@@ -13,6 +13,7 @@ export function convertTemplateToLegacy(template: Template): string {
   const parametersCode = generateParametersCode(template.parameters);
   console.log('🔧 Generated parameters code length:', parametersCode.length);
   console.log('🔍 Generated parameters preview:', parametersCode.substring(0, 500) + '...');
+  console.log('📄 Full parameters code:\n', parametersCode);
   
   // Convert the draw function to string
   const drawFunctionCode = template.draw.toString();
