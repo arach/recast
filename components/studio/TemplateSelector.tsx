@@ -14,11 +14,10 @@ import { Badge } from '@/components/ui/badge'
 import { Palette, ChevronDown } from 'lucide-react'
 import { useLogoStore } from '@/lib/stores/logoStore'
 import { useSelectedLogo } from '@/lib/hooks/useSelectedLogo'
-import { loadTemplateAsLegacy, getAllTemplatesAsLegacy } from '@/lib/theme-converter'
-import type { LoadedTemplate } from '@/lib/theme-loader'
+import { loadTemplate, getAllTemplateInfo, type TemplateInfo } from '@/lib/template-registry-direct'
 
 export function TemplateSelector() {
-  const [availableTemplates, setAvailableTemplates] = useState<LoadedTemplate[]>([])
+  const [availableTemplates, setAvailableTemplates] = useState<TemplateInfo[]>([])
   const { updateLogo } = useLogoStore()
   const { logo } = useSelectedLogo()
   
@@ -26,8 +25,10 @@ export function TemplateSelector() {
   useEffect(() => {
     const loadTemplates = async () => {
       try {
-        const templates = await getAllTemplatesAsLegacy()
-        setAvailableTemplates(templates)
+        const templates = await getAllTemplateInfo()
+        // Only show templates that are actually converted (have code)
+        const validTemplates = templates.filter(t => t.code && t.code.length > 0)
+        setAvailableTemplates(validTemplates)
       } catch (error) {
         console.error('Failed to load templates:', error)
       }
@@ -52,16 +53,12 @@ export function TemplateSelector() {
           }
         })
       } else {
-        // Load the selected template
-        const template = availableTemplates.find(t => t.id === templateId)
+        // Load the selected template directly
+        const template = await loadTemplate(templateId)
         if (!template) {
           console.error('Template not found:', templateId)
           return
         }
-        
-        console.log('Applying template:', template.name, template)
-        console.log('Template code length:', template.code?.length)
-        console.log('Template defaultParams:', template.defaultParams)
         
         // Update the logo with the new template
         const updatedLogo = {
@@ -73,7 +70,6 @@ export function TemplateSelector() {
             custom: template.defaultParams || {}
           }
         }
-        console.log('Updating logo with:', updatedLogo)
         updateLogo(logo.id, updatedLogo)
       }
     } catch (error) {
