@@ -11,9 +11,6 @@ import type { Template } from '@/templates/types';
 export function convertTemplateToLegacy(template: Template): string {
   // Convert parameters to the old PARAMETERS format
   const parametersCode = generateParametersCode(template.parameters);
-  console.log('🔧 Generated parameters code length:', parametersCode.length);
-  console.log('🔍 Generated parameters preview:', parametersCode.substring(0, 500) + '...');
-  console.log('📄 Full parameters code:\n', parametersCode);
   
   // Convert the draw function to string
   const drawFunctionCode = template.draw.toString();
@@ -55,11 +52,8 @@ ${functionBody}}`;
 function generateParametersCode(parameters: Template['parameters']): string {
   const lines = ['const PARAMETERS = {'];
   
-  console.log('📦 Input parameters:', Object.keys(parameters));
-  
   // First, add universal controls parameters
   const universalParams = getUniversalParameterDefinitions();
-  console.log('🌐 Universal params:', Object.keys(universalParams));
   
   const universalEntries = Object.entries(universalParams);
   universalEntries.forEach(([key, param], index) => {
@@ -88,7 +82,6 @@ function generateParametersCode(parameters: Template['parameters']): string {
   
   // Then add template-specific parameters
   const templateParamEntries = Object.entries(parameters).filter(([key]) => !getUniversalParameterDefinitions()[key]);
-  console.log('🎯 Template-specific params:', templateParamEntries.map(([key]) => key));
   
   templateParamEntries.forEach(([key, param], index) => {
     let paramLine = `  ${key}: { `;
@@ -418,26 +411,9 @@ export async function loadThemeAsLegacy(themeName: string): Promise<{
   defaultParams: Record<string, any>;
   code: string;
 }> {
-  console.log('🔄 loadThemeAsLegacy called with themeName:', themeName);
-  
   try {
     // Dynamic import of the template module
-    console.log('📥 Attempting to import:', `@/templates/${themeName}`);
     const module = await import(`@/templates/${themeName}`);
-  
-    console.log('📦 Module imported successfully:', Object.keys(module));
-    console.log('🔧 Module parameters:', module.parameters ? Object.keys(module.parameters) : 'MISSING');
-    console.log('🎨 Module draw function:', typeof module.draw);
-    console.log('📋 Module metadata:', module.metadata);
-    
-    // Additional debugging - check if the module structure matches what we expect
-    console.log('🔍 Module structure validation:');
-    console.log('  - typeof module.parameters:', typeof module.parameters);
-    console.log('  - typeof module.draw:', typeof module.draw);
-    console.log('  - typeof module.metadata:', typeof module.metadata);
-    console.log('  - module.parameters is object:', typeof module.parameters === 'object' && module.parameters !== null);
-    console.log('  - module.draw is function:', typeof module.draw === 'function');
-    console.log('  - module.metadata is object:', typeof module.metadata === 'object' && module.metadata !== null);
     
     // Validate that all required properties exist
     if (!module.parameters || typeof module.parameters !== 'object') {
@@ -457,9 +433,7 @@ export async function loadThemeAsLegacy(themeName: string): Promise<{
     };
     
     // Convert the template to viewable code
-    console.log('🔄 Converting template to legacy format...');
     const code = convertTemplateToLegacy(template);
-    console.log('✅ Converted code length:', code.length);
     
     const result = {
       id: themeName,
@@ -468,14 +442,6 @@ export async function loadThemeAsLegacy(themeName: string): Promise<{
       defaultParams: template.metadata.defaultParams,
       code
     };
-    
-    console.log('🎯 Returning theme result:', {
-      id: result.id,
-      name: result.name,
-      description: result.description,
-      defaultParamsKeys: Object.keys(result.defaultParams || {}),
-      codeLength: result.code.length
-    });
     
     return result;
   } catch (error) {
@@ -539,10 +505,8 @@ export const loadTemplateAsLegacy = loadThemeAsLegacy;
 
 // Debug function for testing specific themes
 export async function debugLoadTheme(themeName: string) {
-  console.log('🐛 DEBUG: Testing theme load for:', themeName);
   try {
     const result = await loadThemeAsLegacy(themeName);
-    console.log('🐛 DEBUG: Theme loaded successfully:', result.name);
     return result;
   } catch (error) {
     console.error('🐛 DEBUG: Theme load failed:', error);
