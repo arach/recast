@@ -76,6 +76,9 @@ export function CanvasArea() {
   // Logo canvas cache - CRITICAL FOR PERFORMANCE
   const logoCanvasCache = useRef<Map<string, { canvas: HTMLCanvasElement, paramHash: string }>>(new Map())
   
+  // Track initial centering to avoid multiple runs
+  const hasInitialCentered = useRef(false)
+  
   // Force render trigger
   const [forceRender, setForceRender] = useState(0)
   
@@ -218,34 +221,50 @@ export function CanvasArea() {
       (logo.templateId || logo.templateName)
     )
     
-    if (!hasValidLogos) return
-    
-    const timer = setTimeout(() => {
-      const canvas = canvasRef.current
-      if (!canvas || logos.length === 0) {
-        setZoom(1)
-        return
-      }
+    if (!hasValidLogos || hasInitialCentered.current) return
 
-      const rect = canvas.getBoundingClientRect()
-      const logoSize = 600
-      
-      // Calculate bounding box of all logos
-      let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity
-      
-      logos.forEach(logo => {
-        const position = logo.position || { x: 0, y: 0 }
-        minX = Math.min(minX, position.x)
-        maxX = Math.max(maxX, position.x + logoSize)
-        minY = Math.min(minY, position.y)
-        maxY = Math.max(maxY, position.y + logoSize)
-      })
-      
-      const contentWidth = maxX - minX
-      const contentHeight = maxY - minY
-      const centerX = (minX + maxX) / 2
-      const centerY = (minY + maxY) / 2
-      
+    const canvas = canvasRef.current
+    if (!canvas || logos.length === 0) return
+
+    const rect = canvas.getBoundingClientRect()
+    const logoSize = 600
+    
+    // Calculate bounding box of all logos
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity
+    
+    logos.forEach(logo => {
+      const position = logo.position || { x: 0, y: 0 }
+      minX = Math.min(minX, position.x)
+      maxX = Math.max(maxX, position.x + logoSize)
+      minY = Math.min(minY, position.y)
+      maxY = Math.max(maxY, position.y + logoSize)
+    })
+    
+    const contentWidth = maxX - minX
+    const contentHeight = maxY - minY
+    const centerX = (minX + maxX) / 2
+    const centerY = (minY + maxY) / 2
+
+    // Log initial canvas state
+    console.log('🎯 Initial canvas state:', {
+      currentOffset: { x: canvasOffset.x, y: canvasOffset.y },
+      currentZoom: zoom,
+      logosBounds: { minX, maxX, minY, maxY, centerX, centerY }
+    });
+
+    // IMMEDIATE: Set rough center position to eliminate jump
+    const roughCenterOffset = {
+      x: (rect.width / 2) / zoom - centerX,
+      y: (rect.height / 2) / zoom - centerY
+    }
+    setCanvasOffset(roughCenterOffset)
+    console.log('⚡ Immediate rough center applied:', roughCenterOffset);
+    
+    // Mark that we've done initial centering
+    hasInitialCentered.current = true
+    
+    // DELAYED: Fine-tune with optimal zoom and precise centering
+    const timer = setTimeout(() => {
       // Calculate zoom to fit all logos at 70% coverage, but don't exceed 100%
       const targetCoverage = 0.7
       const zoomX = (rect.width * targetCoverage) / contentWidth
@@ -256,13 +275,17 @@ export function CanvasArea() {
       
       setZoom(clampedZoom)
       
-      // Center all logos in view
-      setCanvasOffset({
+      // Fine-tune center position with new zoom
+      const finalCenterOffset = {
         x: (rect.width / 2) / clampedZoom - centerX,
         y: (rect.height / 2) / clampedZoom - centerY
-      })
+      }
+      setCanvasOffset(finalCenterOffset)
       
-      console.log('📍 Canvas centered on load');
+      console.log('📍 Fine-tuned centering applied:', {
+        zoom: clampedZoom,
+        offset: finalCenterOffset
+      });
     }, 200) // Slightly longer delay to ensure template is loaded
     
     return () => clearTimeout(timer)
