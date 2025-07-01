@@ -10,6 +10,7 @@ interface StoreInitializerProps {
   selectedLogoId: string;
   onLogosChange?: (logos: any[]) => void;
   onSelectedLogoChange?: (id: string) => void;
+  onTemplateChange?: (templateId: string) => void;
   
   // UI state
   zoom?: number;
@@ -27,6 +28,7 @@ export function StoreInitializer({
   selectedLogoId,
   onLogosChange,
   onSelectedLogoChange,
+  onTemplateChange,
   zoom = 1,
   animating = false,
   controlsPanelOpen = true,
@@ -118,12 +120,19 @@ export function StoreInitializer({
       const existingLogo = storeLogos.find(l => l.id === propLogo.id);
       
       if (existingLogo) {
-        // Check if template/theme has changed
+        // Check if template/theme has changed (prioritize templateId over themeId)
+        // IMPORTANT: Only consider it changed if the field is explicitly provided AND not undefined
+        const hasValidTemplateId = (propLogo.templateId !== undefined && propLogo.templateId !== null) || 
+                                  (propLogo.themeId !== undefined && propLogo.themeId !== null);
+        const hasValidTemplateName = (propLogo.templateName !== undefined && propLogo.templateName !== null) || 
+                                    (propLogo.themeName !== undefined && propLogo.themeName !== null);
+        
+        const currentTemplateId = propLogo.templateId || propLogo.themeId;
+        const currentTemplateName = propLogo.templateName || propLogo.themeName;
+        
         const templateChanged = 
-          (propLogo.themeId && propLogo.themeId !== existingLogo.templateId) ||
-          (propLogo.themeName && propLogo.themeName !== existingLogo.templateName) ||
-          (propLogo.templateId && propLogo.templateId !== existingLogo.templateId) ||
-          (propLogo.templateName && propLogo.templateName !== existingLogo.templateName);
+          (hasValidTemplateId && currentTemplateId && currentTemplateId !== existingLogo.templateId) ||
+          (hasValidTemplateName && currentTemplateName && currentTemplateName !== existingLogo.templateName);
         
         // Check if code has changed
         const codeChanged = propLogo.code && propLogo.code !== existingLogo.code;
@@ -151,11 +160,19 @@ export function StoreInitializer({
           });
           
           // Update the entire logo in the store
+          // IMPORTANT: Preserve existing template fields unless explicitly changed
           const updatedLogo: Logo = {
             ...existingLogo,
-            templateId: propLogo.themeId || propLogo.templateId || existingLogo.templateId,
-            templateName: propLogo.themeName || propLogo.templateName || existingLogo.templateName,
-            code: propLogo.code || existingLogo.code,
+            // Only update templateId if it was explicitly provided AND not undefined in the prop update
+            templateId: hasValidTemplateId && (propLogo.templateId || propLogo.themeId) 
+              ? (propLogo.templateId || propLogo.themeId)
+              : existingLogo.templateId,
+            // Only update templateName if it was explicitly provided AND not undefined in the prop update
+            templateName: hasValidTemplateName && (propLogo.templateName || propLogo.themeName)
+              ? (propLogo.templateName || propLogo.themeName)
+              : existingLogo.templateName,
+            // Only update code if it was explicitly provided
+            code: propLogo.code !== undefined ? propLogo.code : existingLogo.code,
             parameters: {
               ...existingLogo.parameters,
               style: {
@@ -207,6 +224,8 @@ export function StoreInitializer({
           id: logo.id,
           templateId: logo.templateId,
           templateName: logo.templateName,
+          themeId: logo.templateId,  // Ensure both fields are present
+          themeName: logo.templateName,  // Ensure both fields are present
           presetId: logo.templateId,  // For backward compatibility
           presetName: logo.templateName,  // For backward compatibility
           params: {
@@ -248,6 +267,30 @@ export function StoreInitializer({
     
     return unsubscribe;
   }, [onSelectedLogoChange]);
+  
+  // Subscribe to template changes in the store
+  useEffect(() => {
+    if (!onTemplateChange) return;
+    
+    // Get initial template from store
+    const initialState = useLogoStore.getState();
+    const initialLogo = initialState.logos.find(l => l.id === initialState.selectedLogoId);
+    let previousTemplateId: string | undefined = initialLogo?.templateId;
+    
+    const unsubscribe = useLogoStore.subscribe((state) => {
+      const currentLogo = state.logos.find(l => l.id === state.selectedLogoId);
+      if (currentLogo && currentLogo.templateId !== previousTemplateId) {
+        // Template has changed in the store
+        if (currentLogo.templateId) {
+          console.log('🔄 Template changed in store from', previousTemplateId, 'to', currentLogo.templateId);
+          onTemplateChange(currentLogo.templateId);
+        }
+        previousTemplateId = currentLogo.templateId;
+      }
+    });
+    
+    return unsubscribe;
+  }, [onTemplateChange]);
   
   return null; // This component doesn't render anything
 }

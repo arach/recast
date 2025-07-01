@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useRef, useCallback } from 'react'
-import { SavedShape, SavedLogo } from '@/lib/storage'
+import { SavedShape } from '@/lib/storage'
 import { exportCanvasAsPNG } from '@/lib/export-utils'
 import { SaveDialog } from '@/components/save-dialog'
 import { SavedItemsDialog } from '@/components/saved-items-dialog'
@@ -18,6 +18,7 @@ import { BrandPersonality } from '@/components/studio/BrandPersonality'
 import { AIBrandConsultant } from '@/components/studio/AIBrandConsultant'
 import { generateWaveBars, executeCustomCode, type VisualizationParams } from '@/lib/visualization-generators'
 import { loadTemplateAsLegacy, loadThemeAsLegacy, debugLoadTheme } from '@/lib/theme-converter'
+import { StateDebugger } from '@/components/debug/StateDebugger'
 
 
 interface LogoInstance {
@@ -42,11 +43,11 @@ interface LogoInstance {
     customParameters: Record<string, any>
   }
   code: string
-  themeId?: string // Track which theme this logo is using
-  themeName?: string
-  // Legacy fields for backward compatibility
-  templateId?: string
+  templateId?: string // Standardized template identifier
   templateName?: string
+  // Legacy fields for backward compatibility
+  themeId?: string // Kept for legacy support
+  themeName?: string
   presetId?: string
   presetName?: string
 }
@@ -59,8 +60,8 @@ export default function Home() {
   const [logos, setLogos] = useState<LogoInstance[]>([
     {
       id: 'main',
-      x: -300,
-      y: -300,
+      x: 0,
+      y: 0,
       params: {
         seed: 'recast-logo',
         frequency: 4,
@@ -78,12 +79,13 @@ export default function Home() {
         scale: 1.0,
         customParameters: {}
       },
-      code: '// Default wave visualization\nfunction drawVisualization(ctx, width, height, params, generator, time) {\n  ctx.fillStyle = "#ffffff";\n  ctx.fillRect(0, 0, width, height);\n  \n  // Simple wave drawing\n  ctx.strokeStyle = "#0070f3";\n  ctx.lineWidth = 2;\n  ctx.beginPath();\n  \n  for (let x = 0; x < width; x++) {\n    const y = height/2 + Math.sin(x * 0.01 + time) * 50;\n    if (x === 0) ctx.moveTo(x, y);\n    else ctx.lineTo(x, y);\n  }\n  \n  ctx.stroke();\n}',
-      themeId: 'custom',
-      themeName: 'Custom',
+      code: '', // Will be loaded from template
+      // Don't set template fields - they'll be set when template loads
+      templateId: undefined,
+      templateName: undefined,
       // Legacy fields for compatibility
-      templateId: 'custom',
-      templateName: 'Custom'
+      themeId: undefined,
+      themeName: undefined
     }
   ])
   const [selectedLogoId, setSelectedLogoId] = useState('main')
@@ -100,6 +102,7 @@ export default function Home() {
   const [forceRender, setForceRender] = useState(0)
   const [showIndustrySelector, setShowIndustrySelector] = useState(false)
   const [currentIndustry, setCurrentIndustry] = useState<string | undefined>()
+  const [showDebugger, setShowDebugger] = useState(false)
   const animationRef = useRef<number>()
   const timeRef = useRef(0)
 
@@ -119,6 +122,7 @@ export default function Home() {
   const radius = selectedLogo.params.radius
   const color = selectedLogo.params.color
   const customCode = selectedLogo.code
+  // Use selectedLogo.params.customParameters directly - no separate state needed
   const customParameters = selectedLogo.params.customParameters
 
 
@@ -148,7 +152,7 @@ export default function Home() {
   const setCustomCode = (code: string) => {
     setLogos(prev => prev.map(logo => 
       logo.id === selectedLogoId 
-        ? { ...logo, code, themeId: undefined, themeName: 'Custom' }
+        ? { ...logo, code, templateId: 'custom', templateName: 'Custom', themeId: 'custom', themeName: 'Custom' }
         : logo
     ))
   }
@@ -162,9 +166,27 @@ export default function Home() {
     if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
       (window as any).debugLoadTheme = debugLoadTheme;
       (window as any).testOrganicBark = () => debugLoadTheme('organic-bark');
-      console.log('🐛 Debug functions available: window.debugLoadTheme(), window.testOrganicBark()');
+      (window as any).showDebugger = () => {
+        setShowDebugger(true);
+        console.log('✅ State debugger enabled');
+      };
+      (window as any).hideDebugger = () => {
+        setShowDebugger(false);
+        console.log('❌ State debugger disabled');
+      };
+      (window as any).toggleDebugger = () => {
+        setShowDebugger(prev => !prev);
+        console.log(`🔄 State debugger ${!showDebugger ? 'enabled' : 'disabled'}`);
+      };
+      console.log('🐛 Debug functions available:');
+      console.log('  - window.showDebugger() - Show state debugger');
+      console.log('  - window.hideDebugger() - Hide state debugger');
+      console.log('  - window.toggleDebugger() - Toggle state debugger');
+      console.log('  - window.debugLoadTheme(templateId) - Load a template');
+      console.log('  - window.testOrganicBark() - Test Organic Bark template');
     }
   }, [])
+
 
   // Handle URL parameters on mount
   useEffect(() => {
@@ -179,10 +201,10 @@ export default function Home() {
     const strokeColorParam = urlParams.get('strokeColor');
     const backgroundColorParam = urlParams.get('backgroundColor');
     
-    // Load template if specified
-    if (templateParam) {
-      console.log('Loading template from URL:', templateParam);
-      loadThemeById(templateParam).then(() => {
+    // Load template if specified, or load a default template
+    const templateToLoad = templateParam || 'wave-bars';
+    console.log('Loading template:', templateToLoad);
+    loadThemeById(templateToLoad).then(() => {
         // After template loads, apply text and color params
         const updates: Record<string, any> = {};
         
@@ -193,25 +215,15 @@ export default function Home() {
         if (backgroundColorParam) updates.backgroundColor = backgroundColorParam;
         
         if (Object.keys(updates).length > 0) {
-          setCustomParameters((prev: Record<string, any>) => ({ ...prev, ...updates }));
-          updateSelectedLogo({ customParameters: updates });
+          // Update customParameters via the logo state, not separate state
+          updateSelectedLogo({ 
+            customParameters: {
+              ...selectedLogo.params.customParameters,
+              ...updates
+            }
+          });
         }
-      });
-    } else {
-      // If no template, still apply text/color params if present
-      const updates: Record<string, any> = {};
-      
-      if (textParam) updates.text = textParam;
-      if (letterParam) updates.letter = letterParam;
-      if (fillColorParam) updates.fillColor = fillColorParam;
-      if (strokeColorParam) updates.strokeColor = strokeColorParam;
-      if (backgroundColorParam) updates.backgroundColor = backgroundColorParam;
-      
-      if (Object.keys(updates).length > 0) {
-        setCustomParameters((prev: Record<string, any>) => ({ ...prev, ...updates }));
-        updateSelectedLogo({ customParameters: updates });
-      }
-    }
+    });
   }, [mounted]); // Only run once after mount
 
   // Update URL when key parameters change
@@ -486,8 +498,10 @@ export default function Home() {
             }
           },
           code: theme.code, // Set the theme code
-          themeId: theme.id,
-          themeName: theme.name
+          templateId: theme.id, // Primary template identifier
+          templateName: theme.name,
+          themeId: theme.id, // Legacy compatibility
+          themeName: theme.name // Legacy compatibility
         };
         
         console.log('✅ Updated logo:', updatedLogo.themeName);
@@ -515,83 +529,132 @@ export default function Home() {
   const handleApplyBrandPersonality = (personalityParams: Record<string, any>) => {
     console.log('🎭 Applying brand personality params:', Object.keys(personalityParams));
     
-    // Only apply the personality parameters without changing template
-    setLogos(prev => prev.map(logo => 
-      logo.id === selectedLogoId 
-        ? { 
-            ...logo, 
-            params: { 
-              ...logo.params,
-              customParameters: {
-                ...logo.params.customParameters,
-                ...personalityParams // Apply personality parameters while preserving template
+    // Apply personality parameters while preserving all template context
+    setLogos(prev => {
+      // Get the current logo from the latest state, not from closure
+      const currentLogo = prev.find(logo => logo.id === selectedLogoId);
+      if (!currentLogo) return prev;
+      
+      console.log('🏷️ Template context preserved during personality application:', {
+        templateId: currentLogo.templateId,
+        templateName: currentLogo.templateName,
+        themeId: currentLogo.themeId, // legacy
+        themeName: currentLogo.themeName // legacy
+      });
+      
+      return prev.map(logo => 
+        logo.id === selectedLogoId 
+          ? { 
+              ...logo, // Preserve all existing logo properties including template identifiers
+              params: { 
+                ...logo.params,
+                customParameters: {
+                  ...logo.params.customParameters, // Preserve existing parameters
+                  ...personalityParams // Apply personality parameters
+                }
               }
+              // Template context (themeId, themeName, templateId, templateName) preserved via spread
             }
-          }
-        : logo
-    ))
+          : logo
+      )
+    });
     
+    console.log('✅ Brand personality applied while preserving template context');
     // Force re-render
     setForceRender(prev => prev + 1)
   }
 
-  // Handle color theme application
+  // Handle color theme application - preserve template context
   const handleApplyColorTheme = (themedParams: Record<string, any>) => {
-    // Update the logo with new color parameters
-    setLogos(prev => prev.map(logo => 
-      logo.id === selectedLogoId 
-        ? { 
-            ...logo, 
-            params: {
-              ...logo.params,
-              // Apply color params at the root level
-              fillColor: themedParams.fillColor || logo.params.customParameters?.fillColor,
-              strokeColor: themedParams.strokeColor || logo.params.customParameters?.strokeColor,
-              backgroundColor: themedParams.backgroundColor || logo.params.customParameters?.backgroundColor,
-              customParameters: {
-                ...logo.params.customParameters,
-                // Also apply to custom parameters for templates that look there
-                fillColor: themedParams.fillColor || logo.params.customParameters?.fillColor,
-                strokeColor: themedParams.strokeColor || logo.params.customParameters?.strokeColor,
-                backgroundColor: themedParams.backgroundColor || logo.params.customParameters?.backgroundColor,
-                textColor: themedParams.textColor || logo.params.customParameters?.textColor,
-                // Include any other color-related params from the theme
-                ...Object.entries(themedParams).reduce((acc, [key, value]) => {
-                  if (key.includes('Color') || key.includes('color')) {
-                    acc[key] = value;
-                  }
-                  return acc;
-                }, {} as Record<string, any>)
-              }
-            }
-          }
-        : logo
-    ))
+    console.log('🎨 Applying color theme');
     
+    // STRICT FILTER: Only allow specific color parameters to prevent template contamination
+    const allowedColorParams = [
+      'fillColor', 'strokeColor', 'backgroundColor', 'textColor',
+      'backgroundGradientStart', 'backgroundGradientEnd',
+      'fillGradientStart', 'fillGradientEnd',
+      'strokeGradientStart', 'strokeGradientEnd'
+    ];
+    
+    const colorOnlyParams = Object.entries(themedParams).reduce((acc, [key, value]) => {
+      // ONLY include if it's in our allowed list - no other parameters
+      if (allowedColorParams.includes(key)) {
+        acc[key] = value;
+      } else {
+        console.log('⚠️ Filtered out non-color param:', key, '=', value);
+      }
+      return acc;
+    }, {} as Record<string, any>);
+    
+    // Update the logo with new color parameters while preserving all template context
+    setLogos(prev => {
+      // Get the current logo from the latest state, not from closure
+      const currentLogo = prev.find(logo => logo.id === selectedLogoId);
+      if (!currentLogo) {
+        return prev;
+      }
+      
+      const updatedLogos = prev.map(logo => 
+        logo.id === selectedLogoId 
+          ? { 
+              ...logo, // Preserve all existing logo properties including template identifiers
+              params: {
+                ...logo.params,
+                // Apply color params at the root level (for legacy compatibility)
+                fillColor: colorOnlyParams.fillColor || logo.params.fillColor,
+                strokeColor: colorOnlyParams.strokeColor || logo.params.strokeColor,
+                backgroundColor: colorOnlyParams.backgroundColor || logo.params.backgroundColor,
+                customParameters: {
+                  ...logo.params.customParameters, // Preserve all existing custom parameters
+                  // Apply only the filtered color parameters
+                  ...colorOnlyParams
+                }
+              }
+              // Template context (themeId, themeName, templateId, templateName) preserved via spread
+            }
+          : logo
+      );
+      
+      return updatedLogos;
+    });
     // Force re-render to apply the theme changes
     setForceRender(prev => prev + 1)
   }
 
   // Apply template preset (style parameters only, no colors)
   const handleApplyTemplatePreset = (presetParams: Record<string, any>) => {
-    setLogos(prev => prev.map(logo => 
-      logo.id === selectedLogoId 
-        ? { 
-            ...logo, 
-            params: { 
-              ...logo.params,
-              customParameters: {
-                ...logo.params.customParameters,
-                ...presetParams
+    console.log('🎨 Applying template preset params:', Object.keys(presetParams));
+    
+    setLogos(prev => {
+      // Get the current logo from the latest state, not from closure
+      const currentLogo = prev.find(logo => logo.id === selectedLogoId);
+      if (!currentLogo) return prev;
+      
+      console.log('🏷️ Template context preserved during preset application:', {
+        templateId: currentLogo.templateId,
+        templateName: currentLogo.templateName,
+        themeId: currentLogo.themeId, // legacy
+        themeName: currentLogo.themeName // legacy
+      });
+      
+      return prev.map(logo => 
+        logo.id === selectedLogoId 
+          ? { 
+              ...logo, // Preserve all existing logo properties including template identifiers
+              params: { 
+                ...logo.params,
+                customParameters: {
+                  ...logo.params.customParameters, // Preserve existing parameters
+                  ...presetParams // Apply preset parameters
+                }
               }
+              // Template context (themeId, themeName, templateId, templateName) preserved via spread
             }
-          }
-        : logo
-    ))
-    setCustomParameters((prev: Record<string, any>) => ({
-      ...prev,
-      ...presetParams
-    }))
+          : logo
+      )
+    });
+    
+    console.log('✅ Template preset applied while preserving template context');
     // Force re-render
     setForceRender(prev => prev + 1)
   }
@@ -601,11 +664,13 @@ export default function Home() {
     try {
       console.log('🎨 Applying brand preset:', brandPreset.name)
       console.log('🎯 Brand preset data:', brandPreset);
-      console.log('📋 Current selectedLogo.themeId:', selectedLogo.themeId);
+      console.log('📋 Current selectedLogo.templateId:', selectedLogo.templateId);
+      console.log('📋 Current selectedLogo.themeId (legacy):', selectedLogo.themeId);
       console.log('🆔 Selected logo ID:', selectedLogoId);
       
-      // First load the base preset if it's different from current
-      if (brandPreset.preset !== selectedLogo.themeId) {
+      // First load the base preset if it's different from current (check both templateId and themeId for compatibility)
+      const currentTemplate = selectedLogo.templateId || selectedLogo.themeId;
+      if (brandPreset.preset !== currentTemplate) {
         console.log('🔄 Loading different theme:', brandPreset.preset);
         await loadThemeById(brandPreset.preset)
       } else {
@@ -637,15 +702,8 @@ export default function Home() {
         return logo;
       }))
       
-      // Update custom parameters state for the controls panel
-      setCustomParameters((prev: Record<string, any>) => {
-        const newParams = {
-          ...prev,
-          ...filteredParams
-        };
-        console.log('📦 Updated custom parameters:', Object.keys(newParams));
-        return newParams;
-      })
+      // Custom parameters updated via logo state above - no separate state needed
+      console.log('📦 Updated custom parameters:', Object.keys(filteredParams));
       
       // Force re-render
       setForceRender(prev => prev + 1)
@@ -732,6 +790,11 @@ export default function Home() {
         selectedLogoId={selectedLogoId}
         onLogosChange={setLogos}
         onSelectedLogoChange={setSelectedLogoId}
+        onTemplateChange={(templateId: string) => {
+          // When template changes in Zustand store, load it in React state
+          console.log('📋 Template changed via selector:', templateId);
+          loadThemeById(templateId);
+        }}
         zoom={zoom}
         animating={animating}
         controlsPanelOpen={true}
@@ -758,13 +821,13 @@ export default function Home() {
                 onApplyTheme={handleApplyColorTheme}
               />
               <TemplatePresetsPanel
-                currentTemplate={selectedLogo.themeId || 'custom'}
+                currentTemplate={selectedLogo.templateId || selectedLogo.themeId || 'custom'}
                 currentParams={customParameters}
                 onApplyPreset={handleApplyTemplatePreset}
               />
               <AISuggestions
                 currentIndustry={currentIndustry}
-                currentPreset={selectedLogo.themeId || 'custom'}
+                currentPreset={selectedLogo.templateId || selectedLogo.themeId || 'custom'}
                 currentParams={customParameters}
                 onApplySuggestion={handleApplyColorTheme}
               />
@@ -819,6 +882,14 @@ export default function Home() {
         onLoadShape={handleLoadShape}
         onLoadLogo={handleLoadLogo}
       />
+      
+      {/* Debug state viewer */}
+      {process.env.NODE_ENV === 'development' && showDebugger && (
+        <StateDebugger 
+          reactLogos={logos}
+          selectedLogoId={selectedLogoId}
+        />
+      )}
     </div>
   )
 }
