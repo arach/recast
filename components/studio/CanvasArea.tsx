@@ -212,6 +212,14 @@ export function CanvasArea() {
 
   // Center view on initial load with appropriate zoom (max 100%)
   useEffect(() => {
+    // Only run initial centering if we have logos with actual content
+    const hasValidLogos = logos.length > 0 && logos.some(logo => 
+      logo.code && logo.code.length > 0 && 
+      (logo.templateId || logo.templateName)
+    )
+    
+    if (!hasValidLogos) return
+    
     const timer = setTimeout(() => {
       const canvas = canvasRef.current
       if (!canvas || logos.length === 0) {
@@ -253,9 +261,12 @@ export function CanvasArea() {
         x: (rect.width / 2) / clampedZoom - centerX,
         y: (rect.height / 2) / clampedZoom - centerY
       })
-    }, 150) // Small delay to ensure canvas and logos are ready
+      
+      console.log('📍 Canvas centered on load');
+    }, 200) // Slightly longer delay to ensure template is loaded
+    
     return () => clearTimeout(timer)
-  }, []) // Empty deps - only run once on mount
+  }, [logos, setZoom]) // Depend on logos so it re-runs when template loads
 
   const drawInfiniteCanvas = useCallback(() => {
     const canvas = canvasRef.current
