@@ -31,9 +31,10 @@ const MonacoEditor = dynamic(
 
 interface CodeEditorPanelProps {
   onClose?: () => void
+  onStateChange?: (isCollapsed: boolean, width: number) => void
 }
 
-export function CodeEditorPanel({ onClose }: CodeEditorPanelProps) {
+export function CodeEditorPanel({ onClose, onStateChange }: CodeEditorPanelProps) {
   const [copied, setCopied] = useState(false)
   const [width, setWidth] = useState(500)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
@@ -69,6 +70,11 @@ export function CodeEditorPanel({ onClose }: CodeEditorPanelProps) {
     }
     loadPresets()
   }, [])
+  
+  // Notify parent of state changes
+  useEffect(() => {
+    onStateChange?.(isCollapsed, width)
+  }, [isCollapsed, width, onStateChange])
 
   // Debug log
   useEffect(() => {
@@ -290,10 +296,17 @@ export function CodeEditorPanel({ onClose }: CodeEditorPanelProps) {
   console.log('🎨 Rendering expanded panel, selectedLogo:', selectedLogo?.id, 'localCode length:', localCode?.length)
   
   return (
-    <div 
-      className={`absolute top-0 left-0 h-full shadow-lg flex flex-col ${darkMode ? 'bg-gray-900' : 'bg-white'} z-30 transition-all duration-300`}
-      style={{ width: `${width}px` }}
-    >
+    <>
+      {/* Subtle background overlay for code editor area */}
+      <div 
+        className="absolute top-0 left-0 h-full bg-black/5 dark:bg-black/10 z-20 transition-all duration-300"
+        style={{ width: `${width}px` }}
+      />
+      
+      <div 
+        className={`absolute top-0 left-0 h-full shadow-lg flex flex-col ${darkMode ? 'bg-gray-900' : 'bg-white'} z-30 transition-all duration-300`}
+        style={{ width: `${width}px` }}
+      >
       
       {/* Resize Handle - on the right side for left panel */}
       <div
@@ -465,7 +478,7 @@ export function CodeEditorPanel({ onClose }: CodeEditorPanelProps) {
                   fontSize: 13,
                   lineNumbers: 'on',
                   scrollBeyondLastLine: false,
-                  wordWrap: 'on',
+                  wordWrap: 'off',
                   automaticLayout: true,
                   tabSize: 2,
                   insertSpaces: true,
@@ -516,5 +529,6 @@ export function CodeEditorPanel({ onClose }: CodeEditorPanelProps) {
         </CardContent>
       </Card>
     </div>
+    </>
   )
 }

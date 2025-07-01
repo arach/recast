@@ -69,6 +69,10 @@ export function CanvasArea() {
   const [hoveredLogoId, setHoveredLogoId] = useState<string | null>(null)
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
   
+  // Code editor state for adjusting canvas controls
+  const [codeEditorCollapsed, setCodeEditorCollapsed] = useState(true)
+  const [codeEditorWidth, setCodeEditorWidth] = useState(500)
+  
   // Logo canvas cache - CRITICAL FOR PERFORMANCE
   const logoCanvasCache = useRef<Map<string, { canvas: HTMLCanvasElement, paramHash: string }>>(new Map())
   
@@ -617,10 +621,21 @@ export function CanvasArea() {
       }}
     >
       {/* Code Editor Panel - positioned relative to canvas container */}
-      <CodeEditorPanel />
+      <CodeEditorPanel 
+        onStateChange={(collapsed, width) => {
+          setCodeEditorCollapsed(collapsed)
+          setCodeEditorWidth(width)
+        }}
+      />
       
-      {/* Preview Toggle */}
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20">
+      {/* Preview Toggle - adjust position based on code editor */}
+      <div 
+        className="absolute bottom-6 z-20"
+        style={{
+          left: codeEditorCollapsed ? '50%' : `calc(${codeEditorWidth}px + (100% - ${codeEditorWidth}px) / 2)`,
+          transform: 'translateX(-50%)'
+        }}
+      >
         <Button
           variant={previewMode ? "default" : "outline"}
           size="sm"
@@ -809,9 +824,14 @@ export function CanvasArea() {
       )}
 
 
-      {/* Help Text */}
+      {/* Help Text - adjust position based on code editor */}
       {!previewMode && (
-        <div className="absolute bottom-6 left-6 z-20">
+        <div 
+          className="absolute bottom-6 z-20"
+          style={{
+            left: codeEditorCollapsed ? '24px' : `${codeEditorWidth + 24}px`
+          }}
+        >
           <div className="bg-white/90 backdrop-blur-sm rounded-lg border shadow-lg px-3 py-2">
             <div className="text-xs text-gray-600 space-y-1">
               <div><kbd className="bg-gray-100 px-1 rounded text-xs">Drag</kbd> to pan</div>
