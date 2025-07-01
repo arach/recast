@@ -1,11 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Sparkles, Heart, Target, Zap, Shield, Smile, Star, Loader2 } from 'lucide-react';
 import { useCompletion } from 'ai/react';
+import { useBrandStore } from '@/lib/stores/brandStore';
 
 interface BrandPersonalityProps {
   currentParams: Record<string, any>;

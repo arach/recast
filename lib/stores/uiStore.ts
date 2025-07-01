@@ -40,7 +40,7 @@ interface UIStore {
   setRenderTrigger: (trigger: number) => void;
   
   // Complex UI actions
-  showSaveDialog: (mode: 'shape' | 'preset') => void;
+  showSaveDialog: (mode: 'shape' | 'logo') => void;
   hideSaveDialog: () => void;
 }
 

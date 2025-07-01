@@ -14,8 +14,8 @@ import { Badge } from '@/components/ui/badge'
 import { Palette, ChevronDown } from 'lucide-react'
 import { useLogoStore } from '@/lib/stores/logoStore'
 import { useSelectedLogo } from '@/lib/hooks/useSelectedLogo'
-import { loadTemplateAsLegacy, getAllTemplatesAsLegacy } from '@/lib/template-converter'
-import type { LoadedTemplate } from '@/lib/template-loader'
+import { loadTemplateAsLegacy, getAllTemplatesAsLegacy } from '@/lib/theme-converter'
+import type { LoadedTemplate } from '@/lib/theme-loader'
 
 export function TemplateSelector() {
   const [availableTemplates, setAvailableTemplates] = useState<LoadedTemplate[]>([])

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { Template } from '@/templates/types';
-import { loadTemplate, type TemplateName } from '@/lib/template-loader';
+import { loadTemplate, type ShapeName as TemplateName } from '@/lib/theme-loader';
 
 interface UseTemplateReturn {
   template: Template | null;
@@ -56,7 +56,7 @@ export function useTemplateList() {
   useEffect(() => {
     async function loadTemplateList() {
       try {
-        const { getAllTemplateMetadata } = await import('@/lib/template-loader');
+        const { getAllTemplateMetadata } = await import('@/lib/theme-loader');
         const metadata = await getAllTemplateMetadata();
         setTemplates(metadata);
       } catch (error) {

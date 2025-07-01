@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTemplate, useTemplateList } from '@/hooks/use-template';
 import { WaveGenerator } from '@/core/wave-generator';
-import type { TemplateName } from '@/lib/template-loader';
+import type { ShapeName as TemplateName } from '@/lib/theme-loader';
 
 export function TemplateDemo() {
   const canvasRef = useRef<HTMLCanvasElement>(null);

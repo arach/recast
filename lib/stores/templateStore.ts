@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 import { Template, Parameters } from '@/lib/types';
-import { loadTemplateAsLegacy, getAllTemplatesAsLegacy } from '@/lib/template-converter';
+import { loadTemplateAsLegacy, getAllTemplatesAsLegacy } from '@/lib/theme-converter';
 import { useLogoStore } from './logoStore';
 
 interface TemplateStore {

@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useRef, useCallback } from 'react'
-import { SavedShape, SavedPreset } from '@/lib/storage'
+import { SavedShape, SavedLogo } from '@/lib/storage'
 import { exportCanvasAsPNG } from '@/lib/export-utils'
 import { SaveDialog } from '@/components/save-dialog'
 import { SavedItemsDialog } from '@/components/saved-items-dialog'
@@ -17,7 +17,7 @@ import { AISuggestions } from '@/components/studio/AISuggestions'
 import { BrandPersonality } from '@/components/studio/BrandPersonality'
 import { AIBrandConsultant } from '@/components/studio/AIBrandConsultant'
 import { generateWaveBars, executeCustomCode, type VisualizationParams } from '@/lib/visualization-generators'
-import { loadTemplateAsLegacy } from '@/lib/template-converter'
+import { loadTemplateAsLegacy } from '@/lib/theme-converter'
 
 
 interface LogoInstance {
@@ -42,10 +42,13 @@ interface LogoInstance {
     customParameters: Record<string, any>
   }
   code: string
-  presetId?: string // Track which preset this logo is using
-  presetName?: string
-  templateId?: string // For backward compatibility
+  themeId?: string // Track which theme this logo is using
+  themeName?: string
+  // Legacy fields for backward compatibility
+  templateId?: string
   templateName?: string
+  presetId?: string
+  presetName?: string
 }
 
 export default function Home() {
@@ -87,7 +90,7 @@ export default function Home() {
   const [zoom] = useState(1)
   const [isDarkMode, setIsDarkMode] = useState(false)
   const [saveDialogOpen, setSaveDialogOpen] = useState(false)
-  const [saveMode, setSaveMode] = useState<'shape' | 'preset'>('preset')
+  const [saveMode, setSaveMode] = useState<'shape' | 'logo'>('logo')
   const [savedItemsOpen, setSavedItemsOpen] = useState(false)
   const [currentShapeId, setCurrentShapeId] = useState<string | undefined>()
   const [currentShapeName, setCurrentShapeName] = useState('Custom Shape')
@@ -142,7 +145,7 @@ export default function Home() {
   const setCustomCode = (code: string) => {
     setLogos(prev => prev.map(logo => 
       logo.id === selectedLogoId 
-        ? { ...logo, code, presetId: undefined, presetName: 'Custom' }
+        ? { ...logo, code, themeId: undefined, themeName: 'Custom' }
         : logo
     ))
   }
@@ -169,7 +172,7 @@ export default function Home() {
     // Load template if specified
     if (templateParam) {
       console.log('Loading template from URL:', templateParam);
-      loadPresetById(templateParam).then(() => {
+      loadThemeById(templateParam).then(() => {
         // After template loads, apply text and color params
         const updates: Record<string, any> = {};
         
@@ -211,7 +214,7 @@ export default function Home() {
     }, 1000);
     
     return () => clearTimeout(timeoutId);
-  }, [selectedLogo.presetId, customParameters.text, customParameters.letter, 
+  }, [selectedLogo.themeId, customParameters.text, customParameters.letter, 
       customParameters.fillColor, customParameters.strokeColor, customParameters.backgroundColor]);
 
   // Theme detection
@@ -372,21 +375,21 @@ export default function Home() {
   }, [])
 
 
-  // Load preset by ID
-  const loadPresetById = async (presetId: string, customDefaults?: Record<string, any>) => {
+  // Load theme by ID
+  const loadThemeById = async (themeId: string, customDefaults?: Record<string, any>) => {
     try {
-      console.log('Loading preset by ID:', presetId)
-      const preset = await loadPresetAsLegacy(presetId)
+      console.log('Loading theme by ID:', themeId)
+      const theme = await loadThemeAsLegacy(themeId)
       
-      if (!preset) {
-        console.error('Preset not found:', presetId)
+      if (!theme) {
+        console.error('Theme not found:', themeId)
         return
       }
       
-      console.log('Loaded preset code preview:', preset.code.substring(0, 500) + '...')
+      console.log('Loaded theme code preview:', theme.code.substring(0, 500) + '...')
       
-      // Parse the preset code to get ALL parameter definitions (not just defaults)
-      const parsedParams = parseCustomParameters(preset.code) || {};
+      // Parse the theme code to get ALL parameter definitions (not just defaults)
+      const parsedParams = parseCustomParameters(theme.code) || {};
       
       // Text parameters that should be preserved
       const textParams = ['text', 'letter', 'letters', 'brandName', 'words', 'title', 'subtitle'];
@@ -399,7 +402,7 @@ export default function Home() {
         }
       });
       
-      // Update the selected logo with preset data
+      // Update the selected logo with theme data
       setLogos(prev => prev.map(logo => {
         if (logo.id !== selectedLogoId) return logo;
         
@@ -411,10 +414,10 @@ export default function Home() {
           }
         });
         
-        // Merge preset defaults with custom defaults (industry-specific or otherwise)
+        // Merge theme defaults with custom defaults (industry-specific or otherwise)
         const mergedParams = {
           ...completeParams,
-          ...preset.defaultParams,
+          ...theme.defaultParams,
           ...customDefaults,
           ...currentTextValues // Preserve text values
         };
@@ -450,9 +453,9 @@ export default function Home() {
     }
   }
   
-  // Handle preset selection from industry selector
-  const handleIndustryPresetSelect = async (presetId: string, industryDefaults?: Record<string, any>, industryId?: string) => {
-    await loadPresetById(presetId, industryDefaults)
+  // Handle theme selection from industry selector
+  const handleIndustryThemeSelect = async (themeId: string, industryDefaults?: Record<string, any>, industryId?: string) => {
+    await loadThemeById(themeId, industryDefaults)
     setCurrentIndustry(industryId)
     setShowIndustrySelector(false)
   }
@@ -524,8 +527,8 @@ export default function Home() {
       console.log('Applying brand preset:', brandPreset.name)
       
       // First load the base preset if it's different from current
-      if (brandPreset.preset !== selectedLogo.presetId) {
-        await loadPresetById(brandPreset.preset)
+      if (brandPreset.preset !== selectedLogo.themeId) {
+        await loadThemeById(brandPreset.preset)
       }
       
       // Filter out text-based parameters that shouldn't be overridden
@@ -603,19 +606,26 @@ export default function Home() {
     setForceRender(prev => prev + 1)
   }
 
-  const handleLoadPreset = (preset: SavedPreset) => {
-    setSeed(preset.params.seed)
-    setFrequency(preset.params.frequency)
-    setAmplitude(preset.params.amplitude)
-    setComplexity(preset.params.complexity)
-    setChaos(preset.params.chaos)
-    setDamping(preset.params.damping)
-    setLayers(preset.params.layers)
-    if (preset.params.barCount) setBarCount(preset.params.barCount)
-    if (preset.params.barSpacing) setBarSpacing(preset.params.barSpacing)
-    if (preset.params.radius) setRadius(preset.params.radius)
-    if (preset.params.color) setColor(preset.params.color)
-    if (preset.shapeId) setCurrentShapeId(preset.shapeId)
+  const handleLoadLogo = (logo: SavedLogo) => {
+    // Update parameters from saved logo
+    setSeed(logo.parameters.core.frequency.toString()) // Convert to seed format
+    setFrequency(logo.parameters.core.frequency)
+    setAmplitude(logo.parameters.core.amplitude)
+    setComplexity(logo.parameters.core.complexity)
+    setChaos(logo.parameters.core.chaos)
+    setDamping(logo.parameters.core.damping)
+    setLayers(logo.parameters.core.layers)
+    if (logo.parameters.core.radius) setRadius(logo.parameters.core.radius)
+    
+    // Update custom parameters
+    if (logo.parameters.custom.barCount) setBarCount(logo.parameters.custom.barCount)
+    if (logo.parameters.custom.barSpacing) setBarSpacing(logo.parameters.custom.barSpacing)
+    
+    // Update style
+    if (logo.parameters.style.fillColor) setColor(logo.parameters.style.fillColor)
+    
+    // Update shape if custom
+    if (logo.shape.id) setCurrentShapeId(logo.shape.id)
     
     // Force re-render after all state updates
     setForceRender(prev => prev + 1)
@@ -659,13 +669,13 @@ export default function Home() {
                 onApplyTheme={handleApplyColorTheme}
               />
               <TemplatePresetsPanel
-                currentTemplate={selectedLogo.presetId || 'custom'}
+                currentTemplate={selectedLogo.themeId || 'custom'}
                 currentParams={customParameters}
                 onApplyPreset={handleApplyTemplatePreset}
               />
               <AISuggestions
                 currentIndustry={currentIndustry}
-                currentPreset={selectedLogo.presetId || 'custom'}
+                currentPreset={selectedLogo.themeId || 'custom'}
                 currentParams={customParameters}
                 onApplySuggestion={handleApplyColorTheme}
               />
@@ -676,7 +686,7 @@ export default function Home() {
               <BrandPresetsPanel
                 onApplyPreset={handleApplyBrandPreset}
                 currentParams={customParameters}
-                currentPreset={selectedLogo.presetId || 'custom'}
+                currentPreset={selectedLogo.themeId || 'custom'}
               />
             </div>
           </div>
@@ -686,7 +696,7 @@ export default function Home() {
       {/* Industry Selector */}
       {showIndustrySelector && (
         <IndustrySelector 
-          onSelectPreset={handleIndustryPresetSelect}
+          onSelectTheme={handleIndustryThemeSelect}
           onClose={() => setShowIndustrySelector(false)}
         />
       )}
@@ -718,7 +728,7 @@ export default function Home() {
         open={savedItemsOpen}
         onOpenChange={setSavedItemsOpen}
         onLoadShape={handleLoadShape}
-        onLoadPreset={handleLoadPreset}
+        onLoadLogo={handleLoadLogo}
       />
     </div>
   )

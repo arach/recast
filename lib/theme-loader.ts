@@ -54,41 +54,60 @@ export interface LoadedTemplate {
 /**
  * Load a template module dynamically
  */
-export async function loadTemplate(templateName: TemplateName): Promise<Template> {
-  const loader = TEMPLATE_MODULES[templateName];
+export async function loadShapeModule(shapeName: ShapeName): Promise<Template> {
+  const loader = SHAPE_MODULES[shapeName];
   if (!loader) {
-    throw new Error(`Template "${templateName}" not found`);
+    throw new Error(`Shape "${shapeName}" not found`);
   }
   
-  const template = await loader();
-  return template;
+  const shapeModule = await loader();
+  return shapeModule;
 }
+
+// Legacy function name for compatibility
+export const loadTemplate = loadShapeModule;
 
 /**
  * Get all available template names
  */
-export function getAvailableTemplates(): TemplateName[] {
-  return Object.keys(TEMPLATE_MODULES) as TemplateName[];
+export function getAvailableShapes(): ShapeName[] {
+  return Object.keys(SHAPE_MODULES) as ShapeName[];
 }
+
+// Legacy function name for compatibility  
+export const getAvailableTemplates = getAvailableShapes;
 
 /**
  * Get template metadata without loading the full template
  */
-export async function getTemplateMetadata(templateName: TemplateName) {
-  const template = await loadTemplate(templateName);
-  return template.metadata;
+export async function getShapeMetadata(shapeName: ShapeName) {
+  const shape = await loadShapeModule(shapeName);
+  return shape.metadata;
 }
+
+// Legacy function name for compatibility
+export const getTemplateMetadata = getShapeMetadata;
 
 /**
  * Get all template metadata for display in UI
  */
-export async function getAllTemplateMetadata() {
-  const templateNames = getAvailableTemplates();
+export async function getAllShapeMetadata() {
+  const shapeNames = getAvailableShapes();
   const metadata = await Promise.all(
-    templateNames.map(async (name) => ({
+    shapeNames.map(async (name) => ({
       id: name,
-      ...(await getTemplateMetadata(name)),
+      ...(await getShapeMetadata(name)),
     }))
   );
   return metadata;
+}
+
+// Legacy function name for compatibility
+export const getAllTemplateMetadata = getAllShapeMetadata;
+
+/**
+ * Get all curated themes from the theme library
+ */
+export function getAllThemes(): Theme[] {
+  return curatedThemes;
 }

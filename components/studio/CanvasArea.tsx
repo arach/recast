@@ -210,12 +210,50 @@ export function CanvasArea() {
     })
   }, [setZoom, logos])
 
-  // Center view on initial load at 100% zoom - only once
+  // Center view on initial load with appropriate zoom (max 100%)
   useEffect(() => {
     const timer = setTimeout(() => {
-      setZoom(1) // Ensure 100% zoom
-      centerView()
-    }, 100) // Small delay to ensure canvas is ready
+      const canvas = canvasRef.current
+      if (!canvas || logos.length === 0) {
+        setZoom(1)
+        return
+      }
+
+      const rect = canvas.getBoundingClientRect()
+      const logoSize = 600
+      
+      // Calculate bounding box of all logos
+      let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity
+      
+      logos.forEach(logo => {
+        const position = logo.position || { x: 0, y: 0 }
+        minX = Math.min(minX, position.x)
+        maxX = Math.max(maxX, position.x + logoSize)
+        minY = Math.min(minY, position.y)
+        maxY = Math.max(maxY, position.y + logoSize)
+      })
+      
+      const contentWidth = maxX - minX
+      const contentHeight = maxY - minY
+      const centerX = (minX + maxX) / 2
+      const centerY = (minY + maxY) / 2
+      
+      // Calculate zoom to fit all logos at 70% coverage, but don't exceed 100%
+      const targetCoverage = 0.7
+      const zoomX = (rect.width * targetCoverage) / contentWidth
+      const zoomY = (rect.height * targetCoverage) / contentHeight
+      const idealZoom = Math.min(zoomX, zoomY, 1) // Cap at 100%
+      
+      const clampedZoom = Math.max(0.2, Math.min(idealZoom, 1))
+      
+      setZoom(clampedZoom)
+      
+      // Center all logos in view
+      setCanvasOffset({
+        x: (rect.width / 2) / clampedZoom - centerX,
+        y: (rect.height / 2) / clampedZoom - centerY
+      })
+    }, 150) // Small delay to ensure canvas and logos are ready
     return () => clearTimeout(timer)
   }, []) // Empty deps - only run once on mount
 

@@ -410,7 +410,7 @@ function getUniversalParameterDefinitions() {
 /**
  * Load and convert a template module to legacy format
  */
-export async function loadTemplateAsLegacy(templateName: string): Promise<{
+export async function loadThemeAsLegacy(themeName: string): Promise<{
   id: string;
   name: string;
   description: string;
@@ -418,7 +418,7 @@ export async function loadTemplateAsLegacy(templateName: string): Promise<{
   code: string;
 }> {
   // Dynamic import of the template module
-  const module = await import(`@/templates/${templateName}`);
+  const module = await import(`@/templates/${themeName}`);
   
   const template: Template = {
     parameters: module.parameters,
@@ -430,7 +430,7 @@ export async function loadTemplateAsLegacy(templateName: string): Promise<{
   const code = convertTemplateToLegacy(template);
   
   return {
-    id: templateName,
+    id: themeName,
     name: template.metadata.name,
     description: template.metadata.description,
     defaultParams: template.metadata.defaultParams,
@@ -481,8 +481,11 @@ export async function getAllTemplatesAsLegacy() {
   ];
   
   const templates = await Promise.all(
-    templateNames.map(name => loadTemplateAsLegacy(name))
+    templateNames.map(name => loadThemeAsLegacy(name))
   );
   
   return templates;
 }
+
+// Backward compatibility alias
+export const loadTemplateAsLegacy = loadThemeAsLegacy;

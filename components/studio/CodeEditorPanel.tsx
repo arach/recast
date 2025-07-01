@@ -9,8 +9,8 @@ import { useLogoStore } from '@/lib/stores/logoStore'
 import { useUIStore } from '@/lib/stores/uiStore'
 import { useSelectedLogo } from '@/lib/hooks/useSelectedLogo'
 import { visualizationTypes } from '@/lib/monaco-types'
-import { loadTemplateAsLegacy, getAllTemplatesAsLegacy } from '@/lib/template-converter'
-import type { LoadedTemplate } from '@/lib/template-loader'
+import { loadTemplateAsLegacy, getAllTemplatesAsLegacy } from '@/lib/theme-converter'
+import type { LoadedTemplate } from '@/lib/theme-loader'
 import type { editor, languages } from 'monaco-editor'
 
 // Dynamically import Monaco to avoid SSR issues
@@ -240,10 +240,10 @@ export function CodeEditorPanel({ onClose, onStateChange }: CodeEditorPanelProps
           console.log('🔧 Code button clicked, selectedLogo:', selectedLogo?.id)
           setIsCollapsed(false)
         }}
-        className={`absolute top-6 left-6 z-50 shadow-lg border-2 ${
+        className={`absolute top-6 left-6 z-50 shadow-lg border ${
           darkMode 
-            ? 'bg-gray-800 hover:bg-gray-700 text-white border-gray-600' 
-            : 'bg-white hover:bg-gray-50 text-gray-900 border-gray-300'
+            ? 'bg-gray-800 hover:bg-gray-700 text-white border-gray-700' 
+            : 'bg-white hover:bg-gray-50 text-gray-900 border-gray-200'
         }`}
         size="sm"
         variant="outline"
@@ -299,7 +299,7 @@ export function CodeEditorPanel({ onClose, onStateChange }: CodeEditorPanelProps
     <>
       {/* Subtle background overlay for code editor area */}
       <div 
-        className="absolute top-0 left-0 h-full bg-black/5 dark:bg-black/10 z-20 transition-all duration-300"
+        className="absolute top-0 left-0 h-full bg-transparent z-20 transition-all duration-300 pointer-events-none"
         style={{ width: `${width}px` }}
       />
       
@@ -310,13 +310,16 @@ export function CodeEditorPanel({ onClose, onStateChange }: CodeEditorPanelProps
       
       {/* Resize Handle - on the right side for left panel */}
       <div
-        className={`absolute right-0 top-0 bottom-0 w-1 hover:w-2 cursor-col-resize transition-all ${
-          darkMode ? 'bg-gray-700 hover:bg-blue-600' : 'bg-gray-200 hover:bg-blue-500'
+        className={`absolute right-0 top-0 bottom-0 w-3 -mr-1 cursor-col-resize z-50 group ${
+          darkMode ? 'hover:bg-blue-600/20' : 'hover:bg-blue-500/20'
         }`}
         onMouseDown={handleMouseDown}
       >
-        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-          <GripVertical className={`w-4 h-4 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`} />
+        <div className={`absolute left-1/2 top-0 bottom-0 w-1 -translate-x-1/2 transition-all ${
+          darkMode ? 'bg-gray-700 group-hover:bg-blue-600' : 'bg-gray-200 group-hover:bg-blue-500'
+        }`} />
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
+          <GripVertical className={`w-4 h-4 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`} />
         </div>
       </div>
 
@@ -475,7 +478,7 @@ export function CodeEditorPanel({ onClose, onStateChange }: CodeEditorPanelProps
                 height="100%"
                 options={{
                   minimap: { enabled: false },
-                  fontSize: 13,
+                  fontSize: 12,
                   lineNumbers: 'on',
                   scrollBeyondLastLine: false,
                   wordWrap: 'off',
