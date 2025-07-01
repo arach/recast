@@ -84,7 +84,7 @@ export async function getAllTemplateInfo(): Promise<TemplateInfo[]> {
   const templateInfos: TemplateInfo[] = [];
   
   // For now, load templates that we know are converted
-  const convertedTemplates = ['wave-bars', 'audio-bars', 'wordmark', 'letter-mark'];
+  const convertedTemplates = ['wave-bars', 'audio-bars', 'wordmark', 'letter-mark', 'infinity-loops'];
   
   for (const templateId of convertedTemplates) {
     try {

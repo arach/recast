@@ -115,3 +115,7 @@ The `WaveGenerator` class in `core/wave-generator.ts` provides:
 2. **Dual Purpose**: Serves as both a web application (design studio) and npm library
 3. **Mathematical Focus**: All visual generation is mathematically driven
 4. **No Static Assets**: The goal is to eliminate traditional static brand assets
+
+## Development Process
+
+- **Use dev:alt for all interaction with your dev process**

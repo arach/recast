@@ -8,20 +8,20 @@ const PARAMETERS = {
   fillType: { type: 'select', options: [{"value":"none","label":"None"},{"value":"solid","label":"Solid Color"},{"value":"gradient","label":"Gradient"}], default: "solid", label: 'Fill Type', category: 'Fill' },
   fillColor: { type: 'color', default: "#9333ea", label: 'Fill Color', category: 'Fill', showIf: (params)=>params.fillType === 'solid' },
   fillGradientStart: { type: 'color', default: "#9333ea", label: 'Gradient Start', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
-  fillGradientEnd: { type: 'color', default: "#3b82f6", label: 'Gradient End', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
+  fillGradientEnd: { type: 'color', default: "#7c3aed", label: 'Gradient End', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
   fillGradientDirection: { type: 'slider', min: 0, max: 360, step: 15, default: 45, label: 'Gradient Direction', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
   fillOpacity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.8, label: 'Fill Opacity', category: 'Fill', showIf: (params)=>params.fillType !== 'none' },
   strokeType: { type: 'select', options: [{"value":"none","label":"None"},{"value":"solid","label":"Solid"},{"value":"dashed","label":"Dashed"},{"value":"dotted","label":"Dotted"}], default: "solid", label: 'Stroke Type', category: 'Stroke' },
   strokeColor: { type: 'color', default: "#7c3aed", label: 'Stroke Color', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
   strokeWidth: { type: 'slider', min: 0, max: 10, step: 0.5, default: 2, label: 'Stroke Width', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
   strokeOpacity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 1, label: 'Stroke Opacity', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
-  frequency: { type: 'slider', min: 0.1, max: 8, step: 0.1, default: 2, label: 'Flow Speed' },
-  amplitude: { type: 'slider', min: 10, max: 150, step: 5, default: 60, label: 'Loop Size' },
-  complexity: { type: 'slider', min: 0, max: 1, step: 0.01, default: 0.3, label: 'Flowing Particles' },
-  chaos: { type: 'slider', min: 0, max: 1, step: 0.01, default: 0.1, label: 'Organic Variance' },
-  damping: { type: 'slider', min: 0.3, max: 1, step: 0.01, default: 0.9, label: 'Layer Scale' },
-  layers: { type: 'slider', min: 1, max: 6, step: 1, default: 2, label: 'Nested Loops' },
-  scale: { type: 'slider', min: 0.3, max: 3, step: 0.1, default: 1.0, label: 'Overall Scale' }
+  frequency: { type: 'slider', min: 0.1, max: 8, step: 0.1, default: 2, label: 'Flow Speed', category: 'Animation' },
+  amplitude: { type: 'slider', min: 10, max: 150, step: 5, default: 60, label: 'Loop Size', category: 'Shape' },
+  complexity: { type: 'slider', min: 0, max: 1, step: 0.01, default: 0.3, label: 'Flowing Particles', category: 'Effects' },
+  chaos: { type: 'slider', min: 0, max: 1, step: 0.01, default: 0.1, label: 'Organic Variance', category: 'Effects' },
+  damping: { type: 'slider', min: 0.3, max: 1, step: 0.01, default: 0.9, label: 'Layer Scale', category: 'Shape' },
+  layers: { type: 'slider', min: 1, max: 6, step: 1, default: 2, label: 'Nested Loops', category: 'Shape' },
+  scale: { type: 'slider', min: 0.3, max: 3, step: 0.1, default: 1.0, label: 'Overall Scale', category: 'Shape' }
 };
 
 function applyUniversalBackground(ctx, width, height, params) {
@@ -328,20 +328,20 @@ const PARAMETERS = {
   fillType: { type: 'select', options: [{"value":"none","label":"None"},{"value":"solid","label":"Solid Color"},{"value":"gradient","label":"Gradient"}], default: "solid", label: 'Fill Type', category: 'Fill' },
   fillColor: { type: 'color', default: "#9333ea", label: 'Fill Color', category: 'Fill', showIf: (params)=>params.fillType === 'solid' },
   fillGradientStart: { type: 'color', default: "#9333ea", label: 'Gradient Start', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
-  fillGradientEnd: { type: 'color', default: "#3b82f6", label: 'Gradient End', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
+  fillGradientEnd: { type: 'color', default: "#7c3aed", label: 'Gradient End', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
   fillGradientDirection: { type: 'slider', min: 0, max: 360, step: 15, default: 45, label: 'Gradient Direction', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
   fillOpacity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.8, label: 'Fill Opacity', category: 'Fill', showIf: (params)=>params.fillType !== 'none' },
   strokeType: { type: 'select', options: [{"value":"none","label":"None"},{"value":"solid","label":"Solid"},{"value":"dashed","label":"Dashed"},{"value":"dotted","label":"Dotted"}], default: "solid", label: 'Stroke Type', category: 'Stroke' },
   strokeColor: { type: 'color', default: "#7c3aed", label: 'Stroke Color', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
   strokeWidth: { type: 'slider', min: 0, max: 10, step: 0.5, default: 2, label: 'Stroke Width', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
   strokeOpacity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 1, label: 'Stroke Opacity', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
-  frequency: { type: 'slider', min: 0.1, max: 8, step: 0.1, default: 2, label: 'Flow Speed' },
-  amplitude: { type: 'slider', min: 10, max: 150, step: 5, default: 60, label: 'Loop Size' },
-  complexity: { type: 'slider', min: 0, max: 1, step: 0.01, default: 0.3, label: 'Flowing Particles' },
-  chaos: { type: 'slider', min: 0, max: 1, step: 0.01, default: 0.1, label: 'Organic Variance' },
-  damping: { type: 'slider', min: 0.3, max: 1, step: 0.01, default: 0.9, label: 'Layer Scale' },
-  layers: { type: 'slider', min: 1, max: 6, step: 1, default: 2, label: 'Nested Loops' },
-  scale: { type: 'slider', min: 0.3, max: 3, step: 0.1, default: 1.0, label: 'Overall Scale' }
+  frequency: { type: 'slider', min: 0.1, max: 8, step: 0.1, default: 2, label: 'Flow Speed', category: 'Animation' },
+  amplitude: { type: 'slider', min: 10, max: 150, step: 5, default: 60, label: 'Loop Size', category: 'Shape' },
+  complexity: { type: 'slider', min: 0, max: 1, step: 0.01, default: 0.3, label: 'Flowing Particles', category: 'Effects' },
+  chaos: { type: 'slider', min: 0, max: 1, step: 0.01, default: 0.1, label: 'Organic Variance', category: 'Effects' },
+  damping: { type: 'slider', min: 0.3, max: 1, step: 0.01, default: 0.9, label: 'Layer Scale', category: 'Shape' },
+  layers: { type: 'slider', min: 1, max: 6, step: 1, default: 2, label: 'Nested Loops', category: 'Shape' },
+  scale: { type: 'slider', min: 0.3, max: 3, step: 0.1, default: 1.0, label: 'Overall Scale', category: 'Shape' }
 };
 
 function applyUniversalBackground(ctx, width, height, params) {

@@ -12,7 +12,7 @@ import { draw as apexVercelDraw } from '@/templates/apex-vercel'
 import { draw as prismGoogleDraw } from '@/templates/prism-google'
 import { draw as pulseSpotifyDraw } from '@/templates/pulse-spotify'
 import { draw as spinningTrianglesDraw } from '@/templates/spinning-triangles'
-import { draw as infinityLoopsDraw } from '@/templates/infinity-loops'
+import { drawVisualization as infinityLoopsDraw } from '@/templates/infinity-loops'
 import { drawVisualization as wordmarkDraw } from '@/templates/wordmark'
 import { drawVisualization as letterMarkDraw } from '@/templates/letter-mark'
 
