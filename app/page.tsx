@@ -17,7 +17,6 @@ import { AISuggestions } from '@/components/studio/AISuggestions'
 import { BrandPersonality } from '@/components/studio/BrandPersonality'
 import { AIBrandConsultant } from '@/components/studio/AIBrandConsultant'
 import { generateWaveBars, executeCustomCode, type VisualizationParams } from '@/lib/visualization-generators'
-import { loadTemplateAsLegacy, loadThemeAsLegacy, debugLoadTheme } from '@/lib/theme-converter'
 import { StateDebugger } from '@/components/debug/StateDebugger'
 
 
@@ -164,8 +163,7 @@ export default function Home() {
     
     // Debug functions available in development
     if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
-      (window as any).debugLoadTheme = debugLoadTheme;
-      (window as any).testOrganicBark = () => debugLoadTheme('organic-bark');
+      (window as any).testThemeLoad = (themeId: string) => loadThemeById(themeId);
       (window as any).showDebugger = () => {
         setShowDebugger(true);
         console.log('✅ State debugger enabled');
@@ -182,8 +180,7 @@ export default function Home() {
       console.log('  - window.showDebugger() - Show state debugger');
       console.log('  - window.hideDebugger() - Hide state debugger');
       console.log('  - window.toggleDebugger() - Toggle state debugger');
-      console.log('  - window.debugLoadTheme(templateId) - Load a template');
-      console.log('  - window.testOrganicBark() - Test Organic Bark template');
+      console.log('  - window.testThemeLoad(templateId) - Test loading a template');
     }
   }, [])
 
@@ -415,15 +412,16 @@ export default function Home() {
   // Load theme by ID
   const loadThemeById = async (themeId: string, customDefaults?: Record<string, any>) => {
     try {
-      const theme = await loadThemeAsLegacy(themeId)
+      // Direct import of the template module
+      const template = await import(`@/templates/${themeId}`);
       
-      if (!theme) {
+      if (!template || !template.code) {
         console.error('❌ Theme not found:', themeId)
         return
       }
       
       // Parse the theme code to get ALL parameter definitions (not just defaults)
-      const parsedParams = parseCustomParameters(theme.code) || {};
+      const parsedParams = parseCustomParameters(template.code) || {};
       
       // Text parameters that should be preserved
       const textParams = ['text', 'letter', 'letters', 'brandName', 'words', 'title', 'subtitle'];
@@ -453,7 +451,7 @@ export default function Home() {
         // Merge theme defaults with custom defaults (industry-specific or otherwise)
         const mergedParams = {
           ...completeParams,
-          ...theme.defaultParams,
+          ...template.defaultParams,
           ...customDefaults,
           ...currentTextValues // Preserve text values
         };
@@ -474,11 +472,11 @@ export default function Home() {
               ...currentTextValues // Ensure text values are preserved
             }
           },
-          code: theme.code, // Set the theme code
-          templateId: theme.id, // Primary template identifier
-          templateName: theme.name,
-          themeId: theme.id, // Legacy compatibility
-          themeName: theme.name // Legacy compatibility
+          code: template.code, // Set the theme code
+          templateId: template.id, // Primary template identifier
+          templateName: template.name,
+          themeId: template.id, // Legacy compatibility
+          themeName: template.name // Legacy compatibility
         };
         
         return updatedLogo;
