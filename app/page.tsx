@@ -511,6 +511,30 @@ export default function Home() {
     setShowIndustrySelector(false)
   }
 
+  // Handle brand personality application (parameters only, no template change)
+  const handleApplyBrandPersonality = (personalityParams: Record<string, any>) => {
+    console.log('🎭 Applying brand personality params:', Object.keys(personalityParams));
+    
+    // Only apply the personality parameters without changing template
+    setLogos(prev => prev.map(logo => 
+      logo.id === selectedLogoId 
+        ? { 
+            ...logo, 
+            params: { 
+              ...logo.params,
+              customParameters: {
+                ...logo.params.customParameters,
+                ...personalityParams // Apply personality parameters while preserving template
+              }
+            }
+          }
+        : logo
+    ))
+    
+    // Force re-render
+    setForceRender(prev => prev + 1)
+  }
+
   // Handle color theme application
   const handleApplyColorTheme = (themedParams: Record<string, any>) => {
     // Update the logo with new color parameters
@@ -746,7 +770,7 @@ export default function Home() {
               />
               <BrandPersonality
                 currentParams={customParameters}
-                onApplyPersonality={handleApplyColorTheme}
+                onApplyPersonality={handleApplyBrandPersonality}
               />
               <BrandPresetsPanel
                 onApplyPreset={handleApplyBrandPreset}
