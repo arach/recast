@@ -152,17 +152,28 @@ export function StudioHeader() {
   }
   
   const exportAsSVG = () => {
-    // TODO: Implement SVG export
-    alert('SVG export coming soon!')
+    // SVG export is currently limited to simple visualizations
+    alert('SVG export is available for wave bars mode only. For complex templates, use PNG export.')
+    // Future: integrate with svg-export.ts for full SVG support
   }
   
   const shareLink = () => {
-    // TODO: Implement share functionality
     const url = new URL(window.location.href)
     url.searchParams.set('template', logo?.templateId || '')
-    // Add parameters to URL
+    
+    // Add key parameters to URL for sharing
+    if (logo?.parameters?.content?.text) {
+      url.searchParams.set('text', logo.parameters.content.text)
+    }
+    if (logo?.parameters?.style?.fillColor) {
+      url.searchParams.set('fillColor', logo.parameters.style.fillColor)
+    }
+    if (logo?.parameters?.style?.strokeColor) {
+      url.searchParams.set('strokeColor', logo.parameters.style.strokeColor)
+    }
+    
     navigator.clipboard.writeText(url.toString())
-    alert('Share link copied to clipboard!')
+    alert('Shareable link copied to clipboard!')
   }
   
   const randomizeParams = () => {

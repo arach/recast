@@ -116,8 +116,67 @@ export const getSavedLogos = (): SavedLogo[] => {
       return JSON.parse(logos)
     }
     
-    // TODO: Migrate from old theme/preset keys if needed
-    // For now, return empty array
+    // Try to migrate from old storage keys
+    const legacyThemes = localStorage.getItem(STORAGE_KEYS.THEMES)
+    const legacyPresets = localStorage.getItem(STORAGE_KEYS.PRESETS)
+    
+    if (legacyThemes || legacyPresets) {
+      console.log('📦 Migrating legacy storage to new logo format')
+      const migrated: SavedLogo[] = []
+      
+      // Migrate old themes/presets to new logo format
+      try {
+        if (legacyThemes) {
+          const oldThemes = JSON.parse(legacyThemes)
+          migrated.push(...oldThemes.map((theme: any) => ({
+            id: theme.id || `migrated-${Date.now()}-${Math.random()}`,
+            name: theme.name || 'Migrated Logo',
+            description: theme.description || '',
+            createdAt: theme.createdAt || new Date().toISOString(),
+            shape: { id: 'custom', name: 'Custom Shape' },
+            parameters: {
+              core: theme.params || {},
+              style: theme.style || {},
+              content: theme.content || {},
+              custom: theme.customParameters || {}
+            }
+          })))
+        }
+        
+        if (legacyPresets) {
+          const oldPresets = JSON.parse(legacyPresets)
+          migrated.push(...oldPresets.map((preset: any) => ({
+            id: preset.id || `migrated-${Date.now()}-${Math.random()}`,
+            name: preset.name || 'Migrated Logo',
+            description: preset.description || '',
+            createdAt: preset.createdAt || new Date().toISOString(),
+            shape: { id: 'custom', name: 'Custom Shape' },
+            parameters: {
+              core: preset.params || {},
+              style: preset.style || {},
+              content: preset.content || {},
+              custom: preset.customParameters || {}
+            }
+          })))
+        }
+        
+        // Save migrated data to new format
+        if (migrated.length > 0) {
+          localStorage.setItem(STORAGE_KEYS.LOGOS, JSON.stringify(migrated))
+          console.log(`✅ Migrated ${migrated.length} items to new logo format`)
+          
+          // Clean up old storage
+          localStorage.removeItem(STORAGE_KEYS.THEMES)
+          localStorage.removeItem(STORAGE_KEYS.PRESETS)
+        }
+        
+        return migrated
+      } catch (error) {
+        console.error('❌ Migration failed:', error)
+        return []
+      }
+    }
+    
     return []
   } catch {
     return []
