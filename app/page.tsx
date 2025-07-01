@@ -432,7 +432,6 @@ export default function Home() {
       
       // Parse the theme code to get ALL parameter definitions (not just defaults)
       const parsedParams = parseCustomParameters(theme.code) || {};
-      console.log('📦 Parsed params from code:', Object.keys(parsedParams));
       
       // Text parameters that should be preserved
       const textParams = ['text', 'letter', 'letters', 'brandName', 'words', 'title', 'subtitle'];
@@ -444,7 +443,6 @@ export default function Home() {
           completeParams[key] = paramDef.default;
         }
       });
-      console.log('🔧 Complete params built:', Object.keys(completeParams).length, 'parameters');
       
       // Update the selected logo with theme data
       console.log('🔄 Updating logo state with theme data...');
@@ -462,7 +460,6 @@ export default function Home() {
             currentTextValues[param] = logo.params.customParameters[param];
           }
         });
-        console.log('📝 Preserved text values:', Object.keys(currentTextValues));
         
         // Merge theme defaults with custom defaults (industry-specific or otherwise)
         const mergedParams = {
@@ -471,7 +468,6 @@ export default function Home() {
           ...customDefaults,
           ...currentTextValues // Preserve text values
         };
-        console.log('🔧 Merged params:', Object.keys(mergedParams).length, 'total parameters');
         
         const updatedLogo = { 
           ...logo, 
@@ -494,13 +490,7 @@ export default function Home() {
           themeName: theme.name
         };
         
-        console.log('✅ Updated logo:', {
-          id: updatedLogo.id,
-          themeId: updatedLogo.themeId,
-          themeName: updatedLogo.themeName,
-          codeLength: updatedLogo.code.length,
-          customParamsKeys: Object.keys(updatedLogo.params.customParameters)
-        });
+        console.log('✅ Updated logo:', updatedLogo.themeName);
         
         return updatedLogo;
       }))
