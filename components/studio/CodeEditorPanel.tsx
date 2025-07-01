@@ -51,12 +51,6 @@ export function CodeEditorPanel({ onClose }: CodeEditorPanelProps) {
   const logos = useLogoStore(state => state.logos)
   const selectedLogoId = useLogoStore(state => state.selectedLogoId)
   
-  // Debug log
-  useEffect(() => {
-    console.log('🎨 CodeEditorPanel mounted, isCollapsed:', isCollapsed, 'selectedLogo:', selectedLogo?.id, 'darkMode:', darkMode)
-    return () => console.log('🎨 CodeEditorPanel unmounted')
-  }, [isCollapsed, selectedLogo, darkMode])
-
   const [localCode, setLocalCode] = useState(selectedLogo?.code || '')
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
 
@@ -75,6 +69,20 @@ export function CodeEditorPanel({ onClose }: CodeEditorPanelProps) {
     }
     loadPresets()
   }, [])
+
+  // Debug log
+  useEffect(() => {
+    console.log('🎨 CodeEditorPanel state:', {
+      isCollapsed,
+      selectedLogoId: selectedLogo?.id,
+      selectedLogoIdFromStore: selectedLogoId,
+      logoFromHook: selectedLogo,
+      darkMode,
+      localCodeLength: localCode?.length,
+      hasUnsavedChanges,
+      presetsLoaded: availablePresets.length
+    })
+  }, [isCollapsed, selectedLogo?.id, selectedLogoId, darkMode, localCode, hasUnsavedChanges, availablePresets.length])
 
   // Update local code when selected logo changes
   useEffect(() => {
@@ -222,7 +230,10 @@ export function CodeEditorPanel({ onClose }: CodeEditorPanelProps) {
   if (isCollapsed) {
     return (
       <Button
-        onClick={() => setIsCollapsed(false)}
+        onClick={() => {
+          console.log('🔧 Code button clicked, selectedLogo:', selectedLogo?.id)
+          setIsCollapsed(false)
+        }}
         className={`absolute top-6 left-6 z-50 shadow-lg border-2 ${
           darkMode 
             ? 'bg-gray-800 hover:bg-gray-700 text-white border-gray-600' 
@@ -230,7 +241,8 @@ export function CodeEditorPanel({ onClose }: CodeEditorPanelProps) {
         }`}
         size="sm"
         variant="outline"
-        title="Open Code Editor"
+        title={selectedLogo ? "Open Code Editor" : "Select a logo first"}
+        disabled={!selectedLogo}
       >
         <Code className="w-4 h-4 mr-2" />
         Code
@@ -238,15 +250,51 @@ export function CodeEditorPanel({ onClose }: CodeEditorPanelProps) {
     )
   }
 
-  // If no logo selected, return null for expanded state
-  if (!selectedLogo) return null
+  // If no logo selected, show a message instead of returning null
+  if (!selectedLogo) {
+    return (
+      <div 
+        className={`absolute top-0 left-0 h-full shadow-lg flex flex-col ${darkMode ? 'bg-gray-900' : 'bg-white'} z-30 transition-all duration-300`}
+        style={{ width: `${width}px` }}
+      >
+        <Card className={`h-full flex flex-col border-0 rounded-none ${darkMode ? 'bg-gray-900 text-gray-100' : ''}`}>
+          <CardHeader className="flex-shrink-0">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Code className="w-5 h-5" />
+                <CardTitle className="text-lg">Code Editor</CardTitle>
+              </div>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => setIsCollapsed(true)}
+                className="h-8 w-8 p-0"
+                title="Collapse editor"
+              >
+                <PanelLeftClose className="w-4 h-4" />
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent className="flex-1 flex items-center justify-center">
+            <div className="text-center text-gray-500">
+              <p className="text-sm">No logo selected</p>
+              <p className="text-xs mt-2">Select a logo from the canvas to edit its code</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
 
   // Expanded state - full panel
+  console.log('🎨 Rendering expanded panel, selectedLogo:', selectedLogo?.id, 'localCode length:', localCode?.length)
+  
   return (
     <div 
       className={`absolute top-0 left-0 h-full shadow-lg flex flex-col ${darkMode ? 'bg-gray-900' : 'bg-white'} z-30 transition-all duration-300`}
       style={{ width: `${width}px` }}
     >
+      
       {/* Resize Handle - on the right side for left panel */}
       <div
         className={`absolute right-0 top-0 bottom-0 w-1 hover:w-2 cursor-col-resize transition-all ${
@@ -404,13 +452,14 @@ export function CodeEditorPanel({ onClose }: CodeEditorPanelProps) {
             )}
             
             {/* Monaco Editor */}
-            <div className="flex-1">
+            <div className="flex-1" style={{ minHeight: '400px' }}>
               <MonacoEditor
                 value={localCode}
                 onChange={handleCodeChange}
                 onMount={handleEditorMount}
                 language="javascript"
                 theme={darkMode ? "vs-dark" : "vs"}
+                height="100%"
                 options={{
                   minimap: { enabled: false },
                   fontSize: 13,

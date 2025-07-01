@@ -10,6 +10,7 @@ export function useSelectedLogo() {
   const selectedLogoId = useLogoStore((state) => state.selectedLogoId);
   const logos = useLogoStore((state) => state.logos);
   const updateLogoParameters = useLogoStore((state) => state.updateLogoParameters);
+  const updateLogo = useLogoStore((state) => state.updateLogo);
   const parameterStore = useParameterStore();
   
   // Get the selected logo
@@ -39,9 +40,17 @@ export function useSelectedLogo() {
     parameterStore.updateCustomParameters(params);
   };
   
+  // Update the selected logo's code
+  const updateSelectedLogoCode = (code: string) => {
+    if (selectedLogoId) {
+      updateLogo(selectedLogoId, { code });
+    }
+  };
+  
   return {
     // Logo data
     logo: selectedLogo,
+    selectedLogo, // Also expose as selectedLogo for compatibility
     parameters,
     coreParams,
     styleParams,
@@ -53,6 +62,7 @@ export function useSelectedLogo() {
     updateStyle,
     updateContent,
     updateCustom,
+    updateSelectedLogoCode,
     
     // Direct parameter updates
     setFrequency: (frequency: number) => updateCore({ frequency }),

@@ -354,6 +354,19 @@ export function CanvasArea() {
     const canvasX = (mouseX / zoom) - canvasOffset.x
     const canvasY = (mouseY / zoom) - canvasOffset.y
     
+    // Debug: log click coordinates and logo positions
+    console.log('🖱️ Mouse click at canvas coords:', { canvasX, canvasY })
+    console.log('📍 Logos:', logos.map(l => ({ 
+      id: l.id, 
+      position: l.position || { x: 0, y: 0 },
+      bounds: {
+        x1: (l.position?.x || 0),
+        y1: (l.position?.y || 0),
+        x2: (l.position?.x || 0) + 600,
+        y2: (l.position?.y || 0) + 600
+      }
+    })))
+    
     // Check if click is on any logo (check in reverse order so top logos are selected first)
     let clickedLogo = null
     for (let i = logos.length - 1; i >= 0; i--) {
@@ -365,7 +378,15 @@ export function CanvasArea() {
     
     if (clickedLogo) {
       // Select the clicked logo
+      console.log('🎯 Clicked on logo:', clickedLogo.id)
       selectLogo(clickedLogo.id)
+      // Verify selection worked
+      setTimeout(() => {
+        const currentSelection = useLogoStore.getState().selectedLogoId
+        console.log('✅ After selectLogo, selectedLogoId is:', currentSelection)
+      }, 100)
+    } else {
+      console.log('🎯 Clicked on empty canvas at:', canvasX, canvasY)
     }
     
     // Always start dragging (either logo or canvas)
