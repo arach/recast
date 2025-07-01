@@ -1,4 +1,4 @@
-// Preset type definitions for ReCast visualization presets
+// Template type definitions for ReCast visualization templates
 
 export interface ParameterDefinition {
   type: 'slider' | 'select' | 'color' | 'toggle' | 'text';
@@ -12,13 +12,13 @@ export interface ParameterDefinition {
   showIf?: (params: any) => boolean; // Conditional visibility
 }
 
-export interface PresetMetadata {
+export interface TemplateMetadata {
   name: string;
   description: string;
   defaultParams: Record<string, any>;
 }
 
-export interface Preset {
+export interface Template {
   parameters: Record<string, ParameterDefinition>;
   draw: (
     ctx: CanvasRenderingContext2D,
@@ -28,5 +28,9 @@ export interface Preset {
     generator: any,
     time: number
   ) => void;
-  metadata: PresetMetadata;
+  metadata: TemplateMetadata;
 }
+
+// Keep Preset as an alias for backward compatibility during migration
+export type PresetMetadata = TemplateMetadata;
+export type Preset = Template;

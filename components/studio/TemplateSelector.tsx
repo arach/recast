@@ -14,32 +14,32 @@ import { Badge } from '@/components/ui/badge'
 import { Palette, ChevronDown } from 'lucide-react'
 import { useLogoStore } from '@/lib/stores/logoStore'
 import { useSelectedLogo } from '@/lib/hooks/useSelectedLogo'
-import { loadPresetAsLegacy, getAllPresetsAsLegacy } from '@/lib/preset-converter'
-import type { LoadedPreset } from '@/lib/preset-loader'
+import { loadTemplateAsLegacy, getAllTemplatesAsLegacy } from '@/lib/template-converter'
+import type { LoadedTemplate } from '@/lib/template-loader'
 
 export function TemplateSelector() {
-  const [availablePresets, setAvailablePresets] = useState<LoadedPreset[]>([])
+  const [availableTemplates, setAvailableTemplates] = useState<LoadedTemplate[]>([])
   const { updateLogo } = useLogoStore()
   const { logo } = useSelectedLogo()
   
-  // Load all available presets
+  // Load all available templates
   useEffect(() => {
-    const loadPresets = async () => {
+    const loadTemplates = async () => {
       try {
-        const presets = await getAllPresetsAsLegacy()
-        setAvailablePresets(presets)
+        const templates = await getAllTemplatesAsLegacy()
+        setAvailableTemplates(templates)
       } catch (error) {
-        console.error('Failed to load presets:', error)
+        console.error('Failed to load templates:', error)
       }
     }
-    loadPresets()
+    loadTemplates()
   }, [])
   
-  const handleTemplateChange = async (presetId: string) => {
+  const handleTemplateChange = async (templateId: string) => {
     if (!logo) return
     
     try {
-      if (presetId === 'custom') {
+      if (templateId === 'custom') {
         // Reset to custom code (empty template)
         console.log('Switching to custom code')
         updateLogo(logo.id, {
@@ -52,25 +52,25 @@ export function TemplateSelector() {
           }
         })
       } else {
-        // Load the selected preset
-        const preset = availablePresets.find(p => p.id === presetId)
-        if (!preset) {
-          console.error('Preset not found:', presetId)
+        // Load the selected template
+        const template = availableTemplates.find(t => t.id === templateId)
+        if (!template) {
+          console.error('Template not found:', templateId)
           return
         }
         
-        console.log('Applying preset:', preset.name, preset)
-        console.log('Preset code length:', preset.code?.length)
-        console.log('Preset defaultParams:', preset.defaultParams)
+        console.log('Applying template:', template.name, template)
+        console.log('Template code length:', template.code?.length)
+        console.log('Template defaultParams:', template.defaultParams)
         
-        // Update the logo with the new preset
+        // Update the logo with the new template
         const updatedLogo = {
-          templateId: preset.id,
-          templateName: preset.name,
-          code: preset.code,
+          templateId: template.id,
+          templateName: template.name,
+          code: template.code,
           parameters: {
             ...logo.parameters,
-            custom: preset.defaultParams || {}
+            custom: template.defaultParams || {}
           }
         }
         console.log('Updating logo with:', updatedLogo)
@@ -84,7 +84,7 @@ export function TemplateSelector() {
   if (!logo) return null
   
   console.log('Current logo state:', { templateId: logo.templateId, templateName: logo.templateName })
-  const currentTemplate = availablePresets.find(p => p.id === logo.templateId)
+  const currentTemplate = availableTemplates.find(t => t.id === logo.templateId)
   
   return (
     <DropdownMenu>
@@ -106,14 +106,14 @@ export function TemplateSelector() {
             {!logo.templateId && <Badge variant="secondary" className="text-xs ml-auto">Current</Badge>}
           </div>
         </DropdownMenuItem>
-        {availablePresets.map((preset) => (
+        {availableTemplates.map((template) => (
           <DropdownMenuItem 
-            key={preset.id} 
-            onClick={() => handleTemplateChange(preset.id)}
+            key={template.id} 
+            onClick={() => handleTemplateChange(template.id)}
           >
             <div className="flex items-center justify-between w-full">
-              <span>{preset.name}</span>
-              {logo.templateId === preset.id && (
+              <span>{template.name}</span>
+              {logo.templateId === template.id && (
                 <Badge variant="secondary" className="text-xs">Current</Badge>
               )}
             </div>

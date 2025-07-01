@@ -1,26 +1,26 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { usePreset, usePresetList } from '@/hooks/use-preset';
+import { useTemplate, useTemplateList } from '@/hooks/use-template';
 import { WaveGenerator } from '@/core/wave-generator';
-import type { PresetName } from '@/lib/preset-loader';
+import type { TemplateName } from '@/lib/template-loader';
 
-export function PresetDemo() {
+export function TemplateDemo() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationRef = useRef<number>();
   const generatorRef = useRef<WaveGenerator>();
   
-  const { presets, loading: presetsLoading } = usePresetList();
-  const { preset, loading: presetLoading, loadPresetByName } = usePreset();
+  const { templates, loading: templatesLoading } = useTemplateList();
+  const { template, loading: templateLoading, loadTemplateByName } = useTemplate();
   
-  const [selectedPreset, setSelectedPreset] = useState<PresetName>('wave-bars');
+  const [selectedTemplate, setSelectedTemplate] = useState<TemplateName>('wave-bars');
   const [params, setParams] = useState<Record<string, any>>({});
   const [isAnimating, setIsAnimating] = useState(true);
 
   // Initialize wave generator
   useEffect(() => {
-    if (preset) {
-      const defaultParams = preset.metadata.defaultParams;
+    if (template) {
+      const defaultParams = template.metadata.defaultParams;
       setParams(defaultParams);
       
       generatorRef.current = new WaveGenerator({

@@ -22,7 +22,9 @@
       "Bash(pnpm add:*)",
       "Bash(sed:*)",
       "Bash(chmod:*)",
-      "Bash(bash:*)"
+      "Bash(bash:*)",
+      "Bash(git mv:*)",
+      "Bash(git rm:*)"
     ],
     "deny": []
   }

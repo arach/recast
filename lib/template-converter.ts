@@ -1,21 +1,21 @@
 /**
- * Converts new TypeScript preset modules to the legacy code string format
- * This allows the new presets to work with the existing system
+ * Converts new TypeScript template modules to the legacy code string format
+ * This allows the new templates to work with the existing system
  */
 
-import type { Preset } from '@/presets/types';
+import type { Template } from '@/templates/types';
 
 /**
- * Convert a new preset module to legacy code string format
+ * Convert a new template module to legacy code string format
  */
-export function convertPresetToLegacy(preset: Preset): string {
+export function convertTemplateToLegacy(template: Template): string {
   // Convert parameters to the old PARAMETERS format
-  const parametersCode = generateParametersCode(preset.parameters);
+  const parametersCode = generateParametersCode(template.parameters);
   console.log('🔧 Generated parameters code length:', parametersCode.length);
   console.log('🔍 Generated parameters preview:', parametersCode.substring(0, 500) + '...');
   
   // Convert the draw function to string
-  const drawFunctionCode = preset.draw.toString();
+  const drawFunctionCode = template.draw.toString();
   
   // Extract the function body
   const bodyMatch = drawFunctionCode.match(/\{([\s\S]*)\}$/);
@@ -25,7 +25,7 @@ export function convertPresetToLegacy(preset: Preset): string {
   const universalControlsCode = getUniversalControlsCode();
   
   // Create the legacy code format
-  return `// ${preset.metadata.name}
+  return `// ${template.metadata.name}
 ${parametersCode}
 
 ${universalControlsCode}
@@ -51,7 +51,7 @@ ${functionBody}}`;
 /**
  * Generate the PARAMETERS object code from parameter definitions
  */
-function generateParametersCode(parameters: Preset['parameters']): string {
+function generateParametersCode(parameters: Template['parameters']): string {
   const lines = ['const PARAMETERS = {'];
   
   console.log('📦 Input parameters:', Object.keys(parameters));
@@ -408,41 +408,41 @@ function getUniversalParameterDefinitions() {
 }
 
 /**
- * Load and convert a preset module to legacy format
+ * Load and convert a template module to legacy format
  */
-export async function loadPresetAsLegacy(presetName: string): Promise<{
+export async function loadTemplateAsLegacy(templateName: string): Promise<{
   id: string;
   name: string;
   description: string;
   defaultParams: Record<string, any>;
   code: string;
 }> {
-  // Dynamic import of the preset module
-  const module = await import(`@/presets/${presetName}`);
+  // Dynamic import of the template module
+  const module = await import(`@/templates/${templateName}`);
   
-  const preset: Preset = {
+  const template: Template = {
     parameters: module.parameters,
     draw: module.draw,
     metadata: module.metadata
   };
   
-  // Convert the preset to viewable code
-  const code = convertPresetToLegacy(preset);
+  // Convert the template to viewable code
+  const code = convertTemplateToLegacy(template);
   
   return {
-    id: presetName,
-    name: preset.metadata.name,
-    description: preset.metadata.description,
-    defaultParams: preset.metadata.defaultParams,
+    id: templateName,
+    name: template.metadata.name,
+    description: template.metadata.description,
+    defaultParams: template.metadata.defaultParams,
     code
   };
 }
 
 /**
- * Get all available presets in legacy format
+ * Get all available templates in legacy format
  */
-export async function getAllPresetsAsLegacy() {
-  const presetNames = [
+export async function getAllTemplatesAsLegacy() {
+  const templateNames = [
     // Accessible brand-focused templates (new)
     'letter-mark',
     'wordmark',
@@ -480,9 +480,9 @@ export async function getAllPresetsAsLegacy() {
     'simple-prism'
   ];
   
-  const presets = await Promise.all(
-    presetNames.map(name => loadPresetAsLegacy(name))
+  const templates = await Promise.all(
+    templateNames.map(name => loadTemplateAsLegacy(name))
   );
   
-  return presets;
+  return templates;
 }

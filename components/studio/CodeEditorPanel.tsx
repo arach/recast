@@ -9,8 +9,8 @@ import { useLogoStore } from '@/lib/stores/logoStore'
 import { useUIStore } from '@/lib/stores/uiStore'
 import { useSelectedLogo } from '@/lib/hooks/useSelectedLogo'
 import { visualizationTypes } from '@/lib/monaco-types'
-import { loadPresetAsLegacy, getAllPresetsAsLegacy } from '@/lib/preset-converter'
-import type { LoadedPreset } from '@/lib/preset-loader'
+import { loadTemplateAsLegacy, getAllTemplatesAsLegacy } from '@/lib/template-converter'
+import type { LoadedTemplate } from '@/lib/template-loader'
 import type { editor, languages } from 'monaco-editor'
 
 // Dynamically import Monaco to avoid SSR issues
@@ -39,8 +39,8 @@ export function CodeEditorPanel({ onClose, onStateChange }: CodeEditorPanelProps
   const [width, setWidth] = useState(500)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [isCollapsed, setIsCollapsed] = useState(true) // Start collapsed
-  const [availablePresets, setAvailablePresets] = useState<LoadedPreset[]>([])
-  const [loadingPresets, setLoadingPresets] = useState(true)
+  const [availableTemplates, setAvailableTemplates] = useState<LoadedTemplate[]>([])
+  const [loadingTemplates, setLoadingTemplates] = useState(true)
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null)
   const isDragging = useRef(false)
   const startX = useRef(0)
@@ -55,20 +55,20 @@ export function CodeEditorPanel({ onClose, onStateChange }: CodeEditorPanelProps
   const [localCode, setLocalCode] = useState(selectedLogo?.code || '')
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
 
-  // Load available presets
+  // Load available templates
   useEffect(() => {
-    const loadPresets = async () => {
+    const loadTemplates = async () => {
       try {
-        setLoadingPresets(true)
-        const presets = await getAllPresetsAsLegacy()
-        setAvailablePresets(presets)
+        setLoadingTemplates(true)
+        const templates = await getAllTemplatesAsLegacy()
+        setAvailableTemplates(templates)
       } catch (error) {
-        console.error('Failed to load presets:', error)
+        console.error('Failed to load templates:', error)
       } finally {
-        setLoadingPresets(false)
+        setLoadingTemplates(false)
       }
     }
-    loadPresets()
+    loadTemplates()
   }, [])
   
   // Notify parent of state changes
@@ -86,9 +86,9 @@ export function CodeEditorPanel({ onClose, onStateChange }: CodeEditorPanelProps
       darkMode,
       localCodeLength: localCode?.length,
       hasUnsavedChanges,
-      presetsLoaded: availablePresets.length
+      templatesLoaded: availableTemplates.length
     })
-  }, [isCollapsed, selectedLogo?.id, selectedLogoId, darkMode, localCode, hasUnsavedChanges, availablePresets.length])
+  }, [isCollapsed, selectedLogo?.id, selectedLogoId, darkMode, localCode, hasUnsavedChanges, availableTemplates.length])
 
   // Update local code when selected logo changes
   useEffect(() => {
@@ -322,7 +322,7 @@ export function CodeEditorPanel({ onClose, onStateChange }: CodeEditorPanelProps
 
       <Card className={`h-full flex flex-col border-0 rounded-none ${darkMode ? 'bg-gray-900 text-gray-100' : ''}`}>
         <CardHeader className="flex-shrink-0">
-          {/* Preset Selector */}
+          {/* Template Selector */}
           <div className="mb-4 p-3 rounded-lg bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20">
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-sm font-semibold flex items-center gap-2">
@@ -334,23 +334,23 @@ export function CodeEditorPanel({ onClose, onStateChange }: CodeEditorPanelProps
             <select
               value={selectedLogo?.templateId || 'custom'}
               onChange={async (e) => {
-                const presetId = e.target.value
-                if (presetId && selectedLogo) {
-                  const preset = availablePresets.find(p => p.id === presetId)
-                  if (preset) {
+                const templateId = e.target.value
+                if (templateId && selectedLogo) {
+                  const template = availableTemplates.find(t => t.id === templateId)
+                  if (template) {
                     updateLogo(selectedLogo.id, {
-                      templateId: preset.id,
-                      templateName: preset.name,
-                      code: preset.code,
+                      templateId: template.id,
+                      templateName: template.name,
+                      code: template.code,
                       parameters: {
                         ...selectedLogo.parameters,
                         custom: {
                           ...selectedLogo.parameters.custom,
-                          ...preset.defaultParams
+                          ...template.defaultParams
                         }
                       }
                     })
-                    setLocalCode(preset.code)
+                    setLocalCode(template.code)
                     setHasUnsavedChanges(false)
                   }
                 }
@@ -360,12 +360,12 @@ export function CodeEditorPanel({ onClose, onStateChange }: CodeEditorPanelProps
                   ? 'bg-gray-800 border-gray-700 text-gray-100'
                   : 'bg-white border-gray-300'
               } focus:outline-none focus:ring-2 focus:ring-blue-500`}
-              disabled={loadingPresets}
+              disabled={loadingTemplates}
             >
               <option value="custom">🎨 Custom Code</option>
-              {availablePresets.map((preset) => (
-                <option key={preset.id} value={preset.id}>
-                  {preset.name}
+              {availableTemplates.map((template) => (
+                <option key={template.id} value={template.id}>
+                  {template.name}
                 </option>
               ))}
             </select>
