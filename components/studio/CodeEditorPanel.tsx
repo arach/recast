@@ -9,7 +9,7 @@ import { useLogoStore } from '@/lib/stores/logoStore'
 import { useUIStore } from '@/lib/stores/uiStore'
 import { useSelectedLogo } from '@/lib/hooks/useSelectedLogo'
 import { visualizationTypes } from '@/lib/monaco-types'
-import { loadTemplateAsLegacy, getAllTemplatesAsLegacy } from '@/lib/theme-converter'
+import { loadTemplate, getAllTemplateInfo } from '@/lib/template-registry-direct'
 import type { LoadedTemplate } from '@/lib/theme-loader'
 import type { editor, languages } from 'monaco-editor'
 
@@ -60,7 +60,7 @@ export function CodeEditorPanel({ onClose, onStateChange }: CodeEditorPanelProps
     const loadTemplates = async () => {
       try {
         setLoadingTemplates(true)
-        const templates = await getAllTemplatesAsLegacy()
+        const templates = await getAllTemplateInfo()
         setAvailableTemplates(templates)
       } catch (error) {
         console.error('Failed to load templates:', error)

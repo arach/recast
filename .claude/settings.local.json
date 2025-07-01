@@ -31,7 +31,8 @@
       "Bash(pnpm tsx:*)",
       "Bash(pkill:*)",
       "Bash(true)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(pnpm run:*)"
     ],
     "deny": []
   }

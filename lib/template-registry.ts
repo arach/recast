@@ -6,13 +6,15 @@
 import { WaveGenerator } from '@/core/wave-generator'
 
 // Import all template draw functions
-import { draw as waveBarsDraw } from '@/templates/wave-bars'
-import { draw as audioBarsDraw } from '@/templates/audio-bars'
+import { drawVisualization as waveBarsDraw } from '@/templates/wave-bars'
+import { drawVisualization as audioBarsDraw } from '@/templates/audio-bars'
 import { draw as apexVercelDraw } from '@/templates/apex-vercel'
 import { draw as prismGoogleDraw } from '@/templates/prism-google'
 import { draw as pulseSpotifyDraw } from '@/templates/pulse-spotify'
 import { draw as spinningTrianglesDraw } from '@/templates/spinning-triangles'
 import { draw as infinityLoopsDraw } from '@/templates/infinity-loops'
+import { drawVisualization as wordmarkDraw } from '@/templates/wordmark'
+import { drawVisualization as letterMarkDraw } from '@/templates/letter-mark'
 
 export type TemplateDrawFunction = (
   ctx: CanvasRenderingContext2D,
@@ -31,7 +33,9 @@ export const templateDrawFunctions: Record<string, TemplateDrawFunction> = {
   'prism-google': prismGoogleDraw,
   'pulse-spotify': pulseSpotifyDraw,
   'spinning-triangles': spinningTrianglesDraw,
-  'infinity-loops': infinityLoopsDraw
+  'infinity-loops': infinityLoopsDraw,
+  'wordmark': wordmarkDraw,
+  'letter-mark': letterMarkDraw
 }
 
 /**
