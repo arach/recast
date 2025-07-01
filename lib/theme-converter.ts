@@ -418,25 +418,71 @@ export async function loadThemeAsLegacy(themeName: string): Promise<{
   defaultParams: Record<string, any>;
   code: string;
 }> {
-  // Dynamic import of the template module
-  const module = await import(`@/templates/${themeName}`);
+  console.log('🔄 loadThemeAsLegacy called with themeName:', themeName);
   
-  const template: Template = {
-    parameters: module.parameters,
-    draw: module.draw,
-    metadata: module.metadata
-  };
+  try {
+    // Dynamic import of the template module
+    console.log('📥 Attempting to import:', `@/templates/${themeName}`);
+    const module = await import(`@/templates/${themeName}`);
   
-  // Convert the template to viewable code
-  const code = convertTemplateToLegacy(template);
-  
-  return {
-    id: themeName,
-    name: template.metadata.name,
-    description: template.metadata.description,
-    defaultParams: template.metadata.defaultParams,
-    code
-  };
+    console.log('📦 Module imported successfully:', Object.keys(module));
+    console.log('🔧 Module parameters:', module.parameters ? Object.keys(module.parameters) : 'MISSING');
+    console.log('🎨 Module draw function:', typeof module.draw);
+    console.log('📋 Module metadata:', module.metadata);
+    
+    // Additional debugging - check if the module structure matches what we expect
+    console.log('🔍 Module structure validation:');
+    console.log('  - typeof module.parameters:', typeof module.parameters);
+    console.log('  - typeof module.draw:', typeof module.draw);
+    console.log('  - typeof module.metadata:', typeof module.metadata);
+    console.log('  - module.parameters is object:', typeof module.parameters === 'object' && module.parameters !== null);
+    console.log('  - module.draw is function:', typeof module.draw === 'function');
+    console.log('  - module.metadata is object:', typeof module.metadata === 'object' && module.metadata !== null);
+    
+    // Validate that all required properties exist
+    if (!module.parameters || typeof module.parameters !== 'object') {
+      throw new Error(`Module ${themeName} is missing or has invalid 'parameters' export`);
+    }
+    if (!module.draw || typeof module.draw !== 'function') {
+      throw new Error(`Module ${themeName} is missing or has invalid 'draw' export`);
+    }
+    if (!module.metadata || typeof module.metadata !== 'object') {
+      throw new Error(`Module ${themeName} is missing or has invalid 'metadata' export`);
+    }
+
+    const template: Template = {
+      parameters: module.parameters,
+      draw: module.draw,
+      metadata: module.metadata
+    };
+    
+    // Convert the template to viewable code
+    console.log('🔄 Converting template to legacy format...');
+    const code = convertTemplateToLegacy(template);
+    console.log('✅ Converted code length:', code.length);
+    
+    const result = {
+      id: themeName,
+      name: template.metadata.name,
+      description: template.metadata.description,
+      defaultParams: template.metadata.defaultParams,
+      code
+    };
+    
+    console.log('🎯 Returning theme result:', {
+      id: result.id,
+      name: result.name,
+      description: result.description,
+      defaultParamsKeys: Object.keys(result.defaultParams || {}),
+      codeLength: result.code.length
+    });
+    
+    return result;
+  } catch (error) {
+    console.error('❌ Error in loadThemeAsLegacy:', error);
+    console.error('❌ Theme name that failed:', themeName);
+    throw error;
+  }
 }
 
 /**
@@ -490,3 +536,16 @@ export async function getAllTemplatesAsLegacy() {
 
 // Backward compatibility alias
 export const loadTemplateAsLegacy = loadThemeAsLegacy;
+
+// Debug function for testing specific themes
+export async function debugLoadTheme(themeName: string) {
+  console.log('🐛 DEBUG: Testing theme load for:', themeName);
+  try {
+    const result = await loadThemeAsLegacy(themeName);
+    console.log('🐛 DEBUG: Theme loaded successfully:', result.name);
+    return result;
+  } catch (error) {
+    console.error('🐛 DEBUG: Theme load failed:', error);
+    throw error;
+  }
+}

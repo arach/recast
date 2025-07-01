@@ -108,7 +108,7 @@ export function StoreInitializer({
     }
   }, []); // Only run once on mount
   
-  // Sync prop changes to stores (including color updates)
+  // Sync prop changes to stores (including template, code, and color updates)
   useEffect(() => {
     if (!isInitialized.current) return;
     
@@ -118,6 +118,16 @@ export function StoreInitializer({
       const existingLogo = storeLogos.find(l => l.id === propLogo.id);
       
       if (existingLogo) {
+        // Check if template/theme has changed
+        const templateChanged = 
+          (propLogo.themeId && propLogo.themeId !== existingLogo.templateId) ||
+          (propLogo.themeName && propLogo.themeName !== existingLogo.templateName) ||
+          (propLogo.templateId && propLogo.templateId !== existingLogo.templateId) ||
+          (propLogo.templateName && propLogo.templateName !== existingLogo.templateName);
+        
+        // Check if code has changed
+        const codeChanged = propLogo.code && propLogo.code !== existingLogo.code;
+        
         // Check if colors have changed
         const colorChanged = 
           propLogo.params?.fillColor !== existingLogo.parameters.style.fillColor ||
@@ -127,24 +137,44 @@ export function StoreInitializer({
           propLogo.params?.customParameters?.strokeColor !== existingLogo.parameters.custom.strokeColor ||
           propLogo.params?.customParameters?.backgroundColor !== existingLogo.parameters.custom.backgroundColor;
         
-        if (colorChanged) {
-          // Update colors in the store
-          const updates = {
-            style: {
-              fillColor: propLogo.params?.fillColor || propLogo.params?.customParameters?.fillColor || existingLogo.parameters.style.fillColor,
-              strokeColor: propLogo.params?.strokeColor || propLogo.params?.customParameters?.strokeColor || existingLogo.parameters.style.strokeColor,
-              backgroundColor: propLogo.params?.backgroundColor || propLogo.params?.customParameters?.backgroundColor || existingLogo.parameters.style.backgroundColor,
-            },
-            custom: {
-              ...existingLogo.parameters.custom,
-              fillColor: propLogo.params?.customParameters?.fillColor || propLogo.params?.fillColor,
-              strokeColor: propLogo.params?.customParameters?.strokeColor || propLogo.params?.strokeColor,
-              backgroundColor: propLogo.params?.customParameters?.backgroundColor || propLogo.params?.backgroundColor,
-              textColor: propLogo.params?.customParameters?.textColor,
+        // Check if custom parameters have changed
+        const customParamsChanged = 
+          JSON.stringify(propLogo.params?.customParameters || {}) !== 
+          JSON.stringify(existingLogo.parameters.custom || {});
+        
+        if (templateChanged || codeChanged || colorChanged || customParamsChanged) {
+          console.log('🔄 StoreInitializer: Syncing changes for logo', propLogo.id, {
+            templateChanged,
+            codeChanged,
+            colorChanged,
+            customParamsChanged
+          });
+          
+          // Update the entire logo in the store
+          const updatedLogo: Logo = {
+            ...existingLogo,
+            templateId: propLogo.themeId || propLogo.templateId || existingLogo.templateId,
+            templateName: propLogo.themeName || propLogo.templateName || existingLogo.templateName,
+            code: propLogo.code || existingLogo.code,
+            parameters: {
+              ...existingLogo.parameters,
+              style: {
+                ...existingLogo.parameters.style,
+                fillColor: propLogo.params?.fillColor || propLogo.params?.customParameters?.fillColor || existingLogo.parameters.style.fillColor,
+                strokeColor: propLogo.params?.strokeColor || propLogo.params?.customParameters?.strokeColor || existingLogo.parameters.style.strokeColor,
+                backgroundColor: propLogo.params?.backgroundColor || propLogo.params?.customParameters?.backgroundColor || existingLogo.parameters.style.backgroundColor,
+              },
+              custom: {
+                ...existingLogo.parameters.custom,
+                ...propLogo.params?.customParameters,
+                fillColor: propLogo.params?.customParameters?.fillColor || propLogo.params?.fillColor,
+                strokeColor: propLogo.params?.customParameters?.strokeColor || propLogo.params?.strokeColor,
+                backgroundColor: propLogo.params?.customParameters?.backgroundColor || propLogo.params?.backgroundColor,
+              }
             }
           };
           
-          useLogoStore.getState().updateLogoParameters(propLogo.id, updates);
+          useLogoStore.getState().updateLogo(propLogo.id, updatedLogo);
         }
       }
     });

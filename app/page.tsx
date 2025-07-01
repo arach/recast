@@ -17,7 +17,7 @@ import { AISuggestions } from '@/components/studio/AISuggestions'
 import { BrandPersonality } from '@/components/studio/BrandPersonality'
 import { AIBrandConsultant } from '@/components/studio/AIBrandConsultant'
 import { generateWaveBars, executeCustomCode, type VisualizationParams } from '@/lib/visualization-generators'
-import { loadTemplateAsLegacy, loadThemeAsLegacy } from '@/lib/theme-converter'
+import { loadTemplateAsLegacy, loadThemeAsLegacy, debugLoadTheme } from '@/lib/theme-converter'
 
 
 interface LogoInstance {
@@ -157,6 +157,13 @@ export default function Home() {
   // Set mounted flag after hydration
   useEffect(() => {
     setMounted(true)
+    
+    // Debug functions available in development
+    if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+      (window as any).debugLoadTheme = debugLoadTheme;
+      (window as any).testOrganicBark = () => debugLoadTheme('organic-bark');
+      console.log('🐛 Debug functions available: window.debugLoadTheme(), window.testOrganicBark()');
+    }
   }, [])
 
   // Handle URL parameters on mount
@@ -413,18 +420,15 @@ export default function Home() {
   // Load theme by ID
   const loadThemeById = async (themeId: string, customDefaults?: Record<string, any>) => {
     try {
-      console.log('Loading theme by ID:', themeId)
+      console.log('🔄 Loading theme by ID:', themeId)
       const theme = await loadThemeAsLegacy(themeId)
       
       if (!theme) {
-        console.error('Theme not found:', themeId)
+        console.error('❌ Theme not found:', themeId)
         return
       }
       
-      console.log('Loaded theme code preview:', theme.code.substring(0, 500) + '...')
-      console.log('🎯 Theme name:', theme.name);
-      console.log('🎯 Theme ID:', theme.id);
-      console.log('🎯 Theme defaultParams:', theme.defaultParams);
+      console.log('✅ Loaded theme:', theme.name, `(${theme.code.length} chars)`);
       
       // Parse the theme code to get ALL parameter definitions (not just defaults)
       const parsedParams = parseCustomParameters(theme.code) || {};
@@ -440,11 +444,16 @@ export default function Home() {
           completeParams[key] = paramDef.default;
         }
       });
-      console.log('🔧 Complete params built:', Object.keys(completeParams));
+      console.log('🔧 Complete params built:', Object.keys(completeParams).length, 'parameters');
       
       // Update the selected logo with theme data
+      console.log('🔄 Updating logo state with theme data...');
       setLogos(prev => prev.map(logo => {
-        if (logo.id !== selectedLogoId) return logo;
+        if (logo.id !== selectedLogoId) {
+          return logo;
+        }
+        
+        console.log('🎯 Updating selected logo with ID:', logo.id);
         
         // Get current text values to preserve
         const currentTextValues: Record<string, any> = {};
@@ -453,6 +462,7 @@ export default function Home() {
             currentTextValues[param] = logo.params.customParameters[param];
           }
         });
+        console.log('📝 Preserved text values:', Object.keys(currentTextValues));
         
         // Merge theme defaults with custom defaults (industry-specific or otherwise)
         const mergedParams = {
@@ -461,8 +471,9 @@ export default function Home() {
           ...customDefaults,
           ...currentTextValues // Preserve text values
         };
+        console.log('🔧 Merged params:', Object.keys(mergedParams).length, 'total parameters');
         
-        return { 
+        const updatedLogo = { 
           ...logo, 
           params: { 
             ...logo.params,
@@ -481,12 +492,22 @@ export default function Home() {
           code: theme.code, // Set the theme code
           themeId: theme.id,
           themeName: theme.name
-        }
+        };
+        
+        console.log('✅ Updated logo:', {
+          id: updatedLogo.id,
+          themeId: updatedLogo.themeId,
+          themeName: updatedLogo.themeName,
+          codeLength: updatedLogo.code.length,
+          customParamsKeys: Object.keys(updatedLogo.params.customParameters)
+        });
+        
+        return updatedLogo;
       }))
       
       // Force re-render
       setForceRender(prev => prev + 1)
-      console.log('Theme loaded successfully:', theme.name)
+      console.log('✅ Theme loaded and applied successfully:', theme.name)
       
     } catch (error) {
       console.error('Failed to load theme:', error)
@@ -615,9 +636,10 @@ export default function Home() {
       // Force re-render
       setForceRender(prev => prev + 1)
       console.log('✅ Brand preset applied successfully:', brandPreset.name)
+      console.log('📊 Final brand preset application complete');
       
     } catch (error) {
-      console.error('Failed to apply brand preset:', error)
+      console.error('❌ Failed to apply brand preset:', error)
     }
   }
   // Update URL with current parameters (without page reload)
