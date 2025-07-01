@@ -245,23 +245,16 @@ export function CanvasArea() {
     const centerX = (minX + maxX) / 2
     const centerY = (minY + maxY) / 2
 
-    // Log initial canvas state
-    console.log('🎯 Initial canvas state:', {
-      currentOffset: { x: canvasOffset.x, y: canvasOffset.y },
-      currentZoom: zoom,
-      logosBounds: { minX, maxX, minY, maxY, centerX, centerY }
-    });
-
     // IMMEDIATE: Set rough center position to eliminate jump
     const roughCenterOffset = {
       x: (rect.width / 2) / zoom - centerX,
       y: (rect.height / 2) / zoom - centerY
     }
     setCanvasOffset(roughCenterOffset)
-    console.log('⚡ Immediate rough center applied:', roughCenterOffset);
     
     // Mark that we've done initial centering
     hasInitialCentered.current = true
+    console.log('📍 Canvas centered on initial load');
     
     // DELAYED: Fine-tune with optimal zoom and precise centering
     const timer = setTimeout(() => {
@@ -281,11 +274,6 @@ export function CanvasArea() {
         y: (rect.height / 2) / clampedZoom - centerY
       }
       setCanvasOffset(finalCenterOffset)
-      
-      console.log('📍 Fine-tuned centering applied:', {
-        zoom: clampedZoom,
-        offset: finalCenterOffset
-      });
     }, 200) // Slightly longer delay to ensure template is loaded
     
     return () => clearTimeout(timer)

@@ -203,7 +203,6 @@ export default function Home() {
     
     // Load template if specified, or load a default template
     const templateToLoad = templateParam || 'wave-bars';
-    console.log('Loading template:', templateToLoad);
     loadThemeById(templateToLoad).then(() => {
         // After template loads, apply text and color params
         const updates: Record<string, any> = {};
@@ -273,9 +272,6 @@ export default function Home() {
   // Parse parameter definitions from custom code
   const parseCustomParameters = (code: string) => {
     try {
-      console.log('🔍 Parsing custom parameters from code length:', code.length);
-      console.log('🔍 Code preview:', code.substring(0, 200) + '...');
-      
       // Look for PARAMETERS = { ... } definition - use a more robust approach
       // Try multiple patterns to catch different formatting
       const patterns = [
@@ -288,24 +284,15 @@ export default function Home() {
       let match = null;
       for (const pattern of patterns) {
         match = code.match(pattern);
-        if (match) {
-          console.log('✅ Found PARAMETERS with pattern:', pattern);
-          break;
-        }
+        if (match) break;
       }
       
-      if (!match) {
-        console.log('❌ No PARAMETERS match found in code');
-        console.log('🔍 Code includes "const PARAMETERS"?', code.includes('const PARAMETERS'));
-        return null
-      }
+      if (!match) return null
       
       const fullParamsBlock = match[1]
       
       // Try to parse as actual JavaScript object (safer approach)
       try {
-        console.log('📝 Full params block to parse:', fullParamsBlock.substring(0, 200) + '...');
-        
         // Replace arrow functions with regular functions for safer evaluation
         const safeParamsBlock = fullParamsBlock.replace(
           /showIf:\s*\(([^)]*)\)\s*=>\s*([^,}]+)/g,
@@ -314,11 +301,7 @@ export default function Home() {
         
         // Replace the object with a safer evaluation
         const paramsCode = `(${safeParamsBlock})`
-        console.log('🔧 Safe params code preview:', paramsCode.substring(0, 300) + '...');
-        
         const paramsObj = eval(paramsCode)
-        
-        console.log('✅ Successfully parsed params object:', Object.keys(paramsObj));
         
         // Convert to our expected format
         const parameters: Record<string, any> = {}
@@ -432,15 +415,12 @@ export default function Home() {
   // Load theme by ID
   const loadThemeById = async (themeId: string, customDefaults?: Record<string, any>) => {
     try {
-      console.log('🔄 Loading theme by ID:', themeId)
       const theme = await loadThemeAsLegacy(themeId)
       
       if (!theme) {
         console.error('❌ Theme not found:', themeId)
         return
       }
-      
-      console.log('✅ Loaded theme:', theme.name, `(${theme.code.length} chars)`);
       
       // Parse the theme code to get ALL parameter definitions (not just defaults)
       const parsedParams = parseCustomParameters(theme.code) || {};
@@ -457,13 +437,10 @@ export default function Home() {
       });
       
       // Update the selected logo with theme data
-      console.log('🔄 Updating logo state with theme data...');
       setLogos(prev => prev.map(logo => {
         if (logo.id !== selectedLogoId) {
           return logo;
         }
-        
-        console.log('🎯 Updating selected logo with ID:', logo.id);
         
         // Get current text values to preserve
         const currentTextValues: Record<string, any> = {};
@@ -504,14 +481,11 @@ export default function Home() {
           themeName: theme.name // Legacy compatibility
         };
         
-        console.log('✅ Updated logo:', updatedLogo.themeName);
-        
         return updatedLogo;
       }))
       
       // Force re-render
       setForceRender(prev => prev + 1)
-      console.log('✅ Theme loaded and applied successfully:', theme.name)
       
     } catch (error) {
       console.error('Failed to load theme:', error)
@@ -527,20 +501,11 @@ export default function Home() {
 
   // Handle brand personality application (parameters only, no template change)
   const handleApplyBrandPersonality = (personalityParams: Record<string, any>) => {
-    console.log('🎭 Applying brand personality params:', Object.keys(personalityParams));
-    
     // Apply personality parameters while preserving all template context
     setLogos(prev => {
       // Get the current logo from the latest state, not from closure
       const currentLogo = prev.find(logo => logo.id === selectedLogoId);
       if (!currentLogo) return prev;
-      
-      console.log('🏷️ Template context preserved during personality application:', {
-        templateId: currentLogo.templateId,
-        templateName: currentLogo.templateName,
-        themeId: currentLogo.themeId, // legacy
-        themeName: currentLogo.themeName // legacy
-      });
       
       return prev.map(logo => 
         logo.id === selectedLogoId 
@@ -559,15 +524,12 @@ export default function Home() {
       )
     });
     
-    console.log('✅ Brand personality applied while preserving template context');
     // Force re-render
     setForceRender(prev => prev + 1)
   }
 
   // Handle color theme application - preserve template context
   const handleApplyColorTheme = (themedParams: Record<string, any>) => {
-    console.log('🎨 Applying color theme');
-    
     // STRICT FILTER: Only allow specific color parameters to prevent template contamination
     const allowedColorParams = [
       'fillColor', 'strokeColor', 'backgroundColor', 'textColor',
@@ -580,8 +542,6 @@ export default function Home() {
       // ONLY include if it's in our allowed list - no other parameters
       if (allowedColorParams.includes(key)) {
         acc[key] = value;
-      } else {
-        console.log('⚠️ Filtered out non-color param:', key, '=', value);
       }
       return acc;
     }, {} as Record<string, any>);
@@ -623,19 +583,10 @@ export default function Home() {
 
   // Apply template preset (style parameters only, no colors)
   const handleApplyTemplatePreset = (presetParams: Record<string, any>) => {
-    console.log('🎨 Applying template preset params:', Object.keys(presetParams));
-    
     setLogos(prev => {
       // Get the current logo from the latest state, not from closure
       const currentLogo = prev.find(logo => logo.id === selectedLogoId);
       if (!currentLogo) return prev;
-      
-      console.log('🏷️ Template context preserved during preset application:', {
-        templateId: currentLogo.templateId,
-        templateName: currentLogo.templateName,
-        themeId: currentLogo.themeId, // legacy
-        themeName: currentLogo.themeName // legacy
-      });
       
       return prev.map(logo => 
         logo.id === selectedLogoId 
@@ -654,7 +605,6 @@ export default function Home() {
       )
     });
     
-    console.log('✅ Template preset applied while preserving template context');
     // Force re-render
     setForceRender(prev => prev + 1)
   }
@@ -662,19 +612,10 @@ export default function Home() {
   // Apply brand preset from AI or examples
   const handleApplyBrandPreset = async (brandPreset: any) => {
     try {
-      console.log('🎨 Applying brand preset:', brandPreset.name)
-      console.log('🎯 Brand preset data:', brandPreset);
-      console.log('📋 Current selectedLogo.templateId:', selectedLogo.templateId);
-      console.log('📋 Current selectedLogo.themeId (legacy):', selectedLogo.themeId);
-      console.log('🆔 Selected logo ID:', selectedLogoId);
-      
       // First load the base preset if it's different from current (check both templateId and themeId for compatibility)
       const currentTemplate = selectedLogo.templateId || selectedLogo.themeId;
       if (brandPreset.preset !== currentTemplate) {
-        console.log('🔄 Loading different theme:', brandPreset.preset);
         await loadThemeById(brandPreset.preset)
-      } else {
-        console.log('✅ Same theme, skipping load');
       }
       
       // Filter out text-based parameters that shouldn't be overridden
@@ -682,12 +623,10 @@ export default function Home() {
       const filteredParams = Object.fromEntries(
         Object.entries(brandPreset.params).filter(([key]) => !textParams.includes(key))
       );
-      console.log('🔧 Filtered params to apply:', Object.keys(filteredParams));
       
       // Then apply the custom parameters
       setLogos(prev => prev.map(logo => {
         if (logo.id === selectedLogoId) {
-          console.log('🎯 Updating logo with ID:', logo.id);
           return { 
             ...logo, 
             params: { 
@@ -702,13 +641,8 @@ export default function Home() {
         return logo;
       }))
       
-      // Custom parameters updated via logo state above - no separate state needed
-      console.log('📦 Updated custom parameters:', Object.keys(filteredParams));
-      
       // Force re-render
       setForceRender(prev => prev + 1)
-      console.log('✅ Brand preset applied successfully:', brandPreset.name)
-      console.log('📊 Final brand preset application complete');
       
     } catch (error) {
       console.error('❌ Failed to apply brand preset:', error)
@@ -792,7 +726,6 @@ export default function Home() {
         onSelectedLogoChange={setSelectedLogoId}
         onTemplateChange={(templateId: string) => {
           // When template changes in Zustand store, load it in React state
-          console.log('📋 Template changed via selector:', templateId);
           loadThemeById(templateId);
         }}
         zoom={zoom}
