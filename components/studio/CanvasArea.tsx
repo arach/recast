@@ -65,10 +65,6 @@ export function CanvasArea() {
   // Copy feedback state
   const [showCopyFeedback, setShowCopyFeedback] = useState(false)
   
-  // Hover state for "Make it yours" CTA
-  const [hoveredLogoId, setHoveredLogoId] = useState<string | null>(null)
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
-  
   // Code editor state for adjusting canvas controls
   const [codeEditorCollapsed, setCodeEditorCollapsed] = useState(true)
   const [codeEditorWidth, setCodeEditorWidth] = useState(500)
@@ -97,7 +93,7 @@ export function CanvasArea() {
   useEffect(() => {
     if (animating) {
       const animate = () => {
-        timeRef.current += 0.05
+        timeRef.current = Math.max(0, timeRef.current + 0.05) // Ensure time never goes negative
         setCurrentTime(timeRef.current)
         setForceRender(prev => prev + 1)
         animationRef.current = requestAnimationFrame(animate)
@@ -418,18 +414,6 @@ export function CanvasArea() {
     const canvasX = (mouseX / zoom) - canvasOffset.x
     const canvasY = (mouseY / zoom) - canvasOffset.y
     
-    // Debug: log click coordinates and logo positions
-    console.log('🖱️ Mouse click at canvas coords:', { canvasX, canvasY })
-    console.log('📍 Logos:', logos.map(l => ({ 
-      id: l.id, 
-      position: l.position || { x: 0, y: 0 },
-      bounds: {
-        x1: (l.position?.x || 0),
-        y1: (l.position?.y || 0),
-        x2: (l.position?.x || 0) + 600,
-        y2: (l.position?.y || 0) + 600
-      }
-    })))
     
     // Check if click is on any logo (check in reverse order so top logos are selected first)
     let clickedLogo = null
@@ -442,15 +426,7 @@ export function CanvasArea() {
     
     if (clickedLogo) {
       // Select the clicked logo
-      console.log('🎯 Clicked on logo:', clickedLogo.id)
       selectLogo(clickedLogo.id)
-      // Verify selection worked
-      setTimeout(() => {
-        const currentSelection = useLogoStore.getState().selectedLogoId
-        console.log('✅ After selectLogo, selectedLogoId is:', currentSelection)
-      }, 100)
-    } else {
-      console.log('🎯 Clicked on empty canvas at:', canvasX, canvasY)
     }
     
     // Always start dragging (either logo or canvas)
@@ -460,30 +436,6 @@ export function CanvasArea() {
   }, [previewMode, canvasOffset, zoom, logos, selectLogo])
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    const rect = canvasRef.current?.getBoundingClientRect()
-    if (!rect) return
-    
-    // Update mouse position
-    const mouseX = e.clientX - rect.left
-    const mouseY = e.clientY - rect.top
-    setMousePosition({ x: mouseX, y: mouseY })
-    
-    // Check for hover over logos
-    if (!isDragging && !previewMode) {
-      const canvasX = (mouseX / zoom) - canvasOffset.x
-      const canvasY = (mouseY / zoom) - canvasOffset.y
-      
-      let hoveredLogo = null
-      for (let i = logos.length - 1; i >= 0; i--) {
-        if (isPointInLogo(canvasX, canvasY, logos[i])) {
-          hoveredLogo = logos[i]
-          break
-        }
-      }
-      
-      setHoveredLogoId(hoveredLogo?.id || null)
-    }
-    
     // Handle dragging
     if (isDragging && !previewMode) {
       const deltaX = (e.clientX - dragStart.x) / zoom
@@ -494,7 +446,7 @@ export function CanvasArea() {
         y: lastPanPoint.y + deltaY
       })
     }
-  }, [isDragging, dragStart, lastPanPoint, zoom, previewMode, canvasOffset, logos])
+  }, [isDragging, dragStart, lastPanPoint, zoom, previewMode])
 
   const handleMouseUp = useCallback(() => {
     setIsDragging(false)
@@ -619,18 +571,15 @@ export function CanvasArea() {
                   'image/png': blob
                 })
               ])
-              console.log('✅ Logo copied to clipboard!')
               
               // Show visual feedback
               setShowCopyFeedback(true)
               setTimeout(() => setShowCopyFeedback(false), 2000)
             } else {
-              console.log('📋 Clipboard not supported, downloading instead...')
               downloadLogoImage()
             }
           } catch (err) {
             console.error('❌ Failed to copy to clipboard:', err)
-            console.log('📥 Falling back to download...')
             downloadLogoImage()
           }
         }
@@ -786,25 +735,6 @@ export function CanvasArea() {
         </div>
       )}
       
-      {/* Make it yours CTA */}
-      {hoveredLogoId && !isDragging && !previewMode && (
-        <div 
-          className="absolute z-30 pointer-events-none animate-in fade-in-0 duration-200"
-          style={{
-            left: `${mousePosition.x}px`,
-            top: `${mousePosition.y - 60}px`,
-          }}
-        >
-          <div className="bg-gray-900 text-white px-4 py-2 rounded-lg shadow-xl text-sm font-medium relative">
-            <span className="flex items-center gap-2">
-              ✨ Make it yours
-            </span>
-            <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-full">
-              <div className="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[6px] border-t-gray-900"></div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Infinite Canvas */}
       {!previewMode ? (
@@ -815,10 +745,7 @@ export function CanvasArea() {
           onMouseDown={handleMouseDown}
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
-          onMouseLeave={() => {
-            handleMouseUp()
-            setHoveredLogoId(null)
-          }}
+          onMouseLeave={handleMouseUp}
         />
       ) : (
         <div className="h-full flex items-center justify-center p-8">

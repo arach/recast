@@ -99,11 +99,7 @@ export function StoreInitializer({
         
         isInitialized.current = true;
         
-        console.log('🔄 StoreInitializer: Zustand stores initialized', {
-          logos: typedLogos.length,
-          selectedId: selectedLogoId,
-          uiState: { zoom, animating, controlsPanelOpen, darkMode }
-        });
+        // Stores initialized successfully
       } catch (error) {
         console.error('❌ StoreInitializer error:', error);
       }
@@ -152,12 +148,6 @@ export function StoreInitializer({
           JSON.stringify(existingLogo.parameters.custom || {});
         
         if (templateChanged || codeChanged || colorChanged || customParamsChanged) {
-          console.log('🔄 StoreInitializer: Syncing changes for logo', propLogo.id, {
-            templateChanged,
-            codeChanged,
-            colorChanged,
-            customParamsChanged
-          });
           
           // Update the entire logo in the store
           // IMPORTANT: Preserve existing template fields unless explicitly changed
@@ -282,7 +272,6 @@ export function StoreInitializer({
       if (currentLogo && currentLogo.templateId !== previousTemplateId) {
         // Template has changed in the store
         if (currentLogo.templateId) {
-          console.log('🔄 Template changed in store from', previousTemplateId, 'to', currentLogo.templateId);
           onTemplateChange(currentLogo.templateId);
         }
         previousTemplateId = currentLogo.templateId;
