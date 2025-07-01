@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 import { Template, Parameters } from '@/lib/types';
-import { loadPresetAsLegacy, getAllPresetsAsLegacy } from '@/lib/preset-converter';
+import { loadTemplateAsLegacy, getAllTemplatesAsLegacy } from '@/lib/template-converter';
 import { useLogoStore } from './logoStore';
 
 interface TemplateStore {
@@ -34,21 +34,21 @@ export const useTemplateStore = create<TemplateStore>()(
         set({ loadingTemplates: true });
         
         try {
-          const presets = await getAllPresetsAsLegacy();
+          const templates = await getAllTemplatesAsLegacy();
           
-          // Convert legacy presets to Template format
-          const templates: Template[] = presets.map(preset => ({
-            id: preset.id,
-            name: preset.name,
-            description: preset.description,
+          // Convert legacy templates to Template format
+          const templatesFormatted: Template[] = templates.map(template => ({
+            id: template.id,
+            name: template.name,
+            description: template.description,
             category: 'general', // We'll need to add categories
             defaultParameters: {
-              custom: preset.defaultParams,
+              custom: template.defaultParams,
             },
             parameterDefinitions: [], // Will be parsed from code
           }));
           
-          set({ templates, loadingTemplates: false });
+          set({ templates: templatesFormatted, loadingTemplates: false });
         } catch (error) {
           console.error('Failed to load templates:', error);
           set({ loadingTemplates: false });
@@ -58,9 +58,9 @@ export const useTemplateStore = create<TemplateStore>()(
       // Load a specific template
       loadTemplate: async (templateId: string) => {
         try {
-          const preset = await loadPresetAsLegacy(templateId);
+          const template = await loadTemplateAsLegacy(templateId);
           
-          if (!preset) {
+          if (!template) {
             console.error('Template not found:', templateId);
             return;
           }
@@ -71,12 +71,12 @@ export const useTemplateStore = create<TemplateStore>()(
             if (existingIndex >= 0) {
               const updatedTemplates = [...state.templates];
               updatedTemplates[existingIndex] = {
-                id: preset.id,
-                name: preset.name,
-                description: preset.description,
+                id: template.id,
+                name: template.name,
+                description: template.description,
                 category: 'general',
                 defaultParameters: {
-                  custom: preset.defaultParams,
+                  custom: template.defaultParams,
                 },
                 parameterDefinitions: [],
               };
@@ -96,22 +96,22 @@ export const useTemplateStore = create<TemplateStore>()(
         if (!logo) return;
         
         try {
-          const preset = await loadPresetAsLegacy(templateId);
-          if (!preset) return;
+          const template = await loadTemplateAsLegacy(templateId);
+          if (!template) return;
           
           // Preserve content parameters
           const currentContent = logo.parameters.content;
           
           // Update logo with new template
           logoStore.updateLogo(logoId, {
-            templateId: preset.id,
-            templateName: preset.name,
-            code: preset.code,
+            templateId: template.id,
+            templateName: template.name,
+            code: template.code,
           });
           
           // Apply template parameters while preserving content
           logoStore.updateLogoParameters(logoId, {
-            custom: preset.defaultParams,
+            custom: template.defaultParams,
             content: currentContent, // Preserve text/letter
           });
           

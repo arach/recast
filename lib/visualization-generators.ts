@@ -1,6 +1,6 @@
 import { WaveGenerator, WaveParameters } from '@/core/wave-generator'
 import { GenerativeEngine, GenerativeParameters, GenerationOptions } from '@/core/generative-engine'
-import { executePreset } from '@/lib/preset-registry'
+import { executeTemplate } from '@/lib/template-registry'
 
 export interface VisualizationParams {
   seed: string
@@ -420,12 +420,12 @@ export const executeCustomCode = (
 ): { success: boolean; error?: string } => {
   try {
     // Check if this code references a preset from the registry
-    const presetIdMatch = customCode.match(/\/\/ PRESET_ID: ([\w-]+)/)
-    if (presetIdMatch) {
-      const presetId = presetIdMatch[1]
-      const success = executePreset(presetId, ctx, width, height, params, params.time)
+    const templateIdMatch = customCode.match(/\/\/ TEMPLATE_ID: ([\w-]+)|PRESET_ID: ([\w-]+)/)
+    if (templateIdMatch) {
+      const templateId = templateIdMatch[1] || templateIdMatch[2]
+      const success = executeTemplate(templateId, ctx, width, height, params, params.time)
       if (success) {
-        return { success: true } // Preset executed successfully
+        return { success: true } // Template executed successfully
       }
     }
     const waveParams: WaveParameters = {

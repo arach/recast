@@ -17,7 +17,7 @@ import { AISuggestions } from '@/components/studio/AISuggestions'
 import { BrandPersonality } from '@/components/studio/BrandPersonality'
 import { AIBrandConsultant } from '@/components/studio/AIBrandConsultant'
 import { generateWaveBars, executeCustomCode, type VisualizationParams } from '@/lib/visualization-generators'
-import { loadPresetAsLegacy } from '@/lib/preset-converter'
+import { loadTemplateAsLegacy } from '@/lib/template-converter'
 
 
 interface LogoInstance {
