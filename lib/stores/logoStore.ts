@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 import { Logo, Parameters, Position } from '@/lib/types';
+import { LogoIdManager } from '@/lib/utils/logoIdManager';
 
 interface LogoStore {
   // State
@@ -115,15 +116,39 @@ function drawVisualization(ctx, width, height, params, generator, time) {
       },
       
       addLogo: (templateId: string) => {
-        const id = `logo-${Date.now()}`;
+        const id = LogoIdManager.generateId();
+        
+        // Smart positioning: calculate position based on existing logos
+        const existingLogos = get().logos;
+        let position = { x: 100, y: 100 };
+        
+        if (existingLogos.length > 0) {
+          // Try to place logos in a grid pattern
+          const gridSize = 350; // Space between logos
+          const columns = 3; // Max columns before wrapping
+          
+          // Calculate next position in grid
+          const index = existingLogos.length;
+          const col = index % columns;
+          const row = Math.floor(index / columns);
+          
+          position = {
+            x: col * gridSize,
+            y: row * gridSize
+          };
+        }
+        
         const newLogo: Logo = {
           id,
           templateId,
           templateName: templateId, // Will be updated when template loads
           parameters: { ...defaultParameters },
-          position: { x: 100, y: 100 }, // Offset from origin
+          position,
           code: '',
         };
+        
+        // Track in localStorage
+        LogoIdManager.upsertInstance({ id, position, templateId });
         
         set((state) => ({
           logos: [...state.logos, newLogo],
@@ -160,6 +185,12 @@ function drawVisualization(ctx, width, height, params, generator, time) {
       },
 
       updateLogoPosition: (id, position) => {
+        // Update localStorage tracking
+        const logo = get().getLogoById(id);
+        if (logo) {
+          LogoIdManager.upsertInstance({ id, position, templateId: logo.templateId });
+        }
+        
         set((state) => ({
           logos: state.logos.map((logo) =>
             logo.id === id ? { ...logo, position } : logo
@@ -170,6 +201,9 @@ function drawVisualization(ctx, width, height, params, generator, time) {
       deleteLogo: (id) => {
         const state = get();
         if (state.logos.length <= 1) return; // Don't delete last logo
+        
+        // Remove from localStorage tracking
+        LogoIdManager.removeInstance(id);
         
         set((state) => {
           const newLogos = state.logos.filter((logo) => logo.id !== id);
@@ -188,15 +222,23 @@ function drawVisualization(ctx, width, height, params, generator, time) {
         const logoToDuplicate = get().logos.find((logo) => logo.id === id);
         if (!logoToDuplicate) return null;
         
-        const newId = `logo-${Date.now()}`;
+        const newId = LogoIdManager.generateId();
+        const newPosition = {
+          x: logoToDuplicate.position.x + 100,
+          y: logoToDuplicate.position.y + 100,
+        };
         const newLogo: Logo = {
           ...logoToDuplicate,
           id: newId,
-          position: {
-            x: logoToDuplicate.position.x + 100,
-            y: logoToDuplicate.position.y + 100,
-          },
+          position: newPosition,
         };
+        
+        // Track in localStorage
+        LogoIdManager.upsertInstance({ 
+          id: newId, 
+          position: newPosition, 
+          templateId: logoToDuplicate.templateId 
+        });
         
         set((state) => ({
           logos: [...state.logos, newLogo],

@@ -116,6 +116,69 @@ The `WaveGenerator` class in `core/wave-generator.ts` provides:
 3. **Mathematical Focus**: All visual generation is mathematically driven
 4. **No Static Assets**: The goal is to eliminate traditional static brand assets
 
+## Debug Toolbar Architecture
+
+ReCast features a comprehensive debug toolbar designed to solve the core challenge of **state fragmentation** in complex React applications. Modern React apps scatter state across multiple systems, and when they get out of sync, debugging becomes a nightmare of console.log statements and page refreshes.
+
+### The Problem: State Fragmentation
+ReCast state is distributed across:
+- **Component State**: `useState` for local UI state
+- **Global Stores**: Zustand for shared application state  
+- **Persistence Layers**: localStorage for user preferences and canvas position
+- **External Systems**: Canvas coordinates, URL parameters, template loading
+- **Derived State**: Computed values and cached calculations
+
+### Debug Toolbar Solution
+
+#### **1. Multi-State Dashboard**
+Real-time observatory of all state systems:
+```
+🎯 Logo State Observer
+├─ React State: selectedLogoId="main", logos.length=1
+├─ Zustand Store: selectedLogoId="main", logos.length=1  
+├─ Canvas State: offset=(362, 35), zoom=1.0
+├─ LocalStorage: canvas-offset=(1068, 619) ❌ STALE
+└─ Template State: templateId="wave-bars", loaded=true
+```
+
+#### **2. Developer Utilities Panel**
+Quick actions for common development scenarios:
+```
+🔧 Quick Actions
+├─ Load Test Scenario → "Multi-logo layout"
+├─ Reset All State → Clear everything, center canvas
+├─ Simulate User Flow → "First-time user experience" 
+└─ Force Sync States → Align localStorage with current state
+```
+
+#### **3. Performance Insights** 
+Development-time performance monitoring:
+```
+⚡ Metrics
+├─ Canvas Render: 16ms (60fps)
+├─ Logo Cache: 85% hit rate
+└─ State Updates: 12/sec
+```
+
+### Key Features
+- **Real-time Updates**: Live state inspection, not snapshots
+- **localStorage Management**: View, edit, and clear browser storage
+- **Canvas Utilities**: Positioning tools and viewport debugging  
+- **Development-only**: Zero production impact
+- **Keyboard Shortcuts**: `Cmd+Shift+D` to toggle (planned)
+
+### Usage
+```typescript
+// Enable in development
+if (process.env.NODE_ENV === 'development') {
+  window.showDebugger()    // Show toolbar
+  window.hideDebugger()    // Hide toolbar  
+  window.toggleDebugger()  // Toggle visibility
+}
+```
+
+The debug toolbar accelerates development by providing immediate visibility into state discrepancies and tools to fix them without page refreshes or complex setup scenarios.
+
 ## Development Process
 
 - **Use dev:alt for all interaction with your dev process**

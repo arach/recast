@@ -466,8 +466,10 @@ export function CanvasArea() {
     }
     
     if (clickedLogo) {
-      // Select the clicked logo
+      // Select the clicked logo immediately to ensure state is updated
       selectLogo(clickedLogo.id)
+      // Force a synchronous state update to prevent race conditions
+      useLogoStore.setState({ selectedLogoId: clickedLogo.id })
     }
     
     // Always start dragging (either logo or canvas)

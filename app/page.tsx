@@ -646,6 +646,385 @@ export default function Home() {
       console.error('❌ Failed to apply brand preset:', error)
     }
   }
+  // Initialize Reflow brand treatment functions
+  useEffect(() => {
+    if (!mounted || typeof window === 'undefined') return;
+    
+    // Initialize Reflow brand - one excellent option
+    (window as any).initReflow = async () => {
+      console.log('✨ Creating Reflow brand identity...');
+      
+      // Let's do ONE thing really well - a sophisticated wordmark
+      const templateId = 'wordmark';
+      await loadThemeById(templateId);
+      
+      // Modern tech brand parameters
+      const reflowParams = {
+        // Typography - lowercase, tight, modern
+        text: 'reflow',
+        fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif',
+        fontSize: 48,
+        fontWeight: 600,  // Semibold for presence
+        letterSpacing: -3,  // Tight spacing like Linear/Vercel
+        textTransform: 'lowercase',
+        textAlign: 'left',  // Not centered!
+        
+        // Remove ALL animation for a static logo
+        frequency: 0,
+        amplitude: 0,  // No wave at all
+        complexity: 0,
+        chaos: 0,
+        damping: 1,
+        layers: 1,
+        
+        // Start with black
+        backgroundType: 'transparent',
+        fillType: 'solid',
+        fillColor: '#000000',
+        fillOpacity: 1,
+        strokeType: 'none',
+        
+        // No border/frame
+        showFrame: false,
+        framePadding: 0,
+        
+        // Consistent seed
+        seed: 'reflow-2024'
+      };
+      
+      // Apply the parameters
+      setLogos(prev => prev.map(logo => {
+        if (logo.id === selectedLogoId) {
+          return {
+            ...logo,
+            params: {
+              ...logo.params,
+              ...reflowParams,
+              customParameters: {
+                ...logo.params.customParameters,
+                ...reflowParams
+              }
+            }
+          };
+        }
+        return logo;
+      }));
+      
+      // Force re-render
+      setForceRender(prev => prev + 1);
+      
+      console.log('✨ Reflow wordmark created');
+      console.log('');
+      console.log('Apply a color treatment:');
+      console.log('• window.reflowColor("black") - Classic black (like Vercel)');
+      console.log('• window.reflowColor("blue") - Tech blue (like Stripe)');
+      console.log('• window.reflowColor("gradient") - Modern gradient');
+    };
+    
+    // Simple, elegant color options
+    (window as any).reflowColor = async (color: string) => {
+      const colors: Record<string, any> = {
+        black: {
+          fillType: 'solid',
+          fillColor: '#000000',
+          backgroundType: 'transparent'
+        },
+        blue: {
+          fillType: 'solid', 
+          fillColor: '#0066FF',  // Bright tech blue
+          backgroundType: 'transparent'
+        },
+        gradient: {
+          fillType: 'gradient',
+          fillGradientStart: '#7c3aed',  // Purple
+          fillGradientEnd: '#06b6d4',    // Cyan
+          fillGradientDirection: 135,
+          backgroundType: 'transparent'
+        }
+      };
+      
+      const colorParams = colors[color];
+      if (!colorParams) {
+        console.error('Unknown color:', color);
+        console.log('Available: black, blue, gradient');
+        return;
+      }
+      
+      // Apply color
+      setLogos(prev => prev.map(logo => {
+        if (logo.id === selectedLogoId) {
+          return {
+            ...logo,
+            params: {
+              ...logo.params,
+              customParameters: {
+                ...logo.params.customParameters,
+                ...colorParams
+              }
+            }
+          };
+        }
+        return logo;
+      }));
+      
+      setForceRender(prev => prev + 1);
+      console.log(`✅ Applied ${color} color`);
+    };
+    
+    // Enhanced utility to load 4 logos with proper ID tracking
+    (window as any).load4Logos = async () => {
+      console.log('🔄 Loading 4 different logos with ID tracking...');
+      
+      // Import required modules
+      const { LogoIdManager } = await import('@/lib/utils/logoIdManager');
+      const { useLogoStore } = await import('@/lib/stores/logoStore');
+      const logoStore = useLogoStore.getState();
+      
+      // Clear localStorage tracking first
+      console.log('📋 Clearing existing logos...');
+      LogoIdManager.clearInstances();
+      
+      // Handle the minimum logo requirement
+      // The store won't delete the last logo, so we need to work around this
+      const currentLogos = [...logoStore.logos];
+      
+      if (currentLogos.length === 1) {
+        // We'll update the existing logo instead of trying to delete it
+        console.log('📝 Keeping required logo, will update it');
+      } else {
+        // Delete all but one logo
+        currentLogos.slice(1).forEach(logo => logoStore.deleteLogo(logo.id));
+      }
+      
+      // Wait for state to settle
+      await new Promise(resolve => setTimeout(resolve, 200));
+      
+      // Import all templates
+      console.log('📦 Loading templates...');
+      const [wordmark, letterMark, waveBars, prismGoogle] = await Promise.all([
+        import('@/templates/wordmark'),
+        import('@/templates/letter-mark'),
+        import('@/templates/wave-bars'),
+        import('@/templates/prism-google')
+      ]);
+      
+      // Create 4 logos with unique IDs
+      const positions = [
+        { x: 0, y: 0 },     // Top left
+        { x: 700, y: 0 },   // Top right
+        { x: 0, y: 700 },   // Bottom left
+        { x: 700, y: 700 }  // Bottom right
+      ];
+      
+      // Logo 1: Wordmark (update existing if present)
+      console.log('🎨 Creating logo 1: Wordmark');
+      let logo1Id: string;
+      
+      if (logoStore.logos.length > 0) {
+        // Update the existing logo
+        logo1Id = logoStore.logos[0].id;
+        logoStore.updateLogoPosition(logo1Id, positions[0]);
+        logoStore.updateLogo(logo1Id, {
+          templateId: 'wordmark',
+          templateName: 'Wordmark',
+          code: wordmark.code
+        });
+      } else {
+        // Create new logo
+        logo1Id = logoStore.addLogo('wordmark');
+        await new Promise(resolve => setTimeout(resolve, 50));
+        logoStore.updateLogoPosition(logo1Id, positions[0]);
+        logoStore.updateLogo(logo1Id, {
+          templateId: 'wordmark',
+          templateName: 'Wordmark',
+          code: wordmark.code
+        });
+      }
+      
+      logoStore.updateLogoParameters(logo1Id, {
+        custom: {
+          text: 'reflow',
+          fontFamily: 'Inter, -apple-system, sans-serif',
+          fontSize: 56,
+          fontWeight: 600,
+          letterSpacing: -2,
+          fillType: 'solid',
+          fillColor: '#000000',
+          strokeType: 'none',
+          backgroundType: 'transparent',
+          frequency: 0,
+          amplitude: 0
+        }
+      });
+      
+      // Logo 2: Letter Mark
+      console.log('🎨 Creating logo 2: Letter Mark');
+      const logo2Id = logoStore.addLogo('letter-mark');
+      await new Promise(resolve => setTimeout(resolve, 50));
+      
+      logoStore.updateLogoPosition(logo2Id, positions[1]);
+      logoStore.updateLogo(logo2Id, {
+        templateId: 'letter-mark',
+        templateName: 'Letter Mark',
+        code: letterMark.code
+      });
+      logoStore.updateLogoParameters(logo2Id, {
+        custom: {
+          letter: 'R',
+          fontFamily: 'Inter, -apple-system, sans-serif',
+          fontSize: 120,
+          fontWeight: 700,
+          fillType: 'solid',
+          fillColor: '#0066FF',
+          strokeType: 'none',
+          backgroundType: 'transparent'
+        }
+      });
+      
+      // Logo 3: Wave Bars
+      console.log('🎨 Creating logo 3: Wave Bars');
+      const logo3Id = logoStore.addLogo('wave-bars');
+      await new Promise(resolve => setTimeout(resolve, 50));
+      
+      logoStore.updateLogoPosition(logo3Id, positions[2]);
+      logoStore.updateLogo(logo3Id, {
+        templateId: 'wave-bars',
+        templateName: 'Wave Bars',
+        code: waveBars.code
+      });
+      logoStore.updateLogoParameters(logo3Id, {
+        core: {
+          frequency: 2,
+          amplitude: 40,
+          complexity: 0.2,
+          chaos: 0
+        },
+        custom: {
+          barCount: 7,
+          barSpacing: 3,
+          fillType: 'gradient',
+          fillGradientStart: '#7c3aed',
+          fillGradientEnd: '#06b6d4',
+          fillGradientDirection: 45,
+          strokeType: 'none',
+          backgroundType: 'transparent'
+        }
+      });
+      
+      // Logo 4: Prism
+      console.log('🎨 Creating logo 4: Prism');
+      const logo4Id = logoStore.addLogo('prism-google');
+      await new Promise(resolve => setTimeout(resolve, 50));
+      
+      logoStore.updateLogoPosition(logo4Id, positions[3]);
+      logoStore.updateLogo(logo4Id, {
+        templateId: 'prism-google',
+        templateName: 'Prism',
+        code: prismGoogle.code
+      });
+      logoStore.updateLogoParameters(logo4Id, {
+        custom: {
+          symmetry: 6,
+          radius: 60,
+          colorMode: 'monochrome',
+          fillType: 'solid',
+          fillColor: '#000000',
+          strokeType: 'none',
+          backgroundType: 'transparent',
+          frequency: 0,
+          amplitude: 0
+        }
+      });
+      
+      // Select the first logo
+      logoStore.selectLogo(logo1Id);
+      
+      // Force re-render
+      setForceRender(prev => prev + 1);
+      
+      // Display results
+      const savedInstances = LogoIdManager.loadInstances();
+      console.log('');
+      console.log('✅ 4 logos created with ID tracking!');
+      console.log(`📍 Top left: ${logo1Id} - reflow wordmark (black)`);
+      console.log(`📍 Top right: ${logo2Id} - R lettermark (blue)`);  
+      console.log(`📍 Bottom left: ${logo3Id} - Wave bars (gradient)`);
+      console.log(`📍 Bottom right: ${logo4Id} - Hexagon (black)`);
+      console.log('');
+      console.log('💾 Saved to localStorage:', savedInstances);
+      console.log('');
+      console.log('💡 Tips:');
+      console.log('• Click on any logo to select it');
+      console.log('• Drag logos to reposition them');
+      console.log('• Use controls panel to modify parameters');
+      console.log('• IDs are persisted in localStorage');
+    };
+    
+    // Logo ID management utilities
+    (window as any).listLogoIds = async () => {
+      const { LogoIdManager } = await import('@/lib/utils/logoIdManager');
+      const instances = LogoIdManager.loadInstances();
+      console.log('📋 Tracked Logo Instances:');
+      console.log('═══════════════════════════');
+      if (instances.length === 0) {
+        console.log('No logos tracked in localStorage');
+      } else {
+        instances.forEach((instance, index) => {
+          console.log(`${index + 1}. ID: ${instance.id}`);
+          console.log(`   Position: (${instance.position.x}, ${instance.position.y})`);
+          console.log(`   Template: ${instance.templateId || 'unknown'}`);
+        });
+      }
+      return instances;
+    };
+    
+    (window as any).clearLogoIds = async () => {
+      const { LogoIdManager } = await import('@/lib/utils/logoIdManager');
+      LogoIdManager.clearInstances();
+      console.log('✅ Cleared all tracked logo IDs from localStorage');
+    };
+    
+    // Debug utility to check current logo state
+    (window as any).debugLogos = async () => {
+      const { useLogoStore } = await import('@/lib/stores/logoStore');
+      const logoStore = useLogoStore.getState();
+      
+      console.log('🔍 Current Logo State:');
+      console.log('════════════════════════');
+      console.log(`Total logos: ${logoStore.logos.length}`);
+      console.log(`Selected logo: ${logoStore.selectedLogoId}`);
+      console.log('');
+      
+      logoStore.logos.forEach((logo, index) => {
+        console.log(`Logo ${index + 1}:`);
+        console.log(`  ID: ${logo.id}`);
+        console.log(`  Template: ${logo.templateId} (${logo.templateName})`);
+        console.log(`  Position: (${logo.position.x}, ${logo.position.y})`);
+        console.log(`  Has code: ${logo.code ? 'Yes' : 'No'}`);
+        console.log(`  Parameters:`, logo.parameters.custom);
+        console.log('');
+      });
+    };
+    
+    // Simple startup message
+    setTimeout(() => {
+      console.log('');
+      console.log('🚀 REFLOW BRAND SYSTEM');
+      console.log('════════════════════════');
+      console.log('');
+      console.log('Commands:');
+      console.log('• window.initReflow() - Create wordmark');
+      console.log('• window.reflowShapes() - Show all 4 options side by side');
+      console.log('• window.load4Logos() - Load 4 logos with ID tracking');
+      console.log('• window.listLogoIds() - List tracked logo IDs');
+      console.log('• window.clearLogoIds() - Clear ID tracking');
+      console.log('• window.debugLogos() - Debug current logo state');
+      console.log('');
+    }, 1000);
+    
+    console.log('✅ Reflow functions attached to window');
+  }, [mounted]); // Only depend on mounted to run once
+  
   // Update URL with current parameters (without page reload)
   const updateURLParams = () => {
     const params = new URLSearchParams();

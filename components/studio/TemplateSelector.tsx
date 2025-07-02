@@ -18,7 +18,7 @@ import { loadTemplate, getAllTemplateInfo, type TemplateInfo } from '@/lib/templ
 
 export function TemplateSelector() {
   const [availableTemplates, setAvailableTemplates] = useState<TemplateInfo[]>([])
-  const { updateLogo } = useLogoStore()
+  const { updateLogo, selectedLogoId, getLogoById } = useLogoStore()
   const { logo } = useSelectedLogo()
   
   // Load all available templates
@@ -37,18 +37,25 @@ export function TemplateSelector() {
   }, [])
   
   const handleTemplateChange = async (templateId: string) => {
-    if (!logo) return
+    // Get the logo directly from the store to ensure we have the latest selection
+    const currentSelectedLogoId = useLogoStore.getState().selectedLogoId
+    const currentLogo = useLogoStore.getState().getLogoById(currentSelectedLogoId)
+    
+    if (!currentLogo) {
+      console.error('No logo selected')
+      return
+    }
     
     try {
       if (templateId === 'custom') {
         // Reset to custom code (empty template)
         console.log('Switching to custom code')
-        updateLogo(logo.id, {
+        updateLogo(currentLogo.id, {
           templateId: 'custom',
           templateName: 'Custom',
-          code: logo.code || '// Custom code\nfunction drawVisualization(ctx, width, height, params, generator, time) {\n  // Your custom code here\n}',
+          code: currentLogo.code || '// Custom code\nfunction drawVisualization(ctx, width, height, params, generator, time) {\n  // Your custom code here\n}',
           parameters: {
-            ...logo.parameters,
+            ...currentLogo.parameters,
             custom: {}
           }
         })
@@ -66,11 +73,11 @@ export function TemplateSelector() {
           templateName: template.name,
           code: template.code,
           parameters: {
-            ...logo.parameters,
+            ...currentLogo.parameters,
             custom: template.defaultParams || {}
           }
         }
-        updateLogo(logo.id, updatedLogo)
+        updateLogo(currentLogo.id, updatedLogo)
       }
     } catch (error) {
       console.error('Failed to apply template:', error)

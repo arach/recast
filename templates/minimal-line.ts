@@ -107,91 +107,7 @@ function drawVisualization(
   _generator: any,
   time: number
 ) {
-  // Parameter compatibility layer
-  if (params.customParameters) {
-    params.fillColor = params.fillColor || params.customParameters.fillColor;
-    params.strokeColor = params.strokeColor || params.customParameters.strokeColor;
-    params.backgroundColor = params.backgroundColor || params.customParameters.backgroundColor;
-    params.textColor = params.textColor || params.customParameters.textColor;
-    
-    Object.keys(params.customParameters).forEach(key => {
-      if (params[key] === undefined) {
-        params[key] = params.customParameters[key];
-      }
-    });
-  }
-
-  // Apply universal background
-  applyUniversalBackground(ctx, width, height, params);
-
-  // Extract parameters
-  const centerX = width / 2;
-  const centerY = height / 2;
-  const frequency = params.frequency || 0.3;
-  const amplitude = params.amplitude || 80;
-  const lineStyleNum = Math.round(params.lineStyle || 0);
-  const precision = params.precision || 0.95;
-  const simplicity = params.simplicity || 0.9;
-  const refinement = params.refinement || 0.8;
-  const strokeWeight = params.strokeWeight || 1.5;
-  const strokeSpacing = params.strokeSpacing || 6;
-  const breathingSpace = params.breathingSpace || 0.03;
-  const lineBreaks = params.lineBreaks || 0.05;
-  const colorPhilosophyNum = Math.round(params.colorPhilosophy || 0);
-  const accentHue = params.accentHue || 200;
-  const sophistication = params.sophistication || 0.6;
-  const goldenRatio = params.goldenRatio || 1.618;
-  const proportionalHarmony = params.proportionalHarmony || 0.9;
-
-  // Minimalist scaling with generous whitespace
-  const baseScale = Math.min(width, height) / 400; // Extra whitespace for elegance
-  const scaledAmplitude = amplitude * baseScale;
-  
-  // Subtle breathing animation
-  const breathingPhase = time * frequency * 0.5;
-  const breathingPulse = 1 + Math.sin(breathingPhase) * breathingSpace;
-
-  // Generate minimal line path
-  const linePath = generateMinimalLine(
-    centerX, centerY, scaledAmplitude * breathingPulse,
-    precision, simplicity, goldenRatio, proportionalHarmony, time, lineBreaks
-  );
-
-  // Sophisticated color system - now using universal stroke parameters
-  const lineColors = generateMinimalistColors(colorPhilosophyNum, accentHue, sophistication, params);
-
-  // Apply universal fill if not none
-  if (params.fillType !== 'none') {
-    ctx.save();
-    ctx.globalAlpha = params.fillOpacity || 0.8;
-    
-    if (params.fillType === 'gradient') {
-      const bounds = getBounds(linePath);
-      const angle = (params.fillGradientDirection || 90) * Math.PI / 180;
-      const gradientLength = Math.sqrt(bounds.width * bounds.width + bounds.height * bounds.height);
-      
-      const x1 = bounds.centerX - Math.cos(angle) * gradientLength / 2;
-      const y1 = bounds.centerY - Math.sin(angle) * gradientLength / 2;
-      const x2 = bounds.centerX + Math.cos(angle) * gradientLength / 2;
-      const y2 = bounds.centerY + Math.sin(angle) * gradientLength / 2;
-      
-      const fillGradient = ctx.createLinearGradient(x1, y1, x2, y2);
-      fillGradient.addColorStop(0, params.fillGradientStart);
-      fillGradient.addColorStop(1, params.fillGradientEnd);
-      
-      ctx.fillStyle = fillGradient;
-    } else {
-      ctx.fillStyle = params.fillColor;
-    }
-    
-    drawMinimalPath(ctx, linePath, refinement);
-    ctx.fill();
-    ctx.restore();
-  }
-
-  // Render the minimal line with universal stroke
-  renderMinimalLine(ctx, linePath, lineColors, lineStyleNum, strokeWeight, strokeSpacing, refinement, params);
-
+  // Helper function definitions first
   function generateMinimalLine(centerX: number, centerY: number, radius: number, precision: number, simplicity: number, phi: number, harmony: number, time: number, breaks: number) {
     const points = [];
     
@@ -507,6 +423,91 @@ function drawVisualization(
     
     return points[0];
   }
+
+  // Parameter compatibility layer
+  if (params.customParameters) {
+    params.fillColor = params.fillColor || params.customParameters.fillColor;
+    params.strokeColor = params.strokeColor || params.customParameters.strokeColor;
+    params.backgroundColor = params.backgroundColor || params.customParameters.backgroundColor;
+    params.textColor = params.textColor || params.customParameters.textColor;
+    
+    Object.keys(params.customParameters).forEach(key => {
+      if (params[key] === undefined) {
+        params[key] = params.customParameters[key];
+      }
+    });
+  }
+
+  // Apply universal background
+  applyUniversalBackground(ctx, width, height, params);
+
+  // Extract parameters
+  const centerX = width / 2;
+  const centerY = height / 2;
+  const frequency = params.frequency || 0.3;
+  const amplitude = params.amplitude || 80;
+  const lineStyleNum = Math.round(params.lineStyle || 0);
+  const precision = params.precision || 0.95;
+  const simplicity = params.simplicity || 0.9;
+  const refinement = params.refinement || 0.8;
+  const strokeWeight = params.strokeWeight || 1.5;
+  const strokeSpacing = params.strokeSpacing || 6;
+  const breathingSpace = params.breathingSpace || 0.03;
+  const lineBreaks = params.lineBreaks || 0.05;
+  const colorPhilosophyNum = Math.round(params.colorPhilosophy || 0);
+  const accentHue = params.accentHue || 200;
+  const sophistication = params.sophistication || 0.6;
+  const goldenRatio = params.goldenRatio || 1.618;
+  const proportionalHarmony = params.proportionalHarmony || 0.9;
+
+  // Minimalist scaling with generous whitespace
+  const baseScale = Math.min(width, height) / 400; // Extra whitespace for elegance
+  const scaledAmplitude = amplitude * baseScale;
+  
+  // Subtle breathing animation
+  const breathingPhase = time * frequency * 0.5;
+  const breathingPulse = 1 + Math.sin(breathingPhase) * breathingSpace;
+
+  // Generate minimal line path
+  const linePath = generateMinimalLine(
+    centerX, centerY, scaledAmplitude * breathingPulse,
+    precision, simplicity, goldenRatio, proportionalHarmony, time, lineBreaks
+  );
+
+  // Sophisticated color system - now using universal stroke parameters
+  const lineColors = generateMinimalistColors(colorPhilosophyNum, accentHue, sophistication, params);
+
+  // Apply universal fill if not none
+  if (params.fillType !== 'none') {
+    ctx.save();
+    ctx.globalAlpha = params.fillOpacity || 0.8;
+    
+    if (params.fillType === 'gradient') {
+      const bounds = getBounds(linePath);
+      const angle = (params.fillGradientDirection || 90) * Math.PI / 180;
+      const gradientLength = Math.sqrt(bounds.width * bounds.width + bounds.height * bounds.height);
+      
+      const x1 = bounds.centerX - Math.cos(angle) * gradientLength / 2;
+      const y1 = bounds.centerY - Math.sin(angle) * gradientLength / 2;
+      const x2 = bounds.centerX + Math.cos(angle) * gradientLength / 2;
+      const y2 = bounds.centerY + Math.sin(angle) * gradientLength / 2;
+      
+      const fillGradient = ctx.createLinearGradient(x1, y1, x2, y2);
+      fillGradient.addColorStop(0, params.fillGradientStart);
+      fillGradient.addColorStop(1, params.fillGradientEnd);
+      
+      ctx.fillStyle = fillGradient;
+    } else {
+      ctx.fillStyle = params.fillColor;
+    }
+    
+    drawMinimalPath(ctx, linePath, refinement);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // Render the minimal line with universal stroke
+  renderMinimalLine(ctx, linePath, lineColors, lineStyleNum, strokeWeight, strokeSpacing, refinement, params);
 }
 
 export const metadata: PresetMetadata = {
