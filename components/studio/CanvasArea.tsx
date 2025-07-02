@@ -147,6 +147,12 @@ export function CanvasArea() {
     const rect = canvas.getBoundingClientRect()
     const logoSize = 600
     
+    // Calculate available canvas space accounting for code editor
+    const availableWidth = codeEditorCollapsed ? rect.width : rect.width - codeEditorWidth
+    const availableHeight = rect.height
+    const effectiveCenterX = codeEditorCollapsed ? availableWidth / 2 : codeEditorWidth + availableWidth / 2
+    const effectiveCenterY = availableHeight / 2
+    
     // Calculate bounding box of all logos
     let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity
     
@@ -161,12 +167,12 @@ export function CanvasArea() {
     const centerX = (minX + maxX) / 2
     const centerY = (minY + maxY) / 2
     
-    // Center all logos in view without changing zoom
+    // Center all logos in available view space without changing zoom
     setCanvasOffset({
-      x: (rect.width / 2) / zoom - centerX,
-      y: (rect.height / 2) / zoom - centerY
+      x: effectiveCenterX / zoom - centerX,
+      y: effectiveCenterY / zoom - centerY
     })
-  }, [zoom, logos])
+  }, [zoom, logos, codeEditorCollapsed, codeEditorWidth])
 
   // Fit view to show all logos
   const fitToView = useCallback(() => {
@@ -175,6 +181,12 @@ export function CanvasArea() {
 
     const rect = canvas.getBoundingClientRect()
     const logoSize = 600
+    
+    // Calculate available canvas space accounting for code editor
+    const availableWidth = codeEditorCollapsed ? rect.width : rect.width - codeEditorWidth
+    const availableHeight = rect.height
+    const effectiveCenterX = codeEditorCollapsed ? availableWidth / 2 : codeEditorWidth + availableWidth / 2
+    const effectiveCenterY = availableHeight / 2
     
     // Calculate bounding box of all logos
     let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity
@@ -192,22 +204,22 @@ export function CanvasArea() {
     const centerX = (minX + maxX) / 2
     const centerY = (minY + maxY) / 2
     
-    // Calculate zoom to fit all logos at 70% coverage
+    // Calculate zoom to fit all logos at 70% coverage using available space
     const targetCoverage = 0.7
-    const zoomX = (rect.width * targetCoverage) / contentWidth
-    const zoomY = (rect.height * targetCoverage) / contentHeight
+    const zoomX = (availableWidth * targetCoverage) / contentWidth
+    const zoomY = (availableHeight * targetCoverage) / contentHeight
     const idealZoom = Math.min(zoomX, zoomY)
     
     const clampedZoom = Math.max(0.2, Math.min(idealZoom, 1.5))
     
     setZoom(clampedZoom)
     
-    // Center all logos in view
+    // Center all logos in available view space
     setCanvasOffset({
-      x: (rect.width / 2) / clampedZoom - centerX,
-      y: (rect.height / 2) / clampedZoom - centerY
+      x: effectiveCenterX / clampedZoom - centerX,
+      y: effectiveCenterY / clampedZoom - centerY
     })
-  }, [setZoom, logos])
+  }, [setZoom, logos, codeEditorCollapsed, codeEditorWidth])
 
   // Center view on initial load with appropriate zoom (max 100%)
   useEffect(() => {
@@ -241,10 +253,16 @@ export function CanvasArea() {
     const centerX = (minX + maxX) / 2
     const centerY = (minY + maxY) / 2
 
+    // Calculate available canvas space accounting for code editor
+    const availableWidth = codeEditorCollapsed ? rect.width : rect.width - codeEditorWidth
+    const availableHeight = rect.height
+    const effectiveCenterX = codeEditorCollapsed ? availableWidth / 2 : codeEditorWidth + availableWidth / 2
+    const effectiveCenterY = availableHeight / 2
+
     // IMMEDIATE: Set rough center position to eliminate jump
     const roughCenterOffset = {
-      x: (rect.width / 2) / zoom - centerX,
-      y: (rect.height / 2) / zoom - centerY
+      x: effectiveCenterX / zoom - centerX,
+      y: effectiveCenterY / zoom - centerY
     }
     setCanvasOffset(roughCenterOffset)
     
@@ -254,26 +272,26 @@ export function CanvasArea() {
     
     // DELAYED: Fine-tune with optimal zoom and precise centering
     const timer = setTimeout(() => {
-      // Calculate zoom to fit all logos at 70% coverage, but don't exceed 100%
+      // Calculate zoom to fit all logos at 70% coverage using available space, but don't exceed 100%
       const targetCoverage = 0.7
-      const zoomX = (rect.width * targetCoverage) / contentWidth
-      const zoomY = (rect.height * targetCoverage) / contentHeight
+      const zoomX = (availableWidth * targetCoverage) / contentWidth
+      const zoomY = (availableHeight * targetCoverage) / contentHeight
       const idealZoom = Math.min(zoomX, zoomY, 1) // Cap at 100%
       
       const clampedZoom = Math.max(0.2, Math.min(idealZoom, 1))
       
       setZoom(clampedZoom)
       
-      // Fine-tune center position with new zoom
+      // Fine-tune center position with new zoom using available space
       const finalCenterOffset = {
-        x: (rect.width / 2) / clampedZoom - centerX,
-        y: (rect.height / 2) / clampedZoom - centerY
+        x: effectiveCenterX / clampedZoom - centerX,
+        y: effectiveCenterY / clampedZoom - centerY
       }
       setCanvasOffset(finalCenterOffset)
     }, 200) // Slightly longer delay to ensure template is loaded
     
     return () => clearTimeout(timer)
-  }, [logos, setZoom]) // Depend on logos so it re-runs when template loads
+  }, [logos, setZoom, codeEditorCollapsed, codeEditorWidth]) // Depend on code editor state too
 
   const drawInfiniteCanvas = useCallback(() => {
     const canvas = canvasRef.current

@@ -1,10 +1,31 @@
 import type { ParameterDefinition, PresetMetadata } from './types';
 
-// Hand Sketch - Organic, imperfect hand-drawn aesthetic for creative/artistic brands
-export const parameters: Record<string, ParameterDefinition> = {
+// Hand Sketch
+const PARAMETERS = {
+  // Universal Background Controls
+  backgroundColor: { type: 'color', default: "#fcfcfc", label: 'Background Color', category: 'Background' },
+  backgroundType: { type: 'select', options: [{"value":"transparent","label":"Transparent"},{"value":"solid","label":"Solid Color"},{"value":"gradient","label":"Gradient"}], default: "gradient", label: 'Background Type', category: 'Background' },
+  backgroundGradientStart: { type: 'color', default: "#fefefe", label: 'Gradient Start', category: 'Background', showIf: (params) => params.backgroundType === 'gradient' },
+  backgroundGradientEnd: { type: 'color', default: "#fafafa", label: 'Gradient End', category: 'Background', showIf: (params) => params.backgroundType === 'gradient' },
+  backgroundGradientDirection: { type: 'slider', min: 0, max: 360, step: 15, default: 135, label: 'Gradient Direction', category: 'Background', showIf: (params) => params.backgroundType === 'gradient' },
+  
+  // Universal Fill Controls
+  fillType: { type: 'select', options: [{"value":"none","label":"None"},{"value":"solid","label":"Solid Color"},{"value":"gradient","label":"Gradient"}], default: "none", label: 'Fill Type', category: 'Fill' },
+  fillColor: { type: 'color', default: "#E0E0E0", label: 'Fill Color', category: 'Fill', showIf: (params) => params.fillType === 'solid' },
+  fillGradientStart: { type: 'color', default: "#F0F0F0", label: 'Gradient Start', category: 'Fill', showIf: (params) => params.fillType === 'gradient' },
+  fillGradientEnd: { type: 'color', default: "#D0D0D0", label: 'Gradient End', category: 'Fill', showIf: (params) => params.fillType === 'gradient' },
+  fillGradientDirection: { type: 'slider', min: 0, max: 360, step: 15, default: 90, label: 'Gradient Direction', category: 'Fill', showIf: (params) => params.fillType === 'gradient' },
+  fillOpacity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.2, label: 'Fill Opacity', category: 'Fill', showIf: (params) => params.fillType !== 'none' },
+  
+  // Universal Stroke Controls
+  strokeType: { type: 'select', options: [{"value":"none","label":"None"},{"value":"solid","label":"Solid"},{"value":"dashed","label":"Dashed"},{"value":"dotted","label":"Dotted"}], default: "solid", label: 'Stroke Type', category: 'Stroke' },
+  strokeColor: { type: 'color', default: "#4169E1", label: 'Stroke Color', category: 'Stroke', showIf: (params) => params.strokeType !== 'none' },
+  strokeWidth: { type: 'slider', min: 0, max: 10, step: 0.5, default: 1.5, label: 'Stroke Width', category: 'Stroke', showIf: (params) => params.strokeType !== 'none' },
+  strokeOpacity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.8, label: 'Stroke Opacity', category: 'Stroke', showIf: (params) => params.strokeType !== 'none' },
+  
   // Core sketch properties
-  frequency: { type: 'slider', min: 0.2, max: 1.5, step: 0.1, default: 0.8, label: 'Drawing Energy' },
-  amplitude: { type: 'slider', min: 60, max: 180, step: 5, default: 110, label: 'Sketch Size' },
+  frequency: { type: 'slider', min: 0.2, max: 1.5, step: 0.1, default: 0.8, label: 'Drawing Energy', category: 'Sketch' },
+  amplitude: { type: 'slider', min: 60, max: 180, step: 5, default: 110, label: 'Sketch Size', category: 'Sketch' },
   
   // Hand-drawn characteristics
   sketchStyle: {
@@ -13,35 +34,64 @@ export const parameters: Record<string, ParameterDefinition> = {
     max: 4,
     step: 1,
     default: 1,
-    label: 'Sketch Style (0=Pencil, 1=Pen, 2=Charcoal, 3=Marker, 4=Brush)'
+    label: 'Sketch Style (0=Pencil, 1=Pen, 2=Charcoal, 3=Marker, 4=Brush)',
+    category: 'Medium'
   },
   
   // Human imperfection controls
-  handTremor: { type: 'slider', min: 0.05, max: 0.4, step: 0.02, default: 0.15, label: 'Hand Tremor' },
-  lineWobble: { type: 'slider', min: 0.1, max: 0.8, step: 0.05, default: 0.3, label: 'Line Wobble' },
-  pressureVariation: { type: 'slider', min: 0.2, max: 1, step: 0.05, default: 0.6, label: 'Pressure Variation' },
+  handTremor: { type: 'slider', min: 0.05, max: 0.4, step: 0.02, default: 0.15, label: 'Hand Tremor', category: 'Character' },
+  lineWobble: { type: 'slider', min: 0.1, max: 0.8, step: 0.05, default: 0.3, label: 'Line Wobble', category: 'Character' },
+  pressureVariation: { type: 'slider', min: 0.2, max: 1, step: 0.05, default: 0.6, label: 'Pressure Variation', category: 'Character' },
   
   // Artistic expression
-  gestureSpeed: { type: 'slider', min: 0.3, max: 2, step: 0.1, default: 1.0, label: 'Drawing Speed' },
-  artisticFlow: { type: 'slider', min: 0.4, max: 1, step: 0.05, default: 0.7, label: 'Artistic Flow' },
-  spontaneity: { type: 'slider', min: 0.2, max: 1, step: 0.05, default: 0.5, label: 'Spontaneous Marks' },
+  gestureSpeed: { type: 'slider', min: 0.3, max: 2, step: 0.1, default: 1.0, label: 'Drawing Speed', category: 'Style' },
+  artisticFlow: { type: 'slider', min: 0.4, max: 1, step: 0.05, default: 0.7, label: 'Artistic Flow', category: 'Style' },
+  spontaneity: { type: 'slider', min: 0.2, max: 1, step: 0.05, default: 0.5, label: 'Spontaneous Marks', category: 'Style' },
   
   // Sketch construction
-  constructionLines: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.3, label: 'Construction Lines' },
-  multipleStrokes: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.4, label: 'Multiple Stroke Passes' },
-  crossHatching: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.2, label: 'Cross Hatching' },
+  constructionLines: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.3, label: 'Construction Lines', category: 'Details' },
+  multipleStrokes: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.4, label: 'Multiple Stroke Passes', category: 'Details' },
+  crossHatching: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.2, label: 'Cross Hatching', category: 'Details' },
   
   // Paper and texture
-  paperTexture: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.3, label: 'Paper Texture' },
-  inkBleed: { type: 'slider', min: 0, max: 0.5, step: 0.02, default: 0.1, label: 'Ink Bleed' },
+  paperTexture: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.3, label: 'Paper Texture', category: 'Texture' },
+  inkBleed: { type: 'slider', min: 0, max: 0.5, step: 0.02, default: 0.1, label: 'Ink Bleed', category: 'Texture' },
   
   // Color and medium
-  mediumHue: { type: 'slider', min: 0, max: 360, step: 15, default: 220, label: 'Medium Color' },
-  mediumSaturation: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.3, label: 'Color Intensity' },
-  mediumOpacity: { type: 'slider', min: 0.4, max: 1, step: 0.05, default: 0.8, label: 'Medium Opacity' }
+  mediumHue: { type: 'slider', min: 0, max: 360, step: 15, default: 220, label: 'Medium Color', category: 'Medium' },
+  mediumSaturation: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.3, label: 'Color Intensity', category: 'Medium' },
+  mediumOpacity: { type: 'slider', min: 0.4, max: 1, step: 0.05, default: 0.8, label: 'Medium Opacity', category: 'Medium' }
 };
 
-export function draw(
+function applyUniversalBackground(ctx: CanvasRenderingContext2D, width: number, height: number, params: any) {
+  if (params.backgroundType === 'transparent') {
+    ctx.clearRect(0, 0, width, height);
+  } else if (params.backgroundType === 'solid') {
+    ctx.fillStyle = params.backgroundColor;
+    ctx.fillRect(0, 0, width, height);
+  } else if (params.backgroundType === 'gradient') {
+    const angle = (params.backgroundGradientDirection || 45) * Math.PI / 180;
+    const dx = Math.cos(angle);
+    const dy = Math.sin(angle);
+    const length = Math.sqrt(width * width + height * height);
+    const centerX = width / 2;
+    const centerY = height / 2;
+    
+    const gradient = ctx.createLinearGradient(
+      centerX - dx * length / 2,
+      centerY - dy * length / 2,
+      centerX + dx * length / 2,
+      centerY + dy * length / 2
+    );
+    
+    gradient.addColorStop(0, params.backgroundGradientStart);
+    gradient.addColorStop(1, params.backgroundGradientEnd);
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, width, height);
+  }
+}
+
+function drawVisualization(
   ctx: CanvasRenderingContext2D,
   width: number,
   height: number,
@@ -49,13 +99,22 @@ export function draw(
   _generator: any,
   time: number
 ) {
-  // Paper background with subtle texture
-  const bgGradient = ctx.createLinearGradient(0, 0, width, height);
-  bgGradient.addColorStop(0, '#fefefe');
-  bgGradient.addColorStop(0.5, '#fcfcfc');
-  bgGradient.addColorStop(1, '#fafafa');
-  ctx.fillStyle = bgGradient;
-  ctx.fillRect(0, 0, width, height);
+  // Parameter compatibility layer
+  if (params.customParameters) {
+    params.fillColor = params.fillColor || params.customParameters.fillColor;
+    params.strokeColor = params.strokeColor || params.customParameters.strokeColor;
+    params.backgroundColor = params.backgroundColor || params.customParameters.backgroundColor;
+    params.textColor = params.textColor || params.customParameters.textColor;
+    
+    Object.keys(params.customParameters).forEach(key => {
+      if (params[key] === undefined) {
+        params[key] = params.customParameters[key];
+      }
+    });
+  }
+
+  // Apply universal background
+  applyUniversalBackground(ctx, width, height, params);
 
   // Add paper texture
   if (params.paperTexture > 0.1) {
@@ -96,18 +155,49 @@ export function draw(
     handTremor, lineWobble, artisticFlow, drawingPhase, spontaneity
   );
 
-  // Medium color system
-  const mediumColors = generateMediumColors(mediumHue, mediumSaturation, mediumOpacity);
+  // Medium color system - use universal stroke color if available
+  const mediumColors = generateMediumColors(mediumHue, mediumSaturation, mediumOpacity, params.strokeColor);
 
   // Draw construction lines first (if enabled)
   if (constructionLines > 0.1) {
     renderConstructionLines(ctx, sketchPath, mediumColors, constructionLines, handTremor);
   }
 
+  // Apply universal fill if enabled
+  if (params.fillType !== 'none' && sketchPath.length > 0) {
+    ctx.save();
+    ctx.globalAlpha = params.fillOpacity || 0.2;
+    
+    if (params.fillType === 'solid') {
+      ctx.fillStyle = params.fillColor;
+    } else if (params.fillType === 'gradient') {
+      const angle = (params.fillGradientDirection || 90) * Math.PI / 180;
+      const dx = Math.cos(angle);
+      const dy = Math.sin(angle);
+      const bounds = getBounds(sketchPath);
+      const size = Math.max(bounds.maxX - bounds.minX, bounds.maxY - bounds.minY);
+      
+      const gradient = ctx.createLinearGradient(
+        bounds.centerX - dx * size / 2,
+        bounds.centerY - dy * size / 2,
+        bounds.centerX + dx * size / 2,
+        bounds.centerY + dy * size / 2
+      );
+      
+      gradient.addColorStop(0, params.fillGradientStart);
+      gradient.addColorStop(1, params.fillGradientEnd);
+      ctx.fillStyle = gradient;
+    }
+    
+    drawHandDrawnPath(ctx, sketchPath, 0);
+    ctx.fill();
+    ctx.restore();
+  }
+
   // Draw multiple stroke passes for authentic feel
   const strokePasses = Math.floor(1 + multipleStrokes * 3);
   for (let pass = 0; pass < strokePasses; pass++) {
-    renderSketchStroke(ctx, sketchPath, mediumColors, sketchStyleNum, pressureVariation, lineWobble, handTremor, pass, inkBleed);
+    renderSketchStroke(ctx, sketchPath, mediumColors, sketchStyleNum, pressureVariation, lineWobble, handTremor, pass, inkBleed, params);
   }
 
   // Add cross hatching for shading (if enabled)
@@ -173,12 +263,15 @@ export function draw(
     return points;
   }
 
-  function generateMediumColors(hue: number, saturation: number, opacity: number) {
+  function generateMediumColors(hue: number, saturation: number, opacity: number, strokeColor?: string) {
     const sat = saturation * 100;
     const lightBase = 20 + saturation * 40; // Darker for drawing media
     
+    // Use universal stroke color if available
+    const primaryColor = strokeColor || `hsla(${hue}, ${sat}%, ${lightBase}%, ${opacity})`;
+    
     return {
-      primary: `hsla(${hue}, ${sat}%, ${lightBase}%, ${opacity})`,
+      primary: primaryColor,
       light: `hsla(${hue}, ${sat * 0.7}%, ${lightBase + 30}%, ${opacity * 0.6})`,
       dark: `hsla(${hue}, ${sat * 1.2}%, ${lightBase - 10}%, ${opacity})`,
       construction: `hsla(${hue}, ${sat * 0.5}%, ${lightBase + 40}%, ${opacity * 0.3})`
@@ -211,37 +304,48 @@ export function draw(
     ctx.restore();
   }
 
-  function renderSketchStroke(ctx: CanvasRenderingContext2D, points: any[], colors: any, style: number, pressureVar: number, wobble: number, tremor: number, pass: number, bleed: number) {
+  function renderSketchStroke(ctx: CanvasRenderingContext2D, points: any[], colors: any, style: number, pressureVar: number, wobble: number, tremor: number, pass: number, bleed: number, params: any) {
     ctx.save();
     
     // Adjust opacity for multiple passes
-    ctx.globalAlpha = pass === 0 ? 1 : 0.3;
+    const baseOpacity = params.strokeOpacity || 0.8;
+    ctx.globalAlpha = pass === 0 ? baseOpacity : baseOpacity * 0.3;
+    
+    // Apply universal stroke settings
+    if (params.strokeType === 'dashed') {
+      ctx.setLineDash([5, 3]);
+    } else if (params.strokeType === 'dotted') {
+      ctx.setLineDash([2, 2]);
+    }
     
     switch (style) {
       case 0: // Pencil
-        renderPencilStroke(ctx, points, colors, pressureVar, wobble, tremor, pass);
+        renderPencilStroke(ctx, points, colors, pressureVar, wobble, tremor, pass, params);
         break;
       case 1: // Pen
-        renderPenStroke(ctx, points, colors, pressureVar, tremor, pass, bleed);
+        renderPenStroke(ctx, points, colors, pressureVar, tremor, pass, bleed, params);
         break;
       case 2: // Charcoal
-        renderCharcoalStroke(ctx, points, colors, pressureVar, wobble, pass);
+        renderCharcoalStroke(ctx, points, colors, pressureVar, wobble, pass, params);
         break;
       case 3: // Marker
-        renderMarkerStroke(ctx, points, colors, pressureVar, pass, bleed);
+        renderMarkerStroke(ctx, points, colors, pressureVar, pass, bleed, params);
         break;
       case 4: // Brush
-        renderBrushStroke(ctx, points, colors, pressureVar, wobble, pass);
+        renderBrushStroke(ctx, points, colors, pressureVar, wobble, pass, params);
         break;
     }
     
+    ctx.setLineDash([]);
     ctx.restore();
   }
 
-  function renderPencilStroke(ctx: CanvasRenderingContext2D, points: any[], colors: any, pressureVar: number, wobble: number, tremor: number, pass: number) {
+  function renderPencilStroke(ctx: CanvasRenderingContext2D, points: any[], colors: any, pressureVar: number, wobble: number, tremor: number, pass: number, params: any) {
     ctx.strokeStyle = colors.primary;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
+    
+    const baseWidth = params.strokeWidth || 1.5;
     
     // Variable pencil pressure
     for (let i = 0; i < points.length; i++) {
@@ -249,10 +353,10 @@ export function draw(
       const next = points[(i + 1) % points.length];
       
       const pressure = current.pressure * pressureVar + (1 - pressureVar) * 0.5;
-      const lineWidth = 0.5 + pressure * 2 + pass * 0.3;
+      const lineWidth = baseWidth * 0.3 + pressure * baseWidth * 0.7 + pass * 0.3;
       
       ctx.lineWidth = lineWidth;
-      ctx.globalAlpha = 0.7 + pressure * 0.3;
+      ctx.globalAlpha = (0.7 + pressure * 0.3) * (params.strokeOpacity || 0.8);
       
       ctx.beginPath();
       ctx.moveTo(current.x, current.y);
@@ -261,9 +365,9 @@ export function draw(
     }
   }
 
-  function renderPenStroke(ctx: CanvasRenderingContext2D, points: any[], colors: any, pressureVar: number, tremor: number, pass: number, bleed: number) {
+  function renderPenStroke(ctx: CanvasRenderingContext2D, points: any[], colors: any, pressureVar: number, tremor: number, pass: number, bleed: number, params: any) {
     ctx.strokeStyle = colors.dark;
-    ctx.lineWidth = 1.5 + pass * 0.2;
+    ctx.lineWidth = (params.strokeWidth || 1.5) + pass * 0.2;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
     
@@ -276,25 +380,27 @@ export function draw(
       ctx.save();
       ctx.globalAlpha = bleed * 0.3;
       ctx.filter = 'blur(1px)';
-      ctx.lineWidth = (1.5 + pass * 0.2) * 1.5;
+      ctx.lineWidth = ((params.strokeWidth || 1.5) + pass * 0.2) * 1.5;
       drawHandDrawnPath(ctx, points, tremor * 0.5);
       ctx.stroke();
       ctx.restore();
     }
   }
 
-  function renderCharcoalStroke(ctx: CanvasRenderingContext2D, points: any[], colors: any, pressureVar: number, wobble: number, pass: number) {
+  function renderCharcoalStroke(ctx: CanvasRenderingContext2D, points: any[], colors: any, pressureVar: number, wobble: number, pass: number, params: any) {
+    const baseWidth = params.strokeWidth || 1.5;
+    
     // Charcoal has texture and variation
     for (let i = 0; i < points.length; i++) {
       const current = points[i];
       const next = points[(i + 1) % points.length];
       
       const pressure = current.pressure * pressureVar + (1 - pressureVar) * 0.3;
-      const charcoalWidth = 2 + pressure * 4 + pass * 0.5;
+      const charcoalWidth = baseWidth + pressure * baseWidth * 2 + pass * 0.5;
       
       ctx.strokeStyle = colors.primary;
       ctx.lineWidth = charcoalWidth;
-      ctx.globalAlpha = 0.4 + pressure * 0.4;
+      ctx.globalAlpha = (0.4 + pressure * 0.4) * (params.strokeOpacity || 0.8);
       
       // Add charcoal texture
       ctx.filter = 'blur(0.5px)';
@@ -308,7 +414,7 @@ export function draw(
       if (Math.random() < pressure * 0.3) {
         ctx.filter = 'none';
         ctx.fillStyle = colors.dark;
-        ctx.globalAlpha = pressure * 0.5;
+        ctx.globalAlpha = pressure * 0.5 * (params.strokeOpacity || 0.8);
         ctx.beginPath();
         ctx.arc(current.x + (Math.random() - 0.5) * 3, current.y + (Math.random() - 0.5) * 3, Math.random() * 1.5, 0, Math.PI * 2);
         ctx.fill();
@@ -318,9 +424,9 @@ export function draw(
     ctx.filter = 'none';
   }
 
-  function renderMarkerStroke(ctx: CanvasRenderingContext2D, points: any[], colors: any, pressureVar: number, pass: number, bleed: number) {
+  function renderMarkerStroke(ctx: CanvasRenderingContext2D, points: any[], colors: any, pressureVar: number, pass: number, bleed: number, params: any) {
     ctx.strokeStyle = colors.primary;
-    ctx.lineWidth = 3 + pass * 0.5;
+    ctx.lineWidth = (params.strokeWidth || 1.5) * 2 + pass * 0.5;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
     
@@ -330,14 +436,16 @@ export function draw(
     
     // Marker bleed and transparency layers
     ctx.save();
-    ctx.globalAlpha = 0.2;
-    ctx.lineWidth = (3 + pass * 0.5) * 1.3;
+    ctx.globalAlpha = 0.2 * (params.strokeOpacity || 0.8);
+    ctx.lineWidth = ((params.strokeWidth || 1.5) * 2 + pass * 0.5) * 1.3;
     drawHandDrawnPath(ctx, points, 0.2);
     ctx.stroke();
     ctx.restore();
   }
 
-  function renderBrushStroke(ctx: CanvasRenderingContext2D, points: any[], colors: any, pressureVar: number, wobble: number, pass: number) {
+  function renderBrushStroke(ctx: CanvasRenderingContext2D, points: any[], colors: any, pressureVar: number, wobble: number, pass: number, params: any) {
+    const baseWidth = params.strokeWidth || 1.5;
+    
     // Brush has very variable width based on pressure
     for (let i = 0; i < points.length; i++) {
       const current = points[i];
@@ -347,11 +455,11 @@ export function draw(
       const speed = current.speed || 0.5;
       
       // Brush width varies dramatically with pressure and speed
-      const brushWidth = 1 + pressure * 6 - speed * 2 + pass * 0.3;
+      const brushWidth = baseWidth * 0.5 + pressure * baseWidth * 3 - speed * baseWidth + pass * 0.3;
       
       ctx.strokeStyle = colors.primary;
       ctx.lineWidth = Math.max(0.5, brushWidth);
-      ctx.globalAlpha = 0.6 + pressure * 0.4;
+      ctx.globalAlpha = (0.6 + pressure * 0.4) * (params.strokeOpacity || 0.8);
       ctx.lineCap = 'round';
       
       ctx.beginPath();
@@ -436,6 +544,21 @@ export const metadata: PresetMetadata = {
   description: "Organic hand-drawn aesthetic with tremor, pressure variation, and artistic imperfection",
   defaultParams: {
     seed: "hand-sketch-artistic",
+    backgroundColor: "#fcfcfc",
+    backgroundType: "gradient",
+    backgroundGradientStart: "#fefefe",
+    backgroundGradientEnd: "#fafafa",
+    backgroundGradientDirection: 135,
+    fillType: "none",
+    fillColor: "#E0E0E0",
+    fillGradientStart: "#F0F0F0",
+    fillGradientEnd: "#D0D0D0",
+    fillGradientDirection: 90,
+    fillOpacity: 0.2,
+    strokeType: "solid",
+    strokeColor: "#4169E1",
+    strokeWidth: 1.5,
+    strokeOpacity: 0.8,
     frequency: 0.8,
     amplitude: 110,
     sketchStyle: 1,
@@ -455,3 +578,17 @@ export const metadata: PresetMetadata = {
     mediumOpacity: 0.8
   }
 };
+
+export const id = 'hand-sketch';
+export const name = "✏️ Hand Sketch";
+export const description = "Organic hand-drawn aesthetic with tremor, pressure variation, and artistic imperfection";
+export const defaultParams = metadata.defaultParams;
+export const parameters = PARAMETERS;
+export const draw = drawVisualization;
+
+export const code = `// Hand Sketch
+const PARAMETERS = ${JSON.stringify(PARAMETERS, null, 2)};
+
+${applyUniversalBackground.toString()}
+
+${drawVisualization.toString()}`;

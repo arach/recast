@@ -1,7 +1,28 @@
 import type { ParameterDefinition, PresetMetadata } from './types';
 
 // VOLT Electric Brand - High-energy borders with electric flow
-export const parameters: Record<string, ParameterDefinition> = {
+const PARAMETERS = {
+  // Universal Background Controls
+  backgroundColor: { type: 'color', default: "#0f0f23", label: 'Background Color', category: 'Background' },
+  backgroundType: { type: 'select', options: [{"value":"transparent","label":"Transparent"},{"value":"solid","label":"Solid Color"},{"value":"gradient","label":"Gradient"}], default: "gradient", label: 'Background Type', category: 'Background' },
+  backgroundGradientStart: { type: 'color', default: "#0f0f23", label: 'Gradient Start', category: 'Background', showIf: (params)=>params.backgroundType === 'gradient' },
+  backgroundGradientEnd: { type: 'color', default: "#16213e", label: 'Gradient End', category: 'Background', showIf: (params)=>params.backgroundType === 'gradient' },
+  backgroundGradientDirection: { type: 'slider', min: 0, max: 360, step: 15, default: 90, label: 'Gradient Direction', category: 'Background', showIf: (params)=>params.backgroundType === 'gradient' },
+  
+  // Universal Fill Controls
+  fillType: { type: 'select', options: [{"value":"none","label":"None"},{"value":"solid","label":"Solid Color"},{"value":"gradient","label":"Gradient"}], default: "gradient", label: 'Fill Type', category: 'Fill' },
+  fillColor: { type: 'color', default: "#ffd700", label: 'Fill Color', category: 'Fill', showIf: (params)=>params.fillType === 'solid' },
+  fillGradientStart: { type: 'color', default: "#ffeb3b", label: 'Gradient Start', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
+  fillGradientEnd: { type: 'color', default: "#ff9800", label: 'Gradient End', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
+  fillGradientDirection: { type: 'slider', min: 0, max: 360, step: 15, default: 45, label: 'Gradient Direction', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
+  fillOpacity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.6, label: 'Fill Opacity', category: 'Fill', showIf: (params)=>params.fillType !== 'none' },
+  
+  // Universal Stroke Controls
+  strokeType: { type: 'select', options: [{"value":"none","label":"None"},{"value":"solid","label":"Solid"},{"value":"dashed","label":"Dashed"},{"value":"dotted","label":"Dotted"}], default: "solid", label: 'Stroke Type', category: 'Stroke' },
+  strokeColor: { type: 'color', default: "#ffd700", label: 'Stroke Color', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
+  strokeWidth: { type: 'slider', min: 0, max: 10, step: 0.5, default: 8, label: 'Stroke Width', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
+  strokeOpacity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 1, label: 'Stroke Opacity', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
+  
   // Core VOLT energy - high frequency electric pulse
   frequency: { type: 'slider', min: 1.8, max: 2.4, step: 0.1, default: 2.1, label: 'Electric Frequency' },
   amplitude: { type: 'slider', min: 140, max: 180, step: 5, default: 160, label: 'Energy Scale' },
@@ -31,7 +52,29 @@ export const parameters: Record<string, ParameterDefinition> = {
   arcDischarge: { type: 'slider', min: 0.4, max: 0.8, step: 0.05, default: 0.6, label: 'Arc Discharge' }
 };
 
-export function draw(
+function applyUniversalBackground(ctx: CanvasRenderingContext2D, width: number, height: number, params: Record<string, any>) {
+  const backgroundType = params.backgroundType || 'gradient';
+  
+  if (backgroundType === 'transparent') {
+    ctx.clearRect(0, 0, width, height);
+  } else if (backgroundType === 'solid') {
+    ctx.fillStyle = params.backgroundColor || '#0f0f23';
+    ctx.fillRect(0, 0, width, height);
+  } else if (backgroundType === 'gradient') {
+    // For VOLT, default to radial gradient
+    const bgGradient = ctx.createRadialGradient(
+      width * 0.5, height * 0.5, 0,
+      width * 0.5, height * 0.5, Math.max(width, height) * 0.8
+    );
+    bgGradient.addColorStop(0, params.backgroundGradientStart || '#0f0f23');
+    bgGradient.addColorStop(0.6, '#1a1a2e');
+    bgGradient.addColorStop(1, params.backgroundGradientEnd || '#16213e');
+    ctx.fillStyle = bgGradient;
+    ctx.fillRect(0, 0, width, height);
+  }
+}
+
+function drawVisualization(
   ctx: CanvasRenderingContext2D,
   width: number,
   height: number,
@@ -39,16 +82,22 @@ export function draw(
   _generator: any,
   time: number
 ) {
-  // VOLT electric background - dark energy field
-  const bgGradient = ctx.createRadialGradient(
-    width * 0.5, height * 0.5, 0,
-    width * 0.5, height * 0.5, Math.max(width, height) * 0.8
-  );
-  bgGradient.addColorStop(0, '#0f0f23');
-  bgGradient.addColorStop(0.6, '#1a1a2e');
-  bgGradient.addColorStop(1, '#16213e');
-  ctx.fillStyle = bgGradient;
-  ctx.fillRect(0, 0, width, height);
+  // Parameter compatibility layer
+  if (params.customParameters) {
+    params.fillColor = params.fillColor || params.customParameters.fillColor;
+    params.strokeColor = params.strokeColor || params.customParameters.strokeColor;
+    params.backgroundColor = params.backgroundColor || params.customParameters.backgroundColor;
+    params.textColor = params.textColor || params.customParameters.textColor;
+    
+    Object.keys(params.customParameters).forEach(key => {
+      if (params[key] === undefined) {
+        params[key] = params.customParameters[key];
+      }
+    });
+  }
+
+  // Apply universal background
+  applyUniversalBackground(ctx, width, height, params);
 
   // Extract VOLT parameters
   const centerX = width / 2;
@@ -58,7 +107,7 @@ export function draw(
   const energyComplexity = params.energyComplexity || 0.7;
   const voltageSpike = params.voltageSpike || 0.8;
   const electricPulse = params.electricPulse || 0.9;
-  const borderVoltage = params.borderVoltage || 8;
+  const borderVoltage = params.borderVoltage || params.strokeWidth || 8;
   const electricLayers = Math.round(params.electricLayers || 3);
   const channelSpacing = params.channelSpacing || 6;
   const electricGlow = params.electricGlow || 0.9;
@@ -73,7 +122,7 @@ export function draw(
   // VOLT electric color palette - high-energy yellows and oranges
   const baseHue = electricHue + Math.sin(time * 2) * voltageShift; // Voltage fluctuation
   const voltColors = {
-    primary: `hsl(${baseHue}, 100%, ${70 * energyBrightness}%)`,
+    primary: params.strokeColor || `hsl(${baseHue}, 100%, ${70 * energyBrightness}%)`,
     electric: `hsl(${baseHue + 10}, 100%, ${80 * energyBrightness}%)`,
     spark: `hsl(${baseHue - 15}, 100%, ${90 * energyBrightness}%)`,
     arc: `hsl(${baseHue + 25}, 100%, ${85 * energyBrightness}%)`,
@@ -96,14 +145,18 @@ export function draw(
     energyComplexity, voltageSpike, electricPhase, voltagePhase
   );
 
-  // Render electric field glow
-  renderElectricField(ctx, electricForm, voltColors, electricGlow, scaledAmplitude);
+  // Render electric field glow (as fill)
+  if (params.fillType !== 'none') {
+    renderElectricField(ctx, electricForm, voltColors, params, scaledAmplitude);
+  }
 
-  // Render VOLT multi-layer electric borders
-  for (let layer = electricLayers - 1; layer >= 0; layer--) {
-    const layerOffset = layer * channelSpacing;
-    const layerAlpha = 1 - (layer * 0.15);
-    renderElectricBorder(ctx, electricForm, voltColors, borderVoltage, layerOffset, layerAlpha, time, layer);
+  // Render VOLT multi-layer electric borders using stroke settings
+  if (params.strokeType !== 'none') {
+    for (let layer = electricLayers - 1; layer >= 0; layer--) {
+      const layerOffset = layer * channelSpacing;
+      const layerAlpha = 1 - (layer * 0.15);
+      renderElectricBorder(ctx, electricForm, voltColors, params, layerOffset, layerAlpha, time, layer);
+    }
   }
 
   // Render energy flow animations
@@ -126,15 +179,15 @@ export function draw(
       const electric3 = Math.sin(angle * 11 + phase * 1.5) * complexity * 0.08;
       
       // Voltage spike variations
-      const voltageSpike = 1 + Math.sin(angle * 3 + voltagePhase * 2) * voltage * 0.12;
-      const finalRadius = radius * (0.8 + electric1 + electric2 + electric3) * voltageSpike;
+      const voltageSpikeVal = 1 + Math.sin(angle * 3 + voltagePhase * 2) * voltage * 0.12;
+      const finalRadius = radius * (0.8 + electric1 + electric2 + electric3) * voltageSpikeVal;
       
       points.push({
         x: centerX + Math.cos(angle) * finalRadius,
         y: centerY + Math.sin(angle) * finalRadius,
         angle: angle,
         voltage: electric1 + electric2,
-        spike: voltageSpike,
+        spike: voltageSpikeVal,
         energy: 0.6 + Math.sin(angle + phase) * 0.4
       });
     }
@@ -142,50 +195,61 @@ export function draw(
     return points;
   }
 
-  function renderElectricField(ctx: CanvasRenderingContext2D, points: any[], colors: any, glow: number, scale: number) {
+  function renderElectricField(ctx: CanvasRenderingContext2D, points: any[], colors: any, params: any, scale: number) {
     ctx.save();
-    ctx.globalAlpha = glow * 0.6;
+    ctx.globalAlpha = (params.fillOpacity || 0.6) * params.electricGlow;
     
     const bounds = getBounds(points);
     
-    // Electric field gradient
-    const fieldGradient = ctx.createRadialGradient(
-      bounds.centerX, bounds.centerY, 0,
-      bounds.centerX, bounds.centerY, Math.max(bounds.width, bounds.height) * 0.8
-    );
+    if (params.fillType === 'solid') {
+      ctx.fillStyle = params.fillColor;
+    } else if (params.fillType === 'gradient') {
+      // Electric field gradient
+      const fieldGradient = ctx.createRadialGradient(
+        bounds.centerX, bounds.centerY, 0,
+        bounds.centerX, bounds.centerY, Math.max(bounds.width, bounds.height) * 0.8
+      );
+      
+      fieldGradient.addColorStop(0, colors.glow);
+      fieldGradient.addColorStop(0.3, params.fillGradientStart || colors.electric);
+      fieldGradient.addColorStop(0.6, params.fillGradientEnd || colors.primary);
+      fieldGradient.addColorStop(1, 'transparent');
+      
+      ctx.fillStyle = fieldGradient;
+    }
     
-    fieldGradient.addColorStop(0, colors.glow);
-    fieldGradient.addColorStop(0.3, colors.electric);
-    fieldGradient.addColorStop(0.6, colors.primary);
-    fieldGradient.addColorStop(1, 'transparent');
-    
-    ctx.fillStyle = fieldGradient;
     drawElectricPath(ctx, points, 0);
     ctx.fill();
     
     ctx.restore();
   }
 
-  function renderElectricBorder(ctx: CanvasRenderingContext2D, points: any[], colors: any, voltage: number, offset: number, alpha: number, time: number, layer: number) {
+  function renderElectricBorder(ctx: CanvasRenderingContext2D, points: any[], colors: any, params: any, offset: number, alpha: number, time: number, layer: number) {
     ctx.save();
-    ctx.globalAlpha = alpha;
+    ctx.globalAlpha = alpha * (params.strokeOpacity || 1);
     
     // Electric ridge border effect
     const borderColors = [colors.primary, colors.electric, colors.spark];
     const layerColor = borderColors[layer % borderColors.length];
     
-    ctx.strokeStyle = layerColor;
-    ctx.lineWidth = voltage - layer;
+    ctx.strokeStyle = params.strokeColor || layerColor;
+    ctx.lineWidth = (params.strokeWidth || borderVoltage) - layer;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
+    
+    if (params.strokeType === 'dashed') {
+      ctx.setLineDash([15, 5]);
+    } else if (params.strokeType === 'dotted') {
+      ctx.setLineDash([3, 5]);
+    }
     
     // Electric border with energy flow
     drawElectricPath(ctx, points, offset);
     ctx.stroke();
     
     // Add electric flow animation
-    if (layer === 0) {
-      renderBorderFlow(ctx, points, colors, voltage, time, offset);
+    if (layer === 0 && params.strokeType === 'solid') {
+      renderBorderFlow(ctx, points, colors, params.strokeWidth || borderVoltage, time, offset);
     }
     
     ctx.restore();
@@ -375,6 +439,25 @@ export const metadata: PresetMetadata = {
   description: "High-energy electric vehicle brand with voltage borders, energy flow, and electric spark effects",
   defaultParams: {
     seed: "volt-electric-energy-dynamic-ev",
+    // Background
+    backgroundColor: "#0f0f23",
+    backgroundType: "gradient",
+    backgroundGradientStart: "#0f0f23",
+    backgroundGradientEnd: "#16213e",
+    backgroundGradientDirection: 90,
+    // Fill
+    fillType: "gradient",
+    fillColor: "#ffd700",
+    fillGradientStart: "#ffeb3b",
+    fillGradientEnd: "#ff9800",
+    fillGradientDirection: 45,
+    fillOpacity: 0.6,
+    // Stroke
+    strokeType: "solid",
+    strokeColor: "#ffd700",
+    strokeWidth: 8,
+    strokeOpacity: 1,
+    // VOLT specific
     frequency: 2.1,
     amplitude: 160,
     energyComplexity: 0.7,
@@ -393,3 +476,18 @@ export const metadata: PresetMetadata = {
     arcDischarge: 0.6
   }
 };
+
+export const id = 'volt-electric-brand';
+export const name = "⚡ VOLT Electric";
+export const description = "High-energy electric vehicle brand with voltage borders, energy flow, and electric spark effects";
+export const defaultParams = metadata.defaultParams;
+
+export const parameters: Record<string, ParameterDefinition> = PARAMETERS;
+export const draw = drawVisualization;
+
+export const code = `// VOLT Electric Brand - High-energy borders with electric flow
+const PARAMETERS = ${JSON.stringify(PARAMETERS, null, 2)};
+
+${applyUniversalBackground.toString()}
+
+${drawVisualization.toString()}`;

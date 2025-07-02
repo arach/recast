@@ -1,7 +1,28 @@
 import type { ParameterDefinition, PresetMetadata } from './types';
 
 // Brand Network - Logo-optimized network shapes
-export const parameters: Record<string, ParameterDefinition> = {
+const PARAMETERS = {
+  // Universal Background Controls
+  backgroundColor: { type: 'color', default: "#ffffff", label: 'Background Color', category: 'Background' },
+  backgroundType: { type: 'select', options: [{"value":"transparent","label":"Transparent"},{"value":"solid","label":"Solid Color"},{"value":"gradient","label":"Gradient"}], default: "solid", label: 'Background Type', category: 'Background' },
+  backgroundGradientStart: { type: 'color', default: "#ffffff", label: 'Gradient Start', category: 'Background', showIf: (params)=>params.backgroundType === 'gradient' },
+  backgroundGradientEnd: { type: 'color', default: "#f0f0f0", label: 'Gradient End', category: 'Background', showIf: (params)=>params.backgroundType === 'gradient' },
+  backgroundGradientDirection: { type: 'slider', min: 0, max: 360, step: 15, default: 45, label: 'Gradient Direction', category: 'Background', showIf: (params)=>params.backgroundType === 'gradient' },
+  
+  // Universal Fill Controls
+  fillType: { type: 'select', options: [{"value":"none","label":"None"},{"value":"solid","label":"Solid Color"},{"value":"gradient","label":"Gradient"}], default: "solid", label: 'Fill Type', category: 'Fill' },
+  fillColor: { type: 'color', default: "#e6f2ff", label: 'Fill Color', category: 'Fill', showIf: (params)=>params.fillType === 'solid' },
+  fillGradientStart: { type: 'color', default: "#e6f2ff", label: 'Gradient Start', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
+  fillGradientEnd: { type: 'color', default: "#cce7ff", label: 'Gradient End', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
+  fillGradientDirection: { type: 'slider', min: 0, max: 360, step: 15, default: 90, label: 'Gradient Direction', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
+  fillOpacity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.1, label: 'Fill Opacity', category: 'Fill', showIf: (params)=>params.fillType !== 'none' },
+  
+  // Universal Stroke Controls
+  strokeType: { type: 'select', options: [{"value":"none","label":"None"},{"value":"solid","label":"Solid"},{"value":"dashed","label":"Dashed"},{"value":"dotted","label":"Dotted"}], default: "solid", label: 'Stroke Type', category: 'Stroke' },
+  strokeColor: { type: 'color', default: "#0064c8", label: 'Stroke Color', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
+  strokeWidth: { type: 'slider', min: 0, max: 10, step: 0.5, default: 3, label: 'Stroke Width', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
+  strokeOpacity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 1, label: 'Stroke Opacity', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
+  
   // Minimal controls for clean logos
   frequency: { type: 'slider', min: 0.1, max: 2, step: 0.1, default: 0.8, label: 'Pulse Speed' },
   amplitude: { type: 'slider', min: 40, max: 120, step: 5, default: 70, label: 'Logo Size' },
@@ -19,22 +40,48 @@ export const parameters: Record<string, ParameterDefinition> = {
   nodeCount: { type: 'slider', min: 3, max: 8, step: 1, default: 4, label: 'Connection Points' },
   
   // Logo styling
-  strokeWeight: { type: 'slider', min: 1, max: 8, step: 1, default: 3, label: 'Line Weight' },
-  fillOpacity: { type: 'slider', min: 0, max: 1, step: 0.1, default: 0.1, label: 'Fill Opacity' },
   contrast: { type: 'slider', min: 0.5, max: 1, step: 0.05, default: 1, label: 'Contrast' }
 };
 
-export function draw(
-  ctx: CanvasRenderingContext2D,
-  width: number,
-  height: number,
-  params: Record<string, any>,
-  _generator: any,
-  time: number
-) {
-  // Clean white background for logo clarity
-  ctx.fillStyle = '#ffffff';
-  ctx.fillRect(0, 0, width, height);
+function applyUniversalBackground(ctx, width, height, params) {
+  if (params.backgroundType === 'transparent') {
+    ctx.clearRect(0, 0, width, height);
+  } else if (params.backgroundType === 'gradient') {
+    const angle = (params.backgroundGradientDirection || 45) * Math.PI / 180;
+    const x1 = width / 2 - Math.cos(angle) * width;
+    const y1 = height / 2 - Math.sin(angle) * height;
+    const x2 = width / 2 + Math.cos(angle) * width;
+    const y2 = height / 2 + Math.sin(angle) * height;
+    
+    const gradient = ctx.createLinearGradient(x1, y1, x2, y2);
+    gradient.addColorStop(0, params.backgroundGradientStart || '#ffffff');
+    gradient.addColorStop(1, params.backgroundGradientEnd || '#f0f0f0');
+    
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, width, height);
+  } else {
+    ctx.fillStyle = params.backgroundColor || '#ffffff';
+    ctx.fillRect(0, 0, width, height);
+  }
+}
+
+function drawVisualization(ctx, width, height, params, _generator, time) {
+  // Parameter compatibility layer
+  if (params.customParameters) {
+    params.fillColor = params.fillColor || params.customParameters.fillColor;
+    params.strokeColor = params.strokeColor || params.customParameters.strokeColor;
+    params.backgroundColor = params.backgroundColor || params.customParameters.backgroundColor;
+    params.textColor = params.textColor || params.customParameters.textColor;
+    
+    Object.keys(params.customParameters).forEach(key => {
+      if (params[key] === undefined) {
+        params[key] = params.customParameters[key];
+      }
+    });
+  }
+
+  // Apply universal background
+  applyUniversalBackground(ctx, width, height, params);
 
   // Extract parameters with logo-friendly defaults
   const centerX = width / 2;
@@ -44,8 +91,6 @@ export function draw(
   const complexity = params.complexity || 0.0;
   const shapeTypeNum = Math.round(params.shapeType || 0);
   const nodeCount = Math.max(3, Math.min(8, params.nodeCount || 4));
-  const strokeWeight = params.strokeWeight || 3;
-  const fillOpacity = params.fillOpacity || 0.1;
   const contrast = params.contrast || 1;
 
   // Logo-friendly shape types (simplified set)
@@ -55,10 +100,6 @@ export function draw(
   // Base scale for logo sizing
   const baseScale = Math.min(width, height) / 300;
   const scaledAmplitude = amplitude * baseScale;
-
-  // Clean, high-contrast colors for logo use
-  const primaryColor = `rgba(0, 100, 200, ${contrast})`;      // Professional blue
-  const fillColor = `rgba(0, 100, 200, ${fillOpacity * contrast})`;
 
   // Gentle pulse for subtle animation (logo-appropriate)
   const pulsePhase = time * frequency;
@@ -77,22 +118,20 @@ export function draw(
   // Set up clean line style
   ctx.lineJoin = 'round';
   ctx.lineCap = 'round';
-  ctx.strokeStyle = primaryColor;
-  ctx.lineWidth = strokeWeight;
 
   // Draw clean connections (minimal, logo-appropriate)
   if (complexity > 0.1) {
-    drawCleanConnections(ctx, nodes, complexity, primaryColor);
+    drawCleanConnections(ctx, nodes, complexity, params, contrast);
   }
 
   // Draw the main shape outline (bold, recognizable)
-  drawShapeOutline(ctx, nodes, fillColor, primaryColor, strokeWeight);
+  drawShapeOutline(ctx, nodes, params, contrast);
 
   // Draw clean nodes (simple, bold)
-  drawCleanNodes(ctx, nodes, scaledAmplitude * 0.08, primaryColor);
+  drawCleanNodes(ctx, nodes, scaledAmplitude * 0.08, params, contrast);
 
-  function generateCleanBrandShape(shapeType: string, centerX: number, centerY: number, radius: number, nodeCount: number, phase: number) {
-    const nodes: Array<{x: number, y: number}> = [];
+  function generateCleanBrandShape(shapeType, centerX, centerY, radius, nodeCount, phase) {
+    const nodes = [];
     
     switch (shapeType) {
       case 'circle':
@@ -144,10 +183,21 @@ export function draw(
     return nodes;
   }
 
-  function drawCleanConnections(ctx: CanvasRenderingContext2D, nodes: any[], complexity: number, color: string) {
+  function drawCleanConnections(ctx, nodes, complexity, params, contrast) {
     ctx.save();
-    ctx.strokeStyle = color.replace(/[\d.]+\)$/, '0.3)'); // Lower opacity for connections
-    ctx.lineWidth = strokeWeight * 0.5;
+    
+    // Apply stroke settings with reduced opacity for connections
+    const connectionOpacity = 0.3 * contrast * (params.strokeOpacity || 1);
+    ctx.globalAlpha = connectionOpacity;
+    ctx.strokeStyle = params.strokeColor || '#0064c8';
+    ctx.lineWidth = (params.strokeWidth || 3) * 0.5;
+    
+    // Apply stroke dash pattern if needed
+    if (params.strokeType === 'dashed') {
+      ctx.setLineDash([5, 5]);
+    } else if (params.strokeType === 'dotted') {
+      ctx.setLineDash([2, 4]);
+    }
     
     // Only connect adjacent nodes for clean look
     for (let i = 0; i < nodes.length; i++) {
@@ -166,32 +216,74 @@ export function draw(
     ctx.restore();
   }
 
-  function drawShapeOutline(ctx: CanvasRenderingContext2D, nodes: any[], fillColor: string, strokeColor: string, strokeWeight: number) {
+  function drawShapeOutline(ctx, nodes, params, contrast) {
     if (nodes.length < 3) return;
     
     ctx.save();
     
     // Fill the shape
-    ctx.fillStyle = fillColor;
-    ctx.beginPath();
-    ctx.moveTo(nodes[0].x, nodes[0].y);
-    for (let i = 1; i < nodes.length; i++) {
-      ctx.lineTo(nodes[i].x, nodes[i].y);
+    if (params.fillType !== 'none') {
+      ctx.globalAlpha = (params.fillOpacity || 0.1) * contrast;
+      
+      if (params.fillType === 'solid') {
+        ctx.fillStyle = params.fillColor || '#e6f2ff';
+      } else if (params.fillType === 'gradient') {
+        const bounds = getBounds(nodes);
+        const angle = (params.fillGradientDirection || 90) * Math.PI / 180;
+        const gradientLength = Math.max(bounds.width, bounds.height);
+        
+        const startX = bounds.centerX - Math.cos(angle) * gradientLength * 0.5;
+        const startY = bounds.centerY - Math.sin(angle) * gradientLength * 0.5;
+        const endX = bounds.centerX + Math.cos(angle) * gradientLength * 0.5;
+        const endY = bounds.centerY + Math.sin(angle) * gradientLength * 0.5;
+        
+        const gradient = ctx.createLinearGradient(startX, startY, endX, endY);
+        gradient.addColorStop(0, params.fillGradientStart || '#e6f2ff');
+        gradient.addColorStop(1, params.fillGradientEnd || '#cce7ff');
+        
+        ctx.fillStyle = gradient;
+      }
+      
+      ctx.beginPath();
+      ctx.moveTo(nodes[0].x, nodes[0].y);
+      for (let i = 1; i < nodes.length; i++) {
+        ctx.lineTo(nodes[i].x, nodes[i].y);
+      }
+      ctx.closePath();
+      ctx.fill();
     }
-    ctx.closePath();
-    ctx.fill();
     
     // Stroke the outline
-    ctx.strokeStyle = strokeColor;
-    ctx.lineWidth = strokeWeight;
-    ctx.stroke();
+    if (params.strokeType !== 'none') {
+      ctx.globalAlpha = (params.strokeOpacity || 1) * contrast;
+      ctx.strokeStyle = params.strokeColor || '#0064c8';
+      ctx.lineWidth = params.strokeWidth || 3;
+      
+      // Apply stroke dash pattern if needed
+      if (params.strokeType === 'dashed') {
+        ctx.setLineDash([params.strokeWidth * 3, params.strokeWidth * 2]);
+      } else if (params.strokeType === 'dotted') {
+        ctx.setLineDash([params.strokeWidth, params.strokeWidth * 2]);
+      }
+      
+      ctx.beginPath();
+      ctx.moveTo(nodes[0].x, nodes[0].y);
+      for (let i = 1; i < nodes.length; i++) {
+        ctx.lineTo(nodes[i].x, nodes[i].y);
+      }
+      ctx.closePath();
+      ctx.stroke();
+    }
     
     ctx.restore();
   }
 
-  function drawCleanNodes(ctx: CanvasRenderingContext2D, nodes: any[], nodeSize: number, color: string) {
+  function drawCleanNodes(ctx, nodes, nodeSize, params, contrast) {
     ctx.save();
-    ctx.fillStyle = color;
+    
+    // Use stroke color for nodes
+    ctx.fillStyle = params.strokeColor || '#0064c8';
+    ctx.globalAlpha = (params.strokeOpacity || 1) * contrast;
     
     for (const node of nodes) {
       ctx.beginPath();
@@ -201,6 +293,23 @@ export function draw(
     
     ctx.restore();
   }
+
+  function getBounds(nodes) {
+    const xs = nodes.map(n => n.x);
+    const ys = nodes.map(n => n.y);
+    const minX = Math.min(...xs);
+    const maxX = Math.max(...xs);
+    const minY = Math.min(...ys);
+    const maxY = Math.max(...ys);
+    
+    return {
+      minX, maxX, minY, maxY,
+      width: maxX - minX,
+      height: maxY - minY,
+      centerX: (minX + maxX) / 2,
+      centerY: (minY + maxY) / 2
+    };
+  }
 }
 
 export const metadata: PresetMetadata = {
@@ -208,13 +317,40 @@ export const metadata: PresetMetadata = {
   description: "Clean, logo-ready network shapes optimized for brand identity and small sizes",
   defaultParams: {
     seed: "brand-network",
+    backgroundColor: "#ffffff",
+    backgroundType: "solid",
+    backgroundGradientStart: "#ffffff",
+    backgroundGradientEnd: "#f0f0f0",
+    backgroundGradientDirection: 45,
+    fillType: "solid",
+    fillColor: "#e6f2ff",
+    fillGradientStart: "#e6f2ff",
+    fillGradientEnd: "#cce7ff",
+    fillGradientDirection: 90,
+    fillOpacity: 0.1,
+    strokeType: "solid",
+    strokeColor: "#0064c8",
+    strokeWidth: 3,
+    strokeOpacity: 1,
     frequency: 0.8,
     amplitude: 70,
     complexity: 0.0,
     shapeType: 0,
     nodeCount: 4,
-    strokeWeight: 3,
-    fillOpacity: 0.1,
     contrast: 1
   }
 };
+
+export const id = 'brand-network';
+export const name = "Brand Network";
+export const description = "Clean, logo-ready network shapes optimized for brand identity and small sizes";
+export const defaultParams = metadata.defaultParams;
+export const parameters = PARAMETERS;
+export const draw = drawVisualization;
+
+export const code = `// Brand Network - Logo-optimized network shapes
+const PARAMETERS = ${JSON.stringify(PARAMETERS, null, 2)};
+
+${applyUniversalBackground.toString()}
+
+${drawVisualization.toString()}`;

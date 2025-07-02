@@ -308,6 +308,7 @@ export const metadata = {
 export const id = 'infinity-loops';
 export const name = "∞ Infinity Loops";
 export const description = "Mystical figure-8 patterns with flowing particles and ethereal glow effects";
+export { drawVisualization };
 export const defaultParams = {
   seed: "infinity-loops",
   frequency: 2,

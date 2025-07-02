@@ -1,7 +1,26 @@
-import type { ParameterDefinition, PresetMetadata } from './types';
-
-// Minimal Shape - Simple geometric logos like Microsoft, Dropbox, etc.
-export const parameters: Record<string, ParameterDefinition> = {
+// ◼ Minimal Shape
+const PARAMETERS = {
+  // Universal Background Controls
+  backgroundColor: { type: 'color', default: "#ffffff", label: 'Background Color', category: 'Background' },
+  backgroundType: { type: 'select', options: [{"value":"transparent","label":"Transparent"},{"value":"solid","label":"Solid Color"},{"value":"gradient","label":"Gradient"}], default: "solid", label: 'Background Type', category: 'Background' },
+  backgroundGradientStart: { type: 'color', default: "#ffffff", label: 'Gradient Start', category: 'Background', showIf: (params)=>params.backgroundType === 'gradient' },
+  backgroundGradientEnd: { type: 'color', default: "#f0f0f0", label: 'Gradient End', category: 'Background', showIf: (params)=>params.backgroundType === 'gradient' },
+  backgroundGradientDirection: { type: 'slider', min: 0, max: 360, step: 15, default: 45, label: 'Gradient Direction', category: 'Background', showIf: (params)=>params.backgroundType === 'gradient' },
+  
+  // Universal Fill Controls
+  fillType: { type: 'select', options: [{"value":"none","label":"None"},{"value":"solid","label":"Solid Color"},{"value":"gradient","label":"Gradient"}], default: "solid", label: 'Fill Type', category: 'Fill' },
+  fillColor: { type: 'color', default: "#0078D4", label: 'Fill Color', category: 'Fill', showIf: (params)=>params.fillType === 'solid' },
+  fillGradientStart: { type: 'color', default: "#0078D4", label: 'Gradient Start', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
+  fillGradientEnd: { type: 'color', default: "#106EBE", label: 'Gradient End', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
+  fillGradientDirection: { type: 'slider', min: 0, max: 360, step: 15, default: 90, label: 'Gradient Direction', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
+  fillOpacity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 1, label: 'Fill Opacity', category: 'Fill', showIf: (params)=>params.fillType !== 'none' },
+  
+  // Universal Stroke Controls
+  strokeType: { type: 'select', options: [{"value":"none","label":"None"},{"value":"solid","label":"Solid"},{"value":"dashed","label":"Dashed"},{"value":"dotted","label":"Dotted"}], default: "none", label: 'Stroke Type', category: 'Stroke' },
+  strokeColor: { type: 'color', default: "#106EBE", label: 'Stroke Color', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
+  strokeWidth: { type: 'slider', min: 0, max: 10, step: 0.5, default: 2, label: 'Stroke Width', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
+  strokeOpacity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 1, label: 'Stroke Opacity', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
+  
   // Shape selection
   shape: {
     type: 'select',
@@ -79,20 +98,45 @@ export const parameters: Record<string, ParameterDefinition> = {
   }
 };
 
-export function draw(
-  ctx: CanvasRenderingContext2D,
-  width: number,
-  height: number,
-  params: Record<string, any>,
-  _generator: any,
-  _time: number
-) {
+function applyUniversalBackground(ctx, width, height, params) {
+  if (!params.backgroundType || params.backgroundType === 'transparent') return;
+  
+  if (params.backgroundType === 'solid') {
+    ctx.fillStyle = params.backgroundColor || '#ffffff';
+    ctx.fillRect(0, 0, width, height);
+  } else if (params.backgroundType === 'gradient') {
+    const direction = (params.backgroundGradientDirection || 45) * (Math.PI / 180);
+    const x1 = width / 2 - Math.cos(direction) * width / 2;
+    const y1 = height / 2 - Math.sin(direction) * height / 2;
+    const x2 = width / 2 + Math.cos(direction) * width / 2;
+    const y2 = height / 2 + Math.sin(direction) * height / 2;
+    
+    const gradient = ctx.createLinearGradient(x1, y1, x2, y2);
+    gradient.addColorStop(0, params.backgroundGradientStart || '#ffffff');
+    gradient.addColorStop(1, params.backgroundGradientEnd || '#f0f0f0');
+    
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, width, height);
+  }
+}
+
+function drawVisualization(ctx, width, height, params, _generator, time) {
+  // Parameter compatibility layer
+  if (params.customParameters) {
+    params.fillColor = params.fillColor || params.customParameters.fillColor;
+    params.strokeColor = params.strokeColor || params.customParameters.strokeColor;
+    params.backgroundColor = params.backgroundColor || params.customParameters.backgroundColor;
+    params.textColor = params.textColor || params.customParameters.textColor;
+    
+    Object.keys(params.customParameters).forEach(key => {
+      if (params[key] === undefined) {
+        params[key] = params.customParameters[key];
+      }
+    });
+  }
+
   // Apply universal background
   applyUniversalBackground(ctx, width, height, params);
-  
-  // Get theme colors
-  const fillColor = params.fillColor || '#0078D4';
-  const strokeColor = params.strokeColor || '#106EBE';
   
   // Extract parameters
   const shape = params.shape || 'square';
@@ -122,12 +166,12 @@ export function draw(
     const squareSize = (shapeSize - gap) / 2;
     
     // Define colors
-    let colors: string[];
+    let colors;
     if (gridColors === 'microsoft') {
       colors = ['#F25022', '#7FBA00', '#00A4EF', '#FFB900']; // Microsoft colors
     } else if (gridColors === 'gradient') {
       // Create gradient variations of theme color
-      const hexToHsl = (hex: string): [number, number, number] => {
+      const hexToHsl = (hex) => {
         const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
         if (!result) return [0, 0, 50];
         
@@ -154,7 +198,7 @@ export function draw(
         return [h * 360, s * 100, l * 100];
       };
       
-      const [h, s, l] = hexToHsl(fillColor);
+      const [h, s, l] = hexToHsl(params.fillColor || '#0078D4');
       colors = [
         `hsl(${h}, ${s}%, ${l}%)`,
         `hsl(${h + 30}, ${s}%, ${l}%)`,
@@ -163,6 +207,7 @@ export function draw(
       ];
     } else {
       // Use theme color for all squares
+      const fillColor = params.fillColor || '#0078D4';
       colors = [fillColor, fillColor, fillColor, fillColor];
     }
     
@@ -176,6 +221,7 @@ export function draw(
     
     positions.forEach((pos, i) => {
       ctx.fillStyle = colors[i];
+      ctx.globalAlpha = params.fillOpacity || 1;
       const radius = squareSize * cornerRadius;
       ctx.beginPath();
       ctx.roundRect(pos.x, pos.y, squareSize, squareSize, radius);
@@ -183,8 +229,23 @@ export function draw(
     });
     
   } else {
-    // Single shape
-    ctx.fillStyle = fillColor;
+    // Single shape - prepare fill
+    if (params.fillType === 'gradient') {
+      const direction = (params.fillGradientDirection || 90) * (Math.PI / 180);
+      const x1 = centerX - Math.cos(direction) * shapeSize / 2;
+      const y1 = centerY - Math.sin(direction) * shapeSize / 2;
+      const x2 = centerX + Math.cos(direction) * shapeSize / 2;
+      const y2 = centerY + Math.sin(direction) * shapeSize / 2;
+      
+      const gradient = ctx.createLinearGradient(x1, y1, x2, y2);
+      gradient.addColorStop(0, params.fillGradientStart || '#0078D4');
+      gradient.addColorStop(1, params.fillGradientEnd || '#106EBE');
+      ctx.fillStyle = gradient;
+    } else if (params.fillType === 'solid') {
+      ctx.fillStyle = params.fillColor || '#0078D4';
+    }
+    
+    ctx.globalAlpha = params.fillOpacity || 1;
     
     switch (shape) {
       case 'square':
@@ -237,24 +298,41 @@ export function draw(
         break;
     }
     
-    ctx.fill();
+    if (params.fillType !== 'none') {
+      ctx.fill();
+    }
     
-    // Optional stroke
-    if (params.strokeWidth && params.strokeWidth > 0) {
-      ctx.strokeStyle = strokeColor;
-      ctx.lineWidth = params.strokeWidth;
+    // Apply stroke
+    if (params.strokeType !== 'none') {
+      ctx.globalAlpha = params.strokeOpacity || 1;
+      ctx.strokeStyle = params.strokeColor || '#106EBE';
+      ctx.lineWidth = params.strokeWidth || 2;
+      
+      if (params.strokeType === 'dashed') {
+        ctx.setLineDash([5, 5]);
+      } else if (params.strokeType === 'dotted') {
+        ctx.setLineDash([2, 2]);
+      }
+      
       ctx.stroke();
+      ctx.setLineDash([]);
     }
   }
   
   ctx.restore();
 }
 
-export const metadata: PresetMetadata = {
+export const metadata = {
   name: "◼ Minimal Shape",
   description: "Simple geometric shapes for clean, modern brand identities",
   defaultParams: {
     seed: "minimal-shape",
+    backgroundType: "solid",
+    backgroundColor: "#ffffff",
+    fillType: "solid",
+    fillColor: "#0078D4",
+    fillOpacity: 1,
+    strokeType: "none",
     shape: 'square',
     size: 0.6,
     cornerRadius: 0.1,
@@ -264,3 +342,15 @@ export const metadata: PresetMetadata = {
     thickness: 1
   }
 };
+
+export const id = 'minimal-shape';
+export const name = "◼ Minimal Shape";
+export const description = "Simple geometric shapes for clean, modern brand identities";
+export const defaultParams = metadata.defaultParams;
+
+export const code = `// ◼ Minimal Shape
+const PARAMETERS = ${JSON.stringify(PARAMETERS, null, 2)};
+
+${applyUniversalBackground.toString()}
+
+${drawVisualization.toString()}`;

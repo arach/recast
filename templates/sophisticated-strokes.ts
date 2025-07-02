@@ -1,40 +1,58 @@
 import type { ParameterDefinition, PresetMetadata } from './types';
 
 // Sophisticated Strokes - Advanced line and fill styling
-export const parameters: Record<string, ParameterDefinition> = {
+const PARAMETERS = {
+  // Universal Background Controls
+  backgroundColor: { type: 'color', default: "#ffffff", label: 'Background Color', category: 'Background' },
+  backgroundType: { type: 'select', options: [{"value":"transparent","label":"Transparent"},{"value":"solid","label":"Solid Color"},{"value":"gradient","label":"Gradient"}], default: "solid", label: 'Background Type', category: 'Background' },
+  backgroundGradientStart: { type: 'color', default: "#ffffff", label: 'Gradient Start', category: 'Background', showIf: (params)=>params.backgroundType === 'gradient' },
+  backgroundGradientEnd: { type: 'color', default: "#f0f0f0", label: 'Gradient End', category: 'Background', showIf: (params)=>params.backgroundType === 'gradient' },
+  backgroundGradientDirection: { type: 'slider', min: 0, max: 360, step: 15, default: 45, label: 'Gradient Direction', category: 'Background', showIf: (params)=>params.backgroundType === 'gradient' },
+  
+  // Universal Fill Controls
+  fillType: { type: 'select', options: [{"value":"none","label":"None"},{"value":"solid","label":"Solid Color"},{"value":"gradient","label":"Gradient"}], default: "solid", label: 'Fill Type', category: 'Fill' },
+  fillColor: { type: 'color', default: "#3b82f6", label: 'Fill Color', category: 'Fill', showIf: (params)=>params.fillType === 'solid' },
+  fillGradientStart: { type: 'color', default: "#3b82f6", label: 'Gradient Start', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
+  fillGradientEnd: { type: 'color', default: "#8b5cf6", label: 'Gradient End', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
+  fillGradientDirection: { type: 'slider', min: 0, max: 360, step: 15, default: 90, label: 'Gradient Direction', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
+  fillOpacity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.8, label: 'Fill Opacity', category: 'Fill', showIf: (params)=>params.fillType !== 'none' },
+  
+  // Universal Stroke Controls
+  strokeType: { type: 'select', options: [{"value":"none","label":"None"},{"value":"solid","label":"Solid"},{"value":"dashed","label":"Dashed"},{"value":"dotted","label":"Dotted"}], default: "solid", label: 'Stroke Type', category: 'Stroke' },
+  strokeColor: { type: 'color', default: "#1e293b", label: 'Stroke Color', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
+  strokeWidth: { type: 'slider', min: 0, max: 10, step: 0.5, default: 3, label: 'Stroke Width', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
+  strokeOpacity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 1, label: 'Stroke Opacity', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
+  
   // Basic form
   frequency: { type: 'slider', min: 0.1, max: 2, step: 0.1, default: 0.8, label: 'Form Energy' },
   amplitude: { type: 'slider', min: 60, max: 180, step: 5, default: 100, label: 'Scale' },
   complexity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.6, label: 'Form Complexity' },
   
-  // Stroke sophistication  
-  strokeWeight: { type: 'slider', min: 0.5, max: 12, step: 0.5, default: 3, label: 'Stroke Weight' },
+  // Advanced stroke sophistication  
   strokeVariation: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.3, label: 'Weight Variation' },
   strokeTaper: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.4, label: 'Stroke Taper' },
   strokeTexture: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.2, label: 'Stroke Texture' },
   
-  // Stroke style
-  strokeStyle: {
+  // Advanced stroke style
+  advancedStrokeStyle: {
     type: 'slider',
     min: 0,
     max: 4,
     step: 1,
     default: 0,
-    label: 'Stroke Style (0=Solid, 1=Dashed, 2=Dotted, 3=Brush, 4=Calligraphy)'
+    label: 'Advanced Style (0=Basic, 1=Brush, 2=Calligraphy, 3=Textured, 4=Variable)'
   },
   
-  // Fill sophistication
-  fillType: {
+  // Advanced fill sophistication
+  advancedFillType: {
     type: 'slider', 
     min: 0,
-    max: 4,
+    max: 2,
     step: 1,
-    default: 1,
-    label: 'Fill Type (0=None, 1=Solid, 2=Gradient, 3=Pattern, 4=Texture)'
+    default: 0,
+    label: 'Advanced Fill (0=Basic, 1=Pattern, 2=Texture)'
   },
-  fillOpacity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.8, label: 'Fill Opacity' },
-  gradientDirection: { type: 'slider', min: 0, max: 360, step: 15, default: 135, label: 'Gradient Angle' },
-  gradientComplexity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.3, label: 'Gradient Stops' },
+  gradientComplexity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.3, label: 'Gradient Stops', showIf: (params)=>params.fillType === 'gradient' },
   
   // Color sophistication
   colorHarmony: {
@@ -49,17 +67,45 @@ export const parameters: Record<string, ParameterDefinition> = {
   colorContrast: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.8, label: 'Color Contrast' }
 };
 
-export function draw(
-  ctx: CanvasRenderingContext2D,
-  width: number,
-  height: number,
-  params: Record<string, any>,
-  _generator: any,
-  time: number
-) {
-  // Clean background
-  ctx.fillStyle = '#ffffff';
-  ctx.fillRect(0, 0, width, height);
+function applyUniversalBackground(ctx, width, height, params) {
+  if (params.backgroundType === 'transparent') {
+    ctx.clearRect(0, 0, width, height);
+  } else if (params.backgroundType === 'gradient') {
+    const angle = (params.backgroundGradientDirection || 45) * Math.PI / 180;
+    const x1 = width / 2 - Math.cos(angle) * width;
+    const y1 = height / 2 - Math.sin(angle) * height;
+    const x2 = width / 2 + Math.cos(angle) * width;
+    const y2 = height / 2 + Math.sin(angle) * height;
+    
+    const gradient = ctx.createLinearGradient(x1, y1, x2, y2);
+    gradient.addColorStop(0, params.backgroundGradientStart || '#ffffff');
+    gradient.addColorStop(1, params.backgroundGradientEnd || '#f0f0f0');
+    
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, width, height);
+  } else {
+    ctx.fillStyle = params.backgroundColor || '#ffffff';
+    ctx.fillRect(0, 0, width, height);
+  }
+}
+
+function drawVisualization(ctx, width, height, params, _generator, time) {
+  // Parameter compatibility layer
+  if (params.customParameters) {
+    params.fillColor = params.fillColor || params.customParameters.fillColor;
+    params.strokeColor = params.strokeColor || params.customParameters.strokeColor;
+    params.backgroundColor = params.backgroundColor || params.customParameters.backgroundColor;
+    params.textColor = params.textColor || params.customParameters.textColor;
+    
+    Object.keys(params.customParameters).forEach(key => {
+      if (params[key] === undefined) {
+        params[key] = params.customParameters[key];
+      }
+    });
+  }
+
+  // Apply universal background
+  applyUniversalBackground(ctx, width, height, params);
 
   // Extract parameters
   const centerX = width / 2;
@@ -68,15 +114,12 @@ export function draw(
   const amplitude = params.amplitude || 100;
   const complexity = params.complexity || 0.6;
   
-  const strokeWeight = params.strokeWeight || 3;
   const strokeVariation = params.strokeVariation || 0.3;
   const strokeTaper = params.strokeTaper || 0.4;
   const strokeTexture = params.strokeTexture || 0.2;
-  const strokeStyleNum = Math.round(params.strokeStyle || 0);
+  const advancedStrokeStyleNum = Math.round(params.advancedStrokeStyle || 0);
   
-  const fillTypeNum = Math.round(params.fillType || 1);
-  const fillOpacity = params.fillOpacity || 0.8;
-  const gradientDirection = params.gradientDirection || 135;
+  const advancedFillTypeNum = Math.round(params.advancedFillType || 0);
   const gradientComplexity = params.gradientComplexity || 0.3;
   
   const colorHarmonyNum = Math.round(params.colorHarmony || 0);
@@ -94,17 +137,19 @@ export function draw(
   );
 
   // Generate color palette
-  const palette = generateColorHarmony(colorHarmonyNum, colorSaturation, colorContrast, time);
+  const palette = generateColorHarmony(colorHarmonyNum, colorSaturation, colorContrast, time, params);
 
   // Apply sophisticated fill
-  if (fillTypeNum > 0) {
-    applySophisticatedFill(ctx, points, fillTypeNum, fillOpacity, gradientDirection, gradientComplexity, palette);
+  if (params.fillType !== 'none') {
+    applySophisticatedFill(ctx, points, params, palette, advancedFillTypeNum, gradientComplexity);
   }
 
   // Apply sophisticated stroke
-  applySophisticatedStroke(ctx, points, strokeWeight, strokeVariation, strokeTaper, strokeTexture, strokeStyleNum, palette, time);
+  if (params.strokeType !== 'none') {
+    applySophisticatedStroke(ctx, points, params, palette, advancedStrokeStyleNum, strokeVariation, strokeTaper, strokeTexture, time);
+  }
 
-  function generateSophisticatedShape(centerX: number, centerY: number, radius: number, complexity: number, time: number, frequency: number) {
+  function generateSophisticatedShape(centerX, centerY, radius, complexity, time, frequency) {
     const points = [];
     const numPoints = Math.floor(6 + complexity * 10); // 6-16 points
     
@@ -131,8 +176,13 @@ export function draw(
     return points;
   }
 
-  function generateColorHarmony(harmonyType: number, saturation: number, contrast: number, time: number) {
-    const baseHue = (time * 10) % 360; // Slowly rotating base hue
+  function generateColorHarmony(harmonyType, saturation, contrast, time, params) {
+    // Extract base hue from fill color if solid
+    let baseHue = (time * 10) % 360;
+    if (params.fillType === 'solid' && params.fillColor) {
+      baseHue = extractHueFromHex(params.fillColor);
+    }
+    
     const sat = saturation * 100;
     const lightBase = 50;
     const contrastRange = contrast * 40;
@@ -140,177 +190,180 @@ export function draw(
     switch (harmonyType) {
       case 0: // Monochromatic
         return {
-          primary: `hsl(${baseHue}, ${sat}%, ${lightBase}%)`,
+          primary: params.fillColor || `hsl(${baseHue}, ${sat}%, ${lightBase}%)`,
           secondary: `hsl(${baseHue}, ${sat * 0.7}%, ${lightBase + contrastRange * 0.3}%)`,
-          accent: `hsl(${baseHue}, ${sat * 0.5}%, ${lightBase - contrastRange * 0.3}%)`
+          accent: params.strokeColor || `hsl(${baseHue}, ${sat * 0.5}%, ${lightBase - contrastRange * 0.3}%)`
         };
       case 1: // Analogous
         return {
-          primary: `hsl(${baseHue}, ${sat}%, ${lightBase}%)`,
+          primary: params.fillColor || `hsl(${baseHue}, ${sat}%, ${lightBase}%)`,
           secondary: `hsl(${(baseHue + 30) % 360}, ${sat}%, ${lightBase + contrastRange * 0.2}%)`,
-          accent: `hsl(${(baseHue - 30 + 360) % 360}, ${sat}%, ${lightBase - contrastRange * 0.2}%)`
+          accent: params.strokeColor || `hsl(${(baseHue - 30 + 360) % 360}, ${sat}%, ${lightBase - contrastRange * 0.2}%)`
         };
       case 2: // Complementary
         return {
-          primary: `hsl(${baseHue}, ${sat}%, ${lightBase}%)`,
+          primary: params.fillColor || `hsl(${baseHue}, ${sat}%, ${lightBase}%)`,
           secondary: `hsl(${(baseHue + 180) % 360}, ${sat}%, ${lightBase + contrastRange * 0.3}%)`,
-          accent: `hsl(${baseHue}, ${sat * 0.5}%, ${lightBase - contrastRange * 0.2}%)`
+          accent: params.strokeColor || `hsl(${baseHue}, ${sat * 0.5}%, ${lightBase - contrastRange * 0.2}%)`
         };
       case 3: // Triadic
         return {
-          primary: `hsl(${baseHue}, ${sat}%, ${lightBase}%)`,
+          primary: params.fillColor || `hsl(${baseHue}, ${sat}%, ${lightBase}%)`,
           secondary: `hsl(${(baseHue + 120) % 360}, ${sat}%, ${lightBase + contrastRange * 0.2}%)`,
-          accent: `hsl(${(baseHue + 240) % 360}, ${sat}%, ${lightBase - contrastRange * 0.2}%)`
+          accent: params.strokeColor || `hsl(${(baseHue + 240) % 360}, ${sat}%, ${lightBase - contrastRange * 0.2}%)`
         };
       case 4: // Split Complementary
         return {
-          primary: `hsl(${baseHue}, ${sat}%, ${lightBase}%)`,
+          primary: params.fillColor || `hsl(${baseHue}, ${sat}%, ${lightBase}%)`,
           secondary: `hsl(${(baseHue + 150) % 360}, ${sat}%, ${lightBase + contrastRange * 0.2}%)`,
-          accent: `hsl(${(baseHue + 210) % 360}, ${sat}%, ${lightBase - contrastRange * 0.2}%)`
+          accent: params.strokeColor || `hsl(${(baseHue + 210) % 360}, ${sat}%, ${lightBase - contrastRange * 0.2}%)`
         };
       case 5: // Tetradic
         return {
-          primary: `hsl(${baseHue}, ${sat}%, ${lightBase}%)`,
+          primary: params.fillColor || `hsl(${baseHue}, ${sat}%, ${lightBase}%)`,
           secondary: `hsl(${(baseHue + 90) % 360}, ${sat}%, ${lightBase + contrastRange * 0.2}%)`,
-          accent: `hsl(${(baseHue + 180) % 360}, ${sat}%, ${lightBase - contrastRange * 0.2}%)`
+          accent: params.strokeColor || `hsl(${(baseHue + 180) % 360}, ${sat}%, ${lightBase - contrastRange * 0.2}%)`
         };
       default:
         return {
-          primary: `hsl(${baseHue}, ${sat}%, ${lightBase}%)`,
+          primary: params.fillColor || `hsl(${baseHue}, ${sat}%, ${lightBase}%)`,
           secondary: `hsl(${baseHue}, ${sat * 0.7}%, ${lightBase + contrastRange * 0.3}%)`,
-          accent: `hsl(${baseHue}, ${sat * 0.5}%, ${lightBase - contrastRange * 0.3}%)`
+          accent: params.strokeColor || `hsl(${baseHue}, ${sat * 0.5}%, ${lightBase - contrastRange * 0.3}%)`
         };
     }
   }
 
-  function applySophisticatedFill(ctx: CanvasRenderingContext2D, points: any[], fillType: number, opacity: number, gradientAngle: number, gradientComplexity: number, palette: any) {
+  function applySophisticatedFill(ctx, points, params, palette, advancedFillType, gradientComplexity) {
     ctx.save();
-    ctx.globalAlpha = opacity;
+    ctx.globalAlpha = params.fillOpacity || 0.8;
 
-    switch (fillType) {
-      case 1: // Solid fill
-        ctx.fillStyle = palette.primary;
-        drawSmoothPath(ctx, points, true);
-        ctx.fill();
-        break;
-        
-      case 2: // Gradient fill
-        const bounds = getBounds(points);
-        const angleRad = (gradientAngle * Math.PI) / 180;
-        const gradientLength = Math.max(bounds.width, bounds.height);
-        
-        const startX = bounds.centerX - Math.cos(angleRad) * gradientLength * 0.5;
-        const startY = bounds.centerY - Math.sin(angleRad) * gradientLength * 0.5;
-        const endX = bounds.centerX + Math.cos(angleRad) * gradientLength * 0.5;
-        const endY = bounds.centerY + Math.sin(angleRad) * gradientLength * 0.5;
-        
-        const gradient = ctx.createLinearGradient(startX, startY, endX, endY);
-        
-        if (gradientComplexity < 0.3) {
-          // Simple 2-stop gradient
-          gradient.addColorStop(0, palette.primary);
-          gradient.addColorStop(1, palette.secondary);
-        } else if (gradientComplexity < 0.7) {
-          // 3-stop gradient
-          gradient.addColorStop(0, palette.primary);
-          gradient.addColorStop(0.5, palette.accent);
-          gradient.addColorStop(1, palette.secondary);
-        } else {
-          // Complex 5-stop gradient
-          gradient.addColorStop(0, palette.primary);
-          gradient.addColorStop(0.25, palette.accent);
-          gradient.addColorStop(0.5, palette.secondary);
-          gradient.addColorStop(0.75, palette.accent);
-          gradient.addColorStop(1, palette.primary);
+    // First apply basic fill
+    if (params.fillType === 'solid') {
+      ctx.fillStyle = params.fillColor || palette.primary;
+      drawSmoothPath(ctx, points, true);
+      ctx.fill();
+    } else if (params.fillType === 'gradient') {
+      const bounds = getBounds(points);
+      const angleRad = ((params.fillGradientDirection || 90) * Math.PI) / 180;
+      const gradientLength = Math.max(bounds.width, bounds.height);
+      
+      const startX = bounds.centerX - Math.cos(angleRad) * gradientLength * 0.5;
+      const startY = bounds.centerY - Math.sin(angleRad) * gradientLength * 0.5;
+      const endX = bounds.centerX + Math.cos(angleRad) * gradientLength * 0.5;
+      const endY = bounds.centerY + Math.sin(angleRad) * gradientLength * 0.5;
+      
+      const gradient = ctx.createLinearGradient(startX, startY, endX, endY);
+      
+      if (gradientComplexity < 0.3) {
+        // Simple 2-stop gradient
+        gradient.addColorStop(0, params.fillGradientStart || palette.primary);
+        gradient.addColorStop(1, params.fillGradientEnd || palette.secondary);
+      } else if (gradientComplexity < 0.7) {
+        // 3-stop gradient
+        gradient.addColorStop(0, params.fillGradientStart || palette.primary);
+        gradient.addColorStop(0.5, palette.accent);
+        gradient.addColorStop(1, params.fillGradientEnd || palette.secondary);
+      } else {
+        // Complex 5-stop gradient
+        gradient.addColorStop(0, params.fillGradientStart || palette.primary);
+        gradient.addColorStop(0.25, palette.accent);
+        gradient.addColorStop(0.5, params.fillGradientEnd || palette.secondary);
+        gradient.addColorStop(0.75, palette.accent);
+        gradient.addColorStop(1, params.fillGradientStart || palette.primary);
+      }
+      
+      ctx.fillStyle = gradient;
+      drawSmoothPath(ctx, points, true);
+      ctx.fill();
+    }
+
+    // Apply advanced fill effects on top
+    if (advancedFillType === 1) { // Pattern
+      ctx.save();
+      ctx.clip();
+      ctx.fillStyle = palette.accent;
+      ctx.globalAlpha = 0.2;
+      const bounds = getBounds(points);
+      const dotSpacing = 8;
+      for (let x = bounds.minX; x < bounds.maxX; x += dotSpacing) {
+        for (let y = bounds.minY; y < bounds.maxY; y += dotSpacing) {
+          ctx.beginPath();
+          ctx.arc(x, y, 1, 0, Math.PI * 2);
+          ctx.fill();
         }
-        
-        ctx.fillStyle = gradient;
-        drawSmoothPath(ctx, points, true);
-        ctx.fill();
-        break;
-        
-      case 3: // Pattern fill (simple dots)
-        ctx.fillStyle = palette.primary;
-        drawSmoothPath(ctx, points, true);
-        ctx.fill();
-        
-        // Add dot pattern
-        ctx.fillStyle = palette.accent;
-        const bounds3 = getBounds(points);
-        const dotSpacing = 8;
-        for (let x = bounds3.minX; x < bounds3.maxX; x += dotSpacing) {
-          for (let y = bounds3.minY; y < bounds3.maxY; y += dotSpacing) {
-            if (ctx.isPointInPath(x, y)) {
-              ctx.beginPath();
-              ctx.arc(x, y, 1, 0, Math.PI * 2);
-              ctx.fill();
-            }
-          }
-        }
-        break;
-        
-      case 4: // Texture fill (noise)
-        ctx.fillStyle = palette.primary;
-        drawSmoothPath(ctx, points, true);
-        ctx.fill();
-        
-        // Add texture noise
-        const bounds4 = getBounds(points);
-        const imageData = ctx.getImageData(bounds4.minX, bounds4.minY, bounds4.width, bounds4.height);
-        const data = imageData.data;
-        
-        for (let i = 0; i < data.length; i += 4) {
-          const noise = (Math.random() - 0.5) * 20;
-          data[i] = Math.max(0, Math.min(255, data[i] + noise));     // Red
-          data[i + 1] = Math.max(0, Math.min(255, data[i + 1] + noise)); // Green
-          data[i + 2] = Math.max(0, Math.min(255, data[i + 2] + noise)); // Blue
-        }
-        
-        ctx.putImageData(imageData, bounds4.minX, bounds4.minY);
-        break;
+      }
+      ctx.restore();
+    } else if (advancedFillType === 2) { // Texture
+      ctx.save();
+      drawSmoothPath(ctx, points, true);
+      ctx.clip();
+      const bounds = getBounds(points);
+      const imageData = ctx.getImageData(bounds.minX, bounds.minY, bounds.width, bounds.height);
+      const data = imageData.data;
+      
+      for (let i = 0; i < data.length; i += 4) {
+        const noise = (Math.random() - 0.5) * 20;
+        data[i] = Math.max(0, Math.min(255, data[i] + noise));     // Red
+        data[i + 1] = Math.max(0, Math.min(255, data[i + 1] + noise)); // Green
+        data[i + 2] = Math.max(0, Math.min(255, data[i + 2] + noise)); // Blue
+      }
+      
+      ctx.putImageData(imageData, bounds.minX, bounds.minY);
+      ctx.restore();
     }
 
     ctx.restore();
   }
 
-  function applySophisticatedStroke(ctx: CanvasRenderingContext2D, points: any[], weight: number, variation: number, taper: number, texture: number, style: number, palette: any, time: number) {
+  function applySophisticatedStroke(ctx, points, params, palette, advancedStyle, variation, taper, texture, time) {
     ctx.save();
     
-    ctx.strokeStyle = palette.accent;
+    ctx.strokeStyle = params.strokeColor || palette.accent;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
+    ctx.globalAlpha = params.strokeOpacity || 1;
 
-    switch (style) {
-      case 0: // Solid stroke
-        drawVariableStroke(ctx, points, weight, variation, taper);
-        break;
-        
-      case 1: // Dashed stroke
-        const dashPattern = [weight * 3, weight * 2];
-        ctx.setLineDash(dashPattern);
-        ctx.lineWidth = weight;
-        drawSmoothPath(ctx, points, true);
-        ctx.stroke();
-        break;
-        
-      case 2: // Dotted stroke
-        const dotSpacing = weight * 4;
-        drawDottedStroke(ctx, points, weight, dotSpacing);
-        break;
-        
-      case 3: // Brush stroke
-        drawBrushStroke(ctx, points, weight, variation, texture, time);
-        break;
-        
-      case 4: // Calligraphy stroke
-        drawCalligraphyStroke(ctx, points, weight, taper, variation);
-        break;
+    // Apply basic stroke style first
+    if (params.strokeType === 'dashed') {
+      const dashPattern = [params.strokeWidth * 3, params.strokeWidth * 2];
+      ctx.setLineDash(dashPattern);
+      ctx.lineWidth = params.strokeWidth || 3;
+      drawSmoothPath(ctx, points, true);
+      ctx.stroke();
+    } else if (params.strokeType === 'dotted') {
+      const dotSpacing = params.strokeWidth * 4;
+      drawDottedStroke(ctx, points, params.strokeWidth || 3, dotSpacing);
+    } else if (params.strokeType === 'solid') {
+      // Apply advanced styles for solid strokes
+      switch (advancedStyle) {
+        case 0: // Basic
+          ctx.lineWidth = params.strokeWidth || 3;
+          drawSmoothPath(ctx, points, true);
+          ctx.stroke();
+          break;
+          
+        case 1: // Brush stroke
+          drawBrushStroke(ctx, points, params.strokeWidth || 3, variation, texture, time);
+          break;
+          
+        case 2: // Calligraphy stroke
+          drawCalligraphyStroke(ctx, points, params.strokeWidth || 3, taper, variation);
+          break;
+          
+        case 3: // Textured stroke
+          drawTexturedStroke(ctx, points, params.strokeWidth || 3, texture);
+          break;
+          
+        case 4: // Variable stroke
+          drawVariableStroke(ctx, points, params.strokeWidth || 3, variation, taper);
+          break;
+      }
     }
 
     ctx.restore();
   }
 
-  function drawVariableStroke(ctx: CanvasRenderingContext2D, points: any[], baseWeight: number, variation: number, taper: number) {
+  function drawVariableStroke(ctx, points, baseWeight, variation, taper) {
     if (points.length < 2) return;
     
     for (let i = 0; i < points.length; i++) {
@@ -331,7 +384,7 @@ export function draw(
     }
   }
 
-  function drawDottedStroke(ctx: CanvasRenderingContext2D, points: any[], dotSize: number, spacing: number) {
+  function drawDottedStroke(ctx, points, dotSize, spacing) {
     const pathLength = getPathLength(points);
     const numDots = Math.floor(pathLength / spacing);
     
@@ -345,7 +398,7 @@ export function draw(
     }
   }
 
-  function drawBrushStroke(ctx: CanvasRenderingContext2D, points: any[], weight: number, variation: number, texture: number, time: number) {
+  function drawBrushStroke(ctx, points, weight, variation, texture, time) {
     ctx.globalAlpha = 0.8;
     
     for (let i = 0; i < points.length; i++) {
@@ -370,7 +423,7 @@ export function draw(
     }
   }
 
-  function drawCalligraphyStroke(ctx: CanvasRenderingContext2D, points: any[], weight: number, taper: number, variation: number) {
+  function drawCalligraphyStroke(ctx, points, weight, taper, variation) {
     if (points.length < 2) return;
     
     for (let i = 0; i < points.length; i++) {
@@ -393,7 +446,38 @@ export function draw(
     }
   }
 
-  function getBounds(points: any[]) {
+  function drawTexturedStroke(ctx, points, weight, texture) {
+    // Draw main stroke
+    ctx.lineWidth = weight;
+    drawSmoothPath(ctx, points, true);
+    ctx.stroke();
+    
+    // Add texture
+    if (texture > 0.1) {
+      ctx.save();
+      ctx.globalAlpha = texture * 0.3;
+      
+      for (let i = 0; i < points.length; i++) {
+        const current = points[i];
+        const next = points[(i + 1) % points.length];
+        
+        // Add random offsets for texture
+        for (let j = 0; j < 3; j++) {
+          const offsetX = (Math.random() - 0.5) * weight;
+          const offsetY = (Math.random() - 0.5) * weight;
+          
+          ctx.beginPath();
+          ctx.moveTo(current.x + offsetX, current.y + offsetY);
+          ctx.lineTo(next.x + offsetX, next.y + offsetY);
+          ctx.stroke();
+        }
+      }
+      
+      ctx.restore();
+    }
+  }
+
+  function getBounds(points) {
     const xs = points.map(p => p.x);
     const ys = points.map(p => p.y);
     const minX = Math.min(...xs);
@@ -410,7 +494,7 @@ export function draw(
     };
   }
 
-  function getPathLength(points: any[]) {
+  function getPathLength(points) {
     let length = 0;
     for (let i = 0; i < points.length; i++) {
       const current = points[i];
@@ -422,7 +506,7 @@ export function draw(
     return length;
   }
 
-  function getPointAtT(points: any[], t: number) {
+  function getPointAtT(points, t) {
     const totalLength = getPathLength(points);
     const targetLength = t * totalLength;
     
@@ -448,7 +532,7 @@ export function draw(
     return points[0];
   }
 
-  function drawSmoothPath(ctx: CanvasRenderingContext2D, points: any[], close: boolean = false) {
+  function drawSmoothPath(ctx, points, close = false) {
     if (points.length < 2) return;
     
     ctx.beginPath();
@@ -478,6 +562,29 @@ export function draw(
       ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, first.x, first.y);
     }
   }
+  
+  function extractHueFromHex(hex) {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    if (!result) return 0;
+    
+    let r = parseInt(result[1], 16) / 255;
+    let g = parseInt(result[2], 16) / 255;
+    let b = parseInt(result[3], 16) / 255;
+    
+    const max = Math.max(r, g, b), min = Math.min(r, g, b);
+    let h = 0;
+    
+    if (max !== min) {
+      const d = max - min;
+      switch (max) {
+        case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
+        case g: h = ((b - r) / d + 2) / 6; break;
+        case b: h = ((r - g) / d + 4) / 6; break;
+      }
+    }
+    
+    return h * 360;
+  }
 }
 
 export const metadata: PresetMetadata = {
@@ -485,20 +592,46 @@ export const metadata: PresetMetadata = {
   description: "Advanced line and fill styling with sophisticated color harmony and stroke techniques",
   defaultParams: {
     seed: "sophisticated-strokes",
+    backgroundColor: "#ffffff",
+    backgroundType: "solid",
+    backgroundGradientStart: "#ffffff",
+    backgroundGradientEnd: "#f0f0f0",
+    backgroundGradientDirection: 45,
+    fillType: "solid",
+    fillColor: "#3b82f6",
+    fillGradientStart: "#3b82f6",
+    fillGradientEnd: "#8b5cf6",
+    fillGradientDirection: 90,
+    fillOpacity: 0.8,
+    strokeType: "solid",
+    strokeColor: "#1e293b",
+    strokeWidth: 3,
+    strokeOpacity: 1,
     frequency: 0.8,
     amplitude: 100,
     complexity: 0.6,
-    strokeWeight: 3,
     strokeVariation: 0.3,
     strokeTaper: 0.4,
     strokeTexture: 0.2,
-    strokeStyle: 0,
-    fillType: 1,
-    fillOpacity: 0.8,
-    gradientDirection: 135,
+    advancedStrokeStyle: 0,
+    advancedFillType: 0,
     gradientComplexity: 0.3,
     colorHarmony: 0,
     colorSaturation: 0.7,
     colorContrast: 0.8
   }
 };
+
+export const id = 'sophisticated-strokes';
+export const name = "Sophisticated Strokes";
+export const description = "Advanced line and fill styling with sophisticated color harmony and stroke techniques";
+export const defaultParams = metadata.defaultParams;
+export const parameters = PARAMETERS;
+export const draw = drawVisualization;
+
+export const code = `// Sophisticated Strokes - Advanced line and fill styling
+const PARAMETERS = ${JSON.stringify(PARAMETERS, null, 2)};
+
+${applyUniversalBackground.toString()}
+
+${drawVisualization.toString()}`;

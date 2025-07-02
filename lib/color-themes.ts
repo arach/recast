@@ -181,7 +181,8 @@ export function applyColorTheme(theme: ColorTheme, currentParams: Record<string,
     'fillColor', 'strokeColor', 'backgroundColor', 'textColor',
     'backgroundGradientStart', 'backgroundGradientEnd',
     'fillGradientStart', 'fillGradientEnd',
-    'strokeGradientStart', 'strokeGradientEnd'
+    'strokeGradientStart', 'strokeGradientEnd',
+    'colorMode' // Preserve Wave template color mode setting
   ];
   
   // Build the color parameters object with only allowed parameters
@@ -203,6 +204,11 @@ export function applyColorTheme(theme: ColorTheme, currentParams: Record<string,
     })
   };
   
+  // Preserve colorMode from current parameters if it exists
+  if (currentParams.colorMode) {
+    colorParams.colorMode = currentParams.colorMode;
+  }
+
   // Filter to only include allowed parameters
   const filteredParams: Record<string, any> = {};
   for (const [key, value] of Object.entries(colorParams)) {

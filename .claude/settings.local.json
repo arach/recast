@@ -32,7 +32,14 @@
       "Bash(pkill:*)",
       "Bash(true)",
       "Bash(find:*)",
-      "Bash(pnpm run:*)"
+      "Bash(pnpm run:*)",
+      "Bash(pnpm build:lib:*)",
+      "Bash(timeout 15s pnpm dev)",
+      "Bash(timeout 10s PORT=3010 pnpm dev)",
+      "Bash(timeout:*)",
+      "Bash(for file in wave-bars audio-bars apex-vercel prism-google pulse-spotify infinity-loops wordmark letter-mark)",
+      "Bash(do echo \"=== $file ===\")",
+      "Bash(done)"
     ],
     "deny": []
   }

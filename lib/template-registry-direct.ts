@@ -84,7 +84,17 @@ export async function getAllTemplateInfo(): Promise<TemplateInfo[]> {
   const templateInfos: TemplateInfo[] = [];
   
   // For now, load templates that we know are converted
-  const convertedTemplates = ['wave-bars', 'audio-bars', 'wordmark', 'letter-mark', 'infinity-loops'];
+  const convertedTemplates = [
+    'wave-bars', 'audio-bars', 'wordmark', 'letter-mark', 'infinity-loops', 
+    'apex-vercel', 'prism-google', 'pulse-spotify', 'spinning-triangles', 
+    'premium-kinetic', 'luxury-brand', 'network-constellation',
+    'sophisticated-strokes', 'brand-network', 'border-effects',
+    'nexus-ai-brand', 'terra-eco-brand', 'volt-electric-brand',
+    'clean-triangle', 'golden-circle', 'smart-hexagon', 'organic-bark',
+    'crystal-blocks', 'crystal-lattice', 'dynamic-diamond', 'hand-sketch',
+    'liquid-flow', 'minimal-line', 'minimal-shape', 'neon-glow',
+    'quantum-field', 'simple-prism', 'architectural-grid'
+  ];
   
   for (const templateId of convertedTemplates) {
     try {

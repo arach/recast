@@ -1,7 +1,28 @@
 import type { ParameterDefinition, PresetMetadata } from './types';
 
-// Dynamic Diamond - Luxury proportional control with premium sophistication
-export const parameters: Record<string, ParameterDefinition> = {
+// Dynamic Diamond
+const PARAMETERS = {
+  // Universal Background Controls
+  backgroundColor: { type: 'color', default: "#f8f8f8", label: 'Background Color', category: 'Background' },
+  backgroundType: { type: 'select', options: [{"value":"transparent","label":"Transparent"},{"value":"solid","label":"Solid Color"},{"value":"gradient","label":"Gradient"}], default: "gradient", label: 'Background Type', category: 'Background' },
+  backgroundGradientStart: { type: 'color', default: "#fefefe", label: 'Gradient Start', category: 'Background', showIf: (params) => params.backgroundType === 'gradient' },
+  backgroundGradientEnd: { type: 'color', default: "#f0f0f0", label: 'Gradient End', category: 'Background', showIf: (params) => params.backgroundType === 'gradient' },
+  backgroundGradientDirection: { type: 'slider', min: 0, max: 360, step: 15, default: 135, label: 'Gradient Direction', category: 'Background', showIf: (params) => params.backgroundType === 'gradient' },
+  
+  // Universal Fill Controls
+  fillType: { type: 'select', options: [{"value":"none","label":"None"},{"value":"solid","label":"Solid Color"},{"value":"gradient","label":"Gradient"}], default: "gradient", label: 'Fill Type', category: 'Fill' },
+  fillColor: { type: 'color', default: "#3A3A3A", label: 'Fill Color', category: 'Fill', showIf: (params) => params.fillType === 'solid' },
+  fillGradientStart: { type: 'color', default: "#606060", label: 'Gradient Start', category: 'Fill', showIf: (params) => params.fillType === 'gradient' },
+  fillGradientEnd: { type: 'color', default: "#2A2A2A", label: 'Gradient End', category: 'Fill', showIf: (params) => params.fillType === 'gradient' },
+  fillGradientDirection: { type: 'slider', min: 0, max: 360, step: 15, default: 90, label: 'Gradient Direction', category: 'Fill', showIf: (params) => params.fillType === 'gradient' },
+  fillOpacity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.8, label: 'Fill Opacity', category: 'Fill', showIf: (params) => params.fillType !== 'none' },
+  
+  // Universal Stroke Controls
+  strokeType: { type: 'select', options: [{"value":"none","label":"None"},{"value":"solid","label":"Solid"},{"value":"dashed","label":"Dashed"},{"value":"dotted","label":"Dotted"}], default: "solid", label: 'Stroke Type', category: 'Stroke' },
+  strokeColor: { type: 'color', default: "#4A4A4A", label: 'Stroke Color', category: 'Stroke', showIf: (params) => params.strokeType !== 'none' },
+  strokeWidth: { type: 'slider', min: 0, max: 10, step: 0.5, default: 2, label: 'Stroke Width', category: 'Stroke', showIf: (params) => params.strokeType !== 'none' },
+  strokeOpacity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 1, label: 'Stroke Opacity', category: 'Stroke', showIf: (params) => params.strokeType !== 'none' },
+  
   // Diamond fundamentals - shape definition (70% of controls)
   diamondStyle: {
     type: 'slider',
@@ -9,22 +30,23 @@ export const parameters: Record<string, ParameterDefinition> = {
     max: 4,
     step: 1,
     default: 0,
-    label: 'Diamond Style (0=Classic, 1=Elongated, 2=Brilliant, 3=Marquise, 4=Emerald)'
+    label: 'Diamond Style (0=Classic, 1=Elongated, 2=Brilliant, 3=Marquise, 4=Emerald)',
+    category: 'Shape'
   },
   
   // Luxury proportions with mathematical precision
-  carat: { type: 'slider', min: 0.5, max: 2, step: 0.1, default: 1.0, label: 'Carat (Size Multiplier)' },
-  tableRatio: { type: 'slider', min: 0.5, max: 0.8, step: 0.02, default: 0.65, label: 'Table Ratio' },
-  depthRatio: { type: 'slider', min: 0.6, max: 1.2, step: 0.05, default: 0.8, label: 'Depth Ratio' },
+  carat: { type: 'slider', min: 0.5, max: 2, step: 0.1, default: 1.0, label: 'Carat (Size Multiplier)', category: 'Shape' },
+  tableRatio: { type: 'slider', min: 0.5, max: 0.8, step: 0.02, default: 0.65, label: 'Table Ratio', category: 'Shape' },
+  depthRatio: { type: 'slider', min: 0.6, max: 1.2, step: 0.05, default: 0.8, label: 'Depth Ratio', category: 'Shape' },
   
   // Cut quality and proportions
-  cutPrecision: { type: 'slider', min: 0.7, max: 1, step: 0.01, default: 0.95, label: 'Cut Precision' },
-  symmetryGrade: { type: 'slider', min: 0.8, max: 1, step: 0.01, default: 0.92, label: 'Symmetry Grade' },
-  facetAngle: { type: 'slider', min: 25, max: 45, step: 1, default: 35, label: 'Crown Angle (degrees)' },
+  cutPrecision: { type: 'slider', min: 0.7, max: 1, step: 0.01, default: 0.95, label: 'Cut Precision', category: 'Quality' },
+  symmetryGrade: { type: 'slider', min: 0.8, max: 1, step: 0.01, default: 0.92, label: 'Symmetry Grade', category: 'Quality' },
+  facetAngle: { type: 'slider', min: 25, max: 45, step: 1, default: 35, label: 'Crown Angle (degrees)', category: 'Quality' },
   
   // Luxury features
-  pavilionDepth: { type: 'slider', min: 0.4, max: 0.8, step: 0.02, default: 0.6, label: 'Pavilion Depth' },
-  girdleThickness: { type: 'slider', min: 0.01, max: 0.05, step: 0.005, default: 0.02, label: 'Girdle Thickness' },
+  pavilionDepth: { type: 'slider', min: 0.4, max: 0.8, step: 0.02, default: 0.6, label: 'Pavilion Depth', category: 'Quality' },
+  girdleThickness: { type: 'slider', min: 0.01, max: 0.05, step: 0.005, default: 0.02, label: 'Girdle Thickness', category: 'Quality' },
   
   // Brand enhancement (30% of controls)
   facetStyle: {
@@ -33,7 +55,8 @@ export const parameters: Record<string, ParameterDefinition> = {
     max: 3,
     step: 1,
     default: 1,
-    label: 'Facets (0=None, 1=Minimal, 2=Classic, 3=Brilliant)'
+    label: 'Facets (0=None, 1=Minimal, 2=Classic, 3=Brilliant)',
+    category: 'Effects'
   },
   
   // Luxury materials and finish
@@ -43,21 +66,50 @@ export const parameters: Record<string, ParameterDefinition> = {
     max: 4,
     step: 1,
     default: 2,
-    label: 'Material (0=Crystal, 1=Platinum, 2=Gold, 3=Carbon, 4=Prismatic)'
+    label: 'Material (0=Crystal, 1=Platinum, 2=Gold, 3=Carbon, 4=Prismatic)',
+    category: 'Material'
   },
   
   // Premium color palette
-  brandHue: { type: 'slider', min: 0, max: 360, step: 10, default: 45, label: 'Brand Hue' },
-  luxury: { type: 'slider', min: 0.6, max: 1, step: 0.05, default: 0.85, label: 'Luxury Factor' },
-  exclusivity: { type: 'slider', min: 0.5, max: 1, step: 0.05, default: 0.8, label: 'Exclusivity' },
+  brandHue: { type: 'slider', min: 0, max: 360, step: 10, default: 45, label: 'Brand Hue', category: 'Material' },
+  luxury: { type: 'slider', min: 0.6, max: 1, step: 0.05, default: 0.85, label: 'Luxury Factor', category: 'Material' },
+  exclusivity: { type: 'slider', min: 0.5, max: 1, step: 0.05, default: 0.8, label: 'Exclusivity', category: 'Material' },
   
   // Premium effects
-  brilliance: { type: 'slider', min: 0.3, max: 1, step: 0.05, default: 0.7, label: 'Brilliance' },
-  fireDispersion: { type: 'slider', min: 0, max: 0.4, step: 0.02, default: 0.2, label: 'Fire Dispersion' },
-  scintillation: { type: 'slider', min: 0, max: 0.6, step: 0.05, default: 0.3, label: 'Scintillation' }
+  brilliance: { type: 'slider', min: 0.3, max: 1, step: 0.05, default: 0.7, label: 'Brilliance', category: 'Effects' },
+  fireDispersion: { type: 'slider', min: 0, max: 0.4, step: 0.02, default: 0.2, label: 'Fire Dispersion', category: 'Effects' },
+  scintillation: { type: 'slider', min: 0, max: 0.6, step: 0.05, default: 0.3, label: 'Scintillation', category: 'Effects' }
 };
 
-export function draw(
+function applyUniversalBackground(ctx: CanvasRenderingContext2D, width: number, height: number, params: any) {
+  if (params.backgroundType === 'transparent') {
+    ctx.clearRect(0, 0, width, height);
+  } else if (params.backgroundType === 'solid') {
+    ctx.fillStyle = params.backgroundColor;
+    ctx.fillRect(0, 0, width, height);
+  } else if (params.backgroundType === 'gradient') {
+    const angle = (params.backgroundGradientDirection || 45) * Math.PI / 180;
+    const dx = Math.cos(angle);
+    const dy = Math.sin(angle);
+    const length = Math.sqrt(width * width + height * height);
+    const centerX = width / 2;
+    const centerY = height / 2;
+    
+    const gradient = ctx.createLinearGradient(
+      centerX - dx * length / 2,
+      centerY - dy * length / 2,
+      centerX + dx * length / 2,
+      centerY + dy * length / 2
+    );
+    
+    gradient.addColorStop(0, params.backgroundGradientStart);
+    gradient.addColorStop(1, params.backgroundGradientEnd);
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, width, height);
+  }
+}
+
+function drawVisualization(
   ctx: CanvasRenderingContext2D,
   width: number,
   height: number,
@@ -65,16 +117,22 @@ export function draw(
   _generator: any,
   time: number
 ) {
-  // Luxury background with subtle sophistication
-  const bgGradient = ctx.createRadialGradient(
-    width * 0.3, height * 0.2, 0,
-    width * 0.7, height * 0.8, Math.max(width, height) * 0.9
-  );
-  bgGradient.addColorStop(0, '#fefefe');
-  bgGradient.addColorStop(0.7, '#f8f8f8');
-  bgGradient.addColorStop(1, '#f0f0f0');
-  ctx.fillStyle = bgGradient;
-  ctx.fillRect(0, 0, width, height);
+  // Parameter compatibility layer
+  if (params.customParameters) {
+    params.fillColor = params.fillColor || params.customParameters.fillColor;
+    params.strokeColor = params.strokeColor || params.customParameters.strokeColor;
+    params.backgroundColor = params.backgroundColor || params.customParameters.backgroundColor;
+    params.textColor = params.textColor || params.customParameters.textColor;
+    
+    Object.keys(params.customParameters).forEach(key => {
+      if (params[key] === undefined) {
+        params[key] = params.customParameters[key];
+      }
+    });
+  }
+
+  // Apply universal background
+  applyUniversalBackground(ctx, width, height, params);
 
   // Extract parameters
   const centerX = width / 2;
@@ -117,7 +175,7 @@ export function draw(
   }
 
   // Render diamond base with luxury materials
-  renderLuxuryDiamond(ctx, diamondGeometry, luxuryColors, materialTypeNum, centerX, centerY, logoSize);
+  renderLuxuryDiamond(ctx, diamondGeometry, luxuryColors, materialTypeNum, centerX, centerY, logoSize, params);
 
   // Render facets for brilliance
   if (facetStyleNum > 0) {
@@ -292,7 +350,7 @@ export function draw(
       
       const offsetGeometry = {
         ...geometry,
-        points: geometry.points.map(p => ({
+        points: geometry.points.map((p: any) => ({
           ...p,
           x: p.x + dispersion.offset * size * 0.1,
           y: p.y + dispersion.offset * size * 0.05
@@ -306,30 +364,64 @@ export function draw(
     ctx.restore();
   }
 
-  function renderLuxuryDiamond(ctx: CanvasRenderingContext2D, geometry: any, colors: any, material: number, centerX: number, centerY: number, size: number) {
+  function renderLuxuryDiamond(ctx: CanvasRenderingContext2D, geometry: any, colors: any, material: number, centerX: number, centerY: number, size: number, params: any) {
     ctx.save();
     
-    // Main diamond fill with luxury gradient
-    const luxuryGradient = ctx.createRadialGradient(
-      centerX - size * 0.2, centerY - size * 0.3, 0,
-      centerX, centerY, size * 0.8
-    );
+    // Apply universal fill
+    if (params.fillType !== 'none') {
+      ctx.globalAlpha = params.fillOpacity || 0.8;
+      
+      if (params.fillType === 'solid') {
+        ctx.fillStyle = params.fillColor;
+      } else if (params.fillType === 'gradient') {
+        const luxuryGradient = ctx.createRadialGradient(
+          centerX - size * 0.2, centerY - size * 0.3, 0,
+          centerX, centerY, size * 0.8
+        );
+        
+        luxuryGradient.addColorStop(0, params.fillGradientStart || colors.brilliance);
+        luxuryGradient.addColorStop(0.3, colors.premium);
+        luxuryGradient.addColorStop(0.7, colors.luxury);
+        luxuryGradient.addColorStop(1, params.fillGradientEnd || colors.primary);
+        
+        ctx.fillStyle = luxuryGradient;
+      } else {
+        // Default luxury gradient
+        const luxuryGradient = ctx.createRadialGradient(
+          centerX - size * 0.2, centerY - size * 0.3, 0,
+          centerX, centerY, size * 0.8
+        );
+        
+        luxuryGradient.addColorStop(0, colors.brilliance);
+        luxuryGradient.addColorStop(0.3, colors.premium);
+        luxuryGradient.addColorStop(0.7, colors.luxury);
+        luxuryGradient.addColorStop(1, colors.primary);
+        
+        ctx.fillStyle = luxuryGradient;
+      }
+      
+      drawDiamondShape(ctx, geometry.points);
+      ctx.fill();
+    }
     
-    luxuryGradient.addColorStop(0, colors.brilliance);
-    luxuryGradient.addColorStop(0.3, colors.premium);
-    luxuryGradient.addColorStop(0.7, colors.luxury);
-    luxuryGradient.addColorStop(1, colors.primary);
-    
-    ctx.fillStyle = luxuryGradient;
-    drawDiamondShape(ctx, geometry.points);
-    ctx.fill();
-    
-    // Luxury border
-    ctx.strokeStyle = colors.accent;
-    ctx.lineWidth = 2;
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-    ctx.stroke();
+    // Apply universal stroke
+    ctx.globalAlpha = params.strokeOpacity || 1;
+    if (params.strokeType !== 'none') {
+      ctx.strokeStyle = params.strokeColor || colors.accent;
+      ctx.lineWidth = params.strokeWidth || 2;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      
+      if (params.strokeType === 'dashed') {
+        ctx.setLineDash([5, 5]);
+      } else if (params.strokeType === 'dotted') {
+        ctx.setLineDash([2, 3]);
+      }
+      
+      drawDiamondShape(ctx, geometry.points);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
     
     ctx.restore();
   }
@@ -463,11 +555,11 @@ export function draw(
     ctx.fillStyle = brillianceGradient;
     
     // Apply to top portion of diamond
-    const topPoints = geometry.points.filter(p => p.y < centerY);
+    const topPoints = geometry.points.filter((p: any) => p.y < centerY);
     if (topPoints.length > 0) {
       ctx.beginPath();
       ctx.moveTo(topPoints[0].x, topPoints[0].y);
-      topPoints.forEach(p => ctx.lineTo(p.x, p.y));
+      topPoints.forEach((p: any) => ctx.lineTo(p.x, p.y));
       ctx.lineTo(centerX, centerY);
       ctx.closePath();
       ctx.fill();
@@ -495,6 +587,21 @@ export const metadata: PresetMetadata = {
   description: "Luxury diamond cuts with proportional control and premium brilliance effects",
   defaultParams: {
     seed: "dynamic-diamond-luxury",
+    backgroundColor: "#f8f8f8",
+    backgroundType: "gradient",
+    backgroundGradientStart: "#fefefe",
+    backgroundGradientEnd: "#f0f0f0",
+    backgroundGradientDirection: 135,
+    fillType: "gradient",
+    fillColor: "#3A3A3A",
+    fillGradientStart: "#606060",
+    fillGradientEnd: "#2A2A2A",
+    fillGradientDirection: 90,
+    fillOpacity: 0.8,
+    strokeType: "solid",
+    strokeColor: "#4A4A4A",
+    strokeWidth: 2,
+    strokeOpacity: 1,
     diamondStyle: 0,
     carat: 1.0,
     tableRatio: 0.65,
@@ -514,3 +621,17 @@ export const metadata: PresetMetadata = {
     scintillation: 0.3
   }
 };
+
+export const id = 'dynamic-diamond';
+export const name = "◆ Dynamic Diamond";
+export const description = "Luxury diamond cuts with proportional control and premium brilliance effects";
+export const defaultParams = metadata.defaultParams;
+export const parameters = PARAMETERS;
+export const draw = drawVisualization;
+
+export const code = `// Dynamic Diamond
+const PARAMETERS = ${JSON.stringify(PARAMETERS, null, 2)};
+
+${applyUniversalBackground.toString()}
+
+${drawVisualization.toString()}`;

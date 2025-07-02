@@ -1,71 +1,110 @@
-import type { ParameterDefinition, PresetMetadata } from './types';
-
-// Luxury Brand - Aesthetically refined programmatic logos
-export const parameters: Record<string, ParameterDefinition> = {
-  // Aesthetic controls for beautiful logos
-  frequency: { type: 'slider', min: 0.1, max: 1, step: 0.1, default: 0.3, label: 'Organic Pulse' },
-  amplitude: { type: 'slider', min: 50, max: 150, step: 5, default: 90, label: 'Logo Scale' },
+// ✨ Luxury Brand
+const PARAMETERS = {
+  // Universal Background Controls
+  backgroundColor: { type: 'color', default: "#fafafa", label: 'Background Color', category: 'Background' },
+  backgroundType: { type: 'select', options: [{"value":"transparent","label":"Transparent"},{"value":"solid","label":"Solid Color"},{"value":"gradient","label":"Gradient"}], default: "gradient", label: 'Background Type', category: 'Background' },
+  backgroundGradientStart: { type: 'color', default: "#fafafa", label: 'Gradient Start', category: 'Background', showIf: (params)=>params.backgroundType === 'gradient' },
+  backgroundGradientEnd: { type: 'color', default: "#ffffff", label: 'Gradient End', category: 'Background', showIf: (params)=>params.backgroundType === 'gradient' },
+  backgroundGradientDirection: { type: 'slider', min: 0, max: 360, step: 15, default: 135, label: 'Gradient Direction', category: 'Background', showIf: (params)=>params.backgroundType === 'gradient' },
   
-  // Brand shape with refined options
+  // Universal Fill Controls
+  fillType: { type: 'select', options: [{"value":"none","label":"None"},{"value":"solid","label":"Solid Color"},{"value":"gradient","label":"Gradient"}], default: "gradient", label: 'Fill Type', category: 'Fill' },
+  fillColor: { type: 'color', default: "#1a1a2e", label: 'Fill Color', category: 'Fill', showIf: (params)=>params.fillType === 'solid' },
+  fillGradientStart: { type: 'color', default: "#533483", label: 'Gradient Start', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
+  fillGradientEnd: { type: 'color', default: "#1a1a2e", label: 'Gradient End', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
+  fillGradientDirection: { type: 'slider', min: 0, max: 360, step: 15, default: 45, label: 'Gradient Direction', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
+  fillOpacity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.4, label: 'Fill Opacity', category: 'Fill', showIf: (params)=>params.fillType !== 'none' },
+  
+  // Universal Stroke Controls
+  strokeType: { type: 'select', options: [{"value":"none","label":"None"},{"value":"solid","label":"Solid"},{"value":"dashed","label":"Dashed"},{"value":"dotted","label":"Dotted"}], default: "solid", label: 'Stroke Type', category: 'Stroke' },
+  strokeColor: { type: 'color', default: "#1a1a2e", label: 'Stroke Color', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
+  strokeWidth: { type: 'slider', min: 0, max: 10, step: 0.5, default: 2.5, label: 'Stroke Width', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
+  strokeOpacity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 1, label: 'Stroke Opacity', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
+  
+  // Template-specific: Aesthetic controls
+  frequency: { type: 'slider', min: 0.1, max: 1, step: 0.1, default: 0.3, label: 'Organic Pulse', category: 'Aesthetic' },
+  amplitude: { type: 'slider', min: 50, max: 150, step: 5, default: 90, label: 'Logo Scale', category: 'Aesthetic' },
+  
+  // Template-specific: Brand shape
   shapeType: { 
-    type: 'slider', 
-    min: 0, 
-    max: 4, 
-    step: 1, 
+    type: 'select', 
+    options: [{"value":0,"label":"Organic Circle"},{"value":1,"label":"Flowing Star"},{"value":2,"label":"Elegant Shield"},{"value":3,"label":"Luxury Hex"},{"value":4,"label":"Dynamic Wave"}],
     default: 0, 
-    label: 'Brand Form (0=Organic Circle, 1=Flowing Star, 2=Elegant Shield, 3=Luxury Hex, 4=Dynamic Wave)' 
+    label: 'Brand Form',
+    category: 'Shape'
   },
   
-  // Aesthetic refinements
-  curvature: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.6, label: 'Curve Sophistication' },
-  tension: { type: 'slider', min: 0.1, max: 2, step: 0.1, default: 0.8, label: 'Visual Tension' },
-  elegance: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.7, label: 'Golden Ratio Balance' },
+  // Template-specific: Aesthetic refinements
+  curvature: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.6, label: 'Curve Sophistication', category: 'Refinements' },
+  tension: { type: 'slider', min: 0.1, max: 2, step: 0.1, default: 0.8, label: 'Visual Tension', category: 'Refinements' },
+  elegance: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.7, label: 'Golden Ratio Balance', category: 'Refinements' },
   
-  // Color sophistication
+  // Template-specific: Color sophistication
   colorMode: {
-    type: 'slider',
-    min: 0,
-    max: 4,
-    step: 1,
+    type: 'select',
+    options: [{"value":0,"label":"Midnight"},{"value":1,"label":"Ocean"},{"value":2,"label":"Sunset"},{"value":3,"label":"Forest"},{"value":4,"label":"Royal"}],
     default: 0,
-    label: 'Color Palette (0=Midnight, 1=Ocean, 2=Sunset, 3=Forest, 4=Royal)'
+    label: 'Color Palette',
+    category: 'Colors'
   },
-  gradient: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.4, label: 'Gradient Depth' },
-  highlight: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.3, label: 'Subtle Highlight' },
+  gradient: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.4, label: 'Gradient Depth', category: 'Colors' },
+  highlight: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.3, label: 'Subtle Highlight', category: 'Colors' },
   
-  // Micro-refinements
-  strokeFlow: { type: 'slider', min: 1, max: 6, step: 0.5, default: 2.5, label: 'Stroke Elegance' },
-  shadowDepth: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.2, label: 'Depth Shadow' }
+  // Template-specific: Micro-refinements
+  shadowDepth: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.2, label: 'Depth Shadow', category: 'Effects' }
 };
 
-export function draw(
-  ctx: CanvasRenderingContext2D,
-  width: number,
-  height: number,
-  params: Record<string, any>,
-  _generator: any,
-  time: number
-) {
-  // Sophisticated background - subtle gradient instead of flat white
-  const bgGradient = ctx.createLinearGradient(0, 0, width, height);
-  bgGradient.addColorStop(0, '#fafafa');
-  bgGradient.addColorStop(1, '#ffffff');
-  ctx.fillStyle = bgGradient;
-  ctx.fillRect(0, 0, width, height);
+function applyUniversalBackground(ctx, width, height, params) {
+  if (!params.backgroundType || params.backgroundType === 'transparent') return;
+  
+  if (params.backgroundType === 'solid') {
+    ctx.fillStyle = params.backgroundColor || '#fafafa';
+    ctx.fillRect(0, 0, width, height);
+  } else if (params.backgroundType === 'gradient') {
+    const direction = (params.backgroundGradientDirection || 135) * (Math.PI / 180);
+    const x1 = width / 2 - Math.cos(direction) * width / 2;
+    const y1 = height / 2 - Math.sin(direction) * height / 2;
+    const x2 = width / 2 + Math.cos(direction) * width / 2;
+    const y2 = height / 2 + Math.sin(direction) * height / 2;
+    
+    const gradient = ctx.createLinearGradient(x1, y1, x2, y2);
+    gradient.addColorStop(0, params.backgroundGradientStart || '#fafafa');
+    gradient.addColorStop(1, params.backgroundGradientEnd || '#ffffff');
+    
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, width, height);
+  }
+}
+
+function drawVisualization(ctx, width, height, params, _generator, time) {
+  // Parameter compatibility layer
+  if (params.customParameters) {
+    params.fillColor = params.fillColor || params.customParameters.fillColor;
+    params.strokeColor = params.strokeColor || params.customParameters.strokeColor;
+    params.backgroundColor = params.backgroundColor || params.customParameters.backgroundColor;
+    
+    Object.keys(params.customParameters).forEach(key => {
+      if (params[key] === undefined) {
+        params[key] = params.customParameters[key];
+      }
+    });
+  }
+
+  // Apply universal background
+  applyUniversalBackground(ctx, width, height, params);
 
   // Extract aesthetic parameters
   const centerX = width / 2;
   const centerY = height / 2;
   const frequency = params.frequency || 0.3;
   const amplitude = params.amplitude || 90;
-  const shapeTypeNum = Math.round(params.shapeType || 0);
+  const shapeTypeNum = Number(params.shapeType) || 0;
   const curvature = params.curvature || 0.6;
   const tension = params.tension || 0.8;
   const elegance = params.elegance || 0.7;
-  const colorModeNum = Math.round(params.colorMode || 0);
+  const colorModeNum = Number(params.colorMode) || 0;
   const gradient = params.gradient || 0.4;
   const highlight = params.highlight || 0.3;
-  const strokeFlow = params.strokeFlow || 2.5;
   const shadowDepth = params.shadowDepth || 0.2;
 
   // Golden ratio and aesthetic scaling
@@ -112,7 +151,9 @@ export function draw(
   drawGradientFill(ctx, controlPoints, palette, gradient, centerX, centerY, scaledAmplitude);
 
   // Draw refined stroke
-  drawElegantStroke(ctx, controlPoints, palette, strokeFlow, curvature);
+  if (params.strokeType !== 'none') {
+    drawElegantStroke(ctx, controlPoints, palette, params.strokeWidth || 2.5, params.strokeOpacity || 1, params.strokeType, params.strokeColor);
+  }
 
   // Add subtle highlight
   if (highlight > 0.1) {
@@ -230,29 +271,41 @@ export function draw(
   }
 
   function drawGradientFill(ctx: CanvasRenderingContext2D, points: any[], palette: any, gradient: number, centerX: number, centerY: number, scale: number) {
-    if (gradient < 0.1) return;
+    if (params.fillType === 'none') return;
     
     ctx.save();
     
-    // Create sophisticated gradient
-    const gradientRadius = scale * 1.2;
-    const fillGradient = ctx.createRadialGradient(
-      centerX - gradientRadius * 0.3, centerY - gradientRadius * 0.3, 0,
-      centerX, centerY, gradientRadius
-    );
-    
-    function hexToRgba(hex: string, alpha: number) {
-      const r = parseInt(hex.slice(1, 3), 16);
-      const g = parseInt(hex.slice(3, 5), 16);
-      const b = parseInt(hex.slice(5, 7), 16);
-      return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    if (params.fillType === 'solid') {
+      ctx.fillStyle = params.fillColor || palette.primary;
+      ctx.globalAlpha = params.fillOpacity || gradient;
+    } else if (params.fillType === 'gradient') {
+      const direction = (params.fillGradientDirection || 45) * (Math.PI / 180);
+      const gradientRadius = scale * 1.2;
+      
+      if (gradient > 0.5) {
+        // Radial gradient for high gradient values
+        const fillGradient = ctx.createRadialGradient(
+          centerX - gradientRadius * 0.3, centerY - gradientRadius * 0.3, 0,
+          centerX, centerY, gradientRadius
+        );
+        fillGradient.addColorStop(0, params.fillGradientStart || palette.accent);
+        fillGradient.addColorStop(1, params.fillGradientEnd || palette.primary);
+        ctx.fillStyle = fillGradient;
+      } else {
+        // Linear gradient for low gradient values
+        const x1 = centerX - Math.cos(direction) * scale;
+        const y1 = centerY - Math.sin(direction) * scale;
+        const x2 = centerX + Math.cos(direction) * scale;
+        const y2 = centerY + Math.sin(direction) * scale;
+        
+        const fillGradient = ctx.createLinearGradient(x1, y1, x2, y2);
+        fillGradient.addColorStop(0, params.fillGradientStart || palette.accent);
+        fillGradient.addColorStop(1, params.fillGradientEnd || palette.primary);
+        ctx.fillStyle = fillGradient;
+      }
+      
+      ctx.globalAlpha = params.fillOpacity || gradient;
     }
-    
-    fillGradient.addColorStop(0, hexToRgba(palette.accent, gradient));
-    fillGradient.addColorStop(0.6, hexToRgba(palette.secondary, gradient * 0.7));
-    fillGradient.addColorStop(1, hexToRgba(palette.primary, gradient * 0.3));
-    
-    ctx.fillStyle = fillGradient;
     
     drawSmoothPath(ctx, points, true);
     ctx.fill();
@@ -260,16 +313,22 @@ export function draw(
     ctx.restore();
   }
 
-  function drawElegantStroke(ctx: CanvasRenderingContext2D, points: any[], palette: any, strokeFlow: number, curvature: number) {
+  function drawElegantStroke(ctx: CanvasRenderingContext2D, points: any[], palette: any, strokeWidth: number, strokeOpacity: number, strokeType: string, strokeColor: string) {
     ctx.save();
     
-    ctx.strokeStyle = palette.primary;
-    ctx.lineWidth = strokeFlow;
+    ctx.strokeStyle = strokeColor || palette.primary;
+    ctx.lineWidth = strokeWidth;
+    ctx.globalAlpha = strokeOpacity;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
     
-    // Variable line width for elegance
-    drawSmoothPath(ctx, points, false);
+    if (strokeType === 'dashed') {
+      ctx.setLineDash([strokeWidth * 3, strokeWidth * 2]);
+    } else if (strokeType === 'dotted') {
+      ctx.setLineDash([strokeWidth, strokeWidth * 2]);
+    }
+    
+    drawSmoothPath(ctx, points, true);
     ctx.stroke();
     
     ctx.restore();
@@ -338,11 +397,29 @@ export function draw(
   }
 }
 
-export const metadata: PresetMetadata = {
+export const metadata = {
   name: "✨ Luxury Brand",
   description: "Aesthetically refined logos with sophisticated curves, gradients, and golden ratio proportions",
   defaultParams: {
     seed: "luxury-brand",
+    // Background
+    backgroundColor: "#fafafa",
+    backgroundType: "gradient",
+    backgroundGradientStart: "#fafafa",
+    backgroundGradientEnd: "#ffffff",
+    backgroundGradientDirection: 135,
+    // Fill
+    fillType: "gradient",
+    fillGradientStart: "#533483",
+    fillGradientEnd: "#1a1a2e",
+    fillGradientDirection: 45,
+    fillOpacity: 0.4,
+    // Stroke
+    strokeType: "solid",
+    strokeColor: "#1a1a2e",
+    strokeWidth: 2.5,
+    strokeOpacity: 1,
+    // Template-specific
     frequency: 0.3,
     amplitude: 90,
     shapeType: 0,
@@ -352,7 +429,13 @@ export const metadata: PresetMetadata = {
     colorMode: 0,
     gradient: 0.4,
     highlight: 0.3,
-    strokeFlow: 2.5,
     shadowDepth: 0.2
   }
 };
+
+export const id = 'luxury-brand';
+export const name = "✨ Luxury Brand";
+export const description = "Aesthetically refined logos with sophisticated curves, gradients, and golden ratio proportions";
+export const defaultParams = metadata.defaultParams;
+
+export const code = `${PARAMETERS.toString().replace('PARAMETERS', 'const PARAMETERS')}\n\n${applyUniversalBackground.toString()}\n\n${drawVisualization.toString()}`;

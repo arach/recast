@@ -323,6 +323,7 @@ export const metadata = {
 export const id = 'wordmark';
 export const name = "Aa Wordmark";
 export const description = "Professional text-based logos with customizable typography";
+export { drawVisualization };
 export const defaultParams = {
   seed: "wordmark",
   text: 'BRAND',

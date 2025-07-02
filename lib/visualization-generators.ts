@@ -481,10 +481,19 @@ export const executeCustomCode = (
       `;
     }
 
-    const executeFunction = new Function(
-      'ctx', 'width', 'height', 'params', 'generator', 'time', 'WaveGenerator',
-      safeCode
-    )
+    let executeFunction;
+    try {
+      executeFunction = new Function(
+        'ctx', 'width', 'height', 'params', 'generator', 'time', 'WaveGenerator',
+        safeCode
+      )
+    } catch (syntaxError) {
+      const errorMsg = `Syntax error in template code: ${syntaxError.message}`;
+      console.error(errorMsg);
+      console.error('Problematic code:', safeCode);
+      if (onError) onError(errorMsg);
+      return { success: false, error: errorMsg };
+    }
 
     executeFunction(ctx, width, height, 
       mergedParams, 

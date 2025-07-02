@@ -1,46 +1,92 @@
-import type { ParameterDefinition, PresetMetadata } from './types';
-
-// Premium Kinetic - Next-level aesthetic sophistication
-export const parameters: Record<string, ParameterDefinition> = {
-  // Motion & Energy
-  frequency: { type: 'slider', min: 0.1, max: 3, step: 0.1, default: 1.2, label: 'Kinetic Energy' },
-  amplitude: { type: 'slider', min: 60, max: 200, step: 5, default: 120, label: 'Scale Presence' },
+// ✨ Premium Kinetic
+const PARAMETERS = {
+  // Universal Background Controls
+  backgroundColor: { type: 'color', default: "#f8fafc", label: 'Background Color', category: 'Background' },
+  backgroundType: { type: 'select', options: [{"value":"transparent","label":"Transparent"},{"value":"solid","label":"Solid Color"},{"value":"gradient","label":"Gradient"}], default: "gradient", label: 'Background Type', category: 'Background' },
+  backgroundGradientStart: { type: 'color', default: "#f8fafc", label: 'Gradient Start', category: 'Background', showIf: (params)=>params.backgroundType === 'gradient' },
+  backgroundGradientEnd: { type: 'color', default: "#e2e8f0", label: 'Gradient End', category: 'Background', showIf: (params)=>params.backgroundType === 'gradient' },
+  backgroundGradientDirection: { type: 'slider', min: 0, max: 360, step: 15, default: 225, label: 'Gradient Direction', category: 'Background', showIf: (params)=>params.backgroundType === 'gradient' },
   
-  // Aesthetic Architecture
-  formComplexity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.75, label: 'Form Complexity' },
-  surfaceTension: { type: 'slider', min: 0.2, max: 2, step: 0.1, default: 1.3, label: 'Surface Tension' },
-  opticalWeight: { type: 'slider', min: 0.3, max: 1.5, step: 0.05, default: 0.85, label: 'Optical Weight' },
+  // Universal Fill Controls
+  fillType: { type: 'select', options: [{"value":"none","label":"None"},{"value":"solid","label":"Solid Color"},{"value":"gradient","label":"Gradient"}], default: "gradient", label: 'Fill Type', category: 'Fill' },
+  fillColor: { type: 'color', default: "#0f172a", label: 'Fill Color', category: 'Fill', showIf: (params)=>params.fillType === 'solid' },
+  fillGradientStart: { type: 'color', default: "#6484a3", label: 'Gradient Start', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
+  fillGradientEnd: { type: 'color', default: "#0f172a", label: 'Gradient End', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
+  fillGradientDirection: { type: 'slider', min: 0, max: 360, step: 15, default: 45, label: 'Gradient Direction', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
+  fillOpacity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.85, label: 'Fill Opacity', category: 'Fill', showIf: (params)=>params.fillType !== 'none' },
   
-  // Premium Materials
+  // Universal Stroke Controls
+  strokeType: { type: 'select', options: [{"value":"none","label":"None"},{"value":"solid","label":"Solid"},{"value":"dashed","label":"Dashed"},{"value":"dotted","label":"Dotted"}], default: "solid", label: 'Stroke Type', category: 'Stroke' },
+  strokeColor: { type: 'color', default: "#0f172a", label: 'Stroke Color', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
+  strokeWidth: { type: 'slider', min: 0, max: 10, step: 0.5, default: 3, label: 'Stroke Width', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
+  strokeOpacity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.85, label: 'Stroke Opacity', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
+  
+  // Template-specific: Motion & Energy
+  frequency: { type: 'slider', min: 0.1, max: 3, step: 0.1, default: 1.2, label: 'Kinetic Energy', category: 'Motion' },
+  amplitude: { type: 'slider', min: 60, max: 200, step: 5, default: 120, label: 'Scale Presence', category: 'Motion' },
+  
+  // Template-specific: Aesthetic Architecture
+  formComplexity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.75, label: 'Form Complexity', category: 'Form' },
+  surfaceTension: { type: 'slider', min: 0.2, max: 2, step: 0.1, default: 1.3, label: 'Surface Tension', category: 'Form' },
+  opticalWeight: { type: 'slider', min: 0.3, max: 1.5, step: 0.05, default: 0.85, label: 'Optical Weight', category: 'Form' },
+  
+  // Template-specific: Premium Materials
   materialType: {
-    type: 'slider',
-    min: 0,
-    max: 4,
-    step: 1,
+    type: 'select',
+    options: [{"value":0,"label":"Glass"},{"value":1,"label":"Metal"},{"value":2,"label":"Carbon"},{"value":3,"label":"Ceramic"},{"value":4,"label":"Liquid"}],
     default: 2,
-    label: 'Material (0=Glass, 1=Metal, 2=Carbon, 3=Ceramic, 4=Liquid)'
+    label: 'Material',
+    category: 'Material'
   },
-  surfaceQuality: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.8, label: 'Surface Refinement' },
+  surfaceQuality: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.8, label: 'Surface Refinement', category: 'Material' },
   
-  // Chromatic Sophistication
-  chromaticDepth: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.6, label: 'Chromatic Depth' },
-  luminanceFlow: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.4, label: 'Luminance Flow' },
-  specularReflection: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.3, label: 'Specular Highlights' },
+  // Template-specific: Chromatic Sophistication
+  chromaticDepth: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.6, label: 'Chromatic Depth', category: 'Effects' },
+  luminanceFlow: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.4, label: 'Luminance Flow', category: 'Effects' },
+  specularReflection: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.3, label: 'Specular Highlights', category: 'Effects' },
   
-  // Mathematical Elegance
-  harmonicRatio: { type: 'slider', min: 1, max: 3, step: 0.1, default: 1.618, label: 'Harmonic Ratio (φ=1.618)' },
-  geometricPurity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.7, label: 'Geometric Purity' },
-  organicDeviation: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.25, label: 'Organic Deviation' }
+  // Template-specific: Mathematical Elegance
+  harmonicRatio: { type: 'slider', min: 1, max: 3, step: 0.1, default: 1.618, label: 'Harmonic Ratio (φ=1.618)', category: 'Mathematics' },
+  geometricPurity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.7, label: 'Geometric Purity', category: 'Mathematics' },
+  organicDeviation: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.25, label: 'Organic Deviation', category: 'Mathematics' }
 };
 
-export function draw(
-  ctx: CanvasRenderingContext2D,
-  width: number,
-  height: number,
-  params: Record<string, any>,
-  _generator: any,
-  time: number
-) {
+function applyUniversalBackground(ctx, width, height, params) {
+  if (!params.backgroundType || params.backgroundType === 'transparent') return;
+  
+  if (params.backgroundType === 'solid') {
+    ctx.fillStyle = params.backgroundColor || '#f8fafc';
+    ctx.fillRect(0, 0, width, height);
+  } else if (params.backgroundType === 'gradient') {
+    const direction = (params.backgroundGradientDirection || 225) * (Math.PI / 180);
+    const x1 = width / 2 - Math.cos(direction) * width / 2;
+    const y1 = height / 2 - Math.sin(direction) * height / 2;
+    const x2 = width / 2 + Math.cos(direction) * width / 2;
+    const y2 = height / 2 + Math.sin(direction) * height / 2;
+    
+    const gradient = ctx.createLinearGradient(x1, y1, x2, y2);
+    gradient.addColorStop(0, params.backgroundGradientStart || '#f8fafc');
+    gradient.addColorStop(1, params.backgroundGradientEnd || '#e2e8f0');
+    
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, width, height);
+  }
+}
+
+function drawVisualization(ctx, width, height, params, _generator, time) {
+  // Parameter compatibility layer
+  if (params.customParameters) {
+    params.fillColor = params.fillColor || params.customParameters.fillColor;
+    params.strokeColor = params.strokeColor || params.customParameters.strokeColor;
+    params.backgroundColor = params.backgroundColor || params.customParameters.backgroundColor;
+    
+    Object.keys(params.customParameters).forEach(key => {
+      if (params[key] === undefined) {
+        params[key] = params.customParameters[key];
+      }
+    });
+  }
+
   // Premium background with subtle environmental lighting
   drawPremiumEnvironment(ctx, width, height, params);
 
@@ -52,7 +98,7 @@ export function draw(
   const formComplexity = params.formComplexity || 0.75;
   const surfaceTension = params.surfaceTension || 1.3;
   const opticalWeight = params.opticalWeight || 0.85;
-  const materialType = Math.round(params.materialType || 2);
+  const materialType = Number(params.materialType) || 2;
   const surfaceQuality = params.surfaceQuality || 0.8;
   const chromaticDepth = params.chromaticDepth || 0.6;
   const luminanceFlow = params.luminanceFlow || 0.4;
@@ -94,32 +140,8 @@ export function draw(
   });
 
   function drawPremiumEnvironment(ctx: CanvasRenderingContext2D, width: number, height: number, params: any) {
-    // Sophisticated environmental lighting
-    const envGradient = ctx.createRadialGradient(
-      width * 0.3, height * 0.2, 0,
-      width * 0.7, height * 0.8, Math.max(width, height) * 0.8
-    );
-    
-    // Material-aware environment colors
-    if (params.materialType <= 1) {
-      // Glass/Metal - cool environment
-      envGradient.addColorStop(0, '#f8fafc');
-      envGradient.addColorStop(0.4, '#f1f5f9');
-      envGradient.addColorStop(1, '#e2e8f0');
-    } else if (params.materialType <= 3) {
-      // Carbon/Ceramic - neutral luxury
-      envGradient.addColorStop(0, '#fafaf9');
-      envGradient.addColorStop(0.4, '#f5f5f4');
-      envGradient.addColorStop(1, '#e7e5e4');
-    } else {
-      // Liquid - warm environment
-      envGradient.addColorStop(0, '#fef7f0');
-      envGradient.addColorStop(0.4, '#fef2e2');
-      envGradient.addColorStop(1, '#fed7aa');
-    }
-    
-    ctx.fillStyle = envGradient;
-    ctx.fillRect(0, 0, width, height);
+    // Apply universal background first
+    applyUniversalBackground(ctx, width, height, params);
 
     // Subtle environmental reflections
     if (params.specularReflection > 0.2) {
@@ -233,7 +255,7 @@ export function draw(
     }
 
     // 2. Main surface with sophisticated shading
-    renderMainSurface(ctx, points, material, surfaceTension, opticalWeight, luminanceFlow, primaryPhase);
+    renderMainSurface(ctx, points, material, surfaceTension, opticalWeight, luminanceFlow, primaryPhase, params);
 
     // 3. Specular highlights
     if (specularReflection > 0.1) {
@@ -241,7 +263,7 @@ export function draw(
     }
 
     // 4. Edge refinement
-    renderEdgeRefinement(ctx, points, material, opticalWeight);
+    renderEdgeRefinement(ctx, points, material, opticalWeight, params);
   }
 
   function renderSubsurfaceScattering(ctx: CanvasRenderingContext2D, points: any[], material: any, scale: number) {
@@ -263,40 +285,55 @@ export function draw(
     ctx.restore();
   }
 
-  function renderMainSurface(ctx: CanvasRenderingContext2D, points: any[], material: any, tension: number, weight: number, luminance: number, phase: number) {
+  function renderMainSurface(ctx: CanvasRenderingContext2D, points: any[], material: any, tension: number, weight: number, luminance: number, phase: number, params: any) {
     ctx.save();
 
-    // Create sophisticated surface gradient
-    const bounds = getBounds(points);
-    const surfaceGradient = ctx.createRadialGradient(
-      bounds.centerX - bounds.width * 0.2, 
-      bounds.centerY - bounds.height * 0.2, 
-      0,
-      bounds.centerX, 
-      bounds.centerY, 
-      Math.max(bounds.width, bounds.height) * 0.7
-    );
+    // Apply fill based on universal fill settings
+    if (params.fillType !== 'none') {
+      if (params.fillType === 'solid') {
+        ctx.fillStyle = params.fillColor || `rgb(${material.primary.join(',')})`;
+        ctx.globalAlpha = params.fillOpacity || weight;
+      } else if (params.fillType === 'gradient') {
+        const bounds = getBounds(points);
+        const direction = (params.fillGradientDirection || 45) * (Math.PI / 180);
+        
+        // Create gradient based on material properties
+        const gradientLength = Math.max(bounds.width, bounds.height);
+        const x1 = bounds.centerX - Math.cos(direction) * gradientLength * 0.5;
+        const y1 = bounds.centerY - Math.sin(direction) * gradientLength * 0.5;
+        const x2 = bounds.centerX + Math.cos(direction) * gradientLength * 0.5;
+        const y2 = bounds.centerY + Math.sin(direction) * gradientLength * 0.5;
+        
+        const surfaceGradient = ctx.createLinearGradient(x1, y1, x2, y2);
+        surfaceGradient.addColorStop(0, params.fillGradientStart || `rgb(${material.accent.join(',')})`);
+        surfaceGradient.addColorStop(0.5, `rgba(${material.secondary.join(',')}, 0.8)`);
+        surfaceGradient.addColorStop(1, params.fillGradientEnd || `rgb(${material.primary.join(',')})`);
+        
+        ctx.fillStyle = surfaceGradient;
+        ctx.globalAlpha = params.fillOpacity || weight;
+      }
+      
+      drawSmoothPath(ctx, points, true);
+      ctx.fill();
+    }
 
-    // Material-aware gradient stops
-    const primaryAlpha = weight;
-    const secondaryAlpha = weight * 0.7;
-    
-    surfaceGradient.addColorStop(0, `rgba(${material.accent.join(',')}, ${primaryAlpha})`);
-    surfaceGradient.addColorStop(0.4, `rgba(${material.secondary.join(',')}, ${secondaryAlpha})`);
-    surfaceGradient.addColorStop(1, `rgba(${material.primary.join(',')}, ${primaryAlpha})`);
-
-    ctx.fillStyle = surfaceGradient;
-    
-    drawSmoothPath(ctx, points, true);
-    ctx.fill();
-
-    // Surface stroke with variable weight
-    const strokeColor = `rgba(${material.primary.join(',')}, ${weight})`;
-    ctx.strokeStyle = strokeColor;
-    ctx.lineWidth = 2 + weight * 2;
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-    ctx.stroke();
+    // Apply stroke based on universal stroke settings
+    if (params.strokeType !== 'none') {
+      ctx.strokeStyle = params.strokeColor || `rgb(${material.primary.join(',')})`;
+      ctx.lineWidth = params.strokeWidth || (2 + weight * 2);
+      ctx.globalAlpha = params.strokeOpacity || weight;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      
+      if (params.strokeType === 'dashed') {
+        ctx.setLineDash([ctx.lineWidth * 3, ctx.lineWidth * 2]);
+      } else if (params.strokeType === 'dotted') {
+        ctx.setLineDash([ctx.lineWidth, ctx.lineWidth * 2]);
+      }
+      
+      drawSmoothPath(ctx, points, true);
+      ctx.stroke();
+    }
 
     ctx.restore();
   }
@@ -331,18 +368,20 @@ export function draw(
     ctx.restore();
   }
 
-  function renderEdgeRefinement(ctx: CanvasRenderingContext2D, points: any[], material: any, weight: number) {
+  function renderEdgeRefinement(ctx: CanvasRenderingContext2D, points: any[], material: any, weight: number, params: any) {
     // Subtle edge enhancement for premium quality
-    ctx.save();
-    ctx.globalAlpha = weight * 0.3;
-    ctx.strokeStyle = `rgba(${material.primary.join(',')}, 0.6)`;
-    ctx.lineWidth = 0.5;
-    ctx.lineCap = 'round';
-    
-    drawSmoothPath(ctx, points, true);
-    ctx.stroke();
-    
-    ctx.restore();
+    if (params.strokeType !== 'none' && weight > 0.5) {
+      ctx.save();
+      ctx.globalAlpha = weight * 0.3;
+      ctx.strokeStyle = params.strokeColor || `rgba(${material.primary.join(',')}, 0.6)`;
+      ctx.lineWidth = 0.5;
+      ctx.lineCap = 'round';
+      
+      drawSmoothPath(ctx, points, true);
+      ctx.stroke();
+      
+      ctx.restore();
+    }
   }
 
   function getBounds(points: any[]) {
@@ -401,11 +440,29 @@ export function draw(
   }
 }
 
-export const metadata: PresetMetadata = {
+export const metadata = {
   name: "✨ Premium Kinetic",
   description: "Next-level aesthetic sophistication with advanced materials, lighting, and mathematical elegance",
   defaultParams: {
     seed: "premium-kinetic",
+    // Background
+    backgroundColor: "#f8fafc",
+    backgroundType: "gradient",
+    backgroundGradientStart: "#f8fafc",
+    backgroundGradientEnd: "#e2e8f0",
+    backgroundGradientDirection: 225,
+    // Fill
+    fillType: "gradient",
+    fillGradientStart: "#6484a3",
+    fillGradientEnd: "#0f172a",
+    fillGradientDirection: 45,
+    fillOpacity: 0.85,
+    // Stroke
+    strokeType: "solid",
+    strokeColor: "#0f172a",
+    strokeWidth: 3,
+    strokeOpacity: 0.85,
+    // Template-specific
     frequency: 1.2,
     amplitude: 120,
     formComplexity: 0.75,
@@ -421,3 +478,10 @@ export const metadata: PresetMetadata = {
     organicDeviation: 0.25
   }
 };
+
+export const id = 'premium-kinetic';
+export const name = "✨ Premium Kinetic";
+export const description = "Next-level aesthetic sophistication with advanced materials, lighting, and mathematical elegance";
+export const defaultParams = metadata.defaultParams;
+
+export const code = `${PARAMETERS.toString().replace('PARAMETERS', 'const PARAMETERS')}\n\n${applyUniversalBackground.toString()}\n\n${drawVisualization.toString()}`;

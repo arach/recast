@@ -214,6 +214,7 @@ export const metadata = {
 export const id = 'wave-bars';
 export const name = "🌊 Wave Bars";
 export const description = "Audio bars that follow wave patterns with customizable color modes";
+export { drawVisualization };
 export const defaultParams = {
   seed: "wave-bars",
   frequency: 3,

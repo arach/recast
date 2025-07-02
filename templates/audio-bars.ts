@@ -195,6 +195,7 @@ export const metadata = {
 export const id = 'audio-bars';
 export const name = "🎵 Audio Bars";
 export const description = "Dynamic audio visualizer bars with customizable color modes";
+export { drawVisualization };
 export const defaultParams = {
   seed: "audio-bars",
   frequency: 4,

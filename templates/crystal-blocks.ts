@@ -1,14 +1,35 @@
 import type { ParameterDefinition, PresetMetadata } from './types';
 
-// Crystal Blocks Visualization
-export const parameters: Record<string, ParameterDefinition> = {
+// Crystal Blocks
+const PARAMETERS = {
+  // Universal Background Controls
+  backgroundColor: { type: 'color', default: "#1a1a2e", label: 'Background Color', category: 'Background' },
+  backgroundType: { type: 'select', options: [{"value":"transparent","label":"Transparent"},{"value":"solid","label":"Solid Color"},{"value":"gradient","label":"Gradient"}], default: "gradient", label: 'Background Type', category: 'Background' },
+  backgroundGradientStart: { type: 'color', default: "#1a1a2e", label: 'Gradient Start', category: 'Background', showIf: (params)=>params.backgroundType === 'gradient' },
+  backgroundGradientEnd: { type: 'color', default: "#0f3460", label: 'Gradient End', category: 'Background', showIf: (params)=>params.backgroundType === 'gradient' },
+  backgroundGradientDirection: { type: 'slider', min: 0, max: 360, step: 15, default: 45, label: 'Gradient Direction', category: 'Background', showIf: (params)=>params.backgroundType === 'gradient' },
+  
+  // Universal Fill Controls
+  fillType: { type: 'select', options: [{"value":"none","label":"None"},{"value":"solid","label":"Solid Color"},{"value":"gradient","label":"Gradient"}], default: "gradient", label: 'Fill Type', category: 'Fill' },
+  fillColor: { type: 'color', default: "#4a90e2", label: 'Fill Color', category: 'Fill', showIf: (params)=>params.fillType === 'solid' },
+  fillGradientStart: { type: 'color', default: "#6495ed", label: 'Gradient Start', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
+  fillGradientEnd: { type: 'color', default: "#1e3a8a", label: 'Gradient End', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
+  fillGradientDirection: { type: 'slider', min: 0, max: 360, step: 15, default: 90, label: 'Gradient Direction', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
+  fillOpacity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.8, label: 'Fill Opacity', category: 'Fill', showIf: (params)=>params.fillType !== 'none' },
+  
+  // Universal Stroke Controls
+  strokeType: { type: 'select', options: [{"value":"none","label":"None"},{"value":"solid","label":"Solid"},{"value":"dashed","label":"Dashed"},{"value":"dotted","label":"Dotted"}], default: "solid", label: 'Stroke Type', category: 'Stroke' },
+  strokeColor: { type: 'color', default: "#87ceeb", label: 'Stroke Color', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
+  strokeWidth: { type: 'slider', min: 0, max: 10, step: 0.5, default: 2, label: 'Stroke Width', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
+  strokeOpacity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 1, label: 'Stroke Opacity', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
+  
   // Core wave parameters
-  frequency: { type: 'slider', min: 0.1, max: 5, step: 0.1, default: 1.5, label: 'Formation Speed' },
-  amplitude: { type: 'slider', min: 20, max: 120, step: 5, default: 60, label: 'Crystal Size' },
-  complexity: { type: 'slider', min: 0, max: 1, step: 0.01, default: 0.6, label: 'Facet Detail' },
-  chaos: { type: 'slider', min: 0, max: 1, step: 0.01, default: 0.3, label: 'Natural Variance' },
-  damping: { type: 'slider', min: 0.5, max: 1, step: 0.01, default: 0.75, label: 'Size Progression' },
-  layers: { type: 'slider', min: 1, max: 8, step: 1, default: 5, label: 'Crystal Count' },
+  frequency: { type: 'slider', min: 0.1, max: 5, step: 0.1, default: 1.5, label: 'Formation Speed', category: 'Wave' },
+  amplitude: { type: 'slider', min: 20, max: 120, step: 5, default: 60, label: 'Crystal Size', category: 'Wave' },
+  complexity: { type: 'slider', min: 0, max: 1, step: 0.01, default: 0.6, label: 'Facet Detail', category: 'Crystal' },
+  chaos: { type: 'slider', min: 0, max: 1, step: 0.01, default: 0.3, label: 'Natural Variance', category: 'Crystal' },
+  damping: { type: 'slider', min: 0.5, max: 1, step: 0.01, default: 0.75, label: 'Size Progression', category: 'Crystal' },
+  layers: { type: 'slider', min: 1, max: 8, step: 1, default: 5, label: 'Crystal Count', category: 'Crystal' },
   
   // Prism-specific parameters
   prismType: { 
@@ -20,15 +41,37 @@ export const parameters: Record<string, ParameterDefinition> = {
       { value: 'crystal', label: 'Crystal' }
     ], 
     default: 'crystal', 
-    label: 'Shape Type' 
+    label: 'Shape Type',
+    category: 'Prism'
   },
-  depth: { type: 'slider', min: 0.1, max: 2, step: 0.1, default: 0.8, label: 'Depth Effect' },
-  perspective: { type: 'slider', min: 0.1, max: 1, step: 0.1, default: 0.6, label: 'Perspective' },
-  facetBrightness: { type: 'slider', min: 0.2, max: 1, step: 0.05, default: 0.85, label: 'Brightness' },
-  crystalline: { type: 'checkbox', default: true, label: 'Crystalline Effects' }
+  depth: { type: 'slider', min: 0.1, max: 2, step: 0.1, default: 0.8, label: 'Depth Effect', category: 'Prism' },
+  perspective: { type: 'slider', min: 0.1, max: 1, step: 0.1, default: 0.6, label: 'Perspective', category: 'Prism' },
+  facetBrightness: { type: 'slider', min: 0.2, max: 1, step: 0.05, default: 0.85, label: 'Brightness', category: 'Prism' },
+  crystalline: { type: 'checkbox', default: true, label: 'Crystalline Effects', category: 'Prism' }
 };
 
-export function draw(
+function applyUniversalBackground(ctx: CanvasRenderingContext2D, width: number, height: number, params: Record<string, any>) {
+  if (params.backgroundType === 'transparent') {
+    ctx.clearRect(0, 0, width, height);
+  } else if (params.backgroundType === 'gradient') {
+    const angle = (params.backgroundGradientDirection || 45) * Math.PI / 180;
+    const x1 = width / 2 - Math.cos(angle) * Math.max(width, height) / 2;
+    const y1 = height / 2 - Math.sin(angle) * Math.max(width, height) / 2;
+    const x2 = width / 2 + Math.cos(angle) * Math.max(width, height) / 2;
+    const y2 = height / 2 + Math.sin(angle) * Math.max(width, height) / 2;
+    
+    const gradient = ctx.createLinearGradient(x1, y1, x2, y2);
+    gradient.addColorStop(0, params.backgroundGradientStart || '#1a1a2e');
+    gradient.addColorStop(1, params.backgroundGradientEnd || '#0f3460');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, width, height);
+  } else {
+    ctx.fillStyle = params.backgroundColor || '#1a1a2e';
+    ctx.fillRect(0, 0, width, height);
+  }
+}
+
+function drawVisualization(
   ctx: CanvasRenderingContext2D,
   width: number,
   height: number,
@@ -36,13 +79,22 @@ export function draw(
   _generator: any,
   time: number
 ) {
-  // Clear with deep geological background
-  const gradient = ctx.createRadialGradient(width/2, height/2, 0, width/2, height/2, Math.max(width, height)/2);
-  gradient.addColorStop(0, '#1a1a2e');
-  gradient.addColorStop(0.7, '#16213e');
-  gradient.addColorStop(1, '#0f3460');
-  ctx.fillStyle = gradient;
-  ctx.fillRect(0, 0, width, height);
+  // Parameter compatibility layer
+  if (params.customParameters) {
+    params.fillColor = params.fillColor || params.customParameters.fillColor;
+    params.strokeColor = params.strokeColor || params.customParameters.strokeColor;
+    params.backgroundColor = params.backgroundColor || params.customParameters.backgroundColor;
+    params.textColor = params.textColor || params.customParameters.textColor;
+    
+    Object.keys(params.customParameters).forEach(key => {
+      if (params[key] === undefined) {
+        params[key] = params.customParameters[key];
+      }
+    });
+  }
+
+  // Apply universal background
+  applyUniversalBackground(ctx, width, height, params);
 
   // Direct prism generation without external requires
   const centerX = width / 2;
@@ -148,9 +200,35 @@ export function draw(
   // Render all elements in depth order
   for (const element of allElements) {
     ctx.save();
-    ctx.fillStyle = element.fillColor;
-    ctx.strokeStyle = element.strokeColor;
-    ctx.lineWidth = element.strokeWidth;
+    
+    // Apply universal fill settings if no specific color
+    if (params.fillType === 'gradient' && element.fillColor) {
+      const gradient = ctx.createLinearGradient(0, 0, width, height);
+      gradient.addColorStop(0, params.fillGradientStart || element.fillColor);
+      gradient.addColorStop(1, params.fillGradientEnd || element.fillColor);
+      ctx.fillStyle = gradient;
+    } else if (params.fillType === 'solid') {
+      ctx.fillStyle = params.fillColor || element.fillColor;
+    } else {
+      ctx.fillStyle = element.fillColor;
+    }
+    
+    // Apply universal stroke settings
+    if (params.strokeType !== 'none') {
+      ctx.strokeStyle = params.strokeColor || element.strokeColor;
+      ctx.lineWidth = params.strokeWidth || element.strokeWidth;
+      ctx.globalAlpha = params.strokeOpacity || 1;
+      
+      if (params.strokeType === 'dashed') {
+        ctx.setLineDash([5, 5]);
+      } else if (params.strokeType === 'dotted') {
+        ctx.setLineDash([2, 2]);
+      }
+    } else {
+      ctx.strokeStyle = element.strokeColor;
+      ctx.lineWidth = element.strokeWidth;
+    }
+    
     ctx.lineJoin = 'round';
     ctx.lineCap = 'round';
 
@@ -162,13 +240,25 @@ export function draw(
         ctx.lineTo(points[i].x, points[i].y);
       }
       ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
+      if (params.fillType !== 'none') {
+        ctx.globalAlpha = params.fillOpacity || 0.8;
+        ctx.fill();
+      }
+      if (params.strokeType !== 'none') {
+        ctx.globalAlpha = params.strokeOpacity || 1;
+        ctx.stroke();
+      }
     } else if (element.type === 'circle' && element.center && element.radius) {
       ctx.beginPath();
       ctx.arc(element.center.x, element.center.y, element.radius, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.stroke();
+      if (params.fillType !== 'none') {
+        ctx.globalAlpha = params.fillOpacity || 0.8;
+        ctx.fill();
+      }
+      if (params.strokeType !== 'none') {
+        ctx.globalAlpha = params.strokeOpacity || 1;
+        ctx.stroke();
+      }
     }
 
     ctx.restore();
@@ -487,6 +577,23 @@ export const metadata: PresetMetadata = {
   description: "Isometric 3D prisms with crystalline facets and geological formations",
   defaultParams: {
     seed: "crystal-blocks",
+    // Universal controls
+    backgroundColor: "#1a1a2e",
+    backgroundType: "gradient",
+    backgroundGradientStart: "#1a1a2e",
+    backgroundGradientEnd: "#0f3460",
+    backgroundGradientDirection: 45,
+    fillType: "gradient",
+    fillColor: "#4a90e2",
+    fillGradientStart: "#6495ed",
+    fillGradientEnd: "#1e3a8a",
+    fillGradientDirection: 90,
+    fillOpacity: 0.8,
+    strokeType: "solid",
+    strokeColor: "#87ceeb",
+    strokeWidth: 2,
+    strokeOpacity: 1,
+    // Template-specific
     frequency: 1.5,
     amplitude: 60,
     complexity: 0.6,
@@ -500,3 +607,17 @@ export const metadata: PresetMetadata = {
     crystalline: true
   }
 };
+
+export const id = 'crystal-blocks';
+export const name = "Crystal Blocks";
+export const description = "Isometric 3D prisms with crystalline facets and geological formations";
+
+export const defaultParams = metadata.defaultParams;
+
+export const code = `${applyUniversalBackground.toString()}
+
+${drawVisualization.toString()}`;
+
+// Re-export for compatibility
+export const parameters = PARAMETERS;
+export const draw = drawVisualization;

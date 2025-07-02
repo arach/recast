@@ -1,7 +1,28 @@
 import type { ParameterDefinition, PresetMetadata } from './types';
 
 // Liquid Flow - Fluid, organic shapes with surface tension for beauty/wellness brands
-export const parameters: Record<string, ParameterDefinition> = {
+const PARAMETERS = {
+  // Universal Background Controls
+  backgroundColor: { type: 'color', default: "#f8fafe", label: 'Background Color', category: 'Background' },
+  backgroundType: { type: 'select', options: [{"value":"transparent","label":"Transparent"},{"value":"solid","label":"Solid Color"},{"value":"gradient","label":"Gradient"}], default: "gradient", label: 'Background Type', category: 'Background' },
+  backgroundGradientStart: { type: 'color', default: "#f8fafe", label: 'Gradient Start', category: 'Background', showIf: (params)=>params.backgroundType === 'gradient' },
+  backgroundGradientEnd: { type: 'color', default: "#e8f0f8", label: 'Gradient End', category: 'Background', showIf: (params)=>params.backgroundType === 'gradient' },
+  backgroundGradientDirection: { type: 'slider', min: 0, max: 360, step: 15, default: 135, label: 'Gradient Direction', category: 'Background', showIf: (params)=>params.backgroundType === 'gradient' },
+  
+  // Universal Fill Controls
+  fillType: { type: 'select', options: [{"value":"none","label":"None"},{"value":"solid","label":"Solid Color"},{"value":"gradient","label":"Gradient"}], default: "gradient", label: 'Fill Type', category: 'Fill' },
+  fillColor: { type: 'color', default: "#66b3ff", label: 'Fill Color', category: 'Fill', showIf: (params)=>params.fillType === 'solid' },
+  fillGradientStart: { type: 'color', default: "#a8d8ff", label: 'Gradient Start', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
+  fillGradientEnd: { type: 'color', default: "#3399ff", label: 'Gradient End', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
+  fillGradientDirection: { type: 'slider', min: 0, max: 360, step: 15, default: 45, label: 'Gradient Direction', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
+  fillOpacity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.6, label: 'Fill Opacity', category: 'Fill', showIf: (params)=>params.fillType !== 'none' },
+  
+  // Universal Stroke Controls
+  strokeType: { type: 'select', options: [{"value":"none","label":"None"},{"value":"solid","label":"Solid"},{"value":"dashed","label":"Dashed"},{"value":"dotted","label":"Dotted"}], default: "solid", label: 'Stroke Type', category: 'Stroke' },
+  strokeColor: { type: 'color', default: "#2288ee", label: 'Stroke Color', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
+  strokeWidth: { type: 'slider', min: 0, max: 10, step: 0.5, default: 2, label: 'Stroke Width', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
+  strokeOpacity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 1, label: 'Stroke Opacity', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
+  
   // Core fluid properties
   frequency: { type: 'slider', min: 0.2, max: 1.2, step: 0.05, default: 0.6, label: 'Flow Rhythm' },
   amplitude: { type: 'slider', min: 70, max: 200, step: 5, default: 130, label: 'Fluid Scale' },
@@ -42,7 +63,39 @@ export const parameters: Record<string, ParameterDefinition> = {
   luminosity: { type: 'slider', min: 0.4, max: 1, step: 0.05, default: 0.7, label: 'Luminosity' }
 };
 
-export function draw(
+function applyUniversalBackground(ctx, width, height, params) {
+  switch (params.backgroundType) {
+    case 'transparent':
+      ctx.clearRect(0, 0, width, height);
+      break;
+      
+    case 'solid':
+      ctx.fillStyle = params.backgroundColor;
+      ctx.fillRect(0, 0, width, height);
+      break;
+      
+    case 'gradient':
+      const angle = (params.backgroundGradientDirection || 0) * Math.PI / 180;
+      const gradientLength = Math.sqrt(width * width + height * height);
+      const centerX = width / 2;
+      const centerY = height / 2;
+      
+      const x1 = centerX - Math.cos(angle) * gradientLength / 2;
+      const y1 = centerY - Math.sin(angle) * gradientLength / 2;
+      const x2 = centerX + Math.cos(angle) * gradientLength / 2;
+      const y2 = centerY + Math.sin(angle) * gradientLength / 2;
+      
+      const bgGradient = ctx.createLinearGradient(x1, y1, x2, y2);
+      bgGradient.addColorStop(0, params.backgroundGradientStart);
+      bgGradient.addColorStop(1, params.backgroundGradientEnd);
+      
+      ctx.fillStyle = bgGradient;
+      ctx.fillRect(0, 0, width, height);
+      break;
+  }
+}
+
+function drawVisualization(
   ctx: CanvasRenderingContext2D,
   width: number,
   height: number,
@@ -50,16 +103,22 @@ export function draw(
   _generator: any,
   time: number
 ) {
-  // Soft ambient background
-  const bgGradient = ctx.createRadialGradient(
-    width * 0.3, height * 0.2, 0,
-    width * 0.7, height * 0.8, Math.max(width, height) * 1.2
-  );
-  bgGradient.addColorStop(0, '#f8fafe');
-  bgGradient.addColorStop(0.6, '#f0f6fc');
-  bgGradient.addColorStop(1, '#e8f0f8');
-  ctx.fillStyle = bgGradient;
-  ctx.fillRect(0, 0, width, height);
+  // Parameter compatibility layer
+  if (params.customParameters) {
+    params.fillColor = params.fillColor || params.customParameters.fillColor;
+    params.strokeColor = params.strokeColor || params.customParameters.strokeColor;
+    params.backgroundColor = params.backgroundColor || params.customParameters.backgroundColor;
+    params.textColor = params.textColor || params.customParameters.textColor;
+    
+    Object.keys(params.customParameters).forEach(key => {
+      if (params[key] === undefined) {
+        params[key] = params.customParameters[key];
+      }
+    });
+  }
+
+  // Apply universal background
+  applyUniversalBackground(ctx, width, height, params);
 
   // Extract parameters
   const centerX = width / 2;
@@ -97,16 +156,16 @@ export function draw(
     viscosity, surfaceTension, organicComplexity, turbulence, eddies, flowPhase
   );
 
-  // Fluid color system
-  const fluidColors = generateFluidColors(fluidHue, purity, luminosity, transparency, liquidTypeNum);
+  // Fluid color system - now using universal fill parameters
+  const fluidColors = generateFluidColors(fluidHue, purity, luminosity, transparency, liquidTypeNum, params);
 
   // Render caustic patterns (background effect)
   if (caustics > 0.1) {
     renderCausticPatterns(ctx, liquidForm, fluidColors, caustics, time, scaledAmplitude);
   }
 
-  // Render main liquid body
-  renderLiquidBody(ctx, liquidForm, fluidColors, viscosity, surfaceTension, transparency);
+  // Render main liquid body with universal fill
+  renderLiquidBody(ctx, liquidForm, fluidColors, viscosity, surfaceTension, transparency, params);
 
   // Render surface effects
   renderSurfaceEffects(ctx, liquidForm, fluidColors, meniscus, ripples, time, scaledAmplitude);
@@ -188,7 +247,7 @@ export function draw(
     return points;
   }
 
-  function generateFluidColors(hue: number, purity: number, luminosity: number, transparency: number, liquidType: number) {
+  function generateFluidColors(hue: number, purity: number, luminosity: number, transparency: number, liquidType: number, params: any) {
     const baseSaturation = purity * 60;
     const baseLightness = 40 + luminosity * 40;
     const alpha = transparency;
@@ -212,7 +271,14 @@ export function draw(
       light: `hsla(${adjustedHue}, ${adjustedSat * 0.7}%, ${adjustedLight + 20}%, ${alpha * 0.8})`,
       dark: `hsla(${adjustedHue}, ${adjustedSat * 1.2}%, ${adjustedLight - 15}%, ${alpha})`,
       highlight: `hsla(${adjustedHue + 10}, ${adjustedSat * 0.5}%, ${Math.min(adjustedLight + 35, 95)}%, ${alpha * 0.6})`,
-      caustic: `hsla(${adjustedHue + 20}, ${adjustedSat * 1.5}%, ${adjustedLight + 25}%, 0.3)`
+      caustic: `hsla(${adjustedHue + 20}, ${adjustedSat * 1.5}%, ${adjustedLight + 25}%, 0.3)`,
+      // Add universal fill colors
+      fillColor: params.fillColor,
+      fillGradientStart: params.fillGradientStart,
+      fillGradientEnd: params.fillGradientEnd,
+      fillGradientDirection: params.fillGradientDirection,
+      fillType: params.fillType,
+      fillOpacity: params.fillOpacity
     };
   }
 
@@ -246,32 +312,66 @@ export function draw(
     ctx.restore();
   }
 
-  function renderLiquidBody(ctx: CanvasRenderingContext2D, form: any[], colors: any, viscosity: number, tension: number, transparency: number) {
+  function renderLiquidBody(ctx: CanvasRenderingContext2D, form: any[], colors: any, viscosity: number, tension: number, transparency: number, params: any) {
     ctx.save();
     
-    // Main fluid body with sophisticated gradient
+    // Apply universal fill
     const bounds = getBounds(form);
-    const fluidGradient = ctx.createRadialGradient(
-      bounds.centerX - bounds.width * 0.2, bounds.centerY - bounds.height * 0.3, 0,
-      bounds.centerX, bounds.centerY, Math.max(bounds.width, bounds.height) * 0.8
-    );
     
-    fluidGradient.addColorStop(0, colors.highlight);
-    fluidGradient.addColorStop(0.3, colors.light);
-    fluidGradient.addColorStop(0.7, colors.primary);
-    fluidGradient.addColorStop(1, colors.dark);
+    if (colors.fillType === 'gradient') {
+      const angle = (colors.fillGradientDirection || 90) * Math.PI / 180;
+      const gradientLength = Math.sqrt(bounds.width * bounds.width + bounds.height * bounds.height);
+      
+      const x1 = bounds.centerX - Math.cos(angle) * gradientLength / 2;
+      const y1 = bounds.centerY - Math.sin(angle) * gradientLength / 2;
+      const x2 = bounds.centerX + Math.cos(angle) * gradientLength / 2;
+      const y2 = bounds.centerY + Math.sin(angle) * gradientLength / 2;
+      
+      const fillGradient = ctx.createLinearGradient(x1, y1, x2, y2);
+      fillGradient.addColorStop(0, colors.fillGradientStart || colors.light);
+      fillGradient.addColorStop(1, colors.fillGradientEnd || colors.dark);
+      
+      ctx.fillStyle = fillGradient;
+      ctx.globalAlpha = colors.fillOpacity || transparency;
+    } else if (colors.fillType === 'solid') {
+      ctx.fillStyle = colors.fillColor || colors.primary;
+      ctx.globalAlpha = colors.fillOpacity || transparency;
+    } else {
+      // Original gradient for compatibility
+      const fluidGradient = ctx.createRadialGradient(
+        bounds.centerX - bounds.width * 0.2, bounds.centerY - bounds.height * 0.3, 0,
+        bounds.centerX, bounds.centerY, Math.max(bounds.width, bounds.height) * 0.8
+      );
+      
+      fluidGradient.addColorStop(0, colors.highlight);
+      fluidGradient.addColorStop(0.3, colors.light);
+      fluidGradient.addColorStop(0.7, colors.primary);
+      fluidGradient.addColorStop(1, colors.dark);
+      
+      ctx.fillStyle = fluidGradient;
+    }
     
-    ctx.fillStyle = fluidGradient;
     drawFluidPath(ctx, form, tension);
     ctx.fill();
     
-    // Fluid edge with surface tension
-    ctx.strokeStyle = colors.dark;
-    ctx.lineWidth = 2 * (1 + tension * 0.5);
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-    drawFluidPath(ctx, form, tension);
-    ctx.stroke();
+    // Apply universal stroke
+    if (params.strokeType !== 'none') {
+      ctx.strokeStyle = params.strokeColor || colors.dark;
+      ctx.lineWidth = params.strokeWidth || (2 * (1 + tension * 0.5));
+      ctx.globalAlpha = params.strokeOpacity || 1;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      
+      if (params.strokeType === 'dashed') {
+        ctx.setLineDash([ctx.lineWidth * 4, ctx.lineWidth * 2]);
+      } else if (params.strokeType === 'dotted') {
+        ctx.setLineDash([ctx.lineWidth, ctx.lineWidth * 2]);
+      }
+      
+      drawFluidPath(ctx, form, tension);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
     
     ctx.restore();
   }
@@ -484,3 +584,30 @@ export const metadata: PresetMetadata = {
     luminosity: 0.7
   }
 };
+
+export const id = 'liquid-flow';
+export const name = "💧 Liquid Flow";
+export const description = "Fluid organic shapes with surface tension, caustics, and realistic liquid behavior";
+export const defaultParams = metadata.defaultParams;
+export const parameters: Record<string, ParameterDefinition> = PARAMETERS;
+export const draw = drawVisualization;
+export const code = `// Liquid Flow - Fluid, organic shapes with surface tension for beauty/wellness brands
+
+// This template creates fluid, organic shapes with realistic liquid behavior including
+// surface tension, caustics, light refraction, and dynamic flow patterns.
+
+const liquidForm = generateFluidShape(
+  liquidType, centerX, centerY, scaledAmplitude,
+  viscosity, surfaceTension, organicComplexity, turbulence, eddies, flowPhase
+);
+
+// The liquid type parameter offers 5 distinct behaviors:
+// 0 = Water - natural surface tension with subtle waves
+// 1 = Oil - smooth, viscous flow with slow movements
+// 2 = Honey - very viscous with minimal turbulence
+// 3 = Mercury - high surface tension with beading effects
+// 4 = Plasma - energetic and turbulent with rapid changes
+
+// Surface effects include meniscus curves, ripples, and droplets
+// Light effects include caustic patterns and refraction for realism
+// Color system adapts based on liquid type for authentic appearance`;

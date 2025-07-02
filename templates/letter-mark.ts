@@ -180,6 +180,7 @@ export const metadata = {
 export const id = 'letter-mark';
 export const name = "A Letter Mark";
 export const description = "Clean, professional letter-based logos perfect for modern brands";
+export { drawVisualization };
 export const defaultParams = {
   seed: "letter-mark",
   letter: 'A',

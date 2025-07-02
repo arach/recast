@@ -1,7 +1,26 @@
-import type { ParameterDefinition, PresetMetadata } from './types';
-
-// Neon Glow - Cyberpunk-inspired glowing effects for gaming/tech brands
-export const parameters: Record<string, ParameterDefinition> = {
+// 💫 Neon Glow
+const PARAMETERS = {
+  // Universal Background Controls
+  backgroundColor: { type: 'color', default: "#0a0a0f", label: 'Background Color', category: 'Background' },
+  backgroundType: { type: 'select', options: [{"value":"transparent","label":"Transparent"},{"value":"solid","label":"Solid Color"},{"value":"gradient","label":"Gradient"}], default: "gradient", label: 'Background Type', category: 'Background' },
+  backgroundGradientStart: { type: 'color', default: "#0a0a0f", label: 'Gradient Start', category: 'Background', showIf: (params)=>params.backgroundType === 'gradient' },
+  backgroundGradientEnd: { type: 'color', default: "#000000", label: 'Gradient End', category: 'Background', showIf: (params)=>params.backgroundType === 'gradient' },
+  backgroundGradientDirection: { type: 'slider', min: 0, max: 360, step: 15, default: 45, label: 'Gradient Direction', category: 'Background', showIf: (params)=>params.backgroundType === 'gradient' },
+  
+  // Universal Fill Controls - Not applicable for neon effects
+  fillType: { type: 'select', options: [{"value":"none","label":"None"},{"value":"solid","label":"Solid Color"},{"value":"gradient","label":"Gradient"}], default: "none", label: 'Fill Type', category: 'Fill' },
+  fillColor: { type: 'color', default: "#00ffff", label: 'Fill Color', category: 'Fill', showIf: (params)=>params.fillType === 'solid' },
+  fillGradientStart: { type: 'color', default: "#00ffff", label: 'Gradient Start', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
+  fillGradientEnd: { type: 'color', default: "#0080ff", label: 'Gradient End', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
+  fillGradientDirection: { type: 'slider', min: 0, max: 360, step: 15, default: 90, label: 'Gradient Direction', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
+  fillOpacity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.8, label: 'Fill Opacity', category: 'Fill', showIf: (params)=>params.fillType !== 'none' },
+  
+  // Universal Stroke Controls - Not applicable for neon effects
+  strokeType: { type: 'select', options: [{"value":"none","label":"None"},{"value":"solid","label":"Solid"},{"value":"dashed","label":"Dashed"},{"value":"dotted","label":"Dotted"}], default: "none", label: 'Stroke Type', category: 'Stroke' },
+  strokeColor: { type: 'color', default: "#00ffff", label: 'Stroke Color', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
+  strokeWidth: { type: 'slider', min: 0, max: 10, step: 0.5, default: 2, label: 'Stroke Width', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
+  strokeOpacity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 1, label: 'Stroke Opacity', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
+  
   // Core neon shape
   frequency: { type: 'slider', min: 0.5, max: 3, step: 0.1, default: 1.8, label: 'Electric Frequency' },
   amplitude: { type: 'slider', min: 80, max: 200, step: 5, default: 140, label: 'Neon Size' },
@@ -37,24 +56,43 @@ export const parameters: Record<string, ParameterDefinition> = {
   flicker: { type: 'slider', min: 0, max: 0.5, step: 0.05, default: 0.15, label: 'Neon Flicker' }
 };
 
-export function draw(
-  ctx: CanvasRenderingContext2D,
-  width: number,
-  height: number,
-  params: Record<string, any>,
-  _generator: any,
-  time: number
-) {
-  // Dark cyberpunk background
-  const bgGradient = ctx.createRadialGradient(
-    width * 0.5, height * 0.5, 0,
-    width * 0.5, height * 0.5, Math.max(width, height) * 0.8
-  );
-  bgGradient.addColorStop(0, '#0a0a0f');
-  bgGradient.addColorStop(0.7, '#050508');
-  bgGradient.addColorStop(1, '#000000');
-  ctx.fillStyle = bgGradient;
-  ctx.fillRect(0, 0, width, height);
+function applyUniversalBackground(ctx, width, height, params) {
+  if (!params.backgroundType || params.backgroundType === 'transparent') return;
+  
+  if (params.backgroundType === 'solid') {
+    ctx.fillStyle = params.backgroundColor || '#0a0a0f';
+    ctx.fillRect(0, 0, width, height);
+  } else if (params.backgroundType === 'gradient') {
+    // For neon glow, we use radial gradient by default for better effect
+    const bgGradient = ctx.createRadialGradient(
+      width * 0.5, height * 0.5, 0,
+      width * 0.5, height * 0.5, Math.max(width, height) * 0.8
+    );
+    bgGradient.addColorStop(0, params.backgroundGradientStart || '#0a0a0f');
+    bgGradient.addColorStop(0.7, '#050508');
+    bgGradient.addColorStop(1, params.backgroundGradientEnd || '#000000');
+    ctx.fillStyle = bgGradient;
+    ctx.fillRect(0, 0, width, height);
+  }
+}
+
+function drawVisualization(ctx, width, height, params, _generator, time) {
+  // Parameter compatibility layer
+  if (params.customParameters) {
+    params.fillColor = params.fillColor || params.customParameters.fillColor;
+    params.strokeColor = params.strokeColor || params.customParameters.strokeColor;
+    params.backgroundColor = params.backgroundColor || params.customParameters.backgroundColor;
+    params.textColor = params.textColor || params.customParameters.textColor;
+    
+    Object.keys(params.customParameters).forEach(key => {
+      if (params[key] === undefined) {
+        params[key] = params.customParameters[key];
+      }
+    });
+  }
+
+  // Apply universal background
+  applyUniversalBackground(ctx, width, height, params);
 
   // Extract parameters
   const centerX = width / 2;
@@ -113,7 +151,7 @@ export function draw(
     renderEnergyFlow(ctx, neonPath, neonColors, energyFlow, time, pulseSpeed);
   }
 
-  function generateNeonPath(style: number, centerX: number, centerY: number, radius: number, complexity: number, phase: number, breaks: number) {
+  function generateNeonPath(style, centerX, centerY, radius, complexity, phase, breaks) {
     const points = [];
     const basePoints = Math.floor(8 + complexity * 16); // 8-24 points
     
@@ -174,7 +212,7 @@ export function draw(
     return points;
   }
 
-  function generateNeonColors(hue: number, shift: number, sat: number, time: number) {
+  function generateNeonColors(hue, shift, sat, time) {
     const animatedHue = hue + Math.sin(time * 0.5) * shift;
     const saturation = sat * 100;
     
@@ -187,7 +225,7 @@ export function draw(
     };
   }
 
-  function renderGlowLayer(ctx: CanvasRenderingContext2D, points: any[], colors: any, radius: number, alpha: number, layer: number) {
+  function renderGlowLayer(ctx, points, colors, radius, alpha, layer) {
     ctx.save();
     ctx.globalAlpha = alpha;
     ctx.filter = `blur(${radius}px)`;
@@ -207,7 +245,7 @@ export function draw(
     ctx.restore();
   }
 
-  function renderNeonCore(ctx: CanvasRenderingContext2D, points: any[], colors: any, style: number, flicker: number) {
+  function renderNeonCore(ctx, points, colors, style, flicker) {
     ctx.save();
     ctx.globalAlpha = flicker;
     
@@ -231,7 +269,7 @@ export function draw(
     ctx.restore();
   }
 
-  function renderElectricSparks(ctx: CanvasRenderingContext2D, points: any[], colors: any, spark: number, time: number, scale: number) {
+  function renderElectricSparks(ctx, points, colors, spark, time, scale) {
     ctx.save();
     
     for (let i = 0; i < points.length; i++) {
@@ -268,7 +306,7 @@ export function draw(
     ctx.restore();
   }
 
-  function renderEnergyFlow(ctx: CanvasRenderingContext2D, points: any[], colors: any, flow: number, time: number, speed: number) {
+  function renderEnergyFlow(ctx, points, colors, flow, time, speed) {
     ctx.save();
     
     const flowCount = Math.floor(flow * 8);
@@ -301,7 +339,7 @@ export function draw(
     ctx.restore();
   }
 
-  function drawNeonPath(ctx: CanvasRenderingContext2D, points: any[]) {
+  function drawNeonPath(ctx, points) {
     if (points.length < 2) return;
     
     ctx.beginPath();
@@ -333,11 +371,16 @@ export function draw(
   }
 }
 
-export const metadata: PresetMetadata = {
+export const metadata = {
   name: "💫 Neon Glow",
   description: "Cyberpunk-inspired glowing neon effects with electric energy and circuit aesthetics",
   defaultParams: {
     seed: "neon-glow-cyberpunk",
+    backgroundType: "gradient",
+    backgroundGradientStart: "#0a0a0f",
+    backgroundGradientEnd: "#000000",
+    fillType: "none",
+    strokeType: "none",
     frequency: 1.8,
     amplitude: 140,
     complexity: 0.6,
@@ -355,3 +398,15 @@ export const metadata: PresetMetadata = {
     flicker: 0.15
   }
 };
+
+export const id = 'neon-glow';
+export const name = "💫 Neon Glow";
+export const description = "Cyberpunk-inspired glowing neon effects with electric energy and circuit aesthetics";
+export const defaultParams = metadata.defaultParams;
+
+export const code = `// 💫 Neon Glow
+const PARAMETERS = ${JSON.stringify(PARAMETERS, null, 2)};
+
+${applyUniversalBackground.toString()}
+
+${drawVisualization.toString()}`;

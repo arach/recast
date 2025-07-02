@@ -1,7 +1,28 @@
 import type { ParameterDefinition, PresetMetadata } from './types';
 
 // Minimal Line - Ultra-clean single-line aesthetic for sophisticated minimalist brands
-export const parameters: Record<string, ParameterDefinition> = {
+const PARAMETERS = {
+  // Universal Background Controls
+  backgroundColor: { type: 'color', default: "#ffffff", label: 'Background Color', category: 'Background' },
+  backgroundType: { type: 'select', options: [{"value":"transparent","label":"Transparent"},{"value":"solid","label":"Solid Color"},{"value":"gradient","label":"Gradient"}], default: "solid", label: 'Background Type', category: 'Background' },
+  backgroundGradientStart: { type: 'color', default: "#ffffff", label: 'Gradient Start', category: 'Background', showIf: (params)=>params.backgroundType === 'gradient' },
+  backgroundGradientEnd: { type: 'color', default: "#f5f5f5", label: 'Gradient End', category: 'Background', showIf: (params)=>params.backgroundType === 'gradient' },
+  backgroundGradientDirection: { type: 'slider', min: 0, max: 360, step: 15, default: 45, label: 'Gradient Direction', category: 'Background', showIf: (params)=>params.backgroundType === 'gradient' },
+  
+  // Universal Fill Controls
+  fillType: { type: 'select', options: [{"value":"none","label":"None"},{"value":"solid","label":"Solid Color"},{"value":"gradient","label":"Gradient"}], default: "none", label: 'Fill Type', category: 'Fill' },
+  fillColor: { type: 'color', default: "#000000", label: 'Fill Color', category: 'Fill', showIf: (params)=>params.fillType === 'solid' },
+  fillGradientStart: { type: 'color', default: "#333333", label: 'Gradient Start', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
+  fillGradientEnd: { type: 'color', default: "#666666", label: 'Gradient End', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
+  fillGradientDirection: { type: 'slider', min: 0, max: 360, step: 15, default: 90, label: 'Gradient Direction', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
+  fillOpacity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.8, label: 'Fill Opacity', category: 'Fill', showIf: (params)=>params.fillType !== 'none' },
+  
+  // Universal Stroke Controls
+  strokeType: { type: 'select', options: [{"value":"none","label":"None"},{"value":"solid","label":"Solid"},{"value":"dashed","label":"Dashed"},{"value":"dotted","label":"Dotted"}], default: "solid", label: 'Stroke Type', category: 'Stroke' },
+  strokeColor: { type: 'color', default: "#000000", label: 'Stroke Color', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
+  strokeWidth: { type: 'slider', min: 0, max: 10, step: 0.5, default: 1.5, label: 'Stroke Width', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
+  strokeOpacity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 1, label: 'Stroke Opacity', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
+  
   // Core line properties
   frequency: { type: 'slider', min: 0.1, max: 1, step: 0.05, default: 0.3, label: 'Line Rhythm' },
   amplitude: { type: 'slider', min: 40, max: 160, step: 5, default: 80, label: 'Scale' },
@@ -46,7 +67,39 @@ export const parameters: Record<string, ParameterDefinition> = {
   proportionalHarmony: { type: 'slider', min: 0.7, max: 1, step: 0.05, default: 0.9, label: 'Proportional Harmony' }
 };
 
-export function draw(
+function applyUniversalBackground(ctx, width, height, params) {
+  switch (params.backgroundType) {
+    case 'transparent':
+      ctx.clearRect(0, 0, width, height);
+      break;
+      
+    case 'solid':
+      ctx.fillStyle = params.backgroundColor;
+      ctx.fillRect(0, 0, width, height);
+      break;
+      
+    case 'gradient':
+      const angle = (params.backgroundGradientDirection || 0) * Math.PI / 180;
+      const gradientLength = Math.sqrt(width * width + height * height);
+      const centerX = width / 2;
+      const centerY = height / 2;
+      
+      const x1 = centerX - Math.cos(angle) * gradientLength / 2;
+      const y1 = centerY - Math.sin(angle) * gradientLength / 2;
+      const x2 = centerX + Math.cos(angle) * gradientLength / 2;
+      const y2 = centerY + Math.sin(angle) * gradientLength / 2;
+      
+      const bgGradient = ctx.createLinearGradient(x1, y1, x2, y2);
+      bgGradient.addColorStop(0, params.backgroundGradientStart);
+      bgGradient.addColorStop(1, params.backgroundGradientEnd);
+      
+      ctx.fillStyle = bgGradient;
+      ctx.fillRect(0, 0, width, height);
+      break;
+  }
+}
+
+function drawVisualization(
   ctx: CanvasRenderingContext2D,
   width: number,
   height: number,
@@ -54,9 +107,22 @@ export function draw(
   _generator: any,
   time: number
 ) {
-  // Pure minimalist background
-  ctx.fillStyle = '#ffffff';
-  ctx.fillRect(0, 0, width, height);
+  // Parameter compatibility layer
+  if (params.customParameters) {
+    params.fillColor = params.fillColor || params.customParameters.fillColor;
+    params.strokeColor = params.strokeColor || params.customParameters.strokeColor;
+    params.backgroundColor = params.backgroundColor || params.customParameters.backgroundColor;
+    params.textColor = params.textColor || params.customParameters.textColor;
+    
+    Object.keys(params.customParameters).forEach(key => {
+      if (params[key] === undefined) {
+        params[key] = params.customParameters[key];
+      }
+    });
+  }
+
+  // Apply universal background
+  applyUniversalBackground(ctx, width, height, params);
 
   // Extract parameters
   const centerX = width / 2;
@@ -91,11 +157,40 @@ export function draw(
     precision, simplicity, goldenRatio, proportionalHarmony, time, lineBreaks
   );
 
-  // Sophisticated color system
-  const lineColors = generateMinimalistColors(colorPhilosophyNum, accentHue, sophistication);
+  // Sophisticated color system - now using universal stroke parameters
+  const lineColors = generateMinimalistColors(colorPhilosophyNum, accentHue, sophistication, params);
 
-  // Render the minimal line
-  renderMinimalLine(ctx, linePath, lineColors, lineStyleNum, strokeWeight, strokeSpacing, refinement);
+  // Apply universal fill if not none
+  if (params.fillType !== 'none') {
+    ctx.save();
+    ctx.globalAlpha = params.fillOpacity || 0.8;
+    
+    if (params.fillType === 'gradient') {
+      const bounds = getBounds(linePath);
+      const angle = (params.fillGradientDirection || 90) * Math.PI / 180;
+      const gradientLength = Math.sqrt(bounds.width * bounds.width + bounds.height * bounds.height);
+      
+      const x1 = bounds.centerX - Math.cos(angle) * gradientLength / 2;
+      const y1 = bounds.centerY - Math.sin(angle) * gradientLength / 2;
+      const x2 = bounds.centerX + Math.cos(angle) * gradientLength / 2;
+      const y2 = bounds.centerY + Math.sin(angle) * gradientLength / 2;
+      
+      const fillGradient = ctx.createLinearGradient(x1, y1, x2, y2);
+      fillGradient.addColorStop(0, params.fillGradientStart);
+      fillGradient.addColorStop(1, params.fillGradientEnd);
+      
+      ctx.fillStyle = fillGradient;
+    } else {
+      ctx.fillStyle = params.fillColor;
+    }
+    
+    drawMinimalPath(ctx, linePath, refinement);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // Render the minimal line with universal stroke
+  renderMinimalLine(ctx, linePath, lineColors, lineStyleNum, strokeWeight, strokeSpacing, refinement, params);
 
   function generateMinimalLine(centerX: number, centerY: number, radius: number, precision: number, simplicity: number, phi: number, harmony: number, time: number, breaks: number) {
     const points = [];
@@ -131,84 +226,120 @@ export function draw(
     return points;
   }
 
-  function generateMinimalistColors(philosophy: number, hue: number, sophistication: number) {
+  function generateMinimalistColors(philosophy: number, hue: number, sophistication: number, params: any) {
     const saturation = sophistication * 30; // Minimal saturation
     const lightness = 20 + sophistication * 40; // Sophisticated range
     
+    // Base colors from philosophy
+    let colors;
     switch (philosophy) {
       case 0: // Pure Black - ultimate minimalism
-        return {
+        colors = {
           primary: '#000000',
           secondary: '#1a1a1a',
           accent: '#333333'
         };
+        break;
         
       case 1: // Warm Gray - sophisticated neutral
-        return {
+        colors = {
           primary: `hsl(30, ${saturation * 0.3}%, ${lightness}%)`,
           secondary: `hsl(30, ${saturation * 0.2}%, ${lightness + 20}%)`,
           accent: `hsl(30, ${saturation * 0.4}%, ${lightness - 10}%)`
         };
+        break;
         
       case 2: // Cool Gray - modern neutral
-        return {
+        colors = {
           primary: `hsl(210, ${saturation * 0.3}%, ${lightness}%)`,
           secondary: `hsl(210, ${saturation * 0.2}%, ${lightness + 20}%)`,
           accent: `hsl(210, ${saturation * 0.4}%, ${lightness - 10}%)`
         };
+        break;
         
       case 3: // Accent Color - minimal color statement
-        return {
+        colors = {
           primary: `hsl(${hue}, ${saturation}%, ${lightness}%)`,
           secondary: `hsl(${hue}, ${saturation * 0.7}%, ${lightness + 15}%)`,
           accent: `hsl(${hue}, ${saturation * 1.2}%, ${lightness - 5}%)`
         };
+        break;
         
       default:
-        return {
+        colors = {
           primary: '#000000',
           secondary: '#333333',
           accent: '#666666'
         };
     }
+    
+    // Override with universal stroke color if set
+    if (params.strokeType !== 'none' && params.strokeColor) {
+      colors.primary = params.strokeColor;
+    }
+    
+    return colors;
   }
 
-  function renderMinimalLine(ctx: CanvasRenderingContext2D, points: any[], colors: any, lineStyle: number, weight: number, spacing: number, refinement: number) {
+  function renderMinimalLine(ctx: CanvasRenderingContext2D, points: any[], colors: any, lineStyle: number, weight: number, spacing: number, refinement: number, params: any) {
     ctx.save();
     
     // Ultra-refined line caps and joins
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
     
-    switch (lineStyle) {
-      case 0: // Single clean line
-        renderSingleLine(ctx, points, colors.primary, weight, refinement);
-        break;
-        
-      case 1: // Double line - sophisticated parallel lines
-        renderDoubleLine(ctx, points, colors.primary, weight, spacing, refinement);
-        break;
-        
-      case 2: // Dashed line - minimal rhythm
-        renderDashedLine(ctx, points, colors.primary, weight, refinement);
-        break;
-        
-      case 3: // Dotted line - precise points
-        renderDottedLine(ctx, points, colors.primary, weight, refinement);
-        break;
-        
-      case 4: // Gradient line - subtle color transition
-        renderGradientLine(ctx, points, colors, weight, refinement);
-        break;
+    // Apply universal stroke settings
+    if (params.strokeType !== 'none') {
+      ctx.strokeStyle = colors.primary;
+      ctx.lineWidth = params.strokeWidth || weight;
+      ctx.globalAlpha = params.strokeOpacity || 1;
+      
+      switch (params.strokeType) {
+        case 'dashed':
+          ctx.setLineDash([ctx.lineWidth * 4, ctx.lineWidth * 2]);
+          break;
+        case 'dotted':
+          ctx.setLineDash([ctx.lineWidth, ctx.lineWidth * 2]);
+          break;
+      }
+      
+      // Override line style if universal stroke type is set
+      if (params.strokeType === 'dashed') {
+        renderDashedLine(ctx, points, colors.primary, ctx.lineWidth, refinement);
+      } else if (params.strokeType === 'dotted') {
+        renderDottedLine(ctx, points, colors.primary, ctx.lineWidth, refinement);
+      } else {
+        // Use template-specific line style
+        switch (lineStyle) {
+          case 0: // Single clean line
+            renderSingleLine(ctx, points, colors.primary, ctx.lineWidth, refinement);
+            break;
+            
+          case 1: // Double line - sophisticated parallel lines
+            renderDoubleLine(ctx, points, colors.primary, ctx.lineWidth, spacing, refinement);
+            break;
+            
+          case 2: // Dashed line - minimal rhythm
+            renderDashedLine(ctx, points, colors.primary, ctx.lineWidth, refinement);
+            break;
+            
+          case 3: // Dotted line - precise points
+            renderDottedLine(ctx, points, colors.primary, ctx.lineWidth, refinement);
+            break;
+            
+          case 4: // Gradient line - subtle color transition
+            renderGradientLine(ctx, points, colors, ctx.lineWidth, refinement);
+            break;
+        }
+      }
+      
+      ctx.setLineDash([]);
     }
     
     ctx.restore();
   }
 
   function renderSingleLine(ctx: CanvasRenderingContext2D, points: any[], color: string, weight: number, refinement: number) {
-    ctx.strokeStyle = color;
-    ctx.lineWidth = weight;
-    
     drawMinimalPath(ctx, points, refinement);
     ctx.stroke();
   }
@@ -233,9 +364,6 @@ export function draw(
       };
     });
     
-    ctx.strokeStyle = color;
-    ctx.lineWidth = weight;
-    
     // Draw both parallel lines
     drawMinimalPath(ctx, outerPoints, refinement);
     ctx.stroke();
@@ -245,18 +373,8 @@ export function draw(
   }
 
   function renderDashedLine(ctx: CanvasRenderingContext2D, points: any[], color: string, weight: number, refinement: number) {
-    ctx.strokeStyle = color;
-    ctx.lineWidth = weight;
-    
-    // Minimal dash pattern
-    const dashLength = weight * 4;
-    const gapLength = weight * 3;
-    ctx.setLineDash([dashLength, gapLength]);
-    
     drawMinimalPath(ctx, points, refinement);
     ctx.stroke();
-    
-    ctx.setLineDash([]);
   }
 
   function renderDottedLine(ctx: CanvasRenderingContext2D, points: any[], color: string, weight: number, refinement: number) {
@@ -292,7 +410,6 @@ export function draw(
     gradient.addColorStop(1, colors.secondary);
     
     ctx.strokeStyle = gradient;
-    ctx.lineWidth = weight;
     
     drawMinimalPath(ctx, points, refinement);
     ctx.stroke();
@@ -338,7 +455,13 @@ export function draw(
     const minY = Math.min(...ys);
     const maxY = Math.max(...ys);
     
-    return { minX, maxX, minY, maxY };
+    return { 
+      minX, maxX, minY, maxY,
+      width: maxX - minX,
+      height: maxY - minY,
+      centerX: (minX + maxX) / 2,
+      centerY: (minY + maxY) / 2
+    };
   }
 
   function getPathLength(points: any[]) {
@@ -408,3 +531,34 @@ export const metadata: PresetMetadata = {
     proportionalHarmony: 0.9
   }
 };
+
+export const id = 'minimal-line';
+export const name = "─ Minimal Line";
+export const description = "Ultra-clean single-line aesthetic with sophisticated simplicity and intentional whitespace";
+export const defaultParams = metadata.defaultParams;
+export const parameters: Record<string, ParameterDefinition> = PARAMETERS;
+export const draw = drawVisualization;
+export const code = `// Minimal Line - Ultra-clean single-line aesthetic for sophisticated minimalist brands
+
+// This template creates refined geometric forms with intentional simplicity,
+// generous whitespace, and sophisticated line treatments.
+
+const linePath = generateMinimalLine(
+  centerX, centerY, scaledAmplitude,
+  precision, simplicity, goldenRatio, proportionalHarmony, time, lineBreaks
+);
+
+// Line style options provide different minimalist expressions:
+// 0 = Single - pure, unadorned line
+// 1 = Double - parallel lines with precise spacing
+// 2 = Dashed - rhythmic breaks for visual interest
+// 3 = Dotted - discrete points along the path
+// 4 = Gradient - subtle color transitions
+
+// Color philosophy aligns with minimalist principles:
+// Pure black for ultimate simplicity
+// Warm/cool grays for sophisticated neutrals
+// Accent colors used sparingly and intentionally
+
+// Golden ratio and proportional harmony create mathematically elegant forms
+// Breathing animation adds subtle life without disrupting the minimal aesthetic`;

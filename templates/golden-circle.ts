@@ -1,46 +1,56 @@
-import type { ParameterDefinition, PresetMetadata } from './types';
-
-// Golden Circle - Fibonacci-based proportions with organic sophistication
-export const parameters: Record<string, ParameterDefinition> = {
-  // Circle fundamentals - shape definition (70% of controls)
+// ◯ Golden Circle
+const PARAMETERS = {
+  // Universal Background Controls
+  backgroundColor: { type: 'color', default: "#fefefe", label: 'Background Color', category: 'Background' },
+  backgroundType: { type: 'select', options: [{"value":"transparent","label":"Transparent"},{"value":"solid","label":"Solid Color"},{"value":"gradient","label":"Gradient"}], default: "solid", label: 'Background Type', category: 'Background' },
+  backgroundGradientStart: { type: 'color', default: "#ffffff", label: 'Gradient Start', category: 'Background', showIf: (params)=>params.backgroundType === 'gradient' },
+  backgroundGradientEnd: { type: 'color', default: "#f5f5f5", label: 'Gradient End', category: 'Background', showIf: (params)=>params.backgroundType === 'gradient' },
+  backgroundGradientDirection: { type: 'slider', min: 0, max: 360, step: 15, default: 45, label: 'Gradient Direction', category: 'Background', showIf: (params)=>params.backgroundType === 'gradient' },
+  
+  // Universal Fill Controls
+  fillType: { type: 'select', options: [{"value":"none","label":"None"},{"value":"solid","label":"Solid Color"},{"value":"gradient","label":"Gradient"}], default: "gradient", label: 'Fill Type', category: 'Fill' },
+  fillColor: { type: 'color', default: "#d4a574", label: 'Fill Color', category: 'Fill', showIf: (params)=>params.fillType === 'solid' },
+  fillGradientStart: { type: 'color', default: "#d4a574", label: 'Gradient Start', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
+  fillGradientEnd: { type: 'color', default: "#b8935f", label: 'Gradient End', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
+  fillGradientDirection: { type: 'slider', min: 0, max: 360, step: 15, default: 90, label: 'Gradient Direction', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
+  fillOpacity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.9, label: 'Fill Opacity', category: 'Fill', showIf: (params)=>params.fillType !== 'none' },
+  
+  // Universal Stroke Controls
+  strokeType: { type: 'select', options: [{"value":"none","label":"None"},{"value":"solid","label":"Solid"},{"value":"dashed","label":"Dashed"},{"value":"dotted","label":"Dotted"}], default: "none", label: 'Stroke Type', category: 'Stroke' },
+  strokeColor: { type: 'color', default: "#b8935f", label: 'Stroke Color', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
+  strokeWidth: { type: 'slider', min: 0, max: 10, step: 0.5, default: 2, label: 'Stroke Width', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
+  strokeOpacity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 1, label: 'Stroke Opacity', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
+  
+  // Template-specific parameters - Circle fundamentals (shape definition)
   circleStyle: {
     type: 'slider',
     min: 0,
     max: 4,
     step: 1,
     default: 0,
-    label: 'Circle Style (0=Perfect, 1=Organic, 2=Spiral, 3=Segmented, 4=Breathing)'
+    label: 'Circle Style (0=Perfect, 1=Organic, 2=Spiral, 3=Segmented, 4=Breathing)',
+    category: 'Shape'
   },
   
   // Mathematical proportions using golden ratio and fibonacci
-  goldenProportion: { type: 'slider', min: 0.5, max: 2, step: 0.05, default: 1.618, label: 'Golden Ratio (φ=1.618)' },
-  fibonacciInfluence: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.3, label: 'Fibonacci Curve Influence' },
-  organicVariation: { type: 'slider', min: 0, max: 0.3, step: 0.01, default: 0.08, label: 'Natural Variation' },
+  goldenProportion: { type: 'slider', min: 0.5, max: 2, step: 0.05, default: 1.618, label: 'Golden Ratio (φ=1.618)', category: 'Mathematics' },
+  fibonacciInfluence: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.3, label: 'Fibonacci Curve Influence', category: 'Mathematics' },
+  organicVariation: { type: 'slider', min: 0, max: 0.3, step: 0.01, default: 0.08, label: 'Natural Variation', category: 'Shape' },
   
   // Geometric precision vs organic flow
-  mathematicalPurity: { type: 'slider', min: 0.7, max: 1, step: 0.01, default: 0.9, label: 'Geometric Precision' },
-  concentricLayers: { type: 'slider', min: 1, max: 4, step: 1, default: 1, label: 'Concentric Rings' },
-  spiralTightness: { type: 'slider', min: 0.1, max: 2, step: 0.1, default: 0.8, label: 'Spiral Tightness' },
+  mathematicalPurity: { type: 'slider', min: 0.7, max: 1, step: 0.01, default: 0.9, label: 'Geometric Precision', category: 'Mathematics' },
+  concentricLayers: { type: 'slider', min: 1, max: 4, step: 1, default: 1, label: 'Concentric Rings', category: 'Shape' },
+  spiralTightness: { type: 'slider', min: 0.1, max: 2, step: 0.1, default: 0.8, label: 'Spiral Tightness', category: 'Shape' },
   
-  // Brand enhancement (30% of controls)
-  borderStyle: {
-    type: 'slider',
-    min: 0,
-    max: 3,
-    step: 1,
-    default: 0,
-    label: 'Border (0=None, 1=Clean, 2=Double, 3=Organic)'
-  },
-  borderWeight: { type: 'slider', min: 1, max: 8, step: 0.5, default: 2, label: 'Border Weight' },
-  
-  // Fill sophistication
-  fillType: {
+  // Brand enhancement - removed duplicate border controls as they're in universal stroke
+  fillStyle: {
     type: 'slider',
     min: 0,
     max: 3,
     step: 1,
     default: 2,
-    label: 'Fill (0=None, 1=Solid, 2=Radial, 3=Fibonacci Gradient)'
+    label: 'Fill (0=None, 1=Solid, 2=Radial, 3=Fibonacci Gradient)',
+    category: 'Effects'
   },
   
   // Professional color system
@@ -52,31 +62,60 @@ export const parameters: Record<string, ParameterDefinition> = {
       { value: 'custom', label: 'Custom Colors' }
     ],
     default: 'theme',
-    label: 'Color Mode'
+    label: 'Color Mode',
+    category: 'Colors'
   },
-  warmth: { type: 'slider', min: 0.3, max: 1, step: 0.05, default: 0.7, label: 'Color Warmth' },
-  sophistication: { type: 'slider', min: 0.4, max: 0.9, step: 0.05, default: 0.6, label: 'Color Sophistication' },
+  warmth: { type: 'slider', min: 0.3, max: 1, step: 0.05, default: 0.7, label: 'Color Warmth', category: 'Colors' },
+  sophistication: { type: 'slider', min: 0.4, max: 0.9, step: 0.05, default: 0.6, label: 'Color Sophistication', category: 'Colors' },
   
   // Subtle effects for brand sophistication  
-  innerGlow: { type: 'slider', min: 0, max: 0.4, step: 0.05, default: 0.15, label: 'Inner Radiance' },
-  breathingMotion: { type: 'slider', min: 0, max: 0.2, step: 0.02, default: 0.05, label: 'Subtle Animation' }
+  innerGlow: { type: 'slider', min: 0, max: 0.4, step: 0.05, default: 0.15, label: 'Inner Radiance', category: 'Effects' },
+  breathingMotion: { type: 'slider', min: 0, max: 0.2, step: 0.02, default: 0.05, label: 'Subtle Animation', category: 'Effects' }
 };
 
-export function draw(
-  ctx: CanvasRenderingContext2D,
-  width: number,
-  height: number,
-  params: Record<string, any>,
-  _generator: any,
-  time: number
-) {
+function applyUniversalBackground(ctx, width, height, params) {
+  if (!params.backgroundType || params.backgroundType === 'transparent') return;
+  
+  if (params.backgroundType === 'solid') {
+    ctx.fillStyle = params.backgroundColor || '#fefefe';
+    ctx.fillRect(0, 0, width, height);
+  } else if (params.backgroundType === 'gradient') {
+    const direction = (params.backgroundGradientDirection || 0) * (Math.PI / 180);
+    const x1 = width / 2 - Math.cos(direction) * width / 2;
+    const y1 = height / 2 - Math.sin(direction) * height / 2;
+    const x2 = width / 2 + Math.cos(direction) * width / 2;
+    const y2 = height / 2 + Math.sin(direction) * height / 2;
+    
+    const gradient = ctx.createLinearGradient(x1, y1, x2, y2);
+    gradient.addColorStop(0, params.backgroundGradientStart || '#ffffff');
+    gradient.addColorStop(1, params.backgroundGradientEnd || '#f5f5f5');
+    
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, width, height);
+  }
+}
+
+function drawVisualization(ctx, width, height, params, _generator, time) {
+  // Parameter compatibility layer
+  if (params.customParameters) {
+    params.fillColor = params.fillColor || params.customParameters.fillColor;
+    params.strokeColor = params.strokeColor || params.customParameters.strokeColor;
+    params.backgroundColor = params.backgroundColor || params.customParameters.backgroundColor;
+    params.textColor = params.textColor || params.customParameters.textColor;
+    
+    Object.keys(params.customParameters).forEach(key => {
+      if (params[key] === undefined) {
+        params[key] = params.customParameters[key];
+      }
+    });
+  }
+
   // Apply universal background
   applyUniversalBackground(ctx, width, height, params);
   
   // Get theme colors with fallbacks
   const fillColor = params.fillColor || '#d4a574'; // Golden color default
   const strokeColor = params.strokeColor || '#b8935f';
-  const backgroundColor = params.backgroundColor || '#fefefe';
 
   // Extract parameters
   const centerX = width / 2;
@@ -88,9 +127,7 @@ export function draw(
   const mathematicalPurity = params.mathematicalPurity || 0.9;
   const concentricLayers = Math.round(params.concentricLayers || 1);
   const spiralTightness = params.spiralTightness || 0.8;
-  const borderStyleNum = Math.round(params.borderStyle || 0);
-  const borderWeight = params.borderWeight || 2;
-  const fillTypeNum = Math.round(params.fillType || 2);
+  const fillStyleNum = Math.round(params.fillStyle || 2);
   const colorMode = params.colorMode || 'theme';
   const warmth = params.warmth || 0.7;
   const sophistication = params.sophistication || 0.6;
@@ -130,15 +167,15 @@ export function draw(
       phi, fibonacciInfluence * (1 - layer * 0.3), organicVariation, mathematicalPurity, spiralTightness, time
     );
     
-    renderCircleLayer(ctx, layerPath, brandColors, fillTypeNum, layerAlpha, centerX, centerY, layerRadius, phi);
+    renderCircleLayer(ctx, layerPath, brandColors, fillStyleNum, layerAlpha, centerX, centerY, layerRadius, phi, params);
   }
 
-  // Render sophisticated border
-  if (borderStyleNum > 0) {
-    renderSophisticatedBorder(ctx, circlePath, brandColors, borderStyleNum, borderWeight, organicVariation);
+  // Render universal stroke if specified
+  if (params.strokeType !== 'none') {
+    renderUniversalStroke(ctx, circlePath, params);
   }
 
-  function generateGoldenCircle(style: number, centerX: number, centerY: number, radius: number, phi: number, fibInfluence: number, organic: number, purity: number, spiralTight: number, time: number) {
+  function generateGoldenCircle(style, centerX, centerY, radius, phi, fibInfluence, organic, purity, spiralTight, time) {
     const points = [];
     
     switch (style) {
@@ -229,9 +266,9 @@ export function draw(
     return points;
   }
 
-  function createSophisticatedPalette(fillColor: string, strokeColor: string, colorMode: string, warmth: number, sophistication: number) {
+  function createSophisticatedPalette(fillColor, strokeColor, colorMode, warmth, sophistication) {
     // Helper to convert hex to HSL
-    const hexToHsl = (hex: string): [number, number, number] => {
+    const hexToHsl = (hex) => {
       const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
       if (!result) return [0, 0, 50];
       
@@ -305,7 +342,7 @@ export function draw(
     }
   }
 
-  function renderInnerGlow(ctx: CanvasRenderingContext2D, points: any[], colors: any, glow: number, radius: number) {
+  function renderInnerGlow(ctx, points, colors, glow, radius) {
     ctx.save();
     ctx.globalAlpha = glow;
     
@@ -324,111 +361,100 @@ export function draw(
     ctx.restore();
   }
 
-  function renderCircleLayer(ctx: CanvasRenderingContext2D, points: any[], colors: any, fillType: number, alpha: number, centerX: number, centerY: number, radius: number, phi: number) {
+  function renderCircleLayer(ctx, points, colors, fillStyle, alpha, centerX, centerY, radius, phi, params) {
     ctx.save();
     ctx.globalAlpha = alpha;
     
-    switch (fillType) {
-      case 0: // No fill
-        break;
-        
-      case 1: // Solid sophisticated fill
-        ctx.fillStyle = colors.primary;
-        drawSmoothCircle(ctx, points);
+    // Draw the path first
+    drawSmoothCircle(ctx, points);
+    
+    // Apply universal fill or template-specific fill
+    if (params.fillType !== 'none' && fillStyle !== 0) {
+      if (params.fillType === 'solid') {
+        ctx.fillStyle = params.fillColor || colors.primary;
+        ctx.globalAlpha = (params.fillOpacity || 1) * alpha;
         ctx.fill();
-        break;
-        
-      case 2: // Radial gradient for depth
-        const radialGradient = ctx.createRadialGradient(
-          centerX - radius * 0.3, centerY - radius * 0.3, 0,
-          centerX, centerY, radius * 1.1
+      } else if (params.fillType === 'gradient') {
+        const angle = (params.fillGradientDirection || 90) * Math.PI / 180;
+        const gradient = ctx.createLinearGradient(
+          centerX - Math.cos(angle) * radius,
+          centerY - Math.sin(angle) * radius,
+          centerX + Math.cos(angle) * radius,
+          centerY + Math.sin(angle) * radius
         );
-        radialGradient.addColorStop(0, colors.secondary);
-        radialGradient.addColorStop(0.6, colors.primary);
-        radialGradient.addColorStop(1, colors.accent);
+        gradient.addColorStop(0, params.fillGradientStart || colors.secondary);
+        gradient.addColorStop(1, params.fillGradientEnd || colors.primary);
         
-        ctx.fillStyle = radialGradient;
-        drawSmoothCircle(ctx, points);
+        ctx.fillStyle = gradient;
+        ctx.globalAlpha = (params.fillOpacity || 1) * alpha;
         ctx.fill();
-        break;
-        
-      case 3: // Fibonacci gradient - mathematically sophisticated
-        const fibGradient = ctx.createRadialGradient(
-          centerX, centerY, 0,
-          centerX, centerY, radius
-        );
-        
-        // Fibonacci-based color stops
-        const fibNumbers = [0, 0.236, 0.382, 0.618, 1]; // Based on golden ratio
-        fibGradient.addColorStop(fibNumbers[0], colors.warm);
-        fibGradient.addColorStop(fibNumbers[1], colors.secondary);
-        fibGradient.addColorStop(fibNumbers[2], colors.primary);
-        fibGradient.addColorStop(fibNumbers[3], colors.accent);
-        fibGradient.addColorStop(fibNumbers[4], colors.depth);
-        
-        ctx.fillStyle = fibGradient;
-        drawSmoothCircle(ctx, points);
-        ctx.fill();
-        break;
+      }
+    }
+    
+    // Additional template-specific fill styles
+    if (fillStyle === 2 && params.fillType === 'none') {
+      // Radial gradient for depth (when universal fill is none)
+      const radialGradient = ctx.createRadialGradient(
+        centerX - radius * 0.3, centerY - radius * 0.3, 0,
+        centerX, centerY, radius * 1.1
+      );
+      radialGradient.addColorStop(0, colors.secondary);
+      radialGradient.addColorStop(0.6, colors.primary);
+      radialGradient.addColorStop(1, colors.accent);
+      
+      ctx.fillStyle = radialGradient;
+      ctx.fill();
+    } else if (fillStyle === 3) {
+      // Fibonacci gradient - mathematically sophisticated
+      const fibGradient = ctx.createRadialGradient(
+        centerX, centerY, 0,
+        centerX, centerY, radius
+      );
+      
+      // Fibonacci-based color stops
+      const fibNumbers = [0, 0.236, 0.382, 0.618, 1]; // Based on golden ratio
+      fibGradient.addColorStop(fibNumbers[0], colors.warm);
+      fibGradient.addColorStop(fibNumbers[1], colors.secondary);
+      fibGradient.addColorStop(fibNumbers[2], colors.primary);
+      fibGradient.addColorStop(fibNumbers[3], colors.accent);
+      fibGradient.addColorStop(fibNumbers[4], colors.depth);
+      
+      ctx.fillStyle = fibGradient;
+      ctx.fill();
     }
     
     ctx.restore();
   }
 
-  function renderSophisticatedBorder(ctx: CanvasRenderingContext2D, points: any[], colors: any, borderStyle: number, weight: number, organic: number) {
-    ctx.save();
+  function renderUniversalStroke(ctx, points, params) {
+    if (params.strokeType === 'none') return;
     
-    ctx.strokeStyle = colors.accent;
-    ctx.lineWidth = weight;
+    ctx.save();
+    ctx.strokeStyle = params.strokeColor;
+    ctx.lineWidth = params.strokeWidth || 2;
+    ctx.globalAlpha = params.strokeOpacity || 1;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
     
-    switch (borderStyle) {
-      case 1: // Clean professional border
-        drawSmoothCircle(ctx, points);
-        ctx.stroke();
+    // Set stroke pattern
+    switch (params.strokeType) {
+      case 'dashed':
+        ctx.setLineDash([params.strokeWidth * 3, params.strokeWidth * 2]);
         break;
-        
-      case 2: // Double border for premium feel
-        // Outer border
-        ctx.lineWidth = weight;
-        drawSmoothCircle(ctx, points);
-        ctx.stroke();
-        
-        // Inner border
-        ctx.strokeStyle = colors.sophisticated;
-        ctx.lineWidth = weight * 0.5;
-        const innerPoints = points.map(p => ({
-          x: centerX + (p.x - centerX) * 0.85,
-          y: centerY + (p.y - centerY) * 0.85,
-          angle: p.angle
-        }));
-        drawSmoothCircle(ctx, innerPoints);
-        ctx.stroke();
+      case 'dotted':
+        ctx.setLineDash([params.strokeWidth, params.strokeWidth]);
         break;
-        
-      case 3: // Organic border with natural variation
-        ctx.lineWidth = weight * (1 + organic * 0.5);
-        
-        // Draw with organic line weight variation
-        for (let i = 0; i < points.length; i++) {
-          const current = points[i];
-          const next = points[(i + 1) % points.length];
-          const organicWeight = weight * (1 + (current.organic || 0) * organic);
-          
-          ctx.lineWidth = organicWeight;
-          ctx.beginPath();
-          ctx.moveTo(current.x, current.y);
-          ctx.lineTo(next.x, next.y);
-          ctx.stroke();
-        }
-        break;
+      default:
+        ctx.setLineDash([]);
     }
+    
+    drawSmoothCircle(ctx, points);
+    ctx.stroke();
     
     ctx.restore();
   }
 
-  function drawSmoothCircle(ctx: CanvasRenderingContext2D, points: any[]) {
+  function drawSmoothCircle(ctx, points) {
     if (points.length < 3) return;
     
     ctx.beginPath();
@@ -461,7 +487,7 @@ export function draw(
   }
 }
 
-export const metadata: PresetMetadata = {
+export const metadata = {
   name: "◯ Golden Circle",
   description: "Fibonacci-based proportions with theme-aware colors and organic sophistication",
   defaultParams: {
@@ -473,9 +499,7 @@ export const metadata: PresetMetadata = {
     mathematicalPurity: 0.9,
     concentricLayers: 1,
     spiralTightness: 0.8,
-    borderStyle: 0,
-    borderWeight: 2,
-    fillType: 2,
+    fillStyle: 2,
     colorMode: 'theme',
     warmth: 0.7,
     sophistication: 0.6,
@@ -483,3 +507,121 @@ export const metadata: PresetMetadata = {
     breathingMotion: 0.05
   }
 };
+
+export const id = 'golden-circle';
+export const name = "◯ Golden Circle";
+export const description = "Fibonacci-based proportions with theme-aware colors and organic sophistication";
+export const defaultParams = {
+  seed: "golden-circle-brand",
+  circleStyle: 0,
+  goldenProportion: 1.618,
+  fibonacciInfluence: 0.3,
+  organicVariation: 0.08,
+  mathematicalPurity: 0.9,
+  concentricLayers: 1,
+  spiralTightness: 0.8,
+  fillStyle: 2,
+  colorMode: 'theme',
+  warmth: 0.7,
+  sophistication: 0.6,
+  innerGlow: 0.15,
+  breathingMotion: 0.05
+};
+export const code = `// ◯ Golden Circle
+const PARAMETERS = {
+  // Universal Background Controls
+  backgroundColor: { type: 'color', default: "#fefefe", label: 'Background Color', category: 'Background' },
+  backgroundType: { type: 'select', options: [{"value":"transparent","label":"Transparent"},{"value":"solid","label":"Solid Color"},{"value":"gradient","label":"Gradient"}], default: "solid", label: 'Background Type', category: 'Background' },
+  backgroundGradientStart: { type: 'color', default: "#ffffff", label: 'Gradient Start', category: 'Background', showIf: (params)=>params.backgroundType === 'gradient' },
+  backgroundGradientEnd: { type: 'color', default: "#f5f5f5", label: 'Gradient End', category: 'Background', showIf: (params)=>params.backgroundType === 'gradient' },
+  backgroundGradientDirection: { type: 'slider', min: 0, max: 360, step: 15, default: 45, label: 'Gradient Direction', category: 'Background', showIf: (params)=>params.backgroundType === 'gradient' },
+  
+  // Universal Fill Controls
+  fillType: { type: 'select', options: [{"value":"none","label":"None"},{"value":"solid","label":"Solid Color"},{"value":"gradient","label":"Gradient"}], default: "gradient", label: 'Fill Type', category: 'Fill' },
+  fillColor: { type: 'color', default: "#d4a574", label: 'Fill Color', category: 'Fill', showIf: (params)=>params.fillType === 'solid' },
+  fillGradientStart: { type: 'color', default: "#d4a574", label: 'Gradient Start', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
+  fillGradientEnd: { type: 'color', default: "#b8935f", label: 'Gradient End', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
+  fillGradientDirection: { type: 'slider', min: 0, max: 360, step: 15, default: 90, label: 'Gradient Direction', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
+  fillOpacity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.9, label: 'Fill Opacity', category: 'Fill', showIf: (params)=>params.fillType !== 'none' },
+  
+  // Universal Stroke Controls
+  strokeType: { type: 'select', options: [{"value":"none","label":"None"},{"value":"solid","label":"Solid"},{"value":"dashed","label":"Dashed"},{"value":"dotted","label":"Dotted"}], default: "none", label: 'Stroke Type', category: 'Stroke' },
+  strokeColor: { type: 'color', default: "#b8935f", label: 'Stroke Color', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
+  strokeWidth: { type: 'slider', min: 0, max: 10, step: 0.5, default: 2, label: 'Stroke Width', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
+  strokeOpacity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 1, label: 'Stroke Opacity', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
+  
+  // Template-specific parameters - Circle fundamentals (shape definition)
+  circleStyle: {
+    type: 'slider',
+    min: 0,
+    max: 4,
+    step: 1,
+    default: 0,
+    label: 'Circle Style (0=Perfect, 1=Organic, 2=Spiral, 3=Segmented, 4=Breathing)',
+    category: 'Shape'
+  },
+  
+  // Mathematical proportions using golden ratio and fibonacci
+  goldenProportion: { type: 'slider', min: 0.5, max: 2, step: 0.05, default: 1.618, label: 'Golden Ratio (φ=1.618)', category: 'Mathematics' },
+  fibonacciInfluence: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.3, label: 'Fibonacci Curve Influence', category: 'Mathematics' },
+  organicVariation: { type: 'slider', min: 0, max: 0.3, step: 0.01, default: 0.08, label: 'Natural Variation', category: 'Shape' },
+  
+  // Geometric precision vs organic flow
+  mathematicalPurity: { type: 'slider', min: 0.7, max: 1, step: 0.01, default: 0.9, label: 'Geometric Precision', category: 'Mathematics' },
+  concentricLayers: { type: 'slider', min: 1, max: 4, step: 1, default: 1, label: 'Concentric Rings', category: 'Shape' },
+  spiralTightness: { type: 'slider', min: 0.1, max: 2, step: 0.1, default: 0.8, label: 'Spiral Tightness', category: 'Shape' },
+  
+  // Brand enhancement - removed duplicate border controls as they're in universal stroke
+  fillStyle: {
+    type: 'slider',
+    min: 0,
+    max: 3,
+    step: 1,
+    default: 2,
+    label: 'Fill (0=None, 1=Solid, 2=Radial, 3=Fibonacci Gradient)',
+    category: 'Effects'
+  },
+  
+  // Professional color system
+  colorMode: { 
+    type: 'select', 
+    options: [
+      { value: 'theme', label: 'Use Theme Colors' },
+      { value: 'golden', label: 'Golden Palette' },
+      { value: 'custom', label: 'Custom Colors' }
+    ],
+    default: 'theme',
+    label: 'Color Mode',
+    category: 'Colors'
+  },
+  warmth: { type: 'slider', min: 0.3, max: 1, step: 0.05, default: 0.7, label: 'Color Warmth', category: 'Colors' },
+  sophistication: { type: 'slider', min: 0.4, max: 0.9, step: 0.05, default: 0.6, label: 'Color Sophistication', category: 'Colors' },
+  
+  // Subtle effects for brand sophistication  
+  innerGlow: { type: 'slider', min: 0, max: 0.4, step: 0.05, default: 0.15, label: 'Inner Radiance', category: 'Effects' },
+  breathingMotion: { type: 'slider', min: 0, max: 0.2, step: 0.02, default: 0.05, label: 'Subtle Animation', category: 'Effects' }
+};
+
+function applyUniversalBackground(ctx, width, height, params) {
+  if (!params.backgroundType || params.backgroundType === 'transparent') return;
+  
+  if (params.backgroundType === 'solid') {
+    ctx.fillStyle = params.backgroundColor || '#fefefe';
+    ctx.fillRect(0, 0, width, height);
+  } else if (params.backgroundType === 'gradient') {
+    const direction = (params.backgroundGradientDirection || 0) * (Math.PI / 180);
+    const x1 = width / 2 - Math.cos(direction) * width / 2;
+    const y1 = height / 2 - Math.sin(direction) * height / 2;
+    const x2 = width / 2 + Math.cos(direction) * width / 2;
+    const y2 = height / 2 + Math.sin(direction) * height / 2;
+    
+    const gradient = ctx.createLinearGradient(x1, y1, x2, y2);
+    gradient.addColorStop(0, params.backgroundGradientStart || '#ffffff');
+    gradient.addColorStop(1, params.backgroundGradientEnd || '#f5f5f5');
+    
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, width, height);
+  }
+}
+
+${drawVisualization.toString()}`;

@@ -1,10 +1,31 @@
 import type { ParameterDefinition, PresetMetadata } from './types';
 
-// Crystal Lattice - Geometric crystal structures with light refraction for jewelry/luxury tech brands
-export const parameters: Record<string, ParameterDefinition> = {
+// Crystal Lattice
+const PARAMETERS = {
+  // Universal Background Controls
+  backgroundColor: { type: 'color', default: "#fafafa", label: 'Background Color', category: 'Background' },
+  backgroundType: { type: 'select', options: [{"value":"transparent","label":"Transparent"},{"value":"solid","label":"Solid Color"},{"value":"gradient","label":"Gradient"}], default: "gradient", label: 'Background Type', category: 'Background' },
+  backgroundGradientStart: { type: 'color', default: "#fafafa", label: 'Gradient Start', category: 'Background', showIf: (params)=>params.backgroundType === 'gradient' },
+  backgroundGradientEnd: { type: 'color', default: "#f0f0f0", label: 'Gradient End', category: 'Background', showIf: (params)=>params.backgroundType === 'gradient' },
+  backgroundGradientDirection: { type: 'slider', min: 0, max: 360, step: 15, default: 45, label: 'Gradient Direction', category: 'Background', showIf: (params)=>params.backgroundType === 'gradient' },
+  
+  // Universal Fill Controls
+  fillType: { type: 'select', options: [{"value":"none","label":"None"},{"value":"solid","label":"Solid Color"},{"value":"gradient","label":"Gradient"}], default: "gradient", label: 'Fill Type', category: 'Fill' },
+  fillColor: { type: 'color', default: "#87ceeb", label: 'Fill Color', category: 'Fill', showIf: (params)=>params.fillType === 'solid' },
+  fillGradientStart: { type: 'color', default: "#e0f2fe", label: 'Gradient Start', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
+  fillGradientEnd: { type: 'color', default: "#60a5fa", label: 'Gradient End', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
+  fillGradientDirection: { type: 'slider', min: 0, max: 360, step: 15, default: 135, label: 'Gradient Direction', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
+  fillOpacity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.7, label: 'Fill Opacity', category: 'Fill', showIf: (params)=>params.fillType !== 'none' },
+  
+  // Universal Stroke Controls
+  strokeType: { type: 'select', options: [{"value":"none","label":"None"},{"value":"solid","label":"Solid"},{"value":"dashed","label":"Dashed"},{"value":"dotted","label":"Dotted"}], default: "solid", label: 'Stroke Type', category: 'Stroke' },
+  strokeColor: { type: 'color', default: "#2563eb", label: 'Stroke Color', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
+  strokeWidth: { type: 'slider', min: 0, max: 10, step: 0.5, default: 1, label: 'Stroke Width', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
+  strokeOpacity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 1, label: 'Stroke Opacity', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
+  
   // Core crystal properties
-  frequency: { type: 'slider', min: 0.3, max: 1.5, step: 0.05, default: 0.8, label: 'Crystal Frequency' },
-  amplitude: { type: 'slider', min: 70, max: 180, step: 5, default: 120, label: 'Crystal Scale' },
+  frequency: { type: 'slider', min: 0.3, max: 1.5, step: 0.05, default: 0.8, label: 'Crystal Frequency', category: 'Wave' },
+  amplitude: { type: 'slider', min: 70, max: 180, step: 5, default: 120, label: 'Crystal Scale', category: 'Wave' },
   
   // Crystal structure
   latticeType: {
@@ -13,36 +34,58 @@ export const parameters: Record<string, ParameterDefinition> = {
     max: 4,
     step: 1,
     default: 2,
-    label: 'Lattice (0=Cubic, 1=Hexagonal, 2=Diamond, 3=Prismatic, 4=Fractal)'
+    label: 'Lattice (0=Cubic, 1=Hexagonal, 2=Diamond, 3=Prismatic, 4=Fractal)',
+    category: 'Crystal'
   },
   
   // Geometric precision
-  crystallineOrder: { type: 'slider', min: 0.7, max: 1, step: 0.02, default: 0.9, label: 'Crystalline Order' },
-  facetPrecision: { type: 'slider', min: 0.8, max: 1, step: 0.01, default: 0.95, label: 'Facet Precision' },
-  symmetryLevel: { type: 'slider', min: 2, max: 8, step: 1, default: 6, label: 'Symmetry Order' },
+  crystallineOrder: { type: 'slider', min: 0.7, max: 1, step: 0.02, default: 0.9, label: 'Crystalline Order', category: 'Crystal' },
+  facetPrecision: { type: 'slider', min: 0.8, max: 1, step: 0.01, default: 0.95, label: 'Facet Precision', category: 'Crystal' },
+  symmetryLevel: { type: 'slider', min: 2, max: 8, step: 1, default: 6, label: 'Symmetry Order', category: 'Crystal' },
   
   // Crystal effects
-  lightRefraction: { type: 'slider', min: 0.3, max: 1, step: 0.05, default: 0.7, label: 'Light Refraction' },
-  internalReflection: { type: 'slider', min: 0.2, max: 0.8, step: 0.05, default: 0.5, label: 'Internal Reflection' },
-  dispersion: { type: 'slider', min: 0, max: 0.6, step: 0.05, default: 0.3, label: 'Spectral Dispersion' },
+  lightRefraction: { type: 'slider', min: 0.3, max: 1, step: 0.05, default: 0.7, label: 'Light Refraction', category: 'Effects' },
+  internalReflection: { type: 'slider', min: 0.2, max: 0.8, step: 0.05, default: 0.5, label: 'Internal Reflection', category: 'Effects' },
+  dispersion: { type: 'slider', min: 0, max: 0.6, step: 0.05, default: 0.3, label: 'Spectral Dispersion', category: 'Effects' },
   
   // Surface characteristics
-  facetCount: { type: 'slider', min: 6, max: 24, step: 2, default: 12, label: 'Facet Count' },
-  surfaceRoughness: { type: 'slider', min: 0, max: 0.3, step: 0.02, default: 0.05, label: 'Surface Roughness' },
-  crystallineFlaws: { type: 'slider', min: 0, max: 0.2, step: 0.01, default: 0.03, label: 'Natural Inclusions' },
+  facetCount: { type: 'slider', min: 6, max: 24, step: 2, default: 12, label: 'Facet Count', category: 'Surface' },
+  surfaceRoughness: { type: 'slider', min: 0, max: 0.3, step: 0.02, default: 0.05, label: 'Surface Roughness', category: 'Surface' },
+  crystallineFlaws: { type: 'slider', min: 0, max: 0.2, step: 0.01, default: 0.03, label: 'Natural Inclusions', category: 'Surface' },
   
   // Optical properties
-  transparency: { type: 'slider', min: 0.4, max: 0.9, step: 0.05, default: 0.7, label: 'Crystal Transparency' },
-  brilliance: { type: 'slider', min: 0.5, max: 1, step: 0.05, default: 0.8, label: 'Optical Brilliance' },
-  fire: { type: 'slider', min: 0.2, max: 0.8, step: 0.05, default: 0.4, label: 'Spectral Fire' },
+  transparency: { type: 'slider', min: 0.4, max: 0.9, step: 0.05, default: 0.7, label: 'Crystal Transparency', category: 'Optical' },
+  brilliance: { type: 'slider', min: 0.5, max: 1, step: 0.05, default: 0.8, label: 'Optical Brilliance', category: 'Optical' },
+  fire: { type: 'slider', min: 0.2, max: 0.8, step: 0.05, default: 0.4, label: 'Spectral Fire', category: 'Optical' },
   
   // Color and material
-  crystalHue: { type: 'slider', min: 0, max: 360, step: 10, default: 210, label: 'Crystal Hue' },
-  purity: { type: 'slider', min: 0.6, max: 1, step: 0.02, default: 0.9, label: 'Color Purity' },
-  materialType: { type: 'slider', min: 0, max: 4, step: 1, default: 1, label: 'Material (0=Quartz, 1=Diamond, 2=Sapphire, 3=Emerald, 4=Opal)' }
+  crystalHue: { type: 'slider', min: 0, max: 360, step: 10, default: 210, label: 'Crystal Hue', category: 'Material' },
+  purity: { type: 'slider', min: 0.6, max: 1, step: 0.02, default: 0.9, label: 'Color Purity', category: 'Material' },
+  materialType: { type: 'slider', min: 0, max: 4, step: 1, default: 1, label: 'Material (0=Quartz, 1=Diamond, 2=Sapphire, 3=Emerald, 4=Opal)', category: 'Material' }
 };
 
-export function draw(
+function applyUniversalBackground(ctx: CanvasRenderingContext2D, width: number, height: number, params: Record<string, any>) {
+  if (params.backgroundType === 'transparent') {
+    ctx.clearRect(0, 0, width, height);
+  } else if (params.backgroundType === 'gradient') {
+    const angle = (params.backgroundGradientDirection || 45) * Math.PI / 180;
+    const x1 = width / 2 - Math.cos(angle) * Math.max(width, height) / 2;
+    const y1 = height / 2 - Math.sin(angle) * Math.max(width, height) / 2;
+    const x2 = width / 2 + Math.cos(angle) * Math.max(width, height) / 2;
+    const y2 = height / 2 + Math.sin(angle) * Math.max(width, height) / 2;
+    
+    const gradient = ctx.createLinearGradient(x1, y1, x2, y2);
+    gradient.addColorStop(0, params.backgroundGradientStart || '#fafafa');
+    gradient.addColorStop(1, params.backgroundGradientEnd || '#f0f0f0');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, width, height);
+  } else {
+    ctx.fillStyle = params.backgroundColor || '#fafafa';
+    ctx.fillRect(0, 0, width, height);
+  }
+}
+
+function drawVisualization(
   ctx: CanvasRenderingContext2D,
   width: number,
   height: number,
@@ -50,16 +93,22 @@ export function draw(
   _generator: any,
   time: number
 ) {
-  // Clean geometric background with subtle radial gradient
-  const bgGradient = ctx.createRadialGradient(
-    width * 0.5, height * 0.5, 0,
-    width * 0.5, height * 0.5, Math.max(width, height) * 0.7
-  );
-  bgGradient.addColorStop(0, '#fafafa');
-  bgGradient.addColorStop(0.8, '#f5f5f5');
-  bgGradient.addColorStop(1, '#f0f0f0');
-  ctx.fillStyle = bgGradient;
-  ctx.fillRect(0, 0, width, height);
+  // Parameter compatibility layer
+  if (params.customParameters) {
+    params.fillColor = params.fillColor || params.customParameters.fillColor;
+    params.strokeColor = params.strokeColor || params.customParameters.strokeColor;
+    params.backgroundColor = params.backgroundColor || params.customParameters.backgroundColor;
+    params.textColor = params.textColor || params.customParameters.textColor;
+    
+    Object.keys(params.customParameters).forEach(key => {
+      if (params[key] === undefined) {
+        params[key] = params.customParameters[key];
+      }
+    });
+  }
+
+  // Apply universal background
+  applyUniversalBackground(ctx, width, height, params);
 
   // Extract parameters
   const centerX = width / 2;
@@ -110,8 +159,8 @@ export function draw(
     renderInternalReflections(ctx, crystalStructure, crystalColors, internalReflection, brilliance);
   }
 
-  // Render main crystal body
-  renderCrystalBody(ctx, crystalStructure, crystalColors, transparency, surfaceRoughness);
+  // Render main crystal body with universal controls
+  renderCrystalBody(ctx, crystalStructure, crystalColors, transparency, surfaceRoughness, params);
 
   // Render crystal facets
   renderCrystalFacets(ctx, crystalStructure, crystalColors, facetPrecision, brilliance);
@@ -285,32 +334,64 @@ export function draw(
     ctx.restore();
   }
 
-  function renderCrystalBody(ctx: CanvasRenderingContext2D, structure: any[], colors: any, transparency: number, roughness: number) {
+  function renderCrystalBody(ctx: CanvasRenderingContext2D, structure: any[], colors: any, transparency: number, roughness: number, params: Record<string, any>) {
     ctx.save();
     
     // Main crystal body with sophisticated gradient
     const bounds = getBounds(structure);
-    const crystalGradient = ctx.createRadialGradient(
-      bounds.centerX - bounds.width * 0.3, bounds.centerY - bounds.height * 0.3, 0,
-      bounds.centerX, bounds.centerY, Math.max(bounds.width, bounds.height) * 0.6
-    );
     
-    crystalGradient.addColorStop(0, colors.brilliant);
-    crystalGradient.addColorStop(0.3, colors.light);
-    crystalGradient.addColorStop(0.7, colors.primary);
-    crystalGradient.addColorStop(1, colors.dark);
+    // Apply universal fill settings
+    if (params.fillType === 'gradient') {
+      const angle = (params.fillGradientDirection || 135) * Math.PI / 180;
+      const x1 = bounds.centerX - Math.cos(angle) * Math.max(bounds.width, bounds.height) / 2;
+      const y1 = bounds.centerY - Math.sin(angle) * Math.max(bounds.width, bounds.height) / 2;
+      const x2 = bounds.centerX + Math.cos(angle) * Math.max(bounds.width, bounds.height) / 2;
+      const y2 = bounds.centerY + Math.sin(angle) * Math.max(bounds.width, bounds.height) / 2;
+      
+      const gradient = ctx.createLinearGradient(x1, y1, x2, y2);
+      gradient.addColorStop(0, params.fillGradientStart || colors.light);
+      gradient.addColorStop(0.3, colors.light);
+      gradient.addColorStop(0.7, colors.primary);
+      gradient.addColorStop(1, params.fillGradientEnd || colors.dark);
+      ctx.fillStyle = gradient;
+    } else if (params.fillType === 'solid') {
+      ctx.fillStyle = params.fillColor || colors.primary;
+    } else {
+      const crystalGradient = ctx.createRadialGradient(
+        bounds.centerX - bounds.width * 0.3, bounds.centerY - bounds.height * 0.3, 0,
+        bounds.centerX, bounds.centerY, Math.max(bounds.width, bounds.height) * 0.6
+      );
+      
+      crystalGradient.addColorStop(0, colors.brilliant);
+      crystalGradient.addColorStop(0.3, colors.light);
+      crystalGradient.addColorStop(0.7, colors.primary);
+      crystalGradient.addColorStop(1, colors.dark);
+      ctx.fillStyle = crystalGradient;
+    }
     
-    ctx.fillStyle = crystalGradient;
-    drawCrystalPath(ctx, structure);
-    ctx.fill();
+    if (params.fillType !== 'none') {
+      ctx.globalAlpha = params.fillOpacity || transparency;
+      drawCrystalPath(ctx, structure);
+      ctx.fill();
+    }
     
     // Crystal edge with precision
-    ctx.strokeStyle = colors.dark;
-    ctx.lineWidth = 1 + roughness * 2;
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-    drawCrystalPath(ctx, structure);
-    ctx.stroke();
+    if (params.strokeType !== 'none') {
+      ctx.strokeStyle = params.strokeColor || colors.dark;
+      ctx.lineWidth = params.strokeWidth || (1 + roughness * 2);
+      ctx.globalAlpha = params.strokeOpacity || 1;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      
+      if (params.strokeType === 'dashed') {
+        ctx.setLineDash([5, 5]);
+      } else if (params.strokeType === 'dotted') {
+        ctx.setLineDash([2, 2]);
+      }
+      
+      drawCrystalPath(ctx, structure);
+      ctx.stroke();
+    }
     
     ctx.restore();
   }
@@ -502,6 +583,23 @@ export const metadata: PresetMetadata = {
   description: "Geometric crystal structures with light refraction, spectral dispersion, and optical brilliance",
   defaultParams: {
     seed: "crystal-lattice-precision",
+    // Universal controls
+    backgroundColor: "#fafafa",
+    backgroundType: "gradient",
+    backgroundGradientStart: "#fafafa",
+    backgroundGradientEnd: "#f0f0f0",
+    backgroundGradientDirection: 45,
+    fillType: "gradient",
+    fillColor: "#87ceeb",
+    fillGradientStart: "#e0f2fe",
+    fillGradientEnd: "#60a5fa",
+    fillGradientDirection: 135,
+    fillOpacity: 0.7,
+    strokeType: "solid",
+    strokeColor: "#2563eb",
+    strokeWidth: 1,
+    strokeOpacity: 1,
+    // Template-specific
     frequency: 0.8,
     amplitude: 120,
     latticeType: 2,
@@ -522,3 +620,17 @@ export const metadata: PresetMetadata = {
     materialType: 1
   }
 };
+
+export const id = 'crystal-lattice';
+export const name = "Crystal Lattice";
+export const description = "Geometric crystal structures with light refraction, spectral dispersion, and optical brilliance";
+
+export const defaultParams = metadata.defaultParams;
+
+export const code = `${applyUniversalBackground.toString()}
+
+${drawVisualization.toString()}`;
+
+// Re-export for compatibility
+export const parameters = PARAMETERS;
+export const draw = drawVisualization;
