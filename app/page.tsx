@@ -819,6 +819,19 @@ export default function Home() {
         <StateDebugger 
           reactLogos={logos}
           selectedLogoId={selectedLogoId}
+          canvasOffset={
+            typeof window !== 'undefined' && (window as any).getCanvasOffset
+              ? (window as any).getCanvasOffset()
+              : undefined
+          }
+          onClearCanvasPosition={() => {
+            // Call the CanvasArea's reset function directly
+            if (typeof window !== 'undefined' && (window as any).resetCanvasPosition) {
+              (window as any).resetCanvasPosition();
+            } else {
+              console.warn('⚠️ resetCanvasPosition function not available');
+            }
+          }}
         />
       )}
     </div>

@@ -55,8 +55,22 @@ export function CanvasArea() {
   const timeRef = useRef(0)
   const [currentTime, setCurrentTime] = useState(0)
   
-  // Canvas state
-  const [canvasOffset, setCanvasOffset] = useState({ x: 0, y: 0 })
+  // Canvas state with localStorage persistence
+  const [canvasOffset, setCanvasOffset] = useState(() => {
+    // Try to restore from localStorage, otherwise center (0,0) in viewport
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('recast-canvas-offset')
+      if (saved) {
+        try {
+          return JSON.parse(saved)
+        } catch (e) {
+          console.warn('Failed to parse saved canvas offset:', e)
+        }
+      }
+    }
+    // Default: will be set by initial centering effect
+    return { x: 0, y: 0 }
+  })
   const [isDragging, setIsDragging] = useState(false)
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
   const [lastPanPoint, setLastPanPoint] = useState({ x: 0, y: 0 })
@@ -74,6 +88,14 @@ export function CanvasArea() {
   
   // Track initial centering to avoid multiple runs
   const hasInitialCentered = useRef(false)
+
+  // Helper to save canvas offset to localStorage
+  const saveCanvasOffset = useCallback((offset: { x: number, y: number }) => {
+    setCanvasOffset(offset)
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('recast-canvas-offset', JSON.stringify(offset))
+    }
+  }, [])
   
   // Force render trigger
   const [forceRender, setForceRender] = useState(0)
@@ -139,7 +161,7 @@ export function CanvasArea() {
            y >= position.y && y <= position.y + logoSize
   }
 
-  // Center view without changing zoom
+  // Center view without changing zoom (back to the working version)
   const centerView = useCallback(() => {
     const canvas = canvasRef.current
     if (!canvas || logos.length === 0) return
@@ -168,11 +190,57 @@ export function CanvasArea() {
     const centerY = (minY + maxY) / 2
     
     // Center all logos in available view space without changing zoom
-    setCanvasOffset({
+    saveCanvasOffset({
       x: effectiveCenterX / zoom - centerX,
       y: effectiveCenterY / zoom - centerY
     })
-  }, [zoom, logos, codeEditorCollapsed, codeEditorWidth])
+  }, [zoom, logos, codeEditorCollapsed, codeEditorWidth, saveCanvasOffset])
+
+  // Reset canvas position immediately (for debug toolbar)
+  const resetCanvasPosition = useCallback(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('recast-canvas-offset')
+      console.log('🗑️ Canvas position reset from debug toolbar')
+    }
+    hasInitialCentered.current = false
+    
+    // Immediately recalculate center position
+    const canvas = canvasRef.current
+    if (canvas) {
+      const rect = canvas.getBoundingClientRect()
+      if (rect.width > 0 && rect.height > 0) {
+        const availableWidth = codeEditorCollapsed ? rect.width : rect.width - codeEditorWidth
+        const availableHeight = rect.height
+        const effectiveCenterX = codeEditorCollapsed ? availableWidth / 2 : codeEditorWidth + availableWidth / 2
+        const effectiveCenterY = availableHeight / 2
+
+        const centerOffset = {
+          x: effectiveCenterX / zoom,
+          y: effectiveCenterY / zoom
+        }
+        
+        console.log('📍 Debug reset centering:', { centerOffset, effectiveCenterX, effectiveCenterY, zoom, rect: { width: rect.width, height: rect.height } });
+        console.log('🔧 Before saveCanvasOffset, current canvasOffset:', canvasOffset);
+        saveCanvasOffset(centerOffset)
+        console.log('✅ After saveCanvasOffset called');
+        hasInitialCentered.current = true
+      }
+    }
+  }, [zoom, codeEditorCollapsed, codeEditorWidth, saveCanvasOffset])
+
+  // Expose debug functions for debug toolbar
+  useEffect(() => {
+    if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+      (window as any).resetCanvasPosition = resetCanvasPosition;
+      (window as any).getCanvasOffset = () => canvasOffset;
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        delete (window as any).resetCanvasPosition;
+        delete (window as any).getCanvasOffset;
+      }
+    }
+  }, [resetCanvasPosition, canvasOffset])
 
   // Fit view to show all logos
   const fitToView = useCallback(() => {
@@ -215,83 +283,13 @@ export function CanvasArea() {
     setZoom(clampedZoom)
     
     // Center all logos in available view space
-    setCanvasOffset({
+    saveCanvasOffset({
       x: effectiveCenterX / clampedZoom - centerX,
       y: effectiveCenterY / clampedZoom - centerY
     })
-  }, [setZoom, logos, codeEditorCollapsed, codeEditorWidth])
+  }, [setZoom, logos, codeEditorCollapsed, codeEditorWidth, saveCanvasOffset])
 
-  // Center view on initial load with appropriate zoom (max 100%)
-  useEffect(() => {
-    // Only run initial centering if we have logos with actual content
-    const hasValidLogos = logos.length > 0 && logos.some(logo => 
-      logo.code && logo.code.length > 0 && 
-      (logo.templateId || logo.templateName)
-    )
-    
-    if (!hasValidLogos || hasInitialCentered.current) return
-
-    const canvas = canvasRef.current
-    if (!canvas || logos.length === 0) return
-
-    const rect = canvas.getBoundingClientRect()
-    const logoSize = 600
-    
-    // Calculate bounding box of all logos
-    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity
-    
-    logos.forEach(logo => {
-      const position = logo.position || { x: 0, y: 0 }
-      minX = Math.min(minX, position.x)
-      maxX = Math.max(maxX, position.x + logoSize)
-      minY = Math.min(minY, position.y)
-      maxY = Math.max(maxY, position.y + logoSize)
-    })
-    
-    const contentWidth = maxX - minX
-    const contentHeight = maxY - minY
-    const centerX = (minX + maxX) / 2
-    const centerY = (minY + maxY) / 2
-
-    // Calculate available canvas space accounting for code editor
-    const availableWidth = codeEditorCollapsed ? rect.width : rect.width - codeEditorWidth
-    const availableHeight = rect.height
-    const effectiveCenterX = codeEditorCollapsed ? availableWidth / 2 : codeEditorWidth + availableWidth / 2
-    const effectiveCenterY = availableHeight / 2
-
-    // IMMEDIATE: Set rough center position to eliminate jump
-    const roughCenterOffset = {
-      x: effectiveCenterX / zoom - centerX,
-      y: effectiveCenterY / zoom - centerY
-    }
-    setCanvasOffset(roughCenterOffset)
-    
-    // Mark that we've done initial centering
-    hasInitialCentered.current = true
-    console.log('📍 Canvas centered on initial load');
-    
-    // DELAYED: Fine-tune with optimal zoom and precise centering
-    const timer = setTimeout(() => {
-      // Calculate zoom to fit all logos at 70% coverage using available space, but don't exceed 100%
-      const targetCoverage = 0.7
-      const zoomX = (availableWidth * targetCoverage) / contentWidth
-      const zoomY = (availableHeight * targetCoverage) / contentHeight
-      const idealZoom = Math.min(zoomX, zoomY, 1) // Cap at 100%
-      
-      const clampedZoom = Math.max(0.2, Math.min(idealZoom, 1))
-      
-      setZoom(clampedZoom)
-      
-      // Fine-tune center position with new zoom using available space
-      const finalCenterOffset = {
-        x: effectiveCenterX / clampedZoom - centerX,
-        y: effectiveCenterY / clampedZoom - centerY
-      }
-      setCanvasOffset(finalCenterOffset)
-    }, 200) // Slightly longer delay to ensure template is loaded
-    
-    return () => clearTimeout(timer)
-  }, [logos, setZoom, codeEditorCollapsed, codeEditorWidth]) // Depend on code editor state too
+  // Initial centering will be handled in drawInfiniteCanvas where we have real dimensions
 
   const drawInfiniteCanvas = useCallback(() => {
     const canvas = canvasRef.current
@@ -303,6 +301,31 @@ export function CanvasArea() {
     // Simple DPI scaling
     const rect = canvas.getBoundingClientRect()
     const dpr = window.devicePixelRatio || 1
+    
+    // Handle initial centering here where we have real canvas dimensions
+    if (!hasInitialCentered.current && rect.width > 0 && rect.height > 0) {
+      // For new sessions without saved position, center (0,0)
+      const hasSavedPosition = typeof window !== 'undefined' && localStorage.getItem('recast-canvas-offset')
+      if (!hasSavedPosition) {
+        // Calculate available canvas space accounting for code editor
+        const availableWidth = codeEditorCollapsed ? rect.width : rect.width - codeEditorWidth
+        const availableHeight = rect.height
+        const effectiveCenterX = codeEditorCollapsed ? availableWidth / 2 : codeEditorWidth + availableWidth / 2
+        const effectiveCenterY = availableHeight / 2
+
+        // Center (0,0) in the viewport - simple and predictable!
+        const centerOffset = {
+          x: effectiveCenterX / zoom,
+          y: effectiveCenterY / zoom
+        }
+        
+        console.log('📍 Initial centering (new session):', { centerOffset, effectiveCenterX, effectiveCenterY, zoom, rect: { width: rect.width, height: rect.height } });
+        saveCanvasOffset(centerOffset)
+      } else {
+        console.log('📍 Using saved canvas position from localStorage');
+      }
+      hasInitialCentered.current = true
+    }
     
     canvas.width = rect.width * dpr
     canvas.height = rect.height * dpr
@@ -415,7 +438,7 @@ export function CanvasArea() {
     })
 
     ctx.restore()
-  }, [logos, selectedLogoId, zoom, setCodeError, forceRender, canvasOffset, animating, currentTime, getLogoParamHash, renderTrigger])
+  }, [logos, selectedLogoId, zoom, setCodeError, forceRender, canvasOffset, animating, currentTime, getLogoParamHash, renderTrigger, codeEditorCollapsed, codeEditorWidth, saveCanvasOffset])
 
   // Handle mouse events for dragging and selection
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
@@ -459,12 +482,12 @@ export function CanvasArea() {
       const deltaX = (e.clientX - dragStart.x) / zoom
       const deltaY = (e.clientY - dragStart.y) / zoom
       
-      setCanvasOffset({
+      saveCanvasOffset({
         x: lastPanPoint.x + deltaX,
         y: lastPanPoint.y + deltaY
       })
     }
-  }, [isDragging, dragStart, lastPanPoint, zoom, previewMode])
+  }, [isDragging, dragStart, lastPanPoint, zoom, previewMode, saveCanvasOffset])
 
   const handleMouseUp = useCallback(() => {
     setIsDragging(false)
@@ -495,11 +518,11 @@ export function CanvasArea() {
     const newOffsetY = canvasOffset.y + (mouseY / newZoom) - (mouseY / zoom)
     
     setZoom(newZoom)
-    setCanvasOffset({
+    saveCanvasOffset({
       x: newOffsetX,
       y: newOffsetY
     })
-  }, [zoom, setZoom, previewMode, canvasOffset])
+  }, [zoom, setZoom, previewMode, canvasOffset, saveCanvasOffset])
 
   // Generate logo canvas (shared function)
   const generateLogoCanvas = useCallback((selectedLogo: any) => {
@@ -820,7 +843,7 @@ export function CanvasArea() {
             variant="outline"
             onClick={centerView}
             className="bg-white/90 backdrop-blur-sm shadow-lg border"
-            title="Center view"
+            title="Center view on logos"
           >
             <RotateCcw className="w-4 h-4 mr-2" />
             Center
