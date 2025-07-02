@@ -41,16 +41,18 @@ export function TemplateSelector() {
     const currentSelectedLogoId = useLogoStore.getState().selectedLogoId
     const currentLogo = useLogoStore.getState().getLogoById(currentSelectedLogoId)
     
-    if (!currentLogo) {
+    if (!currentLogo || !currentSelectedLogoId) {
       console.error('No logo selected')
       return
     }
     
+    console.log('Applying template to logo:', currentSelectedLogoId, 'Template:', templateId)
+    
     try {
       if (templateId === 'custom') {
         // Reset to custom code (empty template)
-        console.log('Switching to custom code')
-        updateLogo(currentLogo.id, {
+        console.log('Switching to custom code for logo:', currentSelectedLogoId)
+        updateLogo(currentSelectedLogoId, {
           templateId: 'custom',
           templateName: 'Custom',
           code: currentLogo.code || '// Custom code\nfunction drawVisualization(ctx, width, height, params, generator, time) {\n  // Your custom code here\n}',
@@ -67,6 +69,8 @@ export function TemplateSelector() {
           return
         }
         
+        console.log('Loaded template:', template.name, 'Applying to logo:', currentSelectedLogoId)
+        
         // Update the logo with the new template
         const updatedLogo = {
           templateId: template.id,
@@ -77,7 +81,7 @@ export function TemplateSelector() {
             custom: template.defaultParams || {}
           }
         }
-        updateLogo(currentLogo.id, updatedLogo)
+        updateLogo(currentSelectedLogoId, updatedLogo)
       }
     } catch (error) {
       console.error('Failed to apply template:', error)

@@ -1,0 +1,58 @@
+/* Debug overlay animations */
+
+@keyframes coinFlip {
+  0% {
+    transform: rotateY(0deg);
+  }
+  50% {
+    transform: rotateY(90deg);
+  }
+  100% {
+    transform: rotateY(360deg);
+  }
+}
+
+.debug-button {
+  perspective: 1000px;
+  transform-style: preserve-3d;
+}
+
+.debug-button-inner {
+  transform-style: preserve-3d;
+  transition: transform 0.2s ease-out;
+}
+
+.debug-button:hover .debug-button-inner {
+  animation: coinFlip 0.6s ease-in-out;
+}
+
+/* Smooth transitions for state changes */
+.debug-overlay-enter {
+  animation: slideInUp 0.3s ease-out;
+}
+
+.debug-overlay-exit {
+  animation: slideOutDown 0.3s ease-out;
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideOutDown {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+}

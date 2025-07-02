@@ -3,13 +3,15 @@
 import { useState, useEffect } from 'react';
 import { useLogoStore } from '@/lib/stores/logoStore';
 import { useUIStore } from '@/lib/stores/uiStore';
-import { Maximize2, Minimize2, ChevronDown, ChevronUp } from 'lucide-react';
+import { Maximize2, Minimize2, ChevronDown, ChevronUp, X } from 'lucide-react';
+import { useDebugActions } from '@/lib/debug/debugRegistry';
 
 interface StateDebuggerProps {
   reactLogos: any[];
   selectedLogoId: string;
   onClearCanvasPosition?: () => void;
   canvasOffset?: { x: number, y: number };
+  onClose?: () => void;
 }
 
 type DebugTab = 'dashboard' | 'details' | 'utilities';
@@ -18,7 +20,8 @@ export function StateDebugger({
   reactLogos, 
   selectedLogoId,
   onClearCanvasPosition,
-  canvasOffset
+  canvasOffset,
+  onClose
 }: StateDebuggerProps) {
   const [activeTab, setActiveTab] = useState<DebugTab>('dashboard');
   const [isExpanded, setIsExpanded] = useState(false);
@@ -27,6 +30,9 @@ export function StateDebugger({
   const zustandLogos = useLogoStore(state => state.logos);
   const zustandSelectedId = useLogoStore(state => state.selectedLogoId);
   const zoom = useUIStore(state => state.zoom);
+  
+  // Get registered debug actions
+  const { actions, categories } = useDebugActions();
   
   const reactLogo = reactLogos.find(l => l.id === selectedLogoId);
   const zustandLogo = zustandLogos.find(l => l.id === zustandSelectedId);
@@ -105,16 +111,15 @@ export function StateDebugger({
           >
             {isExpanded ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
           </button>
-          {onClearCanvasPosition && (
+          {onClose && (
             <button
-              onClick={onClearCanvasPosition}
-              className="bg-red-500/20 hover:bg-red-500/30 text-red-400 
-                         px-2 py-1 rounded-md text-xs font-medium
-                         border border-red-500/30 hover:border-red-500/40 
-                         transition-all duration-200"
-              title="Clear saved canvas position and reset centering flag"
+              onClick={onClose}
+              className="p-1.5 rounded-md text-gray-400 hover:text-white
+                         hover:bg-white/10 transition-all duration-200
+                         hover:scale-110 active:scale-95"
+              title="Close debug toolbar"
             >
-              Clear Position
+              <X className="w-3.5 h-3.5" />
             </button>
           )}
         </div>
@@ -385,47 +390,45 @@ export function StateDebugger({
           Developer Utilities
         </h4>
         
-        {/* Quick Actions */}
-        <div className="space-y-2">
-          <h5 className="text-xs font-medium text-gray-400 uppercase tracking-wider">Quick Actions</h5>
-          
-          <button 
-            className="w-full px-3 py-2.5 rounded-lg text-xs font-medium text-left
-                       bg-blue-500/20 hover:bg-blue-500/30 
-                       text-blue-400
-                       border border-blue-500/30 hover:border-blue-500/40
-                       transition-all duration-200
-                       group flex items-center justify-between"
-            onClick={() => {
-              // Create multi-logo test scenario
-              const testLogos = [
-                { id: 'logo-1', templateId: 'wave-bars', position: { x: 0, y: 0 } },
-                { id: 'logo-2', templateId: 'circle-wave', position: { x: 700, y: 0 } },
-                { id: 'logo-3', templateId: 'infinity-loop', position: { x: 0, y: 700 } }
-              ];
-              console.log('🚀 Loading test scenario:', testLogos);
-              // Would need to call appropriate store actions here
-            }}
-          >
-            <span>Load Multi-Logo Layout</span>
-            <span className="text-[10px] opacity-60 group-hover:opacity-100">3 logos</span>
-          </button>
-          
-          <button 
-            className="w-full px-3 py-2.5 rounded-lg text-xs font-medium text-left
-                       bg-purple-500/20 hover:bg-purple-500/30 
-                       text-purple-400
-                       border border-purple-500/30 hover:border-purple-500/40
-                       transition-all duration-200
-                       group flex items-center justify-between"
-            onClick={() => {
-              console.log('🎭 Simulating state mismatch scenario');
-              // Would create intentional state mismatch for testing
-            }}
-          >
-            <span>Simulate State Mismatch</span>
-            <span className="text-[10px] opacity-60 group-hover:opacity-100">Debug test</span>
-          </button>
+        {/* Dynamic Actions from Registry */}
+        {categories.length > 0 ? (
+          categories.map(category => (
+            <div key={category} className="space-y-2">
+              <h5 className="text-xs font-medium text-gray-400 uppercase tracking-wider">{category}</h5>
+              {actions
+                .filter(action => action.category === category)
+                .map(action => (
+                  <button
+                    key={action.id}
+                    className={`w-full px-3 py-2.5 rounded-lg text-xs font-medium text-left
+                               ${action.dangerous 
+                                 ? 'bg-red-500/20 hover:bg-red-500/30 text-red-400 border-red-500/30 hover:border-red-500/40' 
+                                 : 'bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 border-blue-500/30 hover:border-blue-500/40'}
+                               border transition-all duration-200
+                               group flex items-center justify-between`}
+                    onClick={action.handler}
+                  >
+                    <span className="flex items-center gap-2">
+                      {action.icon && <span>{action.icon}</span>}
+                      <span>{action.label}</span>
+                    </span>
+                    {action.description && (
+                      <span className="text-[10px] opacity-60 group-hover:opacity-100">{action.description}</span>
+                    )}
+                  </button>
+                ))}
+            </div>
+          ))
+        ) : (
+          <div className="text-center py-8 text-gray-500">
+            <p className="text-sm">No debug actions registered</p>
+            <p className="text-xs mt-1">Components can register actions using useDebugAction</p>
+          </div>
+        )}
+        
+        {/* Built-in System Actions */}
+        <div className="space-y-2 mt-4">
+          <h5 className="text-xs font-medium text-gray-400 uppercase tracking-wider">System Actions</h5>
           
           <button 
             className="w-full px-3 py-2.5 rounded-lg text-xs font-medium text-left
@@ -444,6 +447,19 @@ export function StateDebugger({
           >
             <span>Force Sync All States</span>
           </button>
+          
+          {onClearCanvasPosition && (
+            <button
+              onClick={onClearCanvasPosition}
+              className="w-full px-3 py-2.5 rounded-lg text-xs font-medium text-left
+                         bg-orange-500/20 hover:bg-orange-500/30 text-orange-400 
+                         border border-orange-500/30 hover:border-orange-500/40 
+                         transition-all duration-200"
+              title="Clear saved canvas position and reset centering flag"
+            >
+              Clear Canvas Position
+            </button>
+          )}
         </div>
         
         {/* Destructive Actions */}
@@ -460,6 +476,9 @@ export function StateDebugger({
               if (confirm('Clear localStorage and keep page state?')) {
                 localStorage.removeItem('recast-canvas-offset');
                 localStorage.removeItem('recast-logos');
+                if (typeof window !== 'undefined' && (window as any).clearLogoIds) {
+                  (window as any).clearLogoIds();
+                }
                 console.log('🧹 Cleared localStorage (no reload)');
               }
             }}

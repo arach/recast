@@ -24,56 +24,56 @@ export const useParameterStore = create<ParameterStore>()(
     (set, get) => ({
       // Update core parameters
       updateCoreParameters: (params) => {
-        const selectedLogo = useLogoStore.getState().getSelectedLogo();
-        if (!selectedLogo) return;
+        const selectedLogoId = useLogoStore.getState().selectedLogoId;
+        if (!selectedLogoId) return;
         
-        useLogoStore.getState().updateLogoParameters(selectedLogo.id, {
+        useLogoStore.getState().updateLogoParameters(selectedLogoId, {
           core: params,
         });
       },
       
       // Update style parameters
       updateStyleParameters: (params) => {
-        const selectedLogo = useLogoStore.getState().getSelectedLogo();
-        if (!selectedLogo) return;
+        const selectedLogoId = useLogoStore.getState().selectedLogoId;
+        if (!selectedLogoId) return;
         
-        useLogoStore.getState().updateLogoParameters(selectedLogo.id, {
+        useLogoStore.getState().updateLogoParameters(selectedLogoId, {
           style: params,
         });
       },
       
       // Update content parameters
       updateContentParameters: (params) => {
-        const selectedLogo = useLogoStore.getState().getSelectedLogo();
-        if (!selectedLogo) return;
+        const selectedLogoId = useLogoStore.getState().selectedLogoId;
+        if (!selectedLogoId) return;
         
-        useLogoStore.getState().updateLogoParameters(selectedLogo.id, {
+        useLogoStore.getState().updateLogoParameters(selectedLogoId, {
           content: params,
         });
       },
       
       // Update custom parameters
       updateCustomParameters: (params) => {
-        const selectedLogo = useLogoStore.getState().getSelectedLogo();
-        if (!selectedLogo) return;
+        const selectedLogoId = useLogoStore.getState().selectedLogoId;
+        if (!selectedLogoId) return;
         
-        useLogoStore.getState().updateLogoParameters(selectedLogo.id, {
+        useLogoStore.getState().updateLogoParameters(selectedLogoId, {
           custom: params,
         });
       },
       
       // Update all parameters at once
       updateAllParameters: (params) => {
-        const selectedLogo = useLogoStore.getState().getSelectedLogo();
-        if (!selectedLogo) return;
+        const selectedLogoId = useLogoStore.getState().selectedLogoId;
+        if (!selectedLogoId) return;
         
-        useLogoStore.getState().updateLogoParameters(selectedLogo.id, params);
+        useLogoStore.getState().updateLogoParameters(selectedLogoId, params);
       },
       
       // Apply color theme (preserves non-color parameters)
       applyColorTheme: (colors) => {
-        const selectedLogo = useLogoStore.getState().getSelectedLogo();
-        if (!selectedLogo) return;
+        const selectedLogoId = useLogoStore.getState().selectedLogoId;
+        if (!selectedLogoId) return;
         
         // Only update color-related style parameters
         const colorParams: Partial<StyleParameters> = {};
@@ -83,15 +83,15 @@ export const useParameterStore = create<ParameterStore>()(
         if (colors.fillOpacity !== undefined) colorParams.fillOpacity = colors.fillOpacity;
         if (colors.strokeOpacity !== undefined) colorParams.strokeOpacity = colors.strokeOpacity;
         
-        useLogoStore.getState().updateLogoParameters(selectedLogo.id, {
+        useLogoStore.getState().updateLogoParameters(selectedLogoId, {
           style: colorParams,
         });
       },
       
       // Apply template preset (preserves content and colors)
       applyTemplatePreset: (params) => {
-        const selectedLogo = useLogoStore.getState().getSelectedLogo();
-        if (!selectedLogo) return;
+        const selectedLogoId = useLogoStore.getState().selectedLogoId;
+        if (!selectedLogoId) return;
         
         // Filter out content and color parameters
         const filteredParams = { ...params };
@@ -102,15 +102,15 @@ export const useParameterStore = create<ParameterStore>()(
           delete filteredParams[key];
         });
         
-        useLogoStore.getState().updateLogoParameters(selectedLogo.id, {
+        useLogoStore.getState().updateLogoParameters(selectedLogoId, {
           custom: filteredParams,
         });
       },
       
       // Reset to defaults
       resetToDefaults: () => {
-        const selectedLogo = useLogoStore.getState().getSelectedLogo();
-        if (!selectedLogo) return;
+        const selectedLogoId = useLogoStore.getState().selectedLogoId;
+        if (!selectedLogoId) return;
         
         // This would reset to template defaults
         // Implementation depends on template system

@@ -42,8 +42,10 @@ export function useSelectedLogo() {
   
   // Update the selected logo's code
   const updateSelectedLogoCode = (code: string) => {
-    if (selectedLogoId) {
-      updateLogo(selectedLogoId, { code });
+    // Get the current selectedLogoId directly from the store to ensure it's fresh
+    const currentSelectedLogoId = useLogoStore.getState().selectedLogoId;
+    if (currentSelectedLogoId) {
+      updateLogo(currentSelectedLogoId, { code });
     }
   };
   

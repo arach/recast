@@ -17,7 +17,8 @@ import { AISuggestions } from '@/components/studio/AISuggestions'
 import { BrandPersonality } from '@/components/studio/BrandPersonality'
 import { AIBrandConsultant } from '@/components/studio/AIBrandConsultant'
 import { generateWaveBars, executeCustomCode, type VisualizationParams } from '@/lib/visualization-generators'
-import { StateDebugger } from '@/components/debug/StateDebugger'
+import { DebugOverlay } from '@/components/debug/DebugOverlay'
+import { useDebugAction } from '@/lib/debug/useDebugAction'
 
 
 interface LogoInstance {
@@ -101,7 +102,6 @@ export default function Home() {
   const [forceRender, setForceRender] = useState(0)
   const [showIndustrySelector, setShowIndustrySelector] = useState(false)
   const [currentIndustry, setCurrentIndustry] = useState<string | undefined>()
-  const [showDebugger, setShowDebugger] = useState(false)
   const animationRef = useRef<number>()
   const timeRef = useRef(0)
 
@@ -164,22 +164,6 @@ export default function Home() {
     // Debug functions available in development
     if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
       (window as any).testThemeLoad = (themeId: string) => loadThemeById(themeId);
-      (window as any).showDebugger = () => {
-        setShowDebugger(true);
-        console.log('✅ State debugger enabled');
-      };
-      (window as any).hideDebugger = () => {
-        setShowDebugger(false);
-        console.log('❌ State debugger disabled');
-      };
-      (window as any).toggleDebugger = () => {
-        setShowDebugger(prev => !prev);
-        console.log(`🔄 State debugger ${!showDebugger ? 'enabled' : 'disabled'}`);
-      };
-      console.log('🐛 Debug functions available:');
-      console.log('  - window.showDebugger() - Show state debugger');
-      console.log('  - window.hideDebugger() - Hide state debugger');
-      console.log('  - window.toggleDebugger() - Toggle state debugger');
       console.log('  - window.testThemeLoad(templateId) - Test loading a template');
     }
   }, [])
@@ -646,6 +630,84 @@ export default function Home() {
       console.error('❌ Failed to apply brand preset:', error)
     }
   }
+  // Register debug actions for this page
+  useDebugAction([
+    {
+      id: 'load-4-logos',
+      label: 'Load 4 Brand Options',
+      description: '2x2 grid',
+      category: 'Reflow Brand',
+      icon: '🎨',
+      handler: async () => {
+        if (typeof window !== 'undefined' && (window as any).load4Logos) {
+          await (window as any).load4Logos();
+        }
+      }
+    },
+    {
+      id: 'init-reflow',
+      label: 'Create Reflow Wordmark',
+      description: 'Brand logo',
+      category: 'Reflow Brand',
+      icon: '✨',
+      handler: async () => {
+        if (typeof window !== 'undefined' && (window as any).initReflow) {
+          await (window as any).initReflow();
+        }
+      }
+    },
+    {
+      id: 'reflow-shapes',
+      label: 'Show Reflow Shapes',
+      description: '4 options',
+      category: 'Reflow Brand',
+      icon: '🔷',
+      handler: async () => {
+        if (typeof window !== 'undefined' && (window as any).reflowShapes) {
+          await (window as any).reflowShapes();
+        }
+      }
+    },
+    {
+      id: 'list-logo-ids',
+      label: 'List Logo IDs',
+      description: 'In console',
+      category: 'Logo Management',
+      icon: '📋',
+      handler: async () => {
+        if (typeof window !== 'undefined' && (window as any).listLogoIds) {
+          const instances = await (window as any).listLogoIds();
+          console.log(`📋 Found ${instances.length} tracked logos`);
+        }
+      }
+    },
+    {
+      id: 'debug-logos',
+      label: 'Debug Logo State',
+      description: 'Console output',
+      category: 'Logo Management',
+      icon: '🔍',
+      handler: async () => {
+        if (typeof window !== 'undefined' && (window as any).debugLogos) {
+          await (window as any).debugLogos();
+        }
+      }
+    },
+    {
+      id: 'clear-logo-ids',
+      label: 'Clear Logo IDs',
+      description: 'Reset tracking',
+      category: 'Logo Management',
+      icon: '🗑️',
+      handler: async () => {
+        if (typeof window !== 'undefined' && (window as any).clearLogoIds) {
+          await (window as any).clearLogoIds();
+        }
+      },
+      dangerous: true
+    }
+  ]);
+  
   // Initialize Reflow brand treatment functions
   useEffect(() => {
     if (!mounted || typeof window === 'undefined') return;
@@ -1012,7 +1074,9 @@ export default function Home() {
       console.log('🚀 REFLOW BRAND SYSTEM');
       console.log('════════════════════════');
       console.log('');
-      console.log('Commands:');
+      console.log('🐛 Debug Toolbar: Look for the bug icon button in the bottom-right corner!');
+      console.log('');
+      console.log('Console Commands:');
       console.log('• window.initReflow() - Create wordmark');
       console.log('• window.reflowShapes() - Show all 4 options side by side');
       console.log('• window.load4Logos() - Load 4 logos with ID tracking');
@@ -1020,6 +1084,7 @@ export default function Home() {
       console.log('• window.clearLogoIds() - Clear ID tracking');
       console.log('• window.debugLogos() - Debug current logo state');
       console.log('');
+      console.log('💡 Tip: Use the debug toolbar for quick access to all these features!');
     }, 1000);
     
     console.log('✅ Reflow functions attached to window');
@@ -1193,26 +1258,24 @@ export default function Home() {
         onLoadLogo={handleLoadLogo}
       />
       
-      {/* Debug state viewer */}
-      {process.env.NODE_ENV === 'development' && showDebugger && (
-        <StateDebugger 
-          reactLogos={logos}
-          selectedLogoId={selectedLogoId}
-          canvasOffset={
-            typeof window !== 'undefined' && (window as any).getCanvasOffset
-              ? (window as any).getCanvasOffset()
-              : undefined
+      {/* Debug overlay - handles its own visibility and dev mode checking */}
+      <DebugOverlay 
+        reactLogos={logos}
+        selectedLogoId={selectedLogoId}
+        canvasOffset={
+          typeof window !== 'undefined' && (window as any).getCanvasOffset
+            ? (window as any).getCanvasOffset()
+            : undefined
+        }
+        onClearCanvasPosition={() => {
+          // Call the CanvasArea's reset function directly
+          if (typeof window !== 'undefined' && (window as any).resetCanvasPosition) {
+            (window as any).resetCanvasPosition();
+          } else {
+            console.warn('⚠️ resetCanvasPosition function not available');
           }
-          onClearCanvasPosition={() => {
-            // Call the CanvasArea's reset function directly
-            if (typeof window !== 'undefined' && (window as any).resetCanvasPosition) {
-              (window as any).resetCanvasPosition();
-            } else {
-              console.warn('⚠️ resetCanvasPosition function not available');
-            }
-          }}
-        />
-      )}
+        }}
+      />
     </div>
   )
 }

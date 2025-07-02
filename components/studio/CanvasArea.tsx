@@ -470,6 +470,9 @@ export function CanvasArea() {
       selectLogo(clickedLogo.id)
       // Force a synchronous state update to prevent race conditions
       useLogoStore.setState({ selectedLogoId: clickedLogo.id })
+      
+      // Log for debugging
+      console.log('🎯 Logo clicked:', clickedLogo.id, 'Previous selected:', selectedLogoId)
     }
     
     // Always start dragging (either logo or canvas)
