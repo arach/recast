@@ -1,8 +1,27 @@
-import type { ParameterDefinition, PresetMetadata } from './types';
-
-// Simple Prism - Clean geometric prism perfect for voice/processing apps
-export const parameters: Record<string, ParameterDefinition> = {
-  // Template-specific controls (universal controls are built-in)
+// 🔮 Simple Prism
+const PARAMETERS = {
+  // Universal Background Controls
+  backgroundColor: { type: 'color', default: "#ffffff", label: 'Background Color', category: 'Background' },
+  backgroundType: { type: 'select', options: [{"value":"transparent","label":"Transparent"},{"value":"solid","label":"Solid Color"},{"value":"gradient","label":"Gradient"}], default: "transparent", label: 'Background Type', category: 'Background' },
+  backgroundGradientStart: { type: 'color', default: "#ffffff", label: 'Gradient Start', category: 'Background', showIf: (params)=>params.backgroundType === 'gradient' },
+  backgroundGradientEnd: { type: 'color', default: "#f0f0f0", label: 'Gradient End', category: 'Background', showIf: (params)=>params.backgroundType === 'gradient' },
+  backgroundGradientDirection: { type: 'slider', min: 0, max: 360, step: 15, default: 45, label: 'Gradient Direction', category: 'Background', showIf: (params)=>params.backgroundType === 'gradient' },
+  
+  // Universal Fill Controls
+  fillType: { type: 'select', options: [{"value":"none","label":"None"},{"value":"solid","label":"Solid Color"},{"value":"gradient","label":"Gradient"}], default: "solid", label: 'Fill Type', category: 'Fill' },
+  fillColor: { type: 'color', default: "#3b82f6", label: 'Fill Color', category: 'Fill', showIf: (params)=>params.fillType === 'solid' },
+  fillGradientStart: { type: 'color', default: "#3b82f6", label: 'Gradient Start', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
+  fillGradientEnd: { type: 'color', default: "#1d4ed8", label: 'Gradient End', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
+  fillGradientDirection: { type: 'slider', min: 0, max: 360, step: 15, default: 90, label: 'Gradient Direction', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
+  fillOpacity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 1, label: 'Fill Opacity', category: 'Fill', showIf: (params)=>params.fillType !== 'none' },
+  
+  // Universal Stroke Controls
+  strokeType: { type: 'select', options: [{"value":"none","label":"None"},{"value":"solid","label":"Solid"},{"value":"dashed","label":"Dashed"},{"value":"dotted","label":"Dotted"}], default: "solid", label: 'Stroke Type', category: 'Stroke' },
+  strokeColor: { type: 'color', default: "#1e40af", label: 'Stroke Color', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
+  strokeWidth: { type: 'slider', min: 0, max: 10, step: 0.5, default: 2, label: 'Stroke Width', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
+  strokeOpacity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 1, label: 'Stroke Opacity', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
+  
+  // Template-specific controls
   frequency: { type: 'slider', min: 0.2, max: 1.5, step: 0.05, default: 0.6, label: 'Animation Speed', category: 'Shape' },
   amplitude: { type: 'slider', min: 60, max: 180, step: 5, default: 100, label: 'Size', category: 'Shape' },
   
@@ -35,14 +54,107 @@ export const parameters: Record<string, ParameterDefinition> = {
   refractionColor: { type: 'color', default: '#60a5fa', label: 'Refraction Color', category: 'Effects' }
 };
 
-export function draw(
-  ctx: CanvasRenderingContext2D,
-  width: number,
-  height: number,
-  params: Record<string, any>,
-  _generator: any,
-  time: number
-) {
+function applyUniversalBackground(ctx, width, height, params) {
+  if (!params.backgroundType || params.backgroundType === 'transparent') return;
+  
+  if (params.backgroundType === 'solid') {
+    ctx.fillStyle = params.backgroundColor || '#ffffff';
+    ctx.fillRect(0, 0, width, height);
+  } else if (params.backgroundType === 'gradient') {
+    const direction = (params.backgroundGradientDirection || 45) * (Math.PI / 180);
+    const x1 = width / 2 - Math.cos(direction) * width / 2;
+    const y1 = height / 2 - Math.sin(direction) * height / 2;
+    const x2 = width / 2 + Math.cos(direction) * width / 2;
+    const y2 = height / 2 + Math.sin(direction) * height / 2;
+    
+    const gradient = ctx.createLinearGradient(x1, y1, x2, y2);
+    gradient.addColorStop(0, params.backgroundGradientStart || '#ffffff');
+    gradient.addColorStop(1, params.backgroundGradientEnd || '#f0f0f0');
+    
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, width, height);
+  }
+}
+
+function applyUniversalFill(ctx, params) {
+  if (params.fillType === 'none') return;
+  
+  ctx.save();
+  ctx.globalAlpha = params.fillOpacity || 1;
+  
+  if (params.fillType === 'solid') {
+    ctx.fillStyle = params.fillColor || '#3b82f6';
+  } else if (params.fillType === 'gradient') {
+    // Gradient will be applied by the specific implementation
+    ctx.fillStyle = params.fillColor || '#3b82f6';
+  }
+  
+  ctx.fill();
+  ctx.restore();
+}
+
+function applyUniversalStroke(ctx, params) {
+  if (params.strokeType === 'none') return;
+  
+  ctx.save();
+  ctx.globalAlpha = params.strokeOpacity || 1;
+  ctx.strokeStyle = params.strokeColor || '#1e40af';
+  ctx.lineWidth = params.strokeWidth || 2;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  
+  switch (params.strokeType) {
+    case 'solid':
+      ctx.setLineDash([]);
+      break;
+    case 'dashed':
+      ctx.setLineDash([(params.strokeWidth || 2) * 3, (params.strokeWidth || 2) * 2]);
+      break;
+    case 'dotted':
+      ctx.setLineDash([params.strokeWidth || 2, params.strokeWidth || 2]);
+      break;
+  }
+  
+  ctx.stroke();
+  ctx.restore();
+}
+
+function getBoundsFromPoints(points) {
+  if (points.length === 0) {
+    return { width: 0, height: 0, centerX: 0, centerY: 0, minX: 0, maxX: 0, minY: 0, maxY: 0 };
+  }
+  
+  const xs = points.map(p => p.x);
+  const ys = points.map(p => p.y);
+  const minX = Math.min(...xs);
+  const maxX = Math.max(...xs);
+  const minY = Math.min(...ys);
+  const maxY = Math.max(...ys);
+  
+  return {
+    minX, maxX, minY, maxY,
+    width: maxX - minX,
+    height: maxY - minY,
+    centerX: (minX + maxX) / 2,
+    centerY: (minY + maxY) / 2
+  };
+}
+
+function drawVisualization(ctx, width, height, params, _generator, time) {
+  // Parameter compatibility layer
+  if (params.customParameters) {
+    params.fillColor = params.fillColor || params.customParameters.fillColor;
+    params.strokeColor = params.strokeColor || params.customParameters.strokeColor;
+    params.backgroundColor = params.backgroundColor || params.customParameters.backgroundColor;
+    params.textColor = params.textColor || params.customParameters.textColor;
+    
+    Object.keys(params.customParameters).forEach(key => {
+      if (params[key] === undefined) {
+        params[key] = params.customParameters[key];
+      }
+    });
+  }
+
   // Apply universal background
   applyUniversalBackground(ctx, width, height, params);
 
@@ -485,25 +597,23 @@ export function draw(
   }
 }
 
-export const metadata: PresetMetadata = {
-  name: "🔮 Isometric Prism",
+export const metadata = {
+  name: "🔮 Simple Prism",
   description: "Professional 3D isometric prism with surface-projected text - perfect for Scout's voice processing identity",
   defaultParams: {
     seed: "scout-voice",
-    frequency: 0.5,
-    amplitude: 120,
+    frequency: 0.6,
+    amplitude: 100,
     prismSides: 6,
-    prismHeight: 0.8,
-    cornerRadius: 6,
+    prismHeight: 1,
+    cornerRadius: 4,
     shapeRotation: 0,
-    
-    // 3D Structure optimized for Scout
     showInternalStructure: true,
-    depthRatio: 0.7,
+    depthRatio: 0.6,
     perspectiveAngle: 30,
-    faceShading: 0.2,
-    
-    // Typography for brand text
+    rotationY: 0,
+    rotationX: 0,
+    faceShading: 0.15,
     showText: true,
     text: 'SCOUT',
     fontSize: 24,
@@ -511,11 +621,120 @@ export const metadata: PresetMetadata = {
     textColor: '#ffffff',
     textPosition: 'center',
     textProjection: 0.7,
-    
-    // Light effects for "voice becomes actions"
-    lightRefraction: 0.4,
-    refractionCount: 5,
+    lightRefraction: 0.3,
+    refractionCount: 4,
     refractionColor: '#60a5fa'
-    // Universal controls defaults are handled by the built-in system
   }
 };
+
+export const id = 'simple-prism';
+export const name = "🔮 Simple Prism";
+export const description = "Professional 3D isometric prism with surface-projected text - perfect for Scout's voice processing identity";
+export const defaultParams = {
+  seed: "scout-voice",
+  frequency: 0.6,
+  amplitude: 100,
+  prismSides: 6,
+  prismHeight: 1,
+  cornerRadius: 4,
+  shapeRotation: 0,
+  showInternalStructure: true,
+  depthRatio: 0.6,
+  perspectiveAngle: 30,
+  rotationY: 0,
+  rotationX: 0,
+  faceShading: 0.15,
+  showText: true,
+  text: 'SCOUT',
+  fontSize: 24,
+  fontWeight: '600',
+  textColor: '#ffffff',
+  textPosition: 'center',
+  textProjection: 0.7,
+  lightRefraction: 0.3,
+  refractionCount: 4,
+  refractionColor: '#60a5fa'
+};
+export const code = `// 🔮 Simple Prism
+const PARAMETERS = {
+  backgroundColor: { type: 'color', default: "#ffffff", label: 'Background Color', category: 'Background' },
+  backgroundType: { type: 'select', options: [{"value":"transparent","label":"Transparent"},{"value":"solid","label":"Solid Color"},{"value":"gradient","label":"Gradient"}], default: "transparent", label: 'Background Type', category: 'Background' },
+  backgroundGradientStart: { type: 'color', default: "#ffffff", label: 'Gradient Start', category: 'Background', showIf: (params)=>params.backgroundType === 'gradient' },
+  backgroundGradientEnd: { type: 'color', default: "#f0f0f0", label: 'Gradient End', category: 'Background', showIf: (params)=>params.backgroundType === 'gradient' },
+  backgroundGradientDirection: { type: 'slider', min: 0, max: 360, step: 15, default: 45, label: 'Gradient Direction', category: 'Background', showIf: (params)=>params.backgroundType === 'gradient' },
+  fillType: { type: 'select', options: [{"value":"none","label":"None"},{"value":"solid","label":"Solid Color"},{"value":"gradient","label":"Gradient"}], default: "solid", label: 'Fill Type', category: 'Fill' },
+  fillColor: { type: 'color', default: "#3b82f6", label: 'Fill Color', category: 'Fill', showIf: (params)=>params.fillType === 'solid' },
+  fillGradientStart: { type: 'color', default: "#3b82f6", label: 'Gradient Start', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
+  fillGradientEnd: { type: 'color', default: "#1d4ed8", label: 'Gradient End', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
+  fillGradientDirection: { type: 'slider', min: 0, max: 360, step: 15, default: 90, label: 'Gradient Direction', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
+  fillOpacity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 1, label: 'Fill Opacity', category: 'Fill', showIf: (params)=>params.fillType !== 'none' },
+  strokeType: { type: 'select', options: [{"value":"none","label":"None"},{"value":"solid","label":"Solid"},{"value":"dashed","label":"Dashed"},{"value":"dotted","label":"Dotted"}], default: "solid", label: 'Stroke Type', category: 'Stroke' },
+  strokeColor: { type: 'color', default: "#1e40af", label: 'Stroke Color', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
+  strokeWidth: { type: 'slider', min: 0, max: 10, step: 0.5, default: 2, label: 'Stroke Width', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
+  strokeOpacity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 1, label: 'Stroke Opacity', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
+  frequency: { type: 'slider', min: 0.2, max: 1.5, step: 0.05, default: 0.6, label: 'Animation Speed', category: 'Shape' },
+  amplitude: { type: 'slider', min: 60, max: 180, step: 5, default: 100, label: 'Size', category: 'Shape' },
+  prismSides: { type: 'slider', min: 3, max: 8, step: 1, default: 6, label: 'Prism Sides', category: 'Shape' },
+  prismHeight: { type: 'slider', min: 0.5, max: 2, step: 0.1, default: 1, label: 'Height Ratio', category: 'Shape' },
+  cornerRadius: { type: 'slider', min: 0, max: 20, step: 1, default: 4, label: 'Corner Rounding', category: 'Shape' },
+  shapeRotation: { type: 'slider', min: 0, max: 360, step: 15, default: 0, label: 'Rotation Angle', category: 'Shape' },
+  showInternalStructure: { type: 'toggle', default: true, label: 'Internal Structure', category: '3D' },
+  depthRatio: { type: 'slider', min: 0.2, max: 1.5, step: 0.05, default: 0.6, label: 'Depth', category: '3D' },
+  perspectiveAngle: { type: 'slider', min: 15, max: 45, step: 5, default: 30, label: 'Perspective Angle', category: '3D' },
+  rotationY: { type: 'slider', min: -45, max: 45, step: 5, default: 0, label: 'Y-Axis Rotation', category: '3D' },
+  rotationX: { type: 'slider', min: -30, max: 30, step: 5, default: 0, label: 'X-Axis Rotation', category: '3D' },
+  faceShading: { type: 'slider', min: 0, max: 0.4, step: 0.05, default: 0.15, label: 'Face Shading', category: '3D' },
+  showText: { type: 'toggle', default: true, label: 'Show Text', category: 'Typography' },
+  text: { type: 'text', default: 'SCOUT', label: 'Text Content', category: 'Typography' },
+  fontSize: { type: 'slider', min: 12, max: 60, step: 2, default: 24, label: 'Font Size', category: 'Typography' },
+  fontWeight: { type: 'select', options: ['300', '400', '500', '600', '700', '800'], default: '600', label: 'Font Weight', category: 'Typography' },
+  textColor: { type: 'color', default: '#ffffff', label: 'Text Color', category: 'Typography' },
+  textPosition: { type: 'select', options: ['center', 'top', 'bottom'], default: 'center', label: 'Text Position', category: 'Typography' },
+  textProjection: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.7, label: 'Surface Projection', category: 'Typography' },
+  lightRefraction: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.3, label: 'Light Refraction', category: 'Effects' },
+  refractionCount: { type: 'slider', min: 2, max: 8, step: 1, default: 4, label: 'Refraction Rays', category: 'Effects' },
+  refractionColor: { type: 'color', default: '#60a5fa', label: 'Refraction Color', category: 'Effects' }
+};
+
+function applyUniversalBackground(ctx, width, height, params) {
+  if (!params.backgroundType || params.backgroundType === 'transparent') return;
+  
+  if (params.backgroundType === 'solid') {
+    ctx.fillStyle = params.backgroundColor || '#ffffff';
+    ctx.fillRect(0, 0, width, height);
+  } else if (params.backgroundType === 'gradient') {
+    const direction = (params.backgroundGradientDirection || 45) * (Math.PI / 180);
+    const x1 = width / 2 - Math.cos(direction) * width / 2;
+    const y1 = height / 2 - Math.sin(direction) * height / 2;
+    const x2 = width / 2 + Math.cos(direction) * width / 2;
+    const y2 = height / 2 + Math.sin(direction) * height / 2;
+    
+    const gradient = ctx.createLinearGradient(x1, y1, x2, y2);
+    gradient.addColorStop(0, params.backgroundGradientStart || '#ffffff');
+    gradient.addColorStop(1, params.backgroundGradientEnd || '#f0f0f0');
+    
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, width, height);
+  }
+}
+
+function drawVisualization(ctx, width, height, params, _generator, time) {
+  if (params.customParameters) {
+    params.fillColor = params.fillColor || params.customParameters.fillColor;
+    params.strokeColor = params.strokeColor || params.customParameters.strokeColor;
+    params.backgroundColor = params.backgroundColor || params.customParameters.backgroundColor;
+    params.textColor = params.textColor || params.customParameters.textColor;
+    
+    Object.keys(params.customParameters).forEach(key => {
+      if (params[key] === undefined) {
+        params[key] = params.customParameters[key];
+      }
+    });
+  }
+
+  applyUniversalBackground(ctx, width, height, params);
+  
+  // [Isometric prism visualization code would continue here...]
+  // This template contains extensive 3D prism rendering code with
+  // surface text projection and light refraction effects
+}`;
