@@ -157,8 +157,15 @@ export function CanvasArea() {
   const isPointInLogo = (x: number, y: number, logo: any) => {
     const logoSize = 600
     const position = logo.position || { x: 0, y: 0 }
-    return x >= position.x && x <= position.x + logoSize && 
-           y >= position.y && y <= position.y + logoSize
+    const isInBounds = x >= position.x && x <= position.x + logoSize && 
+                      y >= position.y && y <= position.y + logoSize
+    
+    // Debug logging
+    if (isInBounds) {
+      console.log('📍 Point in logo:', logo.id, 'at position:', position)
+    }
+    
+    return isInBounds
   }
 
   // Center view without changing zoom (back to the working version)
@@ -455,6 +462,8 @@ export function CanvasArea() {
     const canvasX = (mouseX / zoom) - canvasOffset.x
     const canvasY = (mouseY / zoom) - canvasOffset.y
     
+    // Debug logging for click coordinates
+    console.log('🖱️ Click at:', { mouseX, mouseY, canvasX, canvasY, zoom, canvasOffset })
     
     // Check if click is on any logo (check in reverse order so top logos are selected first)
     let clickedLogo = null
@@ -466,10 +475,8 @@ export function CanvasArea() {
     }
     
     if (clickedLogo) {
-      // Select the clicked logo immediately to ensure state is updated
+      // Select the clicked logo - don't manually set state as this causes race conditions
       selectLogo(clickedLogo.id)
-      // Force a synchronous state update to prevent race conditions
-      useLogoStore.setState({ selectedLogoId: clickedLogo.id })
       
       // Log for debugging
       console.log('🎯 Logo clicked:', clickedLogo.id, 'Previous selected:', selectedLogoId)
@@ -479,7 +486,7 @@ export function CanvasArea() {
     setIsDragging(true)
     setDragStart({ x: e.clientX, y: e.clientY })
     setLastPanPoint({ x: canvasOffset.x, y: canvasOffset.y })
-  }, [previewMode, canvasOffset, zoom, logos, selectLogo])
+  }, [previewMode, canvasOffset, zoom, logos, selectLogo, selectedLogoId])
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     // Handle dragging

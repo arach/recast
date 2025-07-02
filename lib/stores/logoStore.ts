@@ -124,7 +124,9 @@ function drawVisualization(ctx, width, height, params, generator, time) {
         
         if (existingLogos.length > 0) {
           // Try to place logos in a grid pattern
-          const gridSize = 350; // Space between logos
+          const logoSize = 600; // Size of each logo
+          const spacing = 100; // Space between logos
+          const gridSize = logoSize + spacing; // Total space needed per logo
           const columns = 3; // Max columns before wrapping
           
           // Calculate next position in grid
