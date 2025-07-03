@@ -37,7 +37,7 @@ export function usePageEffects(options: UsePageEffectsOptions = {}) {
       // Load 4 logos utility
       (window as any).load4Logos = () => BrandPresets.create4LogoGrid(options.forceRender)
     }
-  }, [options])
+  }, [options.updateCore, options.updateCustom, options.loadThemeById, options.forceRender])
   
   // Theme detection
   useEffect(() => {
