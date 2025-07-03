@@ -1,6 +1,6 @@
 /**
- * Industry-specific preset packs for immediate brand connection
- * Each pack curates presets, themes, and defaults for specific industries
+ * Industry-specific theme packs for immediate brand connection
+ * Each pack curates themes and defaults for specific industries
  */
 
 export interface IndustryPack {
@@ -9,10 +9,10 @@ export interface IndustryPack {
   icon: string;
   description: string;
   vibe: string[];
-  presets: Array<{
+  themes: Array<{
     id: string;
     name: string;
-    reason: string; // Why this preset works for this industry
+    reason: string; // Why this theme works for this industry
   }>;
   defaultParams?: {
     // Universal control defaults for this industry
@@ -20,8 +20,8 @@ export interface IndustryPack {
     backgroundType?: 'transparent' | 'solid' | 'gradient';
     fillColor?: string;
     strokeColor?: string;
-    // Preset-specific overrides
-    [preset: string]: any;
+    // Theme-specific overrides
+    [theme: string]: any;
   };
   colorSuggestions?: string[]; // For future color theme integration
   seedSuggestions?: string[]; // Industry-relevant seed words
@@ -34,7 +34,7 @@ export const industryPacks: IndustryPack[] = [
     icon: '🚀',
     description: 'Innovation, disruption, and future-forward thinking',
     vibe: ['innovative', 'dynamic', 'clean', 'forward-thinking'],
-    presets: [
+    themes: [
       {
         id: 'simple-prism',
         name: 'Isometric Prism',
@@ -82,7 +82,7 @@ export const industryPacks: IndustryPack[] = [
     icon: '✨',
     description: 'Elegance, sophistication, and timeless luxury',
     vibe: ['elegant', 'sophisticated', 'luxurious', 'refined'],
-    presets: [
+    themes: [
       {
         id: 'liquid-flow',
         name: 'Liquid Flow',
@@ -129,7 +129,7 @@ export const industryPacks: IndustryPack[] = [
     icon: '📊',
     description: 'Trust, stability, and professional expertise',
     vibe: ['trustworthy', 'stable', 'professional', 'authoritative'],
-    presets: [
+    themes: [
       {
         id: 'architectural-grid',
         name: 'Architectural Grid',
@@ -176,7 +176,7 @@ export const industryPacks: IndustryPack[] = [
     icon: '🌿',
     description: 'Balance, vitality, and natural harmony',
     vibe: ['calming', 'natural', 'balanced', 'healing'],
-    presets: [
+    themes: [
       {
         id: 'pulse-spotify',
         name: 'Pulse',
@@ -223,7 +223,7 @@ export const industryPacks: IndustryPack[] = [
     icon: '🎮',
     description: 'Energy, excitement, and immersive experiences',
     vibe: ['energetic', 'dynamic', 'bold', 'playful'],
-    presets: [
+    themes: [
       {
         id: 'neon-glow',
         name: 'Neon Glow',
@@ -270,7 +270,7 @@ export const industryPacks: IndustryPack[] = [
     icon: '🍽️',
     description: 'Appetite appeal, craft quality, and warmth',
     vibe: ['appetizing', 'warm', 'crafted', 'inviting'],
-    presets: [
+    themes: [
       {
         id: 'organic-bark',
         name: 'Organic Bark',

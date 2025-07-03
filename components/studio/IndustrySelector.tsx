@@ -7,19 +7,19 @@ import { industryPacks, getIndustryDefaults, getIndustrySeedSuggestion, type Ind
 import { ArrowRight, Sparkles } from 'lucide-react';
 
 interface IndustrySelectorProps {
-  onSelectPreset: (presetId: string, defaultParams?: Record<string, any>, industryId?: string) => void;
+  onSelectTheme: (themeId: string, defaultParams?: Record<string, any>, industryId?: string) => void;
   onClose?: () => void;
 }
 
-export function IndustrySelector({ onSelectPreset, onClose }: IndustrySelectorProps) {
+export function IndustrySelector({ onSelectTheme, onClose }: IndustrySelectorProps) {
   const [selectedIndustry, setSelectedIndustry] = useState<IndustryPack | null>(null);
-  const [hoveredPreset, setHoveredPreset] = useState<string | null>(null);
+  const [hoveredTheme, setHoveredTheme] = useState<string | null>(null);
 
-  const handlePresetSelect = (presetId: string) => {
+  const handleThemeSelect = (themeId: string) => {
     if (!selectedIndustry) return;
     
-    // Get industry-specific defaults for this preset
-    const industryDefaults = getIndustryDefaults(selectedIndustry.id, presetId);
+    // Get industry-specific defaults for this theme
+    const industryDefaults = getIndustryDefaults(selectedIndustry.id, themeId);
     
     // Add a suggested seed word
     const seedSuggestion = getIndustrySeedSuggestion(selectedIndustry.id);
@@ -27,7 +27,7 @@ export function IndustrySelector({ onSelectPreset, onClose }: IndustrySelectorPr
       industryDefaults.seed = seedSuggestion;
     }
     
-    onSelectPreset(presetId, industryDefaults, selectedIndustry.id);
+    onSelectTheme(themeId, industryDefaults, selectedIndustry.id);
   };
 
   return (
@@ -38,7 +38,7 @@ export function IndustrySelector({ onSelectPreset, onClose }: IndustrySelectorPr
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-2xl font-bold">Choose Your Industry</h2>
-              <p className="text-gray-600 mt-1">Get started with presets tailored to your field</p>
+              <p className="text-gray-600 mt-1">Get started with themes tailored to your field</p>
             </div>
             {onClose && (
               <Button variant="ghost" onClick={onClose} className="text-gray-500">
@@ -102,35 +102,35 @@ export function IndustrySelector({ onSelectPreset, onClose }: IndustrySelectorPr
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {selectedIndustry.presets.map((preset) => (
+                {selectedIndustry.themes.map((theme) => (
                   <Card
-                    key={preset.id}
+                    key={theme.id}
                     className={`cursor-pointer transition-all ${
-                      hoveredPreset === preset.id 
+                      hoveredTheme === theme.id 
                         ? 'shadow-lg scale-[1.02] border-blue-400' 
                         : 'hover:shadow-md hover:border-gray-300'
                     }`}
-                    onMouseEnter={() => setHoveredPreset(preset.id)}
-                    onMouseLeave={() => setHoveredPreset(null)}
-                    onClick={() => handlePresetSelect(preset.id)}
+                    onMouseEnter={() => setHoveredTheme(theme.id)}
+                    onMouseLeave={() => setHoveredTheme(null)}
+                    onClick={() => handleThemeSelect(theme.id)}
                   >
                     <CardContent className="p-6">
                       <div className="flex items-start justify-between mb-3">
-                        <h4 className="font-semibold text-lg">{preset.name}</h4>
+                        <h4 className="font-semibold text-lg">{theme.name}</h4>
                         <ArrowRight className={`w-5 h-5 transition-transform ${
-                          hoveredPreset === preset.id ? 'translate-x-1' : ''
+                          hoveredTheme === theme.id ? 'translate-x-1' : ''
                         }`} />
                       </div>
-                      <p className="text-sm text-gray-600">{preset.reason}</p>
+                      <p className="text-sm text-gray-600">{theme.reason}</p>
                       
-                      {hoveredPreset === preset.id && (
-                        <div className="mt-3 pt-3 border-t">
-                          <p className="text-xs text-blue-600 flex items-center gap-1">
-                            <Sparkles className="w-3 h-3" />
-                            Pre-configured with {selectedIndustry.name.toLowerCase()} aesthetics
-                          </p>
-                        </div>
-                      )}
+                      <div className={`mt-3 pt-3 border-t transition-opacity duration-200 ${
+                        hoveredTheme === theme.id ? 'opacity-100' : 'opacity-0'
+                      }`}>
+                        <p className="text-xs text-blue-600 flex items-center gap-1 h-4">
+                          <Sparkles className="w-3 h-3" />
+                          Pre-configured with {selectedIndustry.name.toLowerCase()} aesthetics
+                        </p>
+                      </div>
                     </CardContent>
                   </Card>
                 ))}

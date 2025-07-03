@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { signUp } from '@/lib/auth-client';
+import { signUp, signIn } from '@/lib/auth-client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Github, Mail } from 'lucide-react';
@@ -10,6 +10,7 @@ import Link from 'next/link';
 
 export default function SignUpPage() {
   const router = useRouter();
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -30,6 +31,7 @@ export default function SignUpPage() {
     try {
       await signUp.email({
         email,
+        name: name || email.split('@')[0], // Use email prefix as name if not provided
         password,
       });
       
@@ -45,7 +47,8 @@ export default function SignUpPage() {
   const handleSocialSignUp = async (provider: 'github' | 'google') => {
     setIsLoading(true);
     try {
-      await signUp.social({
+      // For social auth, we use signIn.social
+      await signIn.social({
         provider,
         callbackURL: '/',
       });
@@ -122,6 +125,20 @@ export default function SignUpPage() {
 
             {/* Email sign up */}
             <form onSubmit={handleEmailSignUp} className="space-y-4">
+              <div className="space-y-2">
+                <label htmlFor="name" className="text-sm font-medium">
+                  Name (optional)
+                </label>
+                <input
+                  id="name"
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Your name"
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              
               <div className="space-y-2">
                 <label htmlFor="email" className="text-sm font-medium">
                   Email

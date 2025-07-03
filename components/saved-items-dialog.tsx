@@ -17,20 +17,20 @@ import {
 } from 'lucide-react'
 import { 
   getSavedShapes, 
-  getSavedPresets, 
+  getSavedLogos, 
   deleteShape, 
-  deletePreset,
+  deleteLogo,
   exportData,
   importData,
   SavedShape,
-  SavedPreset
+  SavedLogo
 } from '@/lib/storage'
 
 interface SavedItemsDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   onLoadShape: (shape: SavedShape) => void
-  onLoadPreset: (preset: SavedPreset) => void
+  onLoadLogo: (logo: SavedLogo) => void
 }
 
 // Built-in shapes
@@ -44,17 +44,17 @@ export function SavedItemsDialog({
   open,
   onOpenChange,
   onLoadShape,
-  onLoadPreset,
+  onLoadLogo,
 }: SavedItemsDialogProps) {
-  const [activeTab, setActiveTab] = useState<'shapes' | 'presets'>('shapes')
+  const [activeTab, setActiveTab] = useState<'shapes' | 'logos'>('shapes')
   const [shapes, setShapes] = useState<SavedShape[]>([])
-  const [presets, setPresets] = useState<SavedPreset[]>([])
+  const [logos, setLogos] = useState<SavedLogo[]>([])
   const [showBuiltIn, setShowBuiltIn] = useState(true)
 
   useEffect(() => {
     if (open) {
       setShapes(getSavedShapes())
-      setPresets(getSavedPresets())
+      setLogos(getSavedLogos())
     }
   }, [open])
 
@@ -65,10 +65,10 @@ export function SavedItemsDialog({
     }
   }
 
-  const handleDeletePreset = (id: string) => {
-    if (confirm('Are you sure you want to delete this preset?')) {
-      deletePreset(id)
-      setPresets(getSavedPresets())
+  const handleDeleteLogo = (id: string) => {
+    if (confirm('Are you sure you want to delete this saved logo?')) {
+      deleteLogo(id)
+      setLogos(getSavedLogos())
     }
   }
 
@@ -78,9 +78,9 @@ export function SavedItemsDialog({
 
     try {
       const result = await importData(file)
-      alert(`Imported ${result.shapes} shapes and ${result.presets} presets`)
+      alert(`Imported ${result.shapes} shapes and ${result.logos} logos`)
       setShapes(getSavedShapes())
-      setPresets(getSavedPresets())
+      setLogos(getSavedLogos())
     } catch (error) {
       alert('Failed to import data: ' + error)
     }
@@ -101,7 +101,7 @@ export function SavedItemsDialog({
         <DialogHeader>
           <DialogTitle>Saved Items</DialogTitle>
           <DialogDescription>
-            Manage your saved shapes and parameter presets
+            Manage your saved shapes and logos
           </DialogDescription>
         </DialogHeader>
 
@@ -116,12 +116,12 @@ export function SavedItemsDialog({
               Shapes ({shapes.length})
             </Button>
             <Button
-              variant={activeTab === 'presets' ? 'default' : 'outline'}
+              variant={activeTab === 'logos' ? 'default' : 'outline'}
               size="sm"
-              onClick={() => setActiveTab('presets')}
+              onClick={() => setActiveTab('logos')}
             >
               <Settings className="w-4 h-4 mr-2" />
-              Presets ({presets.length})
+              Logos ({logos.length})
             </Button>
           </div>
 
@@ -260,27 +260,27 @@ export function SavedItemsDialog({
               )}
             </>
           ) : (
-            presets.length === 0 ? (
-              <p className="text-center text-gray-500 py-8">No saved presets yet</p>
+            logos.length === 0 ? (
+              <p className="text-center text-gray-500 py-8">No saved logos yet</p>
             ) : (
-              presets.map((preset) => (
-                <Card key={preset.id} className="cursor-pointer hover:bg-gray-50">
+              logos.map((logo) => (
+                <Card key={logo.id} className="cursor-pointer hover:bg-gray-50">
                   <CardContent className="p-4">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
-                        <h4 className="font-medium">{preset.name}</h4>
+                        <h4 className="font-medium">{logo.name}</h4>
                         <div className="flex items-center gap-4 text-xs text-gray-500 mt-1">
                           <span className="flex items-center gap-1">
                             <Layers className="w-3 h-3" />
-                            {preset.mode}
+                            {logo.style?.name || 'Custom'}
                           </span>
                           <span className="flex items-center gap-1">
                             <Activity className="w-3 h-3" />
-                            F:{preset.params.frequency} A:{preset.params.amplitude}
+                            F:{logo.parameters.core.frequency} A:{logo.parameters.core.amplitude}
                           </span>
                           <span className="flex items-center gap-1">
                             <Clock className="w-3 h-3" />
-                            {formatDate(preset.createdAt)}
+                            {formatDate(logo.createdAt)}
                           </span>
                         </div>
                       </div>
@@ -288,7 +288,7 @@ export function SavedItemsDialog({
                         <Button
                           size="sm"
                           onClick={() => {
-                            onLoadPreset(preset)
+                            onLoadLogo(logo)
                             onOpenChange(false)
                           }}
                         >
@@ -297,7 +297,7 @@ export function SavedItemsDialog({
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => handleDeletePreset(preset.id)}
+                          onClick={() => handleDeleteLogo(logo.id)}
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>

@@ -5,12 +5,12 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Save, Package, Settings } from 'lucide-react'
-import { saveShape, savePreset } from '@/lib/storage'
+import { saveShape, saveLogo, SavedLogo } from '@/lib/storage'
 
 interface SaveDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  mode: 'shape' | 'preset'
+  mode: 'shape' | 'logo'
   shapeId?: string
   shapeName?: string
   code?: string
@@ -59,11 +59,56 @@ export function SaveDialog({
           name: name.trim(),
           code: code,
         })
-      } else if (mode === 'preset') {
-        savePreset({
+      } else if (mode === 'logo') {
+        // Convert old params format to new SavedLogo format
+        saveLogo({
           name: name.trim(),
-          shapeId: shapeId,
-          params,
+          shape: {
+            id: shapeId || 'custom',
+            code: code
+          },
+          style: {
+            id: 'custom',
+            name: 'Custom Style',
+            colors: {
+              primary: params.color || '#000000',
+              secondary: '#FF0066',
+              accent: '#00FF88',
+              background: '#FFFFFF'
+            },
+            effects: {
+              strokeWidth: 2,
+              opacity: 1,
+              blur: 0,
+              glow: false
+            },
+            mood: {
+              energy: 0.5,
+              formality: 0.5,
+              complexity: params.complexity || 0.5
+            }
+          },
+          parameters: {
+            core: {
+              frequency: params.frequency,
+              amplitude: params.amplitude,
+              complexity: params.complexity,
+              chaos: params.chaos,
+              damping: params.damping,
+              layers: params.layers,
+              radius: params.radius || 0.5
+            },
+            style: {
+              fillColor: params.color || '#000000',
+              strokeColor: '#FF0066',
+              backgroundColor: '#FFFFFF'
+            },
+            custom: {
+              barCount: params.barCount,
+              barSpacing: params.barSpacing,
+              seed: params.seed
+            }
+          }
         })
       }
       
@@ -90,14 +135,14 @@ export function SaveDialog({
             ) : (
               <>
                 <Settings className="w-5 h-5" />
-                Save Parameter Preset
+                Save Logo Configuration
               </>
             )}
           </DialogTitle>
           <DialogDescription>
             {mode === 'shape'
               ? 'Save your custom visualization code as a reusable shape'
-              : 'Save your current parameters as a preset for quick access'}
+              : 'Save your current logo configuration for quick access'}
           </DialogDescription>
         </DialogHeader>
         
@@ -109,13 +154,13 @@ export function SaveDialog({
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder={mode === 'shape' ? 'My Custom Wave' : 'My Preset'}
+              placeholder={mode === 'shape' ? 'My Custom Wave' : 'My Logo Design'}
               className="w-full px-3 py-2 border rounded-md"
               autoFocus
             />
           </div>
           
-          {mode === 'preset' && (
+          {mode === 'logo' && (
             <div className="text-sm text-gray-500 space-y-1">
               <p>This will save:</p>
               <ul className="list-disc list-inside space-y-0.5 text-xs">

@@ -6,6 +6,10 @@ const protectedRoutes = ['/settings'];
 const protectedApiRoutes = ['/api/user'];
 
 export function middleware(request: NextRequest) {
+  // AUTH TEMPORARILY DISABLED
+  return NextResponse.next();
+  
+  /* 
   const { pathname } = request.nextUrl;
   
   // Check if the route is protected
@@ -32,6 +36,7 @@ export function middleware(request: NextRequest) {
   }
   
   return NextResponse.next();
+  */
 }
 
 export const config = {

@@ -28,89 +28,128 @@ import {
   executeCustomCode,
   VisualizationParams
 } from '@/lib/visualization-generators'
+import { useLogoStore } from '@/lib/stores/logoStore'
+import { useUIStore } from '@/lib/stores/uiStore'
+import { exportCanvasAsPNG } from '@/lib/export-utils'
+import { CodeEditorPanel } from './CodeEditorPanel'
+import { stateTracer } from '@/lib/debug/stateUpdateTracer'
 
-interface LogoInstance {
-  id: string
-  x: number
-  y: number
-  params: {
-    seed: string
-    frequency: number
-    amplitude: number
-    complexity: number
-    chaos: number
-    damping: number
-    layers: number
-    barCount: number
-    barSpacing: number
-    radius: number
-    color: string
-    customParameters: Record<string, any>
-  }
-  code: string
-  presetId?: string
-  presetName?: string
-}
-
-interface CanvasAreaProps {
-  logos: LogoInstance[]
-  selectedLogoId: string
-  onSelectLogo: (id: string) => void
-  onDuplicateLogo: (logoId: string) => void
-  onDeleteLogo: (logoId: string) => void
-  animating: boolean
-  zoom: number
-  previewMode: boolean
-  isRendering: boolean
-  currentTime: number
-  onToggleAnimation: () => void
-  onSetZoom: (zoom: number) => void
-  onTogglePreview: () => void
-  onCodeError: (error: string | null) => void
-  forceRender: number
-}
-
-export function CanvasArea({
-  logos,
-  selectedLogoId,
-  onSelectLogo,
-  onDuplicateLogo,
-  onDeleteLogo,
-  animating,
-  zoom,
-  previewMode,
-  isRendering,
-  currentTime,
-  onToggleAnimation,
-  onSetZoom,
-  onTogglePreview,
-  onCodeError,
-  forceRender
-}: CanvasAreaProps) {
+export function CanvasArea() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   
-  // Canvas state
-  const [canvasOffset, setCanvasOffset] = useState({ x: 0, y: 0 })
+  // Get state from Zustand stores
+  const { logos, selectedLogoId, selectLogo, duplicateLogo, deleteLogo } = useLogoStore()
+  const { 
+    zoom, 
+    setZoom, 
+    animating, 
+    toggleAnimation, 
+    previewMode, 
+    togglePreviewMode,
+    isRendering,
+    renderTrigger
+  } = useUIStore()
+  
+  // Time management for animation
+  const animationRef = useRef<number>()
+  const timeRef = useRef(0)
+  const [currentTime, setCurrentTime] = useState(0)
+  
+  // Canvas state with localStorage persistence
+  const [canvasOffset, setCanvasOffset] = useState(() => {
+    // Try to restore from localStorage, otherwise center (0,0) in viewport
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('recast-canvas-offset')
+      if (saved) {
+        try {
+          return JSON.parse(saved)
+        } catch (e) {
+          console.warn('Failed to parse saved canvas offset:', e)
+        }
+      }
+    }
+    // Default: will be set by initial centering effect
+    return { x: 0, y: 0 }
+  })
   const [isDragging, setIsDragging] = useState(false)
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
   const [lastPanPoint, setLastPanPoint] = useState({ x: 0, y: 0 })
+  const [codeError, setCodeError] = useState<string | null>(null)
   
   // Copy feedback state
   const [showCopyFeedback, setShowCopyFeedback] = useState(false)
   
+  // Code editor state for adjusting canvas controls
+  const [codeEditorCollapsed, setCodeEditorCollapsed] = useState(true)
+  const [codeEditorWidth, setCodeEditorWidth] = useState(500)
+  
   // Logo canvas cache - CRITICAL FOR PERFORMANCE
   const logoCanvasCache = useRef<Map<string, { canvas: HTMLCanvasElement, paramHash: string }>>(new Map())
   
+  // Track initial centering to avoid multiple runs
+  const hasInitialCentered = useRef(false)
+
+  // Helper to save canvas offset to localStorage
+  const saveCanvasOffset = useCallback((offset: { x: number, y: number }) => {
+    stateTracer.trace({
+      type: 'both',
+      trigger: 'saveCanvasOffset',
+      oldValue: { 
+        selectedLogoId: selectedLogoId,
+        selectedLogoId: logos.find(l => l.id === selectedLogoId)?.id || 'none'
+      },
+      newValue: { 
+        selectedLogoId: selectedLogoId,
+        selectedLogoId: logos.find(l => l.id === selectedLogoId)?.id || 'none'
+      },
+      metadata: { 
+        canvasOffset: offset,
+        source: 'canvas-drag'
+      }
+    });
+    
+    setCanvasOffset(offset)
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('recast-canvas-offset', JSON.stringify(offset))
+    }
+  }, [selectedLogoId, logos])
+  
+  // Force render trigger
+  const [forceRender, setForceRender] = useState(0)
+  
   // Generate hash for logo parameters to detect changes
-  const getLogoParamHash = useCallback((logo: LogoInstance, time: number) => {
+  const getLogoParamHash = useCallback((logo: any, time: number) => {
     // Only include time in hash if animating, otherwise cache static version
     const timeComponent = animating ? Math.floor(time * 10) / 10 : 0 // Reduce time precision for better caching
     return JSON.stringify({
-      ...logo.params,
+      ...logo.parameters,
       code: logo.code,
       time: timeComponent
     })
+  }, [animating])
+
+  // Animation loop
+  useEffect(() => {
+    if (animating) {
+      const animate = () => {
+        timeRef.current = Math.max(0, timeRef.current + 0.05) // Ensure time never goes negative
+        setCurrentTime(timeRef.current)
+        setForceRender(prev => prev + 1)
+        animationRef.current = requestAnimationFrame(animate)
+      }
+      animate()
+    } else {
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current)
+      }
+    }
+    
+    return () => {
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current)
+      }
+    }
   }, [animating])
 
   // Clean up cache for removed logos
@@ -133,13 +172,17 @@ export function CanvasArea({
   }, [])
 
   // Logo click detection
-  const isPointInLogo = (x: number, y: number, logo: LogoInstance) => {
+  const isPointInLogo = (x: number, y: number, logo: any) => {
     const logoSize = 600
-    return x >= logo.x && x <= logo.x + logoSize && 
-           y >= logo.y && y <= logo.y + logoSize
+    const position = logo.position || { x: 0, y: 0 }
+    const isInBounds = x >= position.x && x <= position.x + logoSize && 
+                      y >= position.y && y <= position.y + logoSize
+    
+    
+    return isInBounds
   }
 
-  // Center view to fit all logos
+  // Center view without changing zoom (back to the working version)
   const centerView = useCallback(() => {
     const canvas = canvasRef.current
     if (!canvas || logos.length === 0) return
@@ -147,14 +190,102 @@ export function CanvasArea({
     const rect = canvas.getBoundingClientRect()
     const logoSize = 600
     
+    // Calculate available canvas space accounting for code editor
+    const availableWidth = codeEditorCollapsed ? rect.width : rect.width - codeEditorWidth
+    const availableHeight = rect.height
+    const effectiveCenterX = codeEditorCollapsed ? availableWidth / 2 : codeEditorWidth + availableWidth / 2
+    const effectiveCenterY = availableHeight / 2
+    
     // Calculate bounding box of all logos
     let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity
     
     logos.forEach(logo => {
-      minX = Math.min(minX, logo.x)
-      maxX = Math.max(maxX, logo.x + logoSize)
-      minY = Math.min(minY, logo.y)
-      maxY = Math.max(maxY, logo.y + logoSize)
+      const position = logo.position || { x: 0, y: 0 }
+      minX = Math.min(minX, position.x)
+      maxX = Math.max(maxX, position.x + logoSize)
+      minY = Math.min(minY, position.y)
+      maxY = Math.max(maxY, position.y + logoSize)
+    })
+    
+    const centerX = (minX + maxX) / 2
+    const centerY = (minY + maxY) / 2
+    
+    // Center all logos in available view space without changing zoom
+    saveCanvasOffset({
+      x: effectiveCenterX / zoom - centerX,
+      y: effectiveCenterY / zoom - centerY
+    })
+  }, [zoom, logos, codeEditorCollapsed, codeEditorWidth, saveCanvasOffset])
+
+  // Reset canvas position immediately (for debug toolbar)
+  const resetCanvasPosition = useCallback(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('recast-canvas-offset')
+      console.log('🗑️ Canvas position reset from debug toolbar')
+    }
+    hasInitialCentered.current = false
+    
+    // Immediately recalculate center position
+    const canvas = canvasRef.current
+    if (canvas) {
+      const rect = canvas.getBoundingClientRect()
+      if (rect.width > 0 && rect.height > 0) {
+        const availableWidth = codeEditorCollapsed ? rect.width : rect.width - codeEditorWidth
+        const availableHeight = rect.height
+        const effectiveCenterX = codeEditorCollapsed ? availableWidth / 2 : codeEditorWidth + availableWidth / 2
+        const effectiveCenterY = availableHeight / 2
+
+        const centerOffset = {
+          x: effectiveCenterX / zoom,
+          y: effectiveCenterY / zoom
+        }
+        
+        console.log('📍 Debug reset centering:', { centerOffset, effectiveCenterX, effectiveCenterY, zoom, rect: { width: rect.width, height: rect.height } });
+        console.log('🔧 Before saveCanvasOffset, current canvasOffset:', canvasOffset);
+        saveCanvasOffset(centerOffset)
+        console.log('✅ After saveCanvasOffset called');
+        hasInitialCentered.current = true
+      }
+    }
+  }, [zoom, codeEditorCollapsed, codeEditorWidth, saveCanvasOffset])
+
+  // Expose debug functions for debug toolbar
+  useEffect(() => {
+    if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+      (window as any).resetCanvasPosition = resetCanvasPosition;
+      (window as any).getCanvasOffset = () => canvasOffset;
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        delete (window as any).resetCanvasPosition;
+        delete (window as any).getCanvasOffset;
+      }
+    }
+  }, [resetCanvasPosition, canvasOffset])
+
+  // Fit view to show all logos
+  const fitToView = useCallback(() => {
+    const canvas = canvasRef.current
+    if (!canvas || logos.length === 0) return
+
+    const rect = canvas.getBoundingClientRect()
+    const logoSize = 600
+    
+    // Calculate available canvas space accounting for code editor
+    const availableWidth = codeEditorCollapsed ? rect.width : rect.width - codeEditorWidth
+    const availableHeight = rect.height
+    const effectiveCenterX = codeEditorCollapsed ? availableWidth / 2 : codeEditorWidth + availableWidth / 2
+    const effectiveCenterY = availableHeight / 2
+    
+    // Calculate bounding box of all logos
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity
+    
+    logos.forEach(logo => {
+      const position = logo.position || { x: 0, y: 0 }
+      minX = Math.min(minX, position.x)
+      maxX = Math.max(maxX, position.x + logoSize)
+      minY = Math.min(minY, position.y)
+      maxY = Math.max(maxY, position.y + logoSize)
     })
     
     const contentWidth = maxX - minX
@@ -162,28 +293,24 @@ export function CanvasArea({
     const centerX = (minX + maxX) / 2
     const centerY = (minY + maxY) / 2
     
-    // Calculate zoom to fit all logos at 70% coverage
+    // Calculate zoom to fit all logos at 70% coverage using available space
     const targetCoverage = 0.7
-    const zoomX = (rect.width * targetCoverage) / contentWidth
-    const zoomY = (rect.height * targetCoverage) / contentHeight
+    const zoomX = (availableWidth * targetCoverage) / contentWidth
+    const zoomY = (availableHeight * targetCoverage) / contentHeight
     const idealZoom = Math.min(zoomX, zoomY)
     
     const clampedZoom = Math.max(0.2, Math.min(idealZoom, 1.5))
     
-    onSetZoom(clampedZoom)
+    setZoom(clampedZoom)
     
-    // Center all logos in view
-    setCanvasOffset({
-      x: (rect.width / 2) / clampedZoom - centerX,
-      y: (rect.height / 2) / clampedZoom - centerY
+    // Center all logos in available view space
+    saveCanvasOffset({
+      x: effectiveCenterX / clampedZoom - centerX,
+      y: effectiveCenterY / clampedZoom - centerY
     })
-  }, [onSetZoom, logos])
+  }, [setZoom, logos, codeEditorCollapsed, codeEditorWidth, saveCanvasOffset])
 
-  // Center view on initial load
-  useEffect(() => {
-    const timer = setTimeout(centerView, 100) // Small delay to ensure canvas is ready
-    return () => clearTimeout(timer)
-  }, [])
+  // Initial centering will be handled in drawInfiniteCanvas where we have real dimensions
 
   const drawInfiniteCanvas = useCallback(() => {
     const canvas = canvasRef.current
@@ -196,6 +323,28 @@ export function CanvasArea({
     const rect = canvas.getBoundingClientRect()
     const dpr = window.devicePixelRatio || 1
     
+    // Handle initial centering here where we have real canvas dimensions
+    if (!hasInitialCentered.current && rect.width > 0 && rect.height > 0) {
+      // For new sessions without saved position, center (0,0)
+      const hasSavedPosition = typeof window !== 'undefined' && localStorage.getItem('recast-canvas-offset')
+      if (!hasSavedPosition) {
+        // Calculate available canvas space accounting for code editor
+        const availableWidth = codeEditorCollapsed ? rect.width : rect.width - codeEditorWidth
+        const availableHeight = rect.height
+        const effectiveCenterX = codeEditorCollapsed ? availableWidth / 2 : codeEditorWidth + availableWidth / 2
+        const effectiveCenterY = availableHeight / 2
+
+        // Center (0,0) in the viewport - simple and predictable!
+        const centerOffset = {
+          x: effectiveCenterX / zoom,
+          y: effectiveCenterY / zoom
+        }
+        
+        saveCanvasOffset(centerOffset)
+      }
+      hasInitialCentered.current = true
+    }
+    
     canvas.width = rect.width * dpr
     canvas.height = rect.height * dpr
     canvas.style.width = rect.width + 'px'
@@ -203,7 +352,7 @@ export function CanvasArea({
     
     ctx.scale(dpr, dpr)
     
-    // Clear canvas (use actual canvas dimensions)
+    // Clear canvas
     ctx.clearRect(0, 0, rect.width, rect.height)
 
     // Save context for transformations
@@ -215,8 +364,9 @@ export function CanvasArea({
 
     // Draw each logo at its position
     logos.forEach((logo) => {
+      const position = logo.position || { x: 0, y: 0 }
       ctx.save()
-      ctx.translate(logo.x, logo.y)
+      ctx.translate(position.x, position.y)
       
       // PERFORMANCE OPTIMIZATION: Use cached canvas instead of creating new one every frame
       const paramHash = getLogoParamHash(logo, currentTime)
@@ -239,7 +389,7 @@ export function CanvasArea({
           logoCtx.fillRect(0, 0, logoCanvas.width, logoCanvas.height)
           
           // Add subtle background for ReCast logo
-          if (logo.params.seed === 'recast-identity') {
+          if (logo.parameters.core.frequency === 4) { // Default ReCast identity
             const gradient = logoCtx.createRadialGradient(
               logoCanvas.width / 2, logoCanvas.height / 2, 0,
               logoCanvas.width / 2, logoCanvas.height / 2, logoCanvas.width / 2
@@ -252,24 +402,27 @@ export function CanvasArea({
 
           // Create VisualizationParams for this logo
           const logoParams: VisualizationParams = {
-            seed: logo.params.seed,
-            frequency: logo.params.frequency,
-            amplitude: logo.params.amplitude,
-            complexity: logo.params.complexity,
-            chaos: logo.params.chaos,
-            damping: logo.params.damping,
-            layers: logo.params.layers,
-            barCount: logo.params.barCount,
-            barSpacing: logo.params.barSpacing,
-            radius: logo.params.radius,
-            color: logo.params.color,
-            customParameters: logo.params.customParameters,
+            seed: logo.id,
+            frequency: logo.parameters.core.frequency,
+            amplitude: logo.parameters.core.amplitude,
+            complexity: logo.parameters.core.complexity,
+            chaos: logo.parameters.core.chaos,
+            damping: logo.parameters.core.damping,
+            layers: logo.parameters.core.layers,
+            barCount: logo.parameters.custom.barCount || 60,
+            barSpacing: logo.parameters.custom.barSpacing || 2,
+            radius: logo.parameters.core.radius,
+            color: logo.parameters.style.fillColor,
+            fillColor: logo.parameters.style.fillColor,
+            strokeColor: logo.parameters.style.strokeColor,
+            backgroundColor: logo.parameters.style.backgroundColor,
+            customParameters: logo.parameters.custom,
             time: currentTime
           }
 
           // Generate logo content using the code
           if (logo.code && logo.code.trim()) {
-            executeCustomCode(logoCtx, logoCanvas.width, logoCanvas.height, logoParams, logo.code, onCodeError)
+            executeCustomCode(logoCtx, logoCanvas.width, logoCanvas.height, logoParams, logo.code, setCodeError)
           } else {
             // Fallback to default wave visualization
             generateWaveLines(logoCtx, logoCanvas.width, logoCanvas.height, logoParams)
@@ -283,13 +436,13 @@ export function CanvasArea({
       // Draw selection highlight for selected logo
       const isSelected = logo.id === selectedLogoId
       
-      // Draw white background with rounded corners (no shadow for performance)
+      // Draw white background with rounded corners
       ctx.fillStyle = '#ffffff'
       ctx.beginPath()
       ctx.roundRect(-10, -10, logoCanvas.width + 20, logoCanvas.height + 20, 12)
       ctx.fill()
       
-      // Draw refined border (very subtle highlight for selected logo)
+      // Draw refined border
       ctx.strokeStyle = isSelected ? '#3b82f6' : '#f3f4f6'
       ctx.lineWidth = 1
       ctx.beginPath()
@@ -303,7 +456,7 @@ export function CanvasArea({
     })
 
     ctx.restore()
-  }, [logos, selectedLogoId, zoom, onCodeError, forceRender, canvasOffset, animating, currentTime])
+  }, [logos, selectedLogoId, zoom, setCodeError, forceRender, canvasOffset, animating, currentTime, getLogoParamHash, renderTrigger, codeEditorCollapsed, codeEditorWidth, saveCanvasOffset])
 
   // Handle mouse events for dragging and selection
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
@@ -330,27 +483,45 @@ export function CanvasArea({
     }
     
     if (clickedLogo) {
+      stateTracer.trace({
+        type: 'both',
+        trigger: `Canvas click -> selectLogo(${clickedLogo.id})`,
+        oldValue: { 
+          selectedLogoId: selectedLogoId,
+          selectedLogoId: logos.find(l => l.id === selectedLogoId)?.id || 'none'
+        },
+        newValue: { 
+          selectedLogoId: clickedLogo.id,
+          selectedLogoId: clickedLogo.id
+        },
+        metadata: { 
+          clickCoords: { canvasX, canvasY },
+          logoPosition: { x: clickedLogo.position.x, y: clickedLogo.position.y }
+        }
+      });
+      
       // Select the clicked logo
-      onSelectLogo(clickedLogo.id)
+      selectLogo(clickedLogo.id);
     }
     
     // Always start dragging (either logo or canvas)
     setIsDragging(true)
     setDragStart({ x: e.clientX, y: e.clientY })
     setLastPanPoint({ x: canvasOffset.x, y: canvasOffset.y })
-  }, [previewMode, canvasOffset, zoom, logos, onSelectLogo])
+  }, [previewMode, canvasOffset, zoom, logos, selectLogo, selectedLogoId])
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    if (!isDragging || previewMode) return
-
-    const deltaX = (e.clientX - dragStart.x) / zoom
-    const deltaY = (e.clientY - dragStart.y) / zoom
-    
-    setCanvasOffset({
-      x: lastPanPoint.x + deltaX,
-      y: lastPanPoint.y + deltaY
-    })
-  }, [isDragging, dragStart, lastPanPoint, zoom, previewMode])
+    // Handle dragging
+    if (isDragging && !previewMode) {
+      const deltaX = (e.clientX - dragStart.x) / zoom
+      const deltaY = (e.clientY - dragStart.y) / zoom
+      
+      saveCanvasOffset({
+        x: lastPanPoint.x + deltaX,
+        y: lastPanPoint.y + deltaY
+      })
+    }
+  }, [isDragging, dragStart, lastPanPoint, zoom, previewMode, saveCanvasOffset])
 
   const handleMouseUp = useCallback(() => {
     setIsDragging(false)
@@ -376,22 +547,16 @@ export function CanvasArea({
     const newZoom = Math.min(Math.max(zoom * delta, 0.1), 5)
     
     // Calculate new offset to keep mouse position fixed
-    // The point under the mouse should stay under the mouse after zoom
     const zoomRatio = newZoom / zoom
     const newOffsetX = canvasOffset.x + (mouseX / newZoom) - (mouseX / zoom)
     const newOffsetY = canvasOffset.y + (mouseY / newZoom) - (mouseY / zoom)
     
-    onSetZoom(newZoom)
-    setCanvasOffset({
+    setZoom(newZoom)
+    saveCanvasOffset({
       x: newOffsetX,
       y: newOffsetY
     })
-  }, [zoom, onSetZoom, previewMode, canvasOffset])
-
-  // Reset view to center
-  const resetView = useCallback(() => {
-    centerView()
-  }, [centerView])
+  }, [zoom, setZoom, previewMode, canvasOffset, saveCanvasOffset])
 
   // Generate logo canvas (shared function)
   const generateLogoCanvas = useCallback((selectedLogo: any) => {
@@ -413,30 +578,33 @@ export function CanvasArea({
       logoCtx.fillRect(0, 0, logoCanvas.width, logoCanvas.height)
       
       const logoParams: VisualizationParams = {
-        seed: selectedLogo.params.seed,
-        frequency: selectedLogo.params.frequency,
-        amplitude: selectedLogo.params.amplitude,
-        complexity: selectedLogo.params.complexity,
-        chaos: selectedLogo.params.chaos,
-        damping: selectedLogo.params.damping,
-        layers: selectedLogo.params.layers,
-        barCount: selectedLogo.params.barCount,
-        barSpacing: selectedLogo.params.barSpacing,
-        radius: selectedLogo.params.radius,
-        color: selectedLogo.params.color,
-        customParameters: selectedLogo.params.customParameters,
+        seed: selectedLogo.id,
+        frequency: selectedLogo.parameters.core.frequency,
+        amplitude: selectedLogo.parameters.core.amplitude,
+        complexity: selectedLogo.parameters.core.complexity,
+        chaos: selectedLogo.parameters.core.chaos,
+        damping: selectedLogo.parameters.core.damping,
+        layers: selectedLogo.parameters.core.layers,
+        barCount: selectedLogo.parameters.custom.barCount || 60,
+        barSpacing: selectedLogo.parameters.custom.barSpacing || 2,
+        radius: selectedLogo.parameters.core.radius,
+        color: selectedLogo.parameters.style.fillColor,
+        fillColor: selectedLogo.parameters.style.fillColor,
+        strokeColor: selectedLogo.parameters.style.strokeColor,
+        backgroundColor: selectedLogo.parameters.style.backgroundColor,
+        customParameters: selectedLogo.parameters.custom,
         time: currentTime
       }
 
       if (selectedLogo.code && selectedLogo.code.trim()) {
-        executeCustomCode(logoCtx, logoCanvas.width, logoCanvas.height, logoParams, selectedLogo.code, onCodeError)
+        executeCustomCode(logoCtx, logoCanvas.width, logoCanvas.height, logoParams, selectedLogo.code, setCodeError)
       } else {
         generateWaveLines(logoCtx, logoCanvas.width, logoCanvas.height, logoParams)
       }
     }
     
     return logoCanvas
-  }, [getLogoParamHash, currentTime, onCodeError])
+  }, [getLogoParamHash, currentTime, setCodeError])
 
   // Download logo as PNG
   const downloadLogoImage = useCallback(() => {
@@ -450,7 +618,7 @@ export function CanvasArea({
         const url = URL.createObjectURL(blob)
         const a = document.createElement('a')
         a.href = url
-        a.download = `${selectedLogo.params.seed || 'logo'}.png`
+        a.download = `${selectedLogo.templateName || 'logo'}.png`
         document.body.appendChild(a)
         a.click()
         document.body.removeChild(a)
@@ -478,18 +646,15 @@ export function CanvasArea({
                   'image/png': blob
                 })
               ])
-              console.log('✅ Logo copied to clipboard!')
               
               // Show visual feedback
               setShowCopyFeedback(true)
               setTimeout(() => setShowCopyFeedback(false), 2000)
             } else {
-              console.log('📋 Clipboard not supported, downloading instead...')
               downloadLogoImage()
             }
           } catch (err) {
             console.error('❌ Failed to copy to clipboard:', err)
-            console.log('📥 Falling back to download...')
             downloadLogoImage()
           }
         }
@@ -524,10 +689,13 @@ export function CanvasArea({
     return () => canvas.removeEventListener('wheel', handleWheel)
   }, [handleWheel])
 
+  // Find selected logo
+  const selectedLogo = logos.find(logo => logo.id === selectedLogoId)
+
   return (
     <div 
       ref={containerRef}
-      className="flex-1 relative transition-all duration-300 overflow-hidden"
+      className="flex-1 relative transition-all duration-300 overflow-hidden canvas-container"
       style={{
         background: `
           radial-gradient(circle, #d1d5db 0.8px, transparent 0.8px)
@@ -536,78 +704,112 @@ export function CanvasArea({
         backgroundColor: '#f9fafb'
       }}
     >
-      {/* Preview Toggle */}
-      <div className="absolute top-6 left-6 z-20">
+      {/* Code Editor Panel - positioned relative to canvas container */}
+      <CodeEditorPanel 
+        onStateChange={(collapsed, width) => {
+          setCodeEditorCollapsed(collapsed)
+          setCodeEditorWidth(width)
+        }}
+      />
+      
+      {/* Preview Toggle - adjust position based on code editor */}
+      <div 
+        className="absolute bottom-6 z-20"
+        style={{
+          left: codeEditorCollapsed ? '50%' : `calc(${codeEditorWidth}px + (100% - ${codeEditorWidth}px) / 2)`,
+          transform: 'translateX(-50%)'
+        }}
+      >
         <Button
           variant={previewMode ? "default" : "outline"}
           size="sm"
-          onClick={onTogglePreview}
+          onClick={() => {
+            togglePreviewMode()
+            // Re-center canvas when exiting preview mode
+            if (previewMode) {
+              setTimeout(centerView, 100)
+            }
+          }}
           className="gap-2 bg-white/90 backdrop-blur-sm shadow-lg border"
         >
           {previewMode ? <Grid3x3 className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-          {previewMode ? "Canvas" : "Preview"}
+          {previewMode ? "Back to Canvas" : "Preview Sizes"}
         </Button>
       </div>
 
-      {/* Floating Logo Toolbar */}
+      {/* Play/Pause Button - Separate circular button */}
+      {!previewMode && (
+        <Button
+          onClick={toggleAnimation}
+          className="absolute top-6 right-6 h-10 w-10 rounded-full shadow-lg bg-white/90 backdrop-blur-sm border hover:bg-white z-20"
+          size="sm"
+          variant="outline"
+          title={animating ? "Pause Animation" : "Play Animation"}
+        >
+          {animating ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+        </Button>
+      )}
+      
+      {/* Logo Action Toolbar */}
       {!previewMode && selectedLogoId && (
         <div className="absolute top-6 right-20 z-20">
           <div className="bg-white/95 backdrop-blur-sm rounded-lg border shadow-lg p-1 flex items-center gap-1">
             <Button
-              size="sm"
-              variant="ghost"
-              onClick={copyLogoImage}
-              className="h-8 w-8 p-0"
-              title="Copy image to clipboard"
-            >
-              <Clipboard className="w-4 h-4" />
-            </Button>
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={downloadLogoImage}
-              className="h-8 w-8 p-0"
-              title="Download as PNG"
-            >
-              <Download className="w-4 h-4" />
-            </Button>
-            <div className="h-4 w-px bg-gray-200 mx-1" />
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => onDuplicateLogo(selectedLogoId)}
-              className="h-8 w-8 p-0"
-              title="Duplicate this logo"
-            >
-              <CopyPlus className="w-4 h-4" />
-            </Button>
-            {logos.length > 1 && (
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => {
-                  if (confirm('Delete this logo?')) {
-                    onDeleteLogo(selectedLogoId)
-                  }
-                }}
-                className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
-                title="Delete this logo"
-              >
-                <Trash2 className="w-4 h-4" />
-              </Button>
-            )}
+                  size="sm"
+                  variant="ghost"
+                  onClick={copyLogoImage}
+                  className="h-8 w-8 p-0"
+                  title="Copy image to clipboard"
+                >
+                  <Clipboard className="w-4 h-4" />
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={downloadLogoImage}
+                  className="h-8 w-8 p-0"
+                  title="Download as PNG"
+                >
+                  <Download className="w-4 h-4" />
+                </Button>
+                <div className="h-4 w-px bg-gray-200 mx-1" />
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => duplicateLogo(selectedLogoId)}
+                  className="h-8 w-8 p-0"
+                  title="Duplicate this logo"
+                >
+                  <CopyPlus className="w-4 h-4" />
+                </Button>
+                {logos.length > 1 && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => {
+                      if (confirm('Delete this logo?')) {
+                        deleteLogo(selectedLogoId)
+                      }
+                    }}
+                    className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                    title="Delete this logo"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                )}
           </div>
         </div>
       )}
 
       {/* Copy Feedback */}
       {showCopyFeedback && (
-        <div className="absolute top-20 right-20 z-30 animate-in fade-in-0 duration-200">
+        <div className="absolute top-20 right-6 z-30 animate-in fade-in-0 duration-200">
           <div className="bg-green-50 border border-green-200 text-green-800 px-3 py-2 rounded-lg shadow-lg text-sm font-medium">
             📋 Copied to clipboard!
           </div>
         </div>
       )}
+      
 
       {/* Infinite Canvas */}
       {!previewMode ? (
@@ -623,7 +825,10 @@ export function CanvasArea({
       ) : (
         <div className="h-full flex items-center justify-center p-8">
           <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-2xl border border-gray-200/50 overflow-hidden">
-            <PreviewGrid canvas={canvasRef.current} seed={logos.find(l => l.id === selectedLogoId)?.params.seed || 'preview'} />
+            <PreviewGrid 
+              canvas={canvasRef.current} 
+              seed={selectedLogo?.templateName || 'preview'} 
+            />
           </div>
         </div>
       )}
@@ -646,7 +851,7 @@ export function CanvasArea({
             <Button
               size="sm"
               variant="ghost"
-              onClick={() => onSetZoom(Math.max(0.1, zoom * 0.8))}
+              onClick={() => setZoom(Math.max(0.1, zoom * 0.8))}
               className="h-7 w-7 p-0"
               title="Zoom Out"
             >
@@ -658,7 +863,7 @@ export function CanvasArea({
             <Button
               size="sm"
               variant="ghost"
-              onClick={() => onSetZoom(Math.min(5, zoom * 1.25))}
+              onClick={() => setZoom(Math.min(5, zoom * 1.25))}
               className="h-7 w-7 p-0"
               title="Zoom In"
             >
@@ -670,9 +875,9 @@ export function CanvasArea({
           <Button
             size="sm"
             variant="outline"
-            onClick={resetView}
+            onClick={centerView}
             className="bg-white/90 backdrop-blur-sm shadow-lg border"
-            title="Center view"
+            title="Center view on logos"
           >
             <RotateCcw className="w-4 h-4 mr-2" />
             Center
@@ -680,22 +885,15 @@ export function CanvasArea({
         </div>
       )}
 
-      {/* Play/Pause Button */}
-      {!previewMode && (
-        <Button
-          onClick={onToggleAnimation}
-          className="absolute top-6 right-6 h-10 w-10 rounded-full shadow-lg bg-white/90 backdrop-blur-sm border hover:bg-white z-20"
-          size="sm"
-          variant="outline"
-          title={animating ? "Pause Animation" : "Play Animation"}
-        >
-          {animating ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-        </Button>
-      )}
 
-      {/* Help Text */}
+      {/* Help Text - adjust position based on code editor */}
       {!previewMode && (
-        <div className="absolute bottom-6 left-6 z-20">
+        <div 
+          className="absolute bottom-6 z-20"
+          style={{
+            left: codeEditorCollapsed ? '24px' : `${codeEditorWidth + 24}px`
+          }}
+        >
           <div className="bg-white/90 backdrop-blur-sm rounded-lg border shadow-lg px-3 py-2">
             <div className="text-xs text-gray-600 space-y-1">
               <div><kbd className="bg-gray-100 px-1 rounded text-xs">Drag</kbd> to pan</div>

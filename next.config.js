@@ -38,6 +38,37 @@ const nextConfig = {
       config.externals.push('better-sqlite3');
     }
     
+    // Monaco Editor configuration
+    if (!isServer) {
+      // Add fallback for node modules that Monaco might need
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        path: false,
+        fs: false,
+      };
+      
+      // Configure webpack for Monaco Editor
+      config.module.rules.push({
+        test: /\.ttf$/,
+        type: 'asset/resource',
+      });
+      
+      // Ensure Monaco Editor chunks are properly generated
+      config.output.publicPath = '/_next/';
+      
+      // Add cache groups for Monaco
+      config.optimization.splitChunks = config.optimization.splitChunks || {};
+      config.optimization.splitChunks.cacheGroups = {
+        ...config.optimization.splitChunks.cacheGroups,
+        monaco: {
+          test: /[\\/]node_modules[\\/]monaco-editor/,
+          name: 'monaco-editor',
+          priority: 50,
+          chunks: 'all',
+        },
+      };
+    }
+    
     // Development optimizations
     if (dev) {
       config.watchOptions = {

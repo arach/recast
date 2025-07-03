@@ -175,41 +175,61 @@ export const colorThemes: ColorTheme[] = [
  * Apply a color theme to current parameters
  */
 export function applyColorTheme(theme: ColorTheme, currentParams: Record<string, any>): Record<string, any> {
-  // Start with all current params to preserve non-color values
-  const updatedParams = { ...currentParams };
+  // STRICT: Only return the exact color parameters allowed by handleApplyColorTheme
+  // This prevents any template contamination or unexpected parameter changes
+  const allowedColorParams = [
+    'fillColor', 'strokeColor', 'backgroundColor', 'textColor',
+    'backgroundGradientStart', 'backgroundGradientEnd',
+    'fillGradientStart', 'fillGradientEnd',
+    'strokeGradientStart', 'strokeGradientEnd',
+    'colorMode' // Preserve Wave template color mode setting
+  ];
   
-  // Update only color-related parameters that exist in currentParams
-  const colorMappings: Record<string, string> = {
-    // Universal control colors
+  // Build the color parameters object with only allowed parameters
+  const colorParams: Record<string, any> = {
+    // Core colors
     fillColor: theme.colors.primary,
     strokeColor: theme.colors.secondary,
     backgroundColor: theme.colors.background,
+    textColor: isLightColor(theme.colors.background) ? '#000000' : '#ffffff',
     
-    // Common preset-specific color params
-    color: theme.colors.primary,
-    accentColor: theme.colors.accent || theme.colors.primary,
-    primaryColor: theme.colors.primary,
-    secondaryColor: theme.colors.secondary,
-    
-    // Effect colors (if the preset uses them)
-    refractionColor: theme.colors.accent || theme.colors.primary,
-    glowColor: theme.colors.accent || theme.colors.primary,
-    particleColor: theme.colors.accent || theme.colors.secondary,
-    
-    // Text color (inverse of background for contrast)
-    textColor: isLightColor(theme.colors.background) ? '#000000' : '#ffffff'
+    // Gradient colors (if accent color is available)
+    ...(theme.colors.accent && {
+      fillGradientStart: theme.colors.primary,
+      fillGradientEnd: theme.colors.accent,
+      strokeGradientStart: theme.colors.secondary,
+      strokeGradientEnd: theme.colors.accent,
+      backgroundGradientStart: theme.colors.background,
+      backgroundGradientEnd: adjustColorBrightness(theme.colors.background, 0.9)
+    })
   };
   
-  // Only update parameters that already exist in currentParams or are universal controls
-  const universalControls = ['fillColor', 'strokeColor', 'backgroundColor'];
-  
-  for (const [param, value] of Object.entries(colorMappings)) {
-    if (universalControls.includes(param) || param in currentParams) {
-      updatedParams[param] = value;
+  // Preserve colorMode from current parameters if it exists
+  if (currentParams.colorMode) {
+    colorParams.colorMode = currentParams.colorMode;
+  }
+
+  // Filter to only include allowed parameters
+  const filteredParams: Record<string, any> = {};
+  for (const [key, value] of Object.entries(colorParams)) {
+    if (allowedColorParams.includes(key)) {
+      filteredParams[key] = value;
     }
   }
   
-  return updatedParams;
+  return filteredParams;
+}
+
+/**
+ * Helper to adjust color brightness
+ */
+function adjustColorBrightness(hex: string, factor: number): string {
+  const rgb = parseInt(hex.slice(1), 16);
+  const r = Math.min(255, Math.floor(((rgb >> 16) & 0xff) * factor));
+  const g = Math.min(255, Math.floor(((rgb >> 8) & 0xff) * factor));
+  const b = Math.min(255, Math.floor((rgb & 0xff) * factor));
+  
+  return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, '0')}`;
 }
 
 /**

@@ -56,14 +56,10 @@ export function MainLayout({
         open={saveDialogOpen}
         onOpenChange={setSaveDialogOpen}
         mode={saveMode}
-        visualMode={visualMode}
-        customCode={customCode}
-        currentShapeName={currentShapeName}
+        code={customCode}
+        shapeName={currentShapeName}
         params={params}
-        currentShapeId={currentShapeId}
-        onSaved={() => {
-          // Optionally show a success message
-        }}
+        shapeId={currentShapeId}
       />
 
       <SavedItemsDialog

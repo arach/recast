@@ -1,17 +1,15 @@
-// Storage utilities for saving shapes and presets
+// Storage utilities for saving shapes and logos
 
-export interface SavedShape {
+import { Shape, SavedLogo, Style } from './types/core'
+
+// Re-export Shape type for backward compatibility
+export type SavedShape = Shape
+
+// Legacy SavedTheme type - will be migrated to SavedLogo
+export interface LegacySavedTheme {
   id: string
   name: string
-  code: string
-  createdAt: number
-  updatedAt: number
-}
-
-export interface SavedPreset {
-  id: string
-  name: string
-  shapeId?: string // Optional reference to custom shape
+  shapeId?: string
   params: {
     seed: string
     frequency: number
@@ -30,17 +28,21 @@ export interface SavedPreset {
 
 const STORAGE_KEYS = {
   SHAPES: 'recast_saved_shapes',
-  PRESETS: 'recast_saved_presets',
+  LOGOS: 'recast_saved_logos',
+  THEMES: 'recast_saved_themes', // Legacy key
+  PRESETS: 'recast_saved_presets', // Legacy key
 }
 
 // Shape management
-export const saveShape = (shape: Omit<SavedShape, 'id' | 'createdAt' | 'updatedAt'>): SavedShape => {
+export const saveShape = (shape: Omit<Shape, 'id' | 'createdAt' | 'updatedAt'>): Shape => {
   const shapes = getSavedShapes()
-  const newShape: SavedShape = {
+  const newShape: Shape = {
     ...shape,
     id: `shape_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
     createdAt: Date.now(),
     updatedAt: Date.now(),
+    supportedParams: shape.supportedParams || [],
+    category: shape.category || 'custom'
   }
   
   shapes.push(newShape)
@@ -48,16 +50,24 @@ export const saveShape = (shape: Omit<SavedShape, 'id' | 'createdAt' | 'updatedA
   return newShape
 }
 
-export const getSavedShapes = (): SavedShape[] => {
+export const getSavedShapes = (): Shape[] => {
   try {
     const shapes = localStorage.getItem(STORAGE_KEYS.SHAPES)
-    return shapes ? JSON.parse(shapes) : []
+    if (!shapes) return []
+    
+    // Migrate old format to new format if needed
+    const parsed = JSON.parse(shapes)
+    return parsed.map((shape: any) => ({
+      ...shape,
+      supportedParams: shape.supportedParams || [],
+      category: shape.category || 'custom'
+    }))
   } catch {
     return []
   }
 }
 
-export const updateShape = (id: string, updates: Partial<SavedShape>): SavedShape | null => {
+export const updateShape = (id: string, updates: Partial<Shape>): Shape | null => {
   const shapes = getSavedShapes()
   const index = shapes.findIndex(s => s.id === id)
   
@@ -83,49 +93,116 @@ export const deleteShape = (id: string): boolean => {
   return true
 }
 
-// Preset management
-export const savePreset = (preset: Omit<SavedPreset, 'id' | 'createdAt'>): SavedPreset => {
-  const presets = getSavedPresets()
-  const newPreset: SavedPreset = {
-    ...preset,
-    id: `preset_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+// Logo management
+export const saveLogo = (logo: Omit<SavedLogo, 'id' | 'createdAt' | 'updatedAt'>): SavedLogo => {
+  const logos = getSavedLogos()
+  const newLogo: SavedLogo = {
+    ...logo,
+    id: `logo_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
     createdAt: Date.now(),
+    updatedAt: Date.now(),
   }
   
-  presets.push(newPreset)
-  localStorage.setItem(STORAGE_KEYS.PRESETS, JSON.stringify(presets))
-  return newPreset
+  logos.push(newLogo)
+  localStorage.setItem(STORAGE_KEYS.LOGOS, JSON.stringify(logos))
+  return newLogo
 }
 
-export const getSavedPresets = (): SavedPreset[] => {
+export const getSavedLogos = (): SavedLogo[] => {
   try {
-    const presets = localStorage.getItem(STORAGE_KEYS.PRESETS)
-    return presets ? JSON.parse(presets) : []
+    // Check new key first
+    const logos = localStorage.getItem(STORAGE_KEYS.LOGOS)
+    if (logos) {
+      return JSON.parse(logos)
+    }
+    
+    // Try to migrate from old storage keys
+    const legacyThemes = localStorage.getItem(STORAGE_KEYS.THEMES)
+    const legacyPresets = localStorage.getItem(STORAGE_KEYS.PRESETS)
+    
+    if (legacyThemes || legacyPresets) {
+      console.log('📦 Migrating legacy storage to new logo format')
+      const migrated: SavedLogo[] = []
+      
+      // Migrate old themes/presets to new logo format
+      try {
+        if (legacyThemes) {
+          const oldThemes = JSON.parse(legacyThemes)
+          migrated.push(...oldThemes.map((theme: any) => ({
+            id: theme.id || `migrated-${Date.now()}-${Math.random()}`,
+            name: theme.name || 'Migrated Logo',
+            description: theme.description || '',
+            createdAt: theme.createdAt || new Date().toISOString(),
+            shape: { id: 'custom', name: 'Custom Shape' },
+            parameters: {
+              core: theme.params || {},
+              style: theme.style || {},
+              content: theme.content || {},
+              custom: theme.customParameters || {}
+            }
+          })))
+        }
+        
+        if (legacyPresets) {
+          const oldPresets = JSON.parse(legacyPresets)
+          migrated.push(...oldPresets.map((preset: any) => ({
+            id: preset.id || `migrated-${Date.now()}-${Math.random()}`,
+            name: preset.name || 'Migrated Logo',
+            description: preset.description || '',
+            createdAt: preset.createdAt || new Date().toISOString(),
+            shape: { id: 'custom', name: 'Custom Shape' },
+            parameters: {
+              core: preset.params || {},
+              style: preset.style || {},
+              content: preset.content || {},
+              custom: preset.customParameters || {}
+            }
+          })))
+        }
+        
+        // Save migrated data to new format
+        if (migrated.length > 0) {
+          localStorage.setItem(STORAGE_KEYS.LOGOS, JSON.stringify(migrated))
+          console.log(`✅ Migrated ${migrated.length} items to new logo format`)
+          
+          // Clean up old storage
+          localStorage.removeItem(STORAGE_KEYS.THEMES)
+          localStorage.removeItem(STORAGE_KEYS.PRESETS)
+        }
+        
+        return migrated
+      } catch (error) {
+        console.error('❌ Migration failed:', error)
+        return []
+      }
+    }
+    
+    return []
   } catch {
     return []
   }
 }
 
-export const deletePreset = (id: string): boolean => {
-  const presets = getSavedPresets()
-  const filtered = presets.filter(p => p.id !== id)
+export const deleteLogo = (id: string): boolean => {
+  const logos = getSavedLogos()
+  const filtered = logos.filter(l => l.id !== id)
   
-  if (filtered.length === presets.length) return false
+  if (filtered.length === logos.length) return false
   
-  localStorage.setItem(STORAGE_KEYS.PRESETS, JSON.stringify(filtered))
+  localStorage.setItem(STORAGE_KEYS.LOGOS, JSON.stringify(filtered))
   return true
 }
 
 // Export/Import functionality
 export const exportData = () => {
   const shapes = getSavedShapes()
-  const presets = getSavedPresets()
+  const logos = getSavedLogos()
   
   const data = {
-    version: 1,
+    version: 2,
     exportDate: new Date().toISOString(),
     shapes,
-    presets,
+    logos,
   }
   
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
@@ -137,26 +214,40 @@ export const exportData = () => {
   URL.revokeObjectURL(url)
 }
 
-export const importData = async (file: File): Promise<{ shapes: number; presets: number }> => {
+export const importData = async (file: File): Promise<{ shapes: number; logos: number }> => {
   const text = await file.text()
   const data = JSON.parse(text)
   
-  if (data.version !== 1) {
+  if (data.version > 2) {
     throw new Error('Incompatible backup version')
   }
   
   const currentShapes = getSavedShapes()
-  const currentPresets = getSavedPresets()
+  const currentLogos = getSavedLogos()
+  
+  // Handle different versions
+  const importedLogos = data.logos || []
+  // TODO: Convert old themes/presets to new logo format if needed
   
   // Merge imported data
-  const mergedShapes = [...currentShapes, ...data.shapes]
-  const mergedPresets = [...currentPresets, ...data.presets]
+  const mergedShapes = [...currentShapes, ...(data.shapes || [])]
+  const mergedLogos = [...currentLogos, ...importedLogos]
   
   localStorage.setItem(STORAGE_KEYS.SHAPES, JSON.stringify(mergedShapes))
-  localStorage.setItem(STORAGE_KEYS.PRESETS, JSON.stringify(mergedPresets))
+  localStorage.setItem(STORAGE_KEYS.LOGOS, JSON.stringify(mergedLogos))
   
   return {
-    shapes: data.shapes.length,
-    presets: data.presets.length,
+    shapes: (data.shapes || []).length,
+    logos: importedLogos.length,
   }
 }
+
+// Backward compatibility exports
+export type SavedPreset = LegacySavedTheme
+export type SavedTheme = SavedLogo
+export const savePreset = saveLogo
+export const saveTheme = saveLogo
+export const getSavedPresets = getSavedLogos
+export const getSavedThemes = getSavedLogos
+export const deletePreset = deleteLogo
+export const deleteTheme = deleteLogo

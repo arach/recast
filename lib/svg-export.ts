@@ -34,7 +34,8 @@ export function generateSVGFromCanvas(
     return generateWaveBarsSVG(width, height, config, time)
   }
   
-  // TODO: Implement wave and bars modes
+  // For other modes, fall back to canvas-based rendering
+  console.log('🎨 SVG export mode', mode, 'not implemented, falling back to canvas export')
   return ''
 }
 

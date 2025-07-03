@@ -1,216 +1,109 @@
 'use client'
 
 import React, { useState, useEffect, useRef, useCallback } from 'react'
-import JSZip from 'jszip'
-import { saveAs } from 'file-saver'
-import { WaveGenerator } from '@/core/wave-generator'
-import { GenerativeEngine, GeneratorRegistry } from '@/core/generative-engine'
-import '@/core/circle-generator' // Import to register
-import '@/core/triangle-generator' // Import to register
-import '@/core/infinity-generator' // Import to register
-import { SavedShape, SavedPreset } from '@/lib/storage'
-import { generateLogoPackage, generateReactComponent, ExportConfig } from '@/lib/svg-export'
+import { SavedShape, SavedLogo } from '@/lib/storage'
+import { exportCanvasAsPNG } from '@/lib/export-utils'
 import { SaveDialog } from '@/components/save-dialog'
 import { SavedItemsDialog } from '@/components/saved-items-dialog'
 import { StudioHeader } from '@/components/studio/StudioHeader'
-import { CodeEditorPanel } from '@/components/studio/CodeEditorPanel'
 import { CanvasArea } from '@/components/studio/CanvasArea'
 import { ControlsPanel } from '@/components/studio/ControlsPanel'
 import { BrandPresetsPanel } from '@/components/studio/BrandPresetsPanel'
 import { IndustrySelector } from '@/components/studio/IndustrySelector'
 import { ColorThemeSelector } from '@/components/studio/ColorThemeSelector'
+import { TemplatePresetsPanel } from '@/components/studio/TemplatePresetsPanel'
 import { AISuggestions } from '@/components/studio/AISuggestions'
 import { BrandPersonality } from '@/components/studio/BrandPersonality'
 import { AIBrandConsultant } from '@/components/studio/AIBrandConsultant'
-import { VisualizationParams } from '@/lib/visualization-generators'
-import { loadPresetAsLegacy, getAllPresetsAsLegacy } from '@/lib/preset-converter'
-import type { LoadedPreset } from '@/lib/preset-loader'
-
-const colorPalette = ['#0070f3', '#7c3aed', '#dc2626', '#059669', '#d97706', '#be185d', '#4338ca', '#0891b2']
-
-interface LogoInstance {
-  id: string
-  x: number
-  y: number
-  params: {
-    seed: string
-    frequency: number
-    amplitude: number
-    complexity: number
-    chaos: number
-    damping: number
-    layers: number
-    barCount: number
-    barSpacing: number
-    radius: number
-    color: string
-    sides: number
-    rotation: number
-    scale: number
-    customParameters: Record<string, any>
-  }
-  code: string
-  presetId?: string // Track which preset this logo is using
-  presetName?: string
-}
+import { DebugOverlay } from '@/components/debug/DebugOverlay'
+import { useDebugAction } from '@/lib/debug/useDebugAction'
+import { useLogoStore } from '@/lib/stores/logoStore'
+import { useUIStore } from '@/lib/stores/uiStore'
+import { useSelectedLogo } from '@/lib/hooks/useSelectedLogo'
+import { stateTracer } from '@/lib/debug/stateUpdateTracer'
 
 export default function Home() {
   const [mounted, setMounted] = useState(false)
-  const [availablePresets, setAvailablePresets] = useState<LoadedPreset[]>([])
   
-  // Multi-logo state
-  const [logos, setLogos] = useState<LogoInstance[]>([
-    {
-      id: 'main',
-      x: -300,
-      y: -300,
-      params: {
-        seed: 'recast-logo',
-        frequency: 4,
-        amplitude: 50,
-        complexity: 0.5,
-        chaos: 0.1,
-        damping: 0.8,
-        layers: 3,
-        barCount: 60,
-        barSpacing: 2,
-        radius: 50,
-        color: '#0070f3',
-        sides: 3,
-        rotation: 0,
-        scale: 1.0,
-        customParameters: {}
-      },
-      code: '// Default wave visualization\nfunction drawVisualization(ctx, width, height, params, generator, time) {\n  ctx.fillStyle = "#ffffff";\n  ctx.fillRect(0, 0, width, height);\n  \n  // Simple wave drawing\n  ctx.strokeStyle = "#0070f3";\n  ctx.lineWidth = 2;\n  ctx.beginPath();\n  \n  for (let x = 0; x < width; x++) {\n    const y = height/2 + Math.sin(x * 0.01 + time) * 50;\n    if (x === 0) ctx.moveTo(x, y);\n    else ctx.lineTo(x, y);\n  }\n  \n  ctx.stroke();\n}',
-      presetName: 'Default Wave'
-    }
-  ])
-  const [selectedLogoId, setSelectedLogoId] = useState('main')
+  // Get state from Zustand stores
+  const { logos, selectedLogoId, selectLogo, updateLogo, updateLogoParameters } = useLogoStore()
+  const { darkMode, setDarkMode } = useUIStore()
+  const { 
+    logo: selectedLogo,
+    coreParams,
+    styleParams,
+    contentParams,
+    customParams,
+    updateCore,
+    updateStyle,
+    updateContent,
+    updateCustom,
+    updateSelectedLogoCode
+  } = useSelectedLogo()
   
   // UI state
-  const [animating, setAnimating] = useState(false)
-  const [codeError, setCodeError] = useState<string | null>(null)
-  const [codeEditorCollapsed, setCodeEditorCollapsed] = useState(false)
-  const [zoom, setZoom] = useState(1)
-  const [isDarkMode, setIsDarkMode] = useState(false)
   const [saveDialogOpen, setSaveDialogOpen] = useState(false)
-  const [saveMode, setSaveMode] = useState<'shape' | 'preset'>('preset')
+  const [saveMode, setSaveMode] = useState<'shape' | 'logo'>('logo')
   const [savedItemsOpen, setSavedItemsOpen] = useState(false)
   const [currentShapeId, setCurrentShapeId] = useState<string | undefined>()
   const [currentShapeName, setCurrentShapeName] = useState('Custom Shape')
-  const [previewMode, setPreviewMode] = useState(false)
   const [forceRender, setForceRender] = useState(0)
-  const [isRendering, setIsRendering] = useState(false)
-  const [renderSuccess, setRenderSuccess] = useState(false)
   const [showIndustrySelector, setShowIndustrySelector] = useState(false)
   const [currentIndustry, setCurrentIndustry] = useState<string | undefined>()
-  const animationRef = useRef<number>()
-  const timeRef = useRef(0)
-
-  // Get currently selected logo
-  const selectedLogo = logos.find(logo => logo.id === selectedLogoId) || logos[0]
-  
-  // Convenience getters for selected logo parameters
-  const seed = selectedLogo.params.seed
-  const frequency = selectedLogo.params.frequency
-  const amplitude = selectedLogo.params.amplitude
-  const complexity = selectedLogo.params.complexity
-  const chaos = selectedLogo.params.chaos
-  const damping = selectedLogo.params.damping
-  const layers = selectedLogo.params.layers
-  const barCount = selectedLogo.params.barCount
-  const barSpacing = selectedLogo.params.barSpacing
-  const radius = selectedLogo.params.radius
-  const color = selectedLogo.params.color
-  const customCode = selectedLogo.code
-  const customParameters = selectedLogo.params.customParameters
-  const currentPresetName = selectedLogo.presetName
-
-  // Load presets on mount
-  useEffect(() => {
-    const loadPresets = async () => {
-      try {
-        const presets = await getAllPresetsAsLegacy()
-        setAvailablePresets(presets)
-        console.log('Loaded presets:', presets.map(p => p.name))
-      } catch (error) {
-        console.error('Failed to load presets:', error)
-      }
-    }
-    
-    if (mounted) {
-      loadPresets()
-    }
-  }, [mounted])
-
-  // Update functions for selected logo parameters
-  const updateSelectedLogo = (updates: Partial<LogoInstance['params']>) => {
-    setLogos(prev => prev.map(logo => 
-      logo.id === selectedLogoId 
-        ? { ...logo, params: { ...logo.params, ...updates } }
-        : logo
-    ))
-  }
-
-  const setSeed = (seed: string) => updateSelectedLogo({ seed })
-  const setFrequency = (frequency: number) => updateSelectedLogo({ frequency })
-  const setAmplitude = (amplitude: number) => updateSelectedLogo({ amplitude })
-  const setComplexity = (complexity: number) => updateSelectedLogo({ complexity })
-  const setChaos = (chaos: number) => updateSelectedLogo({ chaos })
-  const setDamping = (damping: number) => updateSelectedLogo({ damping })
-  const setLayers = (layers: number) => updateSelectedLogo({ layers })
-  const setBarCount = (barCount: number) => updateSelectedLogo({ barCount })
-  const setBarSpacing = (barSpacing: number) => updateSelectedLogo({ barSpacing })
-  const setRadius = (radius: number) => updateSelectedLogo({ radius })
-  const setColor = (color: string) => updateSelectedLogo({ color })
-  const setCustomParameters = (customParameters: Record<string, any>) => updateSelectedLogo({ customParameters })
-  
-  // Update code for selected logo
-  const setCustomCode = (code: string) => {
-    setLogos(prev => prev.map(logo => 
-      logo.id === selectedLogoId 
-        ? { ...logo, code, presetId: undefined, presetName: 'Custom' }
-        : logo
-    ))
-  }
-
-  // Logo management functions
-  const duplicateLogo = (logoId: string) => {
-    const logoToDuplicate = logos.find(logo => logo.id === logoId)
-    if (!logoToDuplicate) return
-    
-    const newId = `logo-${Date.now()}`
-    const newLogo: LogoInstance = {
-      id: newId,
-      x: logoToDuplicate.x + 700, // Place to the right with some spacing
-      y: logoToDuplicate.y,
-      params: { ...logoToDuplicate.params },
-      code: logoToDuplicate.code,
-      presetId: logoToDuplicate.presetId,
-      presetName: logoToDuplicate.presetName
-    }
-    setLogos(prev => [...prev, newLogo])
-    setSelectedLogoId(newId) // Auto-select the new logo
-  }
-
-  const deleteLogo = (logoId: string) => {
-    if (logos.length <= 1) return // Don't delete the last logo
-    
-    setLogos(prev => prev.filter(logo => logo.id !== logoId))
-    
-    // If we deleted the selected logo, select another one
-    if (logoId === selectedLogoId) {
-      const remainingLogos = logos.filter(logo => logo.id !== logoId)
-      if (remainingLogos.length > 0) {
-        setSelectedLogoId(remainingLogos[0].id)
-      }
-    }
-  }
 
   // Set mounted flag after hydration
   useEffect(() => {
     setMounted(true)
+    
+    // Debug functions available in development
+    if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+      (window as any).testThemeLoad = (themeId: string) => loadThemeById(themeId);
+    }
   }, [])
+
+  // Handle URL parameters on mount
+  useEffect(() => {
+    if (!mounted) return;
+    
+    // Parse URL parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const templateParam = urlParams.get('template');
+    const textParam = urlParams.get('text');
+    const letterParam = urlParams.get('letter');
+    const fillColorParam = urlParams.get('fillColor');
+    const strokeColorParam = urlParams.get('strokeColor');
+    const backgroundColorParam = urlParams.get('backgroundColor');
+    
+    // Load template if specified, or load a default template
+    const templateToLoad = templateParam || 'wave-bars';
+    loadThemeById(templateToLoad).then(() => {
+        // After template loads, apply text and color params
+        const updates: Record<string, any> = {};
+        
+        if (textParam) updates.text = textParam;
+        if (letterParam) updates.letter = letterParam;
+        if (fillColorParam) updates.fillColor = fillColorParam;
+        if (strokeColorParam) updates.strokeColor = strokeColorParam;
+        if (backgroundColorParam) updates.backgroundColor = backgroundColorParam;
+        
+        if (Object.keys(updates).length > 0 && selectedLogoId) {
+          updateCustom(updates);
+        }
+    });
+  }, [mounted]); // Only run once after mount
+
+  // Update URL when key parameters change
+  useEffect(() => {
+    if (!mounted || !selectedLogo) return;
+    
+    // Debounce URL updates to avoid too many history entries
+    const timeoutId = setTimeout(() => {
+      updateURLParams();
+    }, 1000);
+    
+    return () => clearTimeout(timeoutId);
+  }, [selectedLogo?.templateId, customParams?.text, customParams?.letter, 
+      customParams?.fillColor, customParams?.strokeColor, customParams?.backgroundColor]);
 
   // Theme detection
   useEffect(() => {
@@ -218,7 +111,7 @@ export default function Home() {
     
     const checkTheme = () => {
       const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches
-      setIsDarkMode(isDark)
+      setDarkMode(isDark)
     }
     
     checkTheme()
@@ -226,7 +119,7 @@ export default function Home() {
     mediaQuery.addEventListener('change', checkTheme)
     
     return () => mediaQuery.removeEventListener('change', checkTheme)
-  }, [mounted])
+  }, [mounted, setDarkMode])
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -243,517 +136,747 @@ export default function Home() {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [mounted])
 
-  // Parse custom parameters when code changes
-  useEffect(() => {
-    const parsedParams = parseCustomParameters(customCode)
-    if (parsedParams) {
-      // Initialize custom parameter values with defaults, preserving existing values
-      const paramValues: Record<string, any> = { ...customParameters }
-      Object.entries(parsedParams).forEach(([key, param]) => {
-        // Only set if the parameter doesn't exist yet
-        if (!(key in paramValues)) {
-          paramValues[key] = param.default ?? 0
-        }
-      })
-      setCustomParameters(paramValues)
-    }
-  }, [customCode])
-
-  // Get metadata for current generator (simplified - just use wave generator)
-  const getCurrentGeneratorMetadata = () => {
-    const generator = GeneratorRegistry.createGenerator('wave', {
-      frequency, amplitude, complexity, chaos, damping, layers, radius
-    }, seed)
-    return generator?.getMetadata()
-  }
-
   // Parse parameter definitions from custom code
   const parseCustomParameters = (code: string) => {
     try {
-      // Look for PARAMETERS = { ... } definition - use a more robust approach
-      const match = code.match(/const\s+PARAMETERS\s*=\s*({[\s\S]*?^});/m)
+      // Look for PARAMETERS = { ... } definition
+      const patterns = [
+        /const\s+PARAMETERS\s*=\s*({[\s\S]*?}\s*});/m,
+        /const\s+PARAMETERS\s*=\s*({[\s\S]*?});/m,
+        /const\s+PARAMETERS\s*=\s*({[^}]+});/,
+        /const\s+PARAMETERS\s*=\s*\{([\s\S]*?)\};/m
+      ];
+      
+      let match = null;
+      for (const pattern of patterns) {
+        match = code.match(pattern);
+        if (match) break;
+      }
+      
       if (!match) return null
       
       const fullParamsBlock = match[1]
       
-      // Try to parse as actual JavaScript object (safer approach)
+      // Try to parse as actual JavaScript object
       try {
-        // Replace the object with a safer evaluation
-        const paramsCode = `(${fullParamsBlock})`
+        const safeParamsBlock = fullParamsBlock.replace(
+          /showIf:\s*\(([^)]*)\)\s*=>\s*([^,}]+)/g,
+          'showIf: function($1) { return $2; }'
+        );
+        
+        const paramsCode = `(${safeParamsBlock})`
         const paramsObj = eval(paramsCode)
         
-        // Convert to our expected format
         const parameters: Record<string, any> = {}
         for (const [paramName, paramDef] of Object.entries(paramsObj)) {
           parameters[paramName] = paramDef
         }
-        
         return parameters
       } catch (evalError) {
-        console.warn('Failed to eval parameters, falling back to regex:', evalError)
-        
-        // Fallback to improved regex parsing
-        const paramsString = fullParamsBlock.slice(1, -1) // Remove outer braces
-        
-        // Find parameter blocks by looking for paramName: { ... } patterns
-        // Use a more sophisticated approach to handle nested braces
-        const parameters: Record<string, any> = {}
-        
-        // Split by commas at the top level only
-        let currentPos = 0
-        let braceDepth = 0
-        let currentParam = ''
-        let inString = false
-        let stringChar = ''
-        
-        for (let i = 0; i < paramsString.length; i++) {
-          const char = paramsString[i]
-          const prevChar = i > 0 ? paramsString[i - 1] : ''
-          
-          if (!inString && (char === '"' || char === "'")) {
-            inString = true
-            stringChar = char
-          } else if (inString && char === stringChar && prevChar !== '\\') {
-            inString = false
-          } else if (!inString) {
-            if (char === '{') braceDepth++
-            else if (char === '}') braceDepth--
-            else if (char === ',' && braceDepth === 0) {
-              // Found a top-level comma - process the parameter
-              const paramBlock = paramsString.slice(currentPos, i).trim()
-              if (paramBlock) {
-                parseParameterBlock(paramBlock, parameters)
-              }
-              currentPos = i + 1
-            }
-          }
-        }
-        
-        // Process the last parameter
-        const lastParamBlock = paramsString.slice(currentPos).trim()
-        if (lastParamBlock) {
-          parseParameterBlock(lastParamBlock, parameters)
-        }
-        
-        return parameters
+        console.error('Failed to evaluate PARAMETERS object:', evalError)
+        return null
       }
     } catch (error) {
       console.warn('Failed to parse custom parameters:', error)
       return null
     }
   }
-  
-  // Helper function to parse individual parameter blocks
-  const parseParameterBlock = (block: string, parameters: Record<string, any>) => {
-    const colonIndex = block.indexOf(':')
-    if (colonIndex === -1) return
-    
-    const paramName = block.slice(0, colonIndex).trim()
-    const paramDefString = block.slice(colonIndex + 1).trim()
-    
-    const param: any = { name: paramName }
-    
-    // Extract properties using regex
-    const typeMatch = paramDefString.match(/type:\s*['"]([^'"]*)['"]/);
-    const minMatch = paramDefString.match(/min:\s*([\d.]+)/);
-    const maxMatch = paramDefString.match(/max:\s*([\d.]+)/);
-    const stepMatch = paramDefString.match(/step:\s*([\d.]+)/);
-    const defaultMatch = paramDefString.match(/default:\s*(['"]?)([^'",\s}]+)\1/);
-    const labelMatch = paramDefString.match(/label:\s*['"]([^'"]*)['"]/);
-    const optionsMatch = paramDefString.match(/options:\s*\[([^\]]*)\]/);
-    
-    if (typeMatch) param.type = typeMatch[1];
-    if (minMatch) param.min = parseFloat(minMatch[1]);
-    if (maxMatch) param.max = parseFloat(maxMatch[1]);
-    if (stepMatch) param.step = parseFloat(stepMatch[1]);
-    if (defaultMatch) {
-      const defaultValue = defaultMatch[2];
-      param.default = isNaN(Number(defaultValue)) ? defaultValue : parseFloat(defaultValue);
-    }
-    if (labelMatch) param.label = labelMatch[1];
-    if (optionsMatch) {
-      const optionsStr = optionsMatch[1];
-      param.options = optionsStr.split(',').map(opt => opt.trim().replace(/['"]/g, ''));
-    }
-    
-    parameters[paramName] = param;
-  }
 
   // Manual refresh function
   const handleRunCode = useCallback(() => {
-    setIsRendering(true)
-    setRenderSuccess(false)
     setForceRender(prev => prev + 1)
-    
-    // Clear any animation state to force a clean render
-    if (animationRef.current) {
-      cancelAnimationFrame(animationRef.current)
-    }
-    
-    // Give visual feedback
-    setTimeout(() => {
-      setIsRendering(false)
-      setRenderSuccess(true)
-      
-      // Hide success after a moment
-      setTimeout(() => {
-        setRenderSuccess(false)
-      }, 1500)
-    }, 300)
   }, [])
 
-  const handleCloneToCustom = () => {
-    const currentCode = selectedLogo.code
-    setCustomCode(currentCode)
-    setCurrentShapeId(undefined)
-    setCurrentShapeName((selectedLogo.presetName || 'Custom') + ' (Clone)')
-  }
-
-  const getShapeNameForMode = () => {
-    return selectedLogo.presetName || 'Custom'
-  }
-
-  const toggleAnimation = () => {
-    if (animating) {
-      setAnimating(false)
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current)
-      }
-    } else {
-      setAnimating(true)
-      const animate = () => {
-        timeRef.current += 0.05
-        setForceRender(prev => prev + 1) // We need this to trigger redraws
-        animationRef.current = requestAnimationFrame(animate)
-      }
-      animate()
-    }
-  }
-
-  const randomizeParams = () => {
-    setSeed(Math.random().toString(36).substring(7))
-    setFrequency(Math.floor(Math.random() * 8) + 1)
-    setAmplitude(Math.floor(Math.random() * 80) + 20)
-    setComplexity(Math.random())
-    setChaos(Math.random() * 0.3)
-    setDamping(0.5 + Math.random() * 0.5)
-    setLayers(Math.floor(Math.random() * 5) + 1)
-    setColor(colorPalette[Math.floor(Math.random() * colorPalette.length)])
-  }
-
-  // Load preset by ID
-  const loadPresetById = async (presetId: string, customDefaults?: Record<string, any>) => {
+  // Load theme by ID
+  const loadThemeById = async (themeId: string, customDefaults?: Record<string, any>) => {
+    if (!selectedLogoId) return;
+    
     try {
-      console.log('Loading preset by ID:', presetId)
-      const preset = await loadPresetAsLegacy(presetId)
+      // Direct import of the template module
+      const template = await import(`@/templates/${themeId}`);
       
-      if (!preset) {
-        console.error('Preset not found:', presetId)
+      if (!template || !template.code) {
+        console.error('Theme not found:', themeId)
         return
       }
       
-      console.log('Loaded preset:', preset.name, 'Code length:', preset.code.length)
+      // Parse the theme code to get parameter definitions
+      const parsedParams = parseCustomParameters(template.code) || {};
       
-      // Merge preset defaults with custom defaults (industry-specific or otherwise)
+      // Text parameters that should be preserved
+      const textParams = ['text', 'letter', 'letters', 'brandName', 'words', 'title', 'subtitle'];
+      
+      // Build complete parameters from definitions and defaults
+      const completeParams: Record<string, any> = {};
+      Object.entries(parsedParams).forEach(([key, paramDef]) => {
+        if (paramDef.default !== undefined) {
+          completeParams[key] = paramDef.default;
+        }
+      });
+      
+      // Get current text values to preserve
+      const currentTextValues: Record<string, any> = {};
+      textParams.forEach(param => {
+        if (customParams?.[param] !== undefined) {
+          currentTextValues[param] = customParams[param];
+        }
+      });
+      
+      // Merge theme defaults with custom defaults
       const mergedParams = {
-        ...preset.defaultParams,
-        ...customDefaults
-      }
+        ...completeParams,
+        ...template.defaultParams,
+        ...customDefaults,
+        ...currentTextValues // Preserve text values
+      };
       
-      // Update the selected logo with preset data
-      setLogos(prev => prev.map(logo => 
-        logo.id === selectedLogoId 
-          ? { 
-              ...logo, 
-              params: { 
-                ...logo.params,
-                ...mergedParams, // Apply merged parameters
-                customParameters: {
-                  ...logo.params.customParameters, // Preserve existing parameters
-                  ...mergedParams // Then apply new ones
-                }
-              },
-              code: preset.code, // Set the preset code
-              presetId: preset.id,
-              presetName: preset.name
-            }
-          : logo
-      ))
+      // Update logo in Zustand
+      updateLogo(selectedLogoId, {
+        code: template.code,
+        templateId: template.id,
+        templateName: template.name,
+      });
+      
+      // Update parameters
+      updateLogoParameters(selectedLogoId, {
+        custom: mergedParams
+      });
       
       // Force re-render
       setForceRender(prev => prev + 1)
-      console.log('Preset loaded successfully:', preset.name)
       
     } catch (error) {
-      console.error('Failed to load preset:', error)
+      console.error('Failed to load theme:', error)
     }
   }
   
-  // Handle preset selection from industry selector
-  const handleIndustryPresetSelect = async (presetId: string, industryDefaults?: Record<string, any>, industryId?: string) => {
-    await loadPresetById(presetId, industryDefaults)
+  // Handle theme selection from industry selector
+  const handleIndustryThemeSelect = async (themeId: string, industryDefaults?: Record<string, any>, industryId?: string) => {
+    await loadThemeById(themeId, industryDefaults)
     setCurrentIndustry(industryId)
     setShowIndustrySelector(false)
   }
 
+  // Handle brand personality application (parameters only, no template change)
+  const handleApplyBrandPersonality = (personalityParams: Record<string, any>) => {
+    if (selectedLogoId) {
+      updateCustom(personalityParams);
+      setForceRender(prev => prev + 1)
+    }
+  }
+
   // Handle color theme application
   const handleApplyColorTheme = (themedParams: Record<string, any>) => {
-    setLogos(prev => prev.map(logo => 
-      logo.id === selectedLogoId 
-        ? { 
-            ...logo, 
-            params: {
-              ...logo.params,
-              customParameters: {
-                ...logo.params.customParameters,
-                ...themedParams
-              }
-            }
-          }
-        : logo
-    ))
-    setCustomParameters(prev => ({
-      ...prev,
-      ...themedParams
-    }))
-    // Force re-render to apply the theme changes
-    setForceRender(prev => prev + 1)
+    const allowedColorParams = [
+      'fillColor', 'strokeColor', 'backgroundColor', 'textColor',
+      'backgroundGradientStart', 'backgroundGradientEnd',
+      'fillGradientStart', 'fillGradientEnd',
+      'strokeGradientStart', 'strokeGradientEnd'
+    ];
+    
+    const colorOnlyParams = Object.entries(themedParams).reduce((acc, [key, value]) => {
+      if (allowedColorParams.includes(key)) {
+        acc[key] = value;
+      }
+      return acc;
+    }, {} as Record<string, any>);
+    
+    if (selectedLogoId) {
+      updateStyle({
+        fillColor: colorOnlyParams.fillColor || styleParams?.fillColor,
+        strokeColor: colorOnlyParams.strokeColor || styleParams?.strokeColor,
+        backgroundColor: colorOnlyParams.backgroundColor || styleParams?.backgroundColor,
+      });
+      updateCustom(colorOnlyParams);
+      setForceRender(prev => prev + 1)
+    }
+  }
+
+  // Apply template preset
+  const handleApplyTemplatePreset = (presetParams: Record<string, any>) => {
+    if (selectedLogoId) {
+      updateCustom(presetParams);
+      setForceRender(prev => prev + 1);
+    }
   }
 
   // Apply brand preset from AI or examples
   const handleApplyBrandPreset = async (brandPreset: any) => {
     try {
-      console.log('Applying brand preset:', brandPreset.name)
-      
       // First load the base preset if it's different from current
-      if (brandPreset.preset !== selectedLogo.presetId) {
-        await loadPresetById(brandPreset.preset)
+      if (brandPreset.preset !== selectedLogo?.templateId) {
+        await loadThemeById(brandPreset.preset)
       }
       
-      // Then apply the custom parameters
-      setLogos(prev => prev.map(logo => 
-        logo.id === selectedLogoId 
-          ? { 
-              ...logo, 
-              params: { 
-                ...logo.params,
-                customParameters: {
-                  ...logo.params.customParameters,
-                  ...brandPreset.params
-                }
-              }
-            }
-          : logo
-      ))
+      // Filter out text-based parameters that shouldn't be overridden
+      const textParams = ['text', 'letter', 'letters', 'brandName', 'words', 'title', 'subtitle'];
+      const filteredParams = Object.fromEntries(
+        Object.entries(brandPreset.params).filter(([key]) => !textParams.includes(key))
+      );
       
-      // Update custom parameters state for the controls panel
-      setCustomParameters(prev => ({
-        ...prev,
-        ...brandPreset.params
-      }))
-      
-      // Force re-render
-      setForceRender(prev => prev + 1)
-      console.log('Brand preset applied successfully:', brandPreset.name)
+      if (selectedLogoId) {
+        updateCustom(filteredParams);
+        setForceRender(prev => prev + 1)
+      }
       
     } catch (error) {
       console.error('Failed to apply brand preset:', error)
     }
   }
 
-  const exportAsPNG = async (size?: number, filename?: string) => {
-    // Implementation would go here - simplified for brevity
-    alert(`Exporting PNG ${size ? `at ${size}x${size}` : ''}...`)
-  }
+  // Register debug actions
+  useDebugAction([
+    {
+      id: 'toggle-state-tracer',
+      label: 'Toggle State Tracer',
+      description: 'Enable/disable state update tracing',
+      category: 'State Management',
+      icon: '🔍',
+      handler: async () => {
+        if ((window as any).stateTracer?.enabled) {
+          stateTracer.disable();
+          console.log('State tracer disabled');
+        } else {
+          stateTracer.enable();
+          console.log('State tracer enabled - watch console for state updates');
+        }
+      }
+    },
+    {
+      id: 'analyze-state-updates',
+      label: 'Analyze State Updates',
+      description: 'Show state update patterns',
+      category: 'State Management',
+      icon: '📊',
+      handler: async () => {
+        stateTracer.analyze();
+      }
+    },
+    {
+      id: 'export-state-table',
+      label: 'Export State Table',
+      description: 'Show all state updates in table',
+      category: 'State Management',
+      icon: '📋',
+      handler: async () => {
+        stateTracer.exportToTable();
+      }
+    },
+    {
+      id: 'load-4-logos',
+      label: 'Load 4 Brand Options',
+      description: '2x2 grid',
+      category: 'Reflow Brand',
+      icon: '🎨',
+      handler: async () => {
+        if (typeof window !== 'undefined' && (window as any).load4Logos) {
+          await (window as any).load4Logos();
+        }
+      }
+    },
+    {
+      id: 'init-reflow',
+      label: 'Create Reflow Wordmark',
+      description: 'Brand logo',
+      category: 'Reflow Brand',
+      icon: '✨',
+      handler: async () => {
+        if (typeof window !== 'undefined' && (window as any).initReflow) {
+          await (window as any).initReflow();
+        }
+      }
+    },
+    {
+      id: 'list-logo-ids',
+      label: 'List Logo IDs',
+      description: 'In console',
+      category: 'Logo Management',
+      icon: '📋',
+      handler: async () => {
+        if (typeof window !== 'undefined' && (window as any).listLogoIds) {
+          const instances = await (window as any).listLogoIds();
+          console.log(`📋 Found ${instances.length} tracked logos`);
+        }
+      }
+    },
+    {
+      id: 'debug-logos',
+      label: 'Debug Logo State',
+      description: 'Console output',
+      category: 'Logo Management',
+      icon: '🔍',
+      handler: async () => {
+        if (typeof window !== 'undefined' && (window as any).debugLogos) {
+          await (window as any).debugLogos();
+        }
+      }
+    },
+    {
+      id: 'clear-logo-ids',
+      label: 'Clear Logo IDs',
+      description: 'Reset tracking',
+      category: 'Logo Management',
+      icon: '🗑️',
+      handler: async () => {
+        if (typeof window !== 'undefined' && (window as any).clearLogoIds) {
+          await (window as any).clearLogoIds();
+        }
+      },
+      dangerous: true
+    },
+    {
+      id: 'clear-canvas-state',
+      label: 'Clear Canvas State',
+      description: 'Reset all logos',
+      category: 'State Management',
+      icon: '🧹',
+      handler: async () => {
+        const { useLogoStore } = await import('@/lib/stores/logoStore');
+        useLogoStore.getState().clearPersistedState();
+        console.log('✅ Canvas state cleared. Reload the page to start fresh.');
+      },
+      dangerous: true
+    },
+    {
+      id: 'debug-all-logos',
+      label: 'Debug All Logo IDs',
+      description: 'Show all logo IDs',
+      category: 'State Management',
+      icon: '🆔',
+      handler: async () => {
+        const { useLogoStore } = await import('@/lib/stores/logoStore');
+        const state = useLogoStore.getState();
+        console.log('🆔 ALL LOGO IDs');
+        console.log('════════════════');
+        state.logos.forEach((logo, index) => {
+          console.log(`Logo ${index + 1}:`);
+          console.log(`  ID: ${logo.id}`);
+          console.log(`  Position: (${logo.position.x}, ${logo.position.y})`);
+          console.log(`  Template: ${logo.templateId}`);
+          console.log(`  Selected: ${logo.id === state.selectedLogoId ? '✅ YES' : '❌ NO'}`);
+        });
+        console.log('');
+        console.log(`Selected Logo ID: ${state.selectedLogoId}`);
+      }
+    }
+  ]);
 
-  const exportAllSizes = async () => {
-    alert('Exporting all sizes...')
-  }
+  // Initialize Reflow brand treatment functions
+  useEffect(() => {
+    if (!mounted || typeof window === 'undefined') return;
+    
+    // Initialize Reflow brand
+    (window as any).initReflow = async () => {
+      console.log('✨ Creating Reflow brand identity...');
+      
+      const templateId = 'wordmark';
+      await loadThemeById(templateId);
+      
+      const reflowParams = {
+        text: 'reflow',
+        fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif',
+        fontSize: 48,
+        fontWeight: 600,
+        letterSpacing: -3,
+        textTransform: 'lowercase',
+        textAlign: 'left',
+        frequency: 0,
+        amplitude: 0,
+        complexity: 0,
+        chaos: 0,
+        damping: 1,
+        layers: 1,
+        backgroundType: 'transparent',
+        fillType: 'solid',
+        fillColor: '#000000',
+        fillOpacity: 1,
+        strokeType: 'none',
+        showFrame: false,
+        framePadding: 0,
+        seed: 'reflow-2024'
+      };
+      
+      if (selectedLogoId) {
+        updateCore({
+          frequency: reflowParams.frequency,
+          amplitude: reflowParams.amplitude,
+          complexity: reflowParams.complexity,
+          chaos: reflowParams.chaos,
+          damping: reflowParams.damping,
+          layers: reflowParams.layers
+        });
+        updateCustom(reflowParams);
+        setForceRender(prev => prev + 1);
+      }
+      
+      console.log('✨ Reflow wordmark created');
+    };
+    
+    // Simple color options
+    (window as any).reflowColor = async (color: string) => {
+      const colors: Record<string, any> = {
+        black: {
+          fillType: 'solid',
+          fillColor: '#000000',
+          backgroundType: 'transparent'
+        },
+        blue: {
+          fillType: 'solid', 
+          fillColor: '#0066FF',
+          backgroundType: 'transparent'
+        },
+        gradient: {
+          fillType: 'gradient',
+          fillGradientStart: '#7c3aed',
+          fillGradientEnd: '#06b6d4',
+          fillGradientDirection: 135,
+          backgroundType: 'transparent'
+        }
+      };
+      
+      const colorParams = colors[color];
+      if (!colorParams) {
+        console.error('Unknown color:', color);
+        console.log('Available: black, blue, gradient');
+        return;
+      }
+      
+      if (selectedLogoId) {
+        updateCustom(colorParams);
+        setForceRender(prev => prev + 1);
+        console.log(`✅ Applied ${color} color`);
+      }
+    };
+    
+    // Load 4 logos utility
+    (window as any).load4Logos = async () => {
+      const { LogoIdManager } = await import('@/lib/utils/logoIdManager');
+      const { useLogoStore } = await import('@/lib/stores/logoStore');
+      const logoStore = useLogoStore.getState();
+      
+      LogoIdManager.clearInstances();
+      
+      const currentLogos = [...logoStore.logos];
+      if (currentLogos.length > 1) {
+        currentLogos.slice(1).forEach(logo => logoStore.deleteLogo(logo.id));
+      }
+      
+      await new Promise(resolve => setTimeout(resolve, 200));
+      
+      const [wordmark, letterMark, waveBars, prismGoogle] = await Promise.all([
+        import('@/templates/wordmark'),
+        import('@/templates/letter-mark'),
+        import('@/templates/wave-bars'),
+        import('@/templates/prism-google')
+      ]);
+      
+      const positions = [
+        { x: 0, y: 0 },
+        { x: 700, y: 0 },
+        { x: 0, y: 700 },
+        { x: 700, y: 700 }
+      ];
+      
+      // Logo 1: Wordmark
+      let logo1Id: string;
+      if (logoStore.logos.length > 0) {
+        logo1Id = logoStore.logos[0].id;
+        logoStore.updateLogoPosition(logo1Id, positions[0]);
+        logoStore.updateLogo(logo1Id, {
+          templateId: 'wordmark',
+          templateName: 'Wordmark',
+          code: wordmark.code
+        });
+      } else {
+        logo1Id = logoStore.addLogo('wordmark');
+        await new Promise(resolve => setTimeout(resolve, 50));
+        logoStore.updateLogoPosition(logo1Id, positions[0]);
+        logoStore.updateLogo(logo1Id, {
+          templateId: 'wordmark',
+          templateName: 'Wordmark',
+          code: wordmark.code
+        });
+      }
+      
+      logoStore.updateLogoParameters(logo1Id, {
+        custom: {
+          text: 'reflow',
+          fontFamily: 'Inter, -apple-system, sans-serif',
+          fontSize: 56,
+          fontWeight: 600,
+          letterSpacing: -2,
+          fillType: 'solid',
+          fillColor: '#000000',
+          strokeType: 'none',
+          backgroundType: 'transparent',
+          frequency: 0,
+          amplitude: 0
+        }
+      });
+      
+      // Logo 2: Letter Mark
+      const logo2Id = logoStore.addLogo('letter-mark');
+      await new Promise(resolve => setTimeout(resolve, 50));
+      logoStore.updateLogoPosition(logo2Id, positions[1]);
+      logoStore.updateLogo(logo2Id, {
+        templateId: 'letter-mark',
+        templateName: 'Letter Mark',
+        code: letterMark.code
+      });
+      logoStore.updateLogoParameters(logo2Id, {
+        custom: {
+          letter: 'R',
+          fontFamily: 'Inter, -apple-system, sans-serif',
+          fontSize: 120,
+          fontWeight: 700,
+          fillType: 'solid',
+          fillColor: '#0066FF',
+          strokeType: 'none',
+          backgroundType: 'transparent'
+        }
+      });
+      
+      // Logo 3: Wave Bars
+      const logo3Id = logoStore.addLogo('wave-bars');
+      await new Promise(resolve => setTimeout(resolve, 50));
+      logoStore.updateLogoPosition(logo3Id, positions[2]);
+      logoStore.updateLogo(logo3Id, {
+        templateId: 'wave-bars',
+        templateName: 'Wave Bars',
+        code: waveBars.code
+      });
+      logoStore.updateLogoParameters(logo3Id, {
+        core: {
+          frequency: 2,
+          amplitude: 40,
+          complexity: 0.2,
+          chaos: 0
+        },
+        custom: {
+          barCount: 7,
+          barSpacing: 3,
+          fillType: 'gradient',
+          fillGradientStart: '#7c3aed',
+          fillGradientEnd: '#06b6d4',
+          fillGradientDirection: 45,
+          strokeType: 'none',
+          backgroundType: 'transparent'
+        }
+      });
+      
+      // Logo 4: Prism
+      const logo4Id = logoStore.addLogo('prism-google');
+      await new Promise(resolve => setTimeout(resolve, 50));
+      logoStore.updateLogoPosition(logo4Id, positions[3]);
+      logoStore.updateLogo(logo4Id, {
+        templateId: 'prism-google',
+        templateName: 'Prism',
+        code: prismGoogle.code
+      });
+      logoStore.updateLogoParameters(logo4Id, {
+        custom: {
+          symmetry: 6,
+          radius: 60,
+          colorMode: 'monochrome',
+          fillType: 'solid',
+          fillColor: '#000000',
+          strokeType: 'none',
+          backgroundType: 'transparent',
+          frequency: 0,
+          amplitude: 0
+        }
+      });
+      
+      logoStore.selectLogo(logo1Id);
+      setForceRender(prev => prev + 1);
+      
+      const savedInstances = LogoIdManager.loadInstances();
+      console.log('');
+      console.log('✅ 4 logos created with ID tracking!');
+      console.log(`📍 Top left: ${logo1Id} - reflow wordmark (black)`);
+      console.log(`📍 Top right: ${logo2Id} - R lettermark (blue)`);  
+      console.log(`📍 Bottom left: ${logo3Id} - Wave bars (gradient)`);
+      console.log(`📍 Bottom right: ${logo4Id} - Hexagon (black)`);
+      console.log('');
+      console.log('💾 Saved to localStorage:', savedInstances);
+    };
+    
+    // Logo ID management utilities
+    (window as any).listLogoIds = async () => {
+      const { LogoIdManager } = await import('@/lib/utils/logoIdManager');
+      const instances = LogoIdManager.loadInstances();
+      console.log('📋 Tracked Logo Instances:');
+      console.log('═══════════════════════════');
+      if (instances.length === 0) {
+        console.log('No logos tracked in localStorage');
+      } else {
+        instances.forEach((instance, index) => {
+          console.log(`${index + 1}. ID: ${instance.id}`);
+          console.log(`   Position: (${instance.position.x}, ${instance.position.y})`);
+          console.log(`   Template: ${instance.templateId || 'unknown'}`);
+        });
+      }
+      return instances;
+    };
+    
+    (window as any).clearLogoIds = async () => {
+      const { LogoIdManager } = await import('@/lib/utils/logoIdManager');
+      LogoIdManager.clearInstances();
+      console.log('✅ Cleared all tracked logo IDs from localStorage');
+    };
+    
+    // Debug utility
+    (window as any).debugLogos = async () => {
+      const { useLogoStore } = await import('@/lib/stores/logoStore');
+      const logoStore = useLogoStore.getState();
+      
+      console.log('🔍 Current Logo State:');
+      console.log('════════════════════════');
+      console.log(`Total logos: ${logoStore.logos.length}`);
+      console.log(`Selected logo: ${logoStore.selectedLogoId}`);
+      console.log('');
+      
+      logoStore.logos.forEach((logo, index) => {
+        console.log(`Logo ${index + 1}:`);
+        console.log(`  ID: ${logo.id}`);
+        console.log(`  Template: ${logo.templateId} (${logo.templateName})`);
+        console.log(`  Position: (${logo.position.x}, ${logo.position.y})`);
+        console.log(`  Has code: ${logo.code ? 'Yes' : 'No'}`);
+        console.log(`  Parameters:`, logo.parameters.custom);
+        console.log('');
+      });
+    };
+    
+    // Startup message
+    setTimeout(() => {
+      console.log('');
+      console.log('🚀 REFLOW BRAND SYSTEM');
+      console.log('════════════════════════');
+      console.log('');
+      console.log('🐛 Debug Toolbar: Look for the bug icon button in the bottom-right corner!');
+      console.log('');
+      console.log('Console Commands:');
+      console.log('• window.initReflow() - Create wordmark');
+      console.log('• window.reflowColor("black"|"blue"|"gradient") - Apply color');
+      console.log('• window.load4Logos() - Load 4 logos with ID tracking');
+      console.log('• window.listLogoIds() - List tracked logo IDs');
+      console.log('• window.clearLogoIds() - Clear ID tracking');
+      console.log('• window.debugLogos() - Debug current logo state');
+    }, 1000);
+    
+  }, [mounted, selectedLogoId, updateCore, updateCustom]); // Add dependencies
 
-  const exportAsSVG = () => {
-    alert('SVG export coming soon!')
-  }
-
-  const shareLink = () => {
-    const params = new URLSearchParams({
-      seed,
-      frequency: frequency.toString(),
-      amplitude: amplitude.toString(),
-      complexity: complexity.toString(),
-      chaos: chaos.toString(),
-      damping: damping.toString(),
-      layers: layers.toString(),
-      barCount: barCount.toString(),
-      barSpacing: barSpacing.toString(),
-    })
-    const url = `${window.location.origin}${window.location.pathname}?${params.toString()}`
-    navigator.clipboard.writeText(url)
-  }
+  // Update URL with current parameters
+  const updateURLParams = () => {
+    if (!selectedLogo) return;
+    
+    const params = new URLSearchParams();
+    
+    if (selectedLogo.templateId) {
+      params.set('template', selectedLogo.templateId);
+    }
+    
+    if (customParams?.text) params.set('text', customParams.text);
+    if (customParams?.letter) params.set('letter', customParams.letter);
+    
+    if (customParams?.fillColor && customParams.fillColor !== '#3b82f6') {
+      params.set('fillColor', customParams.fillColor);
+    }
+    if (customParams?.strokeColor && customParams.strokeColor !== '#1e40af') {
+      params.set('strokeColor', customParams.strokeColor);
+    }
+    if (customParams?.backgroundColor && customParams.backgroundColor !== '#ffffff') {
+      params.set('backgroundColor', customParams.backgroundColor);
+    }
+    
+    const newURL = `${window.location.pathname}${params.toString() ? '?' + params.toString() : ''}`;
+    window.history.replaceState({}, '', newURL);
+  };
 
   const handleLoadShape = (shape: SavedShape) => {
-    setCustomCode(shape.code)
-    setCurrentShapeId(shape.id)
-    setCurrentShapeName(shape.name)
-    
-    // Force re-render after all state updates
-    setForceRender(prev => prev + 1)
+    if (selectedLogoId) {
+      updateSelectedLogoCode(shape.code)
+      setCurrentShapeId(shape.id)
+      setCurrentShapeName(shape.name)
+      setForceRender(prev => prev + 1)
+    }
   }
 
-  const handleLoadPreset = (preset: SavedPreset) => {
-    setSeed(preset.params.seed)
-    setFrequency(preset.params.frequency)
-    setAmplitude(preset.params.amplitude)
-    setComplexity(preset.params.complexity)
-    setChaos(preset.params.chaos)
-    setDamping(preset.params.damping)
-    setLayers(preset.params.layers)
-    if (preset.params.barCount) setBarCount(preset.params.barCount)
-    if (preset.params.barSpacing) setBarSpacing(preset.params.barSpacing)
-    if (preset.params.radius) setRadius(preset.params.radius)
-    if (preset.params.color) setColor(preset.params.color)
-    if (preset.shapeId) setCurrentShapeId(preset.shapeId)
-    
-    // Force re-render after all state updates
-    setForceRender(prev => prev + 1)
-  }
-
-  const openSaveDialog = (mode: 'shape' | 'preset') => {
-    setSaveMode(mode)
-    setSaveDialogOpen(true)
+  const handleLoadLogo = (logo: SavedLogo) => {
+    if (selectedLogoId) {
+      // Update parameters from saved logo
+      updateCore({
+        frequency: logo.parameters.core.frequency,
+        amplitude: logo.parameters.core.amplitude,
+        complexity: logo.parameters.core.complexity,
+        chaos: logo.parameters.core.chaos,
+        damping: logo.parameters.core.damping,
+        layers: logo.parameters.core.layers,
+        radius: logo.parameters.core.radius
+      });
+      
+      updateStyle({
+        fillColor: logo.parameters.style.fillColor,
+        strokeColor: logo.parameters.style.strokeColor,
+        backgroundColor: logo.parameters.style.backgroundColor
+      });
+      
+      if (logo.parameters.custom.barCount || logo.parameters.custom.barSpacing) {
+        updateCustom({
+          barCount: logo.parameters.custom.barCount,
+          barSpacing: logo.parameters.custom.barSpacing
+        });
+      }
+      
+      if (logo.shape.id) setCurrentShapeId(logo.shape.id)
+      
+      setForceRender(prev => prev + 1)
+    }
   }
 
   // Show loading state during SSR and initial hydration
   if (!mounted) return null
 
-  // Create visualization params
-  const visualizationParams: VisualizationParams = {
-    seed,
-    frequency,
-    amplitude,
-    complexity,
-    chaos,
-    damping,
-    layers,
-    barCount,
-    barSpacing,
-    radius,
-    color,
-    customParameters,
-    time: timeRef.current
-  }
-
   return (
     <div className="h-screen overflow-hidden bg-gradient-to-br from-gray-50 to-white flex flex-col">
-      <StudioHeader
-        onRandomize={randomizeParams}
-        onSavePreset={() => openSaveDialog('preset')}
-        onSaveShape={() => openSaveDialog('shape')}
-        onOpenLibrary={() => setSavedItemsOpen(true)}
-        onOpenIndustrySelector={() => setShowIndustrySelector(true)}
-        onShare={shareLink}
-        onExportPNG={exportAsPNG}
-        onExportAllSizes={exportAllSizes}
-        onExportSVG={exportAsSVG}
-        visualMode={selectedLogo.presetId ? 'preset' : 'custom'}
-      />
+      <StudioHeader />
 
       <div className="flex flex-1 overflow-hidden">
-        <CodeEditorPanel
-          collapsed={codeEditorCollapsed}
-          onSetCollapsed={setCodeEditorCollapsed}
-          presets={availablePresets}
-          onLoadPreset={loadPresetById}
-          currentShapeName={currentShapeName}
-          onSetCurrentShapeName={setCurrentShapeName}
-          currentShapeId={currentShapeId}
-          currentPresetName={selectedLogo.presetName}
-          codeError={codeError}
-          code={customCode}
-          onCodeChange={setCustomCode}
-          isDarkMode={isDarkMode}
-          isRendering={isRendering}
-          renderSuccess={renderSuccess}
-          onRunCode={handleRunCode}
-          onSaveShape={() => openSaveDialog('shape')}
-          onCloneToCustom={handleCloneToCustom}
-          getShapeNameForMode={getShapeNameForMode}
-        />
-
-        <CanvasArea
-          logos={logos}
-          selectedLogoId={selectedLogoId}
-          onSelectLogo={setSelectedLogoId}
-          onDuplicateLogo={duplicateLogo}
-          onDeleteLogo={deleteLogo}
-          animating={animating}
-          zoom={zoom}
-          previewMode={previewMode}
-          isRendering={isRendering}
-          currentTime={timeRef.current}
-          onToggleAnimation={toggleAnimation}
-          onSetZoom={setZoom}
-          onTogglePreview={() => setPreviewMode(!previewMode)}
-          onCodeError={setCodeError}
-          forceRender={forceRender}
-        />
+        <CanvasArea />
 
         <div className="flex">
-          <ControlsPanel
-            currentPresetName={currentPresetName}
-            seed={seed}
-            frequency={frequency}
-            amplitude={amplitude}
-            complexity={complexity}
-            chaos={chaos}
-            damping={damping}
-            layers={layers}
-            barCount={barCount}
-            barSpacing={barSpacing}
-            radius={radius}
-            customCode={customCode}
-            customParameters={customParameters}
-            onSeedChange={setSeed}
-            onFrequencyChange={setFrequency}
-            onAmplitudeChange={setAmplitude}
-            onComplexityChange={setComplexity}
-            onChaosChange={setChaos}
-            onDampingChange={setDamping}
-            onLayersChange={setLayers}
-            onBarCountChange={setBarCount}
-            onBarSpacingChange={setBarSpacing}
-            onRadiusChange={setRadius}
-            onCustomParametersChange={setCustomParameters}
-            getCurrentGeneratorMetadata={getCurrentGeneratorMetadata}
-            parseCustomParameters={parseCustomParameters}
-            forceRender={forceRender}
-            onForceRender={() => setForceRender(prev => prev + 1)}
-          />
+          <ControlsPanel />
           
           <div className="w-80 border-l bg-white/50 backdrop-blur-sm overflow-y-auto">
             <div className="p-4 space-y-4">
               <AIBrandConsultant
-                currentParams={customParameters}
+                currentParams={customParams}
                 onApplyRecommendation={handleApplyColorTheme}
               />
               <ColorThemeSelector
                 currentIndustry={currentIndustry}
-                currentParams={customParameters}
+                currentParams={customParams}
                 onApplyTheme={handleApplyColorTheme}
+              />
+              <TemplatePresetsPanel
+                currentTemplate={selectedLogo?.templateId || 'custom'}
+                currentParams={customParams}
+                onApplyPreset={handleApplyTemplatePreset}
               />
               <AISuggestions
                 currentIndustry={currentIndustry}
-                currentPreset={selectedLogo.presetId || 'custom'}
-                currentParams={customParameters}
+                currentPreset={selectedLogo?.templateId || 'custom'}
+                currentParams={customParams}
                 onApplySuggestion={handleApplyColorTheme}
               />
               <BrandPersonality
-                currentParams={customParameters}
-                onApplyPersonality={handleApplyColorTheme}
+                currentParams={customParams}
+                onApplyPersonality={handleApplyBrandPersonality}
               />
               <BrandPresetsPanel
                 onApplyPreset={handleApplyBrandPreset}
-                currentParams={customParameters}
-                currentPreset={selectedLogo.presetId || 'custom'}
+                currentParams={customParams}
+                currentPreset={selectedLogo?.templateId || 'custom'}
               />
             </div>
           </div>
@@ -763,7 +886,7 @@ export default function Home() {
       {/* Industry Selector */}
       {showIndustrySelector && (
         <IndustrySelector 
-          onSelectPreset={handleIndustryPresetSelect}
+          onSelectTheme={handleIndustryThemeSelect}
           onClose={() => setShowIndustrySelector(false)}
         />
       )}
@@ -775,19 +898,19 @@ export default function Home() {
         mode={saveMode}
         shapeId={currentShapeId}
         shapeName={currentShapeName}
-        code={customCode}
+        code={selectedLogo?.code || ''}
         params={{
-          seed,
-          frequency,
-          amplitude,
-          complexity,
-          chaos,
-          damping,
-          layers,
-          barCount,
-          barSpacing,
-          radius,
-          color
+          seed: coreParams?.frequency.toString() || '',
+          frequency: coreParams?.frequency || 4,
+          amplitude: coreParams?.amplitude || 50,
+          complexity: coreParams?.complexity || 0.5,
+          chaos: coreParams?.chaos || 0,
+          damping: coreParams?.damping || 0,
+          layers: coreParams?.layers || 3,
+          barCount: customParams?.barCount || 40,
+          barSpacing: customParams?.barSpacing || 2,
+          radius: coreParams?.radius || 50,
+          color: styleParams?.fillColor || '#3b82f6'
         }}
       />
 
@@ -795,7 +918,25 @@ export default function Home() {
         open={savedItemsOpen}
         onOpenChange={setSavedItemsOpen}
         onLoadShape={handleLoadShape}
-        onLoadPreset={handleLoadPreset}
+        onLoadLogo={handleLoadLogo}
+      />
+      
+      {/* Debug overlay */}
+      <DebugOverlay 
+        reactLogos={logos}
+        selectedLogoId={selectedLogoId}
+        canvasOffset={
+          typeof window !== 'undefined' && (window as any).getCanvasOffset
+            ? (window as any).getCanvasOffset()
+            : undefined
+        }
+        onClearCanvasPosition={() => {
+          if (typeof window !== 'undefined' && (window as any).resetCanvasPosition) {
+            (window as any).resetCanvasPosition();
+          } else {
+            console.warn('resetCanvasPosition function not available');
+          }
+        }}
       />
     </div>
   )

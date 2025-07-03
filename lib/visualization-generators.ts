@@ -1,6 +1,6 @@
 import { WaveGenerator, WaveParameters } from '@/core/wave-generator'
 import { GenerativeEngine, GenerativeParameters, GenerationOptions } from '@/core/generative-engine'
-import { executePreset } from '@/lib/preset-registry'
+import { executeTemplate } from '@/lib/template-registry'
 
 export interface VisualizationParams {
   seed: string
@@ -14,6 +14,9 @@ export interface VisualizationParams {
   barSpacing?: number
   radius?: number
   color: string
+  fillColor?: string
+  strokeColor?: string
+  backgroundColor?: string
   customParameters?: Record<string, any>
   time: number
   sides?: number
@@ -110,7 +113,7 @@ export const generateAudioBars = (
     
     ctx.fillStyle = gradient
     
-    const radius = barWidth / 3
+    const radius = Math.max(0, barWidth / 3)
     ctx.beginPath()
     ctx.roundRect(x, centerY - barHeight/2, barWidth, barHeight, radius)
     ctx.fill()
@@ -188,7 +191,7 @@ export const generateWaveBars = (
     
     ctx.fillStyle = gradient
     
-    const radius = barWidth / 3
+    const radius = Math.max(0, barWidth / 3)
     ctx.beginPath()
     ctx.roundRect(x, waveCenterY - barHeight/2, barWidth, barHeight, radius)
     ctx.fill()
@@ -413,16 +416,16 @@ export const executeCustomCode = (
   height: number, 
   params: VisualizationParams,
   customCode: string,
-  onError: (error: string) => void
-) => {
+  onError?: (error: string) => void
+): { success: boolean; error?: string } => {
   try {
     // Check if this code references a preset from the registry
-    const presetIdMatch = customCode.match(/\/\/ PRESET_ID: ([\w-]+)/)
-    if (presetIdMatch) {
-      const presetId = presetIdMatch[1]
-      const success = executePreset(presetId, ctx, width, height, params, params.time)
+    const templateIdMatch = customCode.match(/\/\/ TEMPLATE_ID: ([\w-]+)|PRESET_ID: ([\w-]+)/)
+    if (templateIdMatch) {
+      const templateId = templateIdMatch[1] || templateIdMatch[2]
+      const success = executeTemplate(templateId, ctx, width, height, params, params.time)
       if (success) {
-        return // Preset executed successfully
+        return { success: true } // Template executed successfully
       }
     }
     const waveParams: WaveParameters = {
@@ -444,25 +447,53 @@ export const executeCustomCode = (
       barCount: params.barCount,
       barSpacing: params.barSpacing,
       radius: params.radius,
+      fillColor: params.fillColor,
+      strokeColor: params.strokeColor,
+      backgroundColor: params.backgroundColor,
       ...params.customParameters // Custom parameters from PARAMETERS definition override defaults
     }
 
-    // Create a safe execution environment with all variables defined
-    const safeCode = `
-      // Define all variables in scope to prevent reference errors
-      const seed = params.seed;
-      const barCount = params.barCount;
-      const barSpacing = params.barSpacing;
-      
-      ${customCode}
-      
-      drawVisualization(ctx, width, height, params, generator, time);
-    `
+    // Check if the code already defines drawVisualization
+    const hasDrawVisualization = customCode.includes('function drawVisualization');
+    
+    let safeCode: string;
+    
+    if (hasDrawVisualization) {
+      // Code already has drawVisualization, just execute it
+      safeCode = `
+        ${customCode}
+        
+        drawVisualization(ctx, width, height, params, generator, time);
+      `;
+    } else {
+      // Legacy code format - wrap it in drawVisualization
+      safeCode = `
+        // Define all variables in scope to prevent reference errors
+        const seed = params.seed;
+        const barCount = params.barCount;
+        const barSpacing = params.barSpacing;
+        
+        function drawVisualization(ctx, width, height, params, generator, time) {
+          ${customCode}
+        }
+        
+        drawVisualization(ctx, width, height, params, generator, time);
+      `;
+    }
 
-    const executeFunction = new Function(
-      'ctx', 'width', 'height', 'params', 'generator', 'time', 'WaveGenerator',
-      safeCode
-    )
+    let executeFunction;
+    try {
+      executeFunction = new Function(
+        'ctx', 'width', 'height', 'params', 'generator', 'time', 'WaveGenerator',
+        safeCode
+      )
+    } catch (syntaxError) {
+      const errorMsg = `Syntax error in template code: ${syntaxError.message}`;
+      console.error(errorMsg);
+      console.error('Problematic code:', safeCode);
+      if (onError) onError(errorMsg);
+      return { success: false, error: errorMsg };
+    }
 
     executeFunction(ctx, width, height, 
       mergedParams, 
@@ -470,8 +501,13 @@ export const executeCustomCode = (
       params.time,
       WaveGenerator
     )
+    return { success: true }
   } catch (error) {
-    onError(error instanceof Error ? error.message : 'Unknown error')
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    if (onError) {
+      onError(errorMessage)
+    }
     console.error('Custom code execution error:', error)
+    return { success: false, error: errorMessage }
   }
 }
