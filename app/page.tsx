@@ -6,7 +6,8 @@ import { exportCanvasAsPNG } from '@/lib/export-utils'
 import { SaveDialog } from '@/components/save-dialog'
 import { SavedItemsDialog } from '@/components/saved-items-dialog'
 import { StudioHeader } from '@/components/studio/StudioHeader'
-import { CanvasArea } from '@/components/studio/CanvasArea'
+// import { CanvasArea } from '@/components/studio/CanvasArea'
+import { CanvasAreaRefactored as CanvasArea } from '@/components/studio/CanvasAreaRefactored'
 import { ControlsPanel } from '@/components/studio/ControlsPanel'
 import { BrandPresetsPanel } from '@/components/studio/BrandPresetsPanel'
 import { IndustrySelector } from '@/components/studio/IndustrySelector'
@@ -925,16 +926,34 @@ export default function Home() {
       <DebugOverlay 
         reactLogos={logos}
         selectedLogoId={selectedLogoId}
-        canvasOffset={
-          typeof window !== 'undefined' && (window as any).getCanvasOffset
-            ? (window as any).getCanvasOffset()
-            : undefined
-        }
+        canvasOffset={(() => {
+          // Try new canvasStore first, fallback to old window method
+          if (typeof window !== 'undefined') {
+            const canvasStore = (window as any).canvasStore
+            if (canvasStore) {
+              const state = canvasStore.getState()
+              return state.offset
+            }
+            if ((window as any).getCanvasOffset) {
+              return (window as any).getCanvasOffset()
+            }
+          }
+          return undefined
+        })()}
         onClearCanvasPosition={() => {
-          if (typeof window !== 'undefined' && (window as any).resetCanvasPosition) {
-            (window as any).resetCanvasPosition();
-          } else {
-            console.warn('resetCanvasPosition function not available');
+          if (typeof window !== 'undefined') {
+            // Try new canvasStore first
+            const canvasStore = (window as any).canvasStore
+            if (canvasStore) {
+              canvasStore.getState().resetView()
+              return
+            }
+            // Fallback to old method
+            if ((window as any).resetCanvasPosition) {
+              (window as any).resetCanvasPosition()
+            } else {
+              console.warn('resetCanvasPosition function not available')
+            }
           }
         }}
       />
