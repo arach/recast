@@ -13,9 +13,11 @@ import { useCanvasAnimation } from '@/lib/hooks/useCanvasAnimation'
 import { useCanvasStore } from '@/lib/stores/canvasStore'
 import { useUIStore } from '@/lib/stores/uiStore'
 import { useSelectedLogo } from '@/lib/hooks/useSelectedLogo'
+import { useLogoStore } from '@/lib/stores/logoStore'
 
 export function CanvasArea() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
   const [codeError, setCodeError] = useState<string | null>(null)
   
   // Canvas state and interactions
@@ -46,6 +48,31 @@ export function CanvasArea() {
     }
   }, [])
   
+  // Handle canvas resizing when container size changes
+  useEffect(() => {
+    const resizeCanvas = () => {
+      if (canvasRef.current && containerRef.current) {
+        const { width, height } = containerRef.current.getBoundingClientRect()
+        canvasRef.current.width = width
+        canvasRef.current.height = height
+      }
+    }
+    
+    resizeCanvas()
+    window.addEventListener('resize', resizeCanvas)
+    
+    // Use ResizeObserver to detect container size changes
+    const resizeObserver = new ResizeObserver(resizeCanvas)
+    if (containerRef.current) {
+      resizeObserver.observe(containerRef.current)
+    }
+    
+    return () => {
+      window.removeEventListener('resize', resizeCanvas)
+      resizeObserver.disconnect()
+    }
+  }, [])
+  
   // Handle code editor state changes
   const handleCodeEditorStateChange = useCallback((collapsed: boolean, width: number) => {
     setCodeEditorState(collapsed, width)
@@ -53,6 +80,7 @@ export function CanvasArea() {
   
   return (
     <div 
+      ref={containerRef}
       className="flex-1 relative transition-all duration-300 overflow-hidden canvas-container"
       style={{
         background: 'radial-gradient(circle, #d1d5db 0.8px, transparent 0.8px)',
@@ -106,61 +134,27 @@ export function CanvasArea() {
             onMouseUp={handleMouseUp}
             onMouseLeave={handleMouseUp}
           />
-          <CanvasRenderer 
+          
+          {/* Canvas Renderer */}
+          <CanvasRenderer
             canvasRef={canvasRef}
             currentTime={currentTime}
             onCodeError={setCodeError}
           />
+          
+          {/* Canvas Controls */}
+          <CanvasControls className="absolute bottom-6 right-6 z-20" />
+          
+          {/* Code Error Display */}
+          {codeError && (
+            <div className="absolute top-4 left-4 right-4 z-30 p-3 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-sm text-red-800 font-mono">{codeError}</p>
+            </div>
+          )}
         </>
       ) : (
-        <div className="h-full flex items-center justify-center p-8">
-          <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-2xl border border-gray-200/50 overflow-hidden">
-            <PreviewGrid 
-              canvas={canvasRef.current} 
-              seed={selectedLogo?.templateName || 'preview'} 
-            />
-          </div>
-        </div>
-      )}
-      
-      {/* Rendering Overlay */}
-      {isRendering && !previewMode && (
-        <div className="absolute inset-0 bg-white/20 backdrop-blur-sm flex items-center justify-center z-10">
-          <div className="bg-gray-900 text-white px-4 py-2 rounded-lg flex items-center shadow-lg">
-            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-            Rendering...
-          </div>
-        </div>
-      )}
-      
-      {/* Canvas Controls */}
-      {!previewMode && (
-        <CanvasControls className="absolute bottom-6 right-6 z-20" />
-      )}
-      
-      {/* Help Text */}
-      {!previewMode && (
-        <div className="absolute bottom-6 left-6 z-20">
-          <div className="bg-white/90 backdrop-blur-sm rounded-lg border shadow-lg px-3 py-2">
-            <div className="text-xs text-gray-600 space-y-1">
-              <div><kbd className="bg-gray-100 px-1 rounded text-xs">Drag</kbd> to pan</div>
-              <div><kbd className="bg-gray-100 px-1 rounded text-xs">Scroll</kbd> to zoom</div>
-            </div>
-          </div>
-        </div>
-      )}
-      
-      {/* Code Error Display */}
-      {codeError && (
-        <div className="absolute top-20 left-6 right-6 z-30">
-          <div className="bg-red-50 border border-red-200 text-red-800 px-3 py-2 rounded-lg shadow-lg text-sm">
-            <strong>Code Error:</strong> {codeError}
-          </div>
-        </div>
+        <PreviewGrid />
       )}
     </div>
   )
 }
-
-// Import stores for initialization
-import { useLogoStore } from '@/lib/stores/logoStore'

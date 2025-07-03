@@ -3,6 +3,7 @@
  */
 
 import { useLogoStore } from '@/lib/stores/logoStore';
+import { useUIStore } from '@/lib/stores/uiStore';
 import { Logo, Parameters } from '@/lib/types';
 
 export function useSelectedLogo() {
@@ -25,12 +26,19 @@ export function useSelectedLogo() {
   const updateCore = (params: Partial<Parameters['core']>) => {
     if (selectedLogoId) {
       updateLogoParameters(selectedLogoId, { core: params });
+      // Force a re-render
+      const { setRenderTrigger } = useUIStore.getState();
+      setRenderTrigger(Date.now());
     }
   };
   
   const updateStyle = (params: Partial<Parameters['style']>) => {
     if (selectedLogoId) {
+      console.log('useSelectedLogo: Updating style params', params);
       updateLogoParameters(selectedLogoId, { style: params });
+      // Force a re-render
+      const { setRenderTrigger } = useUIStore.getState();
+      setRenderTrigger(Date.now());
     }
   };
   
@@ -42,7 +50,11 @@ export function useSelectedLogo() {
   
   const updateCustom = (params: Record<string, any>) => {
     if (selectedLogoId) {
+      console.log('useSelectedLogo: Updating custom params', params);
       updateLogoParameters(selectedLogoId, { custom: params });
+      // Force a re-render
+      const { setRenderTrigger } = useUIStore.getState();
+      setRenderTrigger(Date.now());
     }
   };
   
@@ -85,7 +97,7 @@ export function useSelectedLogo() {
     setStrokeColor: (strokeColor: string) => updateStyle({ strokeColor }),
     setBackgroundColor: (backgroundColor: string) => updateStyle({ backgroundColor }),
     
-    setText: (text: string) => updateContent({ text }),
-    setLetter: (letter: string) => updateContent({ letter }),
+    setText: (text: string) => updateCustom({ text }),
+    setLetter: (letter: string) => updateCustom({ letter }),
   };
 }

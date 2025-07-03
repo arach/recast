@@ -3,8 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { StudioHeader } from '@/components/studio/StudioHeader'
 import { CanvasArea } from '@/components/studio/CanvasArea'
-import { ControlsPanel } from '@/components/studio/ControlsPanel'
-import { RightPanel } from '@/components/studio/RightPanel'
+import { ToolsContainer } from '@/components/studio/tools/ToolsContainer'
 import { Dialogs } from '@/components/studio/Dialogs'
 import { DebugOverlay } from '@/components/debug/DebugOverlay'
 
@@ -176,19 +175,7 @@ export default function Home() {
       <div className="flex flex-1 overflow-hidden">
         <CanvasArea />
         
-        <div className="flex">
-          <ControlsPanel />
-          
-          <RightPanel
-            currentIndustry={dialogState.currentIndustry}
-            currentParams={customParams}
-            selectedLogo={selectedLogo}
-            onApplyColorTheme={logoHandlers.handleApplyColorTheme}
-            onApplyTemplatePreset={logoHandlers.handleApplyTemplatePreset}
-            onApplyBrandPreset={logoHandlers.handleApplyBrandPreset}
-            onApplyPersonality={logoHandlers.handleApplyBrandPersonality}
-          />
-        </div>
+        <ToolsContainer />
       </div>
       
       <Dialogs

@@ -97,9 +97,8 @@ export function CanvasRenderer({ canvasRef, currentTime, onCodeError }: CanvasRe
         const logoCtx = logoCanvas.getContext('2d')
         
         if (logoCtx) {
-          // Clear with white background
-          logoCtx.fillStyle = '#ffffff'
-          logoCtx.fillRect(0, 0, logoCanvas.width, logoCanvas.height)
+          // Clear canvas (transparent by default)
+          logoCtx.clearRect(0, 0, logoCanvas.width, logoCanvas.height)
           
           // Create visualization params
           const logoParams: VisualizationParams = {
@@ -114,14 +113,32 @@ export function CanvasRenderer({ canvasRef, currentTime, onCodeError }: CanvasRe
             barSpacing: logo.parameters.custom.barSpacing || 2,
             radius: logo.parameters.core.radius,
             color: logo.parameters.style.fillColor,
+            // Include all style parameters
             fillColor: logo.parameters.style.fillColor,
+            fillType: logo.parameters.style.fillType,
+            fillOpacity: logo.parameters.style.fillOpacity,
             strokeColor: logo.parameters.style.strokeColor,
+            strokeType: logo.parameters.style.strokeType,
+            strokeWidth: logo.parameters.style.strokeWidth,
+            strokeOpacity: logo.parameters.style.strokeOpacity,
             backgroundColor: logo.parameters.style.backgroundColor,
+            backgroundType: logo.parameters.style.backgroundType,
+            // Include style object for template registry
+            style: logo.parameters.style,
             customParameters: logo.parameters.custom,
             time: currentTime
           }
           
           // Generate content
+          // Debug log parameters
+          console.log('CanvasRenderer: Rendering logo with params:', {
+            templateId: logo.templateId,
+            backgroundColor: logoParams.backgroundColor,
+            backgroundType: logoParams.backgroundType,
+            fillColor: logoParams.fillColor,
+            strokeColor: logoParams.strokeColor
+          });
+          
           // First try to execute by templateId if available
           if (logo.templateId) {
             const success = executeTemplate(

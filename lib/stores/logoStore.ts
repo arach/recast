@@ -172,6 +172,7 @@ function drawVisualization(ctx, width, height, params, generator, time) {
       },
 
       updateLogoParameters: (id, parameters) => {
+        console.log('LogoStore: Updating parameters for logo', id, parameters);
         set((state) => ({
           logos: state.logos.map((logo) =>
             logo.id === id

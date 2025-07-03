@@ -15,8 +15,15 @@ export interface VisualizationParams {
   radius?: number
   color: string
   fillColor?: string
+  fillType?: string
+  fillOpacity?: number
   strokeColor?: string
+  strokeType?: string
+  strokeWidth?: number
+  strokeOpacity?: number
   backgroundColor?: string
+  backgroundType?: string
+  style?: Record<string, any>
   customParameters?: Record<string, any>
   time: number
   sides?: number
