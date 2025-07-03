@@ -9,6 +9,7 @@ import {
   executeCustomCode,
   VisualizationParams
 } from '@/lib/visualization-generators'
+import { executeTemplate } from '@/lib/template-registry'
 
 interface CanvasRendererProps {
   canvasRef: React.RefObject<HTMLCanvasElement>
@@ -121,9 +122,29 @@ export function CanvasRenderer({ canvasRef, currentTime, onCodeError }: CanvasRe
           }
           
           // Generate content
-          if (logo.code && logo.code.trim()) {
+          // First try to execute by templateId if available
+          if (logo.templateId) {
+            const success = executeTemplate(
+              logo.templateId,
+              logoCtx,
+              logoCanvas.width,
+              logoCanvas.height,
+              logoParams,
+              currentTime
+            )
+            
+            // If template execution failed and there's custom code, try that
+            if (!success && logo.code && logo.code.trim()) {
+              executeCustomCode(logoCtx, logoCanvas.width, logoCanvas.height, logoParams, logo.code, onCodeError || (() => {}))
+            } else if (!success) {
+              // Fall back to wave lines if nothing else works
+              generateWaveLines(logoCtx, logoCanvas.width, logoCanvas.height, logoParams)
+            }
+          } else if (logo.code && logo.code.trim()) {
+            // No templateId, but has custom code
             executeCustomCode(logoCtx, logoCanvas.width, logoCanvas.height, logoParams, logo.code, onCodeError || (() => {}))
           } else {
+            // No templateId and no code, use default
             generateWaveLines(logoCtx, logoCanvas.width, logoCanvas.height, logoParams)
           }
         }
