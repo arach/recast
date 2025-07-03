@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useLogoStore } from '@/lib/stores/logoStore';
 import { useUIStore } from '@/lib/stores/uiStore';
-import { Maximize2, Minimize2, ChevronDown, ChevronUp, X, Copy, Check } from 'lucide-react';
+import { Maximize2, Minimize2, Minus, Plus, X, Copy, Check } from 'lucide-react';
 import { useDebugActions } from '@/lib/debug/debugRegistry';
 import { StateTreeView } from './StateTreeView';
 import { copyExpandedState, formatForClipboard, copyToClipboard } from '@/lib/debug/copyExpandedState';
@@ -113,17 +113,21 @@ export function StateDebugger({
         <div className="flex items-center gap-2">
           <button
             onClick={() => setIsMinimized(!isMinimized)}
-            className="p-1.5 rounded-md text-gray-400 hover:text-white
-                       hover:bg-white/10 transition-all duration-200
+            className="w-7 h-7 rounded-full flex items-center justify-center
+                       bg-gray-700/50 hover:bg-gray-600/50
+                       text-gray-400 hover:text-white
+                       transition-all duration-200
                        hover:scale-110 active:scale-95"
             title={isMinimized ? "Show content" : "Hide content"}
           >
-            {isMinimized ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+            {isMinimized ? <Plus className="w-3.5 h-3.5" /> : <Minus className="w-3.5 h-3.5" />}
           </button>
           <button
             onClick={() => setIsExpanded(!isExpanded)}
-            className="p-1.5 rounded-md text-gray-400 hover:text-white
-                       hover:bg-white/10 transition-all duration-200
+            className="w-7 h-7 rounded-full flex items-center justify-center
+                       bg-gray-700/50 hover:bg-gray-600/50
+                       text-gray-400 hover:text-white
+                       transition-all duration-200
                        hover:scale-110 active:scale-95"
             title={isExpanded ? "Collapse width" : "Expand width"}
           >
@@ -132,8 +136,10 @@ export function StateDebugger({
           {onClose && (
             <button
               onClick={onClose}
-              className="p-1.5 rounded-md text-gray-400 hover:text-white
-                         hover:bg-white/10 transition-all duration-200
+              className="w-7 h-7 rounded-full flex items-center justify-center
+                         bg-gray-700/50 hover:bg-gray-600/50
+                         text-gray-400 hover:text-white
+                         transition-all duration-200
                          hover:scale-110 active:scale-95"
               title="Close debug toolbar"
             >

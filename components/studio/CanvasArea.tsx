@@ -7,6 +7,7 @@ import { PreviewGrid } from './PreviewGrid'
 import { CodeEditorPanel } from './CodeEditorPanel'
 import { CanvasRenderer } from './canvas/CanvasRenderer'
 import { CanvasControls } from './canvas/CanvasControls'
+import { CanvasToolbar } from './canvas/CanvasToolbar'
 import { LogoActions } from './canvas/LogoActions'
 import { useCanvas } from '@/lib/hooks/useCanvas'
 import { useCanvasAnimation } from '@/lib/hooks/useCanvasAnimation'
@@ -21,7 +22,7 @@ export function CanvasArea() {
   const [codeError, setCodeError] = useState<string | null>(null)
   
   // Canvas state and interactions
-  const { setCodeEditorState } = useCanvasStore()
+  const { setCodeEditorState, toolMode } = useCanvasStore()
   const { 
     isDragging,
     handleMouseDown,
@@ -50,32 +51,52 @@ export function CanvasArea() {
   
   // Handle canvas resizing when container size changes
   useEffect(() => {
+    let resizeTimeout: NodeJS.Timeout
+    
     const resizeCanvas = () => {
       if (canvasRef.current && containerRef.current) {
         const { width, height } = containerRef.current.getBoundingClientRect()
         canvasRef.current.width = width
         canvasRef.current.height = height
+        
+        // Force re-render after resize
+        const { setRenderTrigger } = useUIStore.getState()
+        setRenderTrigger(Date.now())
       }
     }
     
+    // Debounced resize handler
+    const debouncedResize = () => {
+      clearTimeout(resizeTimeout)
+      resizeTimeout = setTimeout(resizeCanvas, 100)
+    }
+    
     resizeCanvas()
-    window.addEventListener('resize', resizeCanvas)
+    window.addEventListener('resize', debouncedResize)
     
     // Use ResizeObserver to detect container size changes
-    const resizeObserver = new ResizeObserver(resizeCanvas)
+    const resizeObserver = new ResizeObserver(debouncedResize)
     if (containerRef.current) {
       resizeObserver.observe(containerRef.current)
     }
     
     return () => {
-      window.removeEventListener('resize', resizeCanvas)
+      window.removeEventListener('resize', debouncedResize)
       resizeObserver.disconnect()
+      clearTimeout(resizeTimeout)
     }
   }, [])
   
   // Handle code editor state changes
   const handleCodeEditorStateChange = useCallback((collapsed: boolean, width: number) => {
-    setCodeEditorState(collapsed, width)
+    // When collapsed, the sidebar is 40px wide
+    const effectiveWidth = collapsed ? 40 : width
+    setCodeEditorState(collapsed, effectiveWidth)
+    
+    // Force canvas repaint on state change
+    setTimeout(() => {
+      window.dispatchEvent(new Event('resize'))
+    }, 300) // Wait for animation to complete
   }, [setCodeEditorState])
   
   return (
@@ -117,6 +138,11 @@ export function CanvasArea() {
         </Button>
       )}
       
+      {/* Canvas Toolbar */}
+      {!previewMode && (
+        <CanvasToolbar />
+      )}
+      
       {/* Logo Actions Toolbar */}
       {!previewMode && selectedLogo && (
         <LogoActions className="absolute top-6 right-20 z-20" />
@@ -127,8 +153,12 @@ export function CanvasArea() {
         <>
           <canvas
             ref={canvasRef}
-            className="absolute inset-0 w-full h-full cursor-grab active:cursor-grabbing"
-            style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
+            className="absolute inset-0 w-full h-full"
+            style={{ 
+              cursor: toolMode === 'select' 
+                ? 'default' 
+                : isDragging ? 'grabbing' : 'grab' 
+            }}
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}

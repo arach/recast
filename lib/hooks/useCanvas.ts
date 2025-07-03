@@ -8,11 +8,16 @@ interface UseCanvasOptions {
 }
 
 export function useCanvas(canvasRef: React.RefObject<HTMLCanvasElement>, options: UseCanvasOptions = {}) {
-  const { offset, zoom, isDragging, setOffset, setZoom, setIsDragging, setDimensions, zoomAtPoint } = useCanvasStore()
-  const { logos, selectedLogoId, selectLogo } = useLogoStore()
+  const { 
+    offset, zoom, isDragging, toolMode, draggedLogoId, dragOffset,
+    setOffset, setZoom, setIsDragging, setDimensions, zoomAtPoint,
+    setDraggedLogoId, setDragOffset
+  } = useCanvasStore()
+  const { logos, selectedLogoId, selectLogo, updateLogoPosition } = useLogoStore()
   
   const dragStartRef = useRef({ x: 0, y: 0 })
   const lastPanPointRef = useRef({ x: 0, y: 0 })
+  const logoStartPosRef = useRef({ x: 0, y: 0 })
   
   // Update canvas dimensions on mount and resize
   useEffect(() => {
@@ -54,43 +59,70 @@ export function useCanvas(canvasRef: React.RefObject<HTMLCanvasElement>, options
     const mouseY = e.clientY - rect.top
     const canvasCoords = screenToCanvas(mouseX, mouseY)
     
-    // Check for logo click (reverse order for top-most)
-    let clickedLogo = null
-    for (let i = logos.length - 1; i >= 0; i--) {
-      if (isPointInLogo(canvasCoords.x, canvasCoords.y, logos[i])) {
-        clickedLogo = logos[i]
-        break
+    if (toolMode === 'select') {
+      // Check for logo click (reverse order for top-most)
+      let clickedLogo = null
+      for (let i = logos.length - 1; i >= 0; i--) {
+        if (isPointInLogo(canvasCoords.x, canvasCoords.y, logos[i])) {
+          clickedLogo = logos[i]
+          break
+        }
       }
+      
+      if (clickedLogo) {
+        selectLogo(clickedLogo.id)
+        options.onLogoClick?.(clickedLogo.id)
+        
+        // Start dragging the logo
+        setDraggedLogoId(clickedLogo.id)
+        const logoPos = clickedLogo.position || { x: 0, y: 0 }
+        logoStartPosRef.current = { x: logoPos.x, y: logoPos.y }
+        setDragOffset({ 
+          x: canvasCoords.x - logoPos.x, 
+          y: canvasCoords.y - logoPos.y 
+        })
+      }
+    } else {
+      // Pan mode - start panning
+      setIsDragging(true)
+      dragStartRef.current = { x: e.clientX, y: e.clientY }
+      lastPanPointRef.current = { x: offset.x, y: offset.y }
     }
-    
-    if (clickedLogo) {
-      selectLogo(clickedLogo.id)
-      options.onLogoClick?.(clickedLogo.id)
-    }
-    
-    // Start dragging
-    setIsDragging(true)
-    dragStartRef.current = { x: e.clientX, y: e.clientY }
-    lastPanPointRef.current = { x: offset.x, y: offset.y }
-  }, [canvasRef, screenToCanvas, logos, isPointInLogo, selectLogo, options, setIsDragging, offset])
+  }, [canvasRef, screenToCanvas, logos, isPointInLogo, selectLogo, options, setIsDragging, offset, toolMode, setDraggedLogoId, setDragOffset])
   
   // Handle mouse move - dragging
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    if (!isDragging) return
+    const canvas = canvasRef.current
+    if (!canvas) return
     
-    const deltaX = (e.clientX - dragStartRef.current.x) / zoom
-    const deltaY = (e.clientY - dragStartRef.current.y) / zoom
-    
-    setOffset({
-      x: lastPanPointRef.current.x + deltaX,
-      y: lastPanPointRef.current.y + deltaY
-    })
-  }, [isDragging, zoom, setOffset])
+    if (draggedLogoId) {
+      // Logo dragging
+      const rect = canvas.getBoundingClientRect()
+      const mouseX = e.clientX - rect.left
+      const mouseY = e.clientY - rect.top
+      const canvasCoords = screenToCanvas(mouseX, mouseY)
+      
+      // Update logo position
+      const newX = canvasCoords.x - dragOffset.x
+      const newY = canvasCoords.y - dragOffset.y
+      updateLogoPosition(draggedLogoId, { x: newX, y: newY })
+    } else if (isDragging && toolMode === 'pan') {
+      // Canvas panning
+      const deltaX = (e.clientX - dragStartRef.current.x) / zoom
+      const deltaY = (e.clientY - dragStartRef.current.y) / zoom
+      
+      setOffset({
+        x: lastPanPointRef.current.x + deltaX,
+        y: lastPanPointRef.current.y + deltaY
+      })
+    }
+  }, [isDragging, draggedLogoId, dragOffset, zoom, setOffset, toolMode, canvasRef, screenToCanvas, updateLogoPosition])
   
   // Handle mouse up - stop dragging
   const handleMouseUp = useCallback(() => {
     setIsDragging(false)
-  }, [setIsDragging])
+    setDraggedLogoId(null)
+  }, [setIsDragging, setDraggedLogoId])
   
   // Handle wheel - zooming
   const handleWheel = useCallback((e: WheelEvent) => {

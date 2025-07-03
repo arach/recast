@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react'
 import dynamic from 'next/dynamic'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Code, Play, Copy, Check, ChevronLeft, ChevronRight, GripVertical, X, RotateCcw, PanelLeftClose, PanelLeft, Palette, Save, Sparkles } from 'lucide-react'
+import { Code, Play, Copy, Check, ChevronLeft, ChevronRight, GripVertical, X, RotateCcw, PanelLeftClose, PanelLeft, Palette, Save, Sparkles, ChevronRightCircle } from 'lucide-react'
 import { useLogoStore } from '@/lib/stores/logoStore'
 import { useUIStore } from '@/lib/stores/uiStore'
 import { useSelectedLogo } from '@/lib/hooks/useSelectedLogo'
@@ -41,6 +41,35 @@ export function CodeEditorPanel({ onClose, onStateChange }: CodeEditorPanelProps
   const [isCollapsed, setIsCollapsed] = useState(true) // Start collapsed
   const [availableTemplates, setAvailableTemplates] = useState<LoadedTemplate[]>([])
   const [loadingTemplates, setLoadingTemplates] = useState(true)
+  
+  // Add CSS animations
+  useEffect(() => {
+    const style = document.createElement('style')
+    style.textContent = `
+      @keyframes slideIn {
+        from {
+          transform: translateX(-100%);
+          opacity: 0;
+        }
+        to {
+          transform: translateX(0);
+          opacity: 1;
+        }
+      }
+      @keyframes slideOut {
+        from {
+          transform: translateX(0);
+          opacity: 1;
+        }
+        to {
+          transform: translateX(-100%);
+          opacity: 0;
+        }
+      }
+    `
+    document.head.appendChild(style)
+    return () => document.head.removeChild(style)
+  }, [])
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null)
   const isDragging = useRef(false)
   const startX = useRef(0)
@@ -232,32 +261,50 @@ export function CodeEditorPanel({ onClose, onStateChange }: CodeEditorPanelProps
 
   const currentIndex = logos.findIndex(l => l.id === selectedLogoId)
 
-  // Collapsed state - just show a button
+  // Collapsed state - show a narrow sidebar
   if (isCollapsed) {
     return (
-      <Button
-        onClick={() => {
-          console.log('🔧 Code button clicked, selectedLogo:', selectedLogo?.id)
-          setIsCollapsed(false)
-        }}
-        className={`absolute top-6 left-6 z-50 shadow-lg border ${
-          darkMode 
-            ? 'bg-gray-800 hover:bg-gray-700 text-white border-gray-700' 
-            : 'bg-white hover:bg-gray-50 text-gray-900 border-gray-200'
-        }`}
-        size="sm"
-        variant="outline"
-        title={selectedLogo ? "Open Code Editor" : "Select a logo first"}
-        disabled={!selectedLogo}
+      <div 
+        className={`absolute top-0 left-0 h-full flex flex-col cursor-pointer ${
+          darkMode ? 'bg-gray-900/95 border-r border-gray-800 hover:bg-gray-800/95' : 'bg-white/95 border-r border-gray-200 hover:bg-gray-50/95'
+        } z-30 transition-all duration-300 ease-out backdrop-blur-sm`}
+        style={{ width: '40px' }}
+        onClick={() => setIsCollapsed(false)}
+        title="Expand code editor"
       >
-        <Code className="w-4 h-4 mr-2" />
-        Code
-      </Button>
+        {/* Expand chevron tab */}
+        <button
+          className={`absolute -right-5 top-20 w-5 h-12 rounded-r-lg flex items-center justify-center transition-all duration-200 hover:w-6 ${
+            darkMode 
+              ? 'bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white' 
+              : 'bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-900'
+          } shadow-md`}
+          title="Expand code editor"
+        >
+          <ChevronRight className="w-4 h-4" />
+        </button>
+        
+        {/* Minimal content */}
+        <div className="flex flex-col items-center pt-6 pb-4">
+          <div className={`p-2 rounded-lg transition-transform duration-200 hover:scale-110 ${
+            darkMode ? 'text-gray-400' : 'text-gray-600'
+          }`}>
+            <Code className="w-5 h-5" />
+          </div>
+          
+          {/* Minimal unsaved indicator */}
+          {selectedLogo && hasUnsavedChanges && (
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2">
+              <div className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse" />
+            </div>
+          )}
+        </div>
+      </div>
     )
   }
 
-  // If no logo selected, show a message instead of returning null
-  if (!selectedLogo) {
+  // If no logo selected and expanded, show a message
+  if (!selectedLogo && !isCollapsed) {
     return (
       <div 
         className={`absolute top-0 left-0 h-full shadow-lg flex flex-col ${darkMode ? 'bg-gray-900' : 'bg-white'} z-30 transition-all duration-300`}
@@ -304,8 +351,11 @@ export function CodeEditorPanel({ onClose, onStateChange }: CodeEditorPanelProps
       />
       
       <div 
-        className={`absolute top-0 left-0 h-full shadow-lg flex flex-col ${darkMode ? 'bg-gray-900' : 'bg-white'} z-30 transition-all duration-300`}
-        style={{ width: `${width}px` }}
+        className={`absolute top-0 left-0 h-full shadow-lg flex flex-col ${darkMode ? 'bg-gray-900' : 'bg-white'} z-30 transition-all duration-300 ease-out`}
+        style={{ 
+          width: `${width}px`,
+          animation: isCollapsed ? 'slideOut 0.3s ease-out' : 'slideIn 0.3s ease-out'
+        }}
       >
       
       {/* Resize Handle - on the right side for left panel */}
@@ -322,6 +372,19 @@ export function CodeEditorPanel({ onClose, onStateChange }: CodeEditorPanelProps
           <GripVertical className={`w-4 h-4 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`} />
         </div>
       </div>
+      
+      {/* Collapse chevron tab - protruding from expanded state */}
+      <button
+        onClick={() => setIsCollapsed(true)}
+        className={`absolute -right-5 top-20 w-5 h-12 rounded-r-lg flex items-center justify-center transition-all duration-200 hover:w-6 z-50 ${
+          darkMode 
+            ? 'bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white' 
+            : 'bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-900'
+        } shadow-md`}
+        title="Collapse code editor"
+      >
+        <ChevronLeft className="w-4 h-4" />
+      </button>
 
       <Card className={`h-full flex flex-col border-0 rounded-none ${darkMode ? 'bg-gray-900 text-gray-100' : ''}`}>
         <CardHeader className="flex-shrink-0">
