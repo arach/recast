@@ -64,15 +64,26 @@ export class DevelopmentUtilities {
       console.log(`Selected logo: ${logoStore.selectedLogoId}`)
       console.log('')
       
+      // Check for template inconsistencies
+      const templateIds = new Set(logoStore.logos.map(l => l.templateId));
+      if (templateIds.size === 1 && logoStore.logos.length > 1) {
+        console.warn('⚠️  WARNING: All logos have the same templateId:', Array.from(templateIds)[0]);
+      }
+      
       logoStore.logos.forEach((logo, index) => {
         console.log(`Logo ${index + 1}:`)
         console.log(`  ID: ${logo.id}`)
         console.log(`  Template: ${logo.templateId} (${logo.templateName})`)
         console.log(`  Position: (${logo.position.x}, ${logo.position.y})`)
         console.log(`  Has code: ${logo.code ? 'Yes' : 'No'}`)
+        console.log(`  Code snippet: ${logo.code ? logo.code.substring(0, 50) + '...' : 'N/A'}`)
         console.log(`  Parameters:`, logo.parameters.custom)
         console.log('')
       })
+      
+      // Also expose the store for direct manipulation if needed
+      (window as any).logoStore = logoStore;
+      console.log('💡 Tip: Access the store directly with window.logoStore');
     }
   }
   
@@ -99,8 +110,6 @@ export class DevelopmentUtilities {
       console.log('• window.listLogoIds() - List tracked logo IDs')
       console.log('• window.clearLogoIds() - Clear ID tracking')
       console.log('• window.debugLogos() - Debug current logo state')
-      console.log('')
-      console.log('"The canvas has overcome itself!" - Thus Spoke Zustand')
     }, 1000)
   }
 }

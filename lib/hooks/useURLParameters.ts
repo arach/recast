@@ -10,8 +10,9 @@ export function useURLParameters(config: URLParameterConfig = {}) {
   const { selectedLogoId } = useLogoStore()
   const { logo: selectedLogo, customParams, updateCustom } = useSelectedLogo()
   
-  // Parse URL parameters on mount
+  // Parse URL parameters only on initial mount
   useEffect(() => {
+    // Only run once on mount, not when selectedLogoId changes
     if (!selectedLogoId) return
     
     const urlParams = new URLSearchParams(window.location.search)
@@ -22,11 +23,9 @@ export function useURLParameters(config: URLParameterConfig = {}) {
     const strokeColorParam = urlParams.get('strokeColor')
     const backgroundColorParam = urlParams.get('backgroundColor')
     
-    // Load template if specified
-    const templateToLoad = templateParam || 'wave-bars'
-    
-    if (config.onTemplateLoad) {
-      config.onTemplateLoad(templateToLoad).then(() => {
+    // Only load template if explicitly specified in URL
+    if (templateParam && config.onTemplateLoad) {
+      config.onTemplateLoad(templateParam).then(() => {
         // Apply URL parameters after template loads
         const updates: Record<string, any> = {}
         
@@ -40,8 +39,21 @@ export function useURLParameters(config: URLParameterConfig = {}) {
           updateCustom(updates)
         }
       })
+    } else {
+      // Just apply non-template URL parameters
+      const updates: Record<string, any> = {}
+      
+      if (textParam) updates.text = textParam
+      if (letterParam) updates.letter = letterParam
+      if (fillColorParam) updates.fillColor = fillColorParam
+      if (strokeColorParam) updates.strokeColor = strokeColorParam
+      if (backgroundColorParam) updates.backgroundColor = backgroundColorParam
+      
+      if (Object.keys(updates).length > 0) {
+        updateCustom(updates)
+      }
     }
-  }, [selectedLogoId]) // Only run on mount when we have a logo
+  }, []) // Empty dependency array - only run once on mount
   
   // Update URL when parameters change
   const updateURL = useCallback(() => {
@@ -71,24 +83,7 @@ export function useURLParameters(config: URLParameterConfig = {}) {
     window.history.replaceState({}, '', newURL)
   }, [selectedLogo, customParams])
   
-  // Debounced URL update
-  useEffect(() => {
-    if (!selectedLogo) return
-    
-    const timeoutId = setTimeout(() => {
-      updateURL()
-    }, 1000)
-    
-    return () => clearTimeout(timeoutId)
-  }, [
-    selectedLogo?.templateId,
-    customParams?.text,
-    customParams?.letter,
-    customParams?.fillColor,
-    customParams?.strokeColor,
-    customParams?.backgroundColor,
-    updateURL
-  ])
+  // Removed automatic URL updates - now it's manual only via updateURL()
   
   return {
     updateURL

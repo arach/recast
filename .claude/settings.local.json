@@ -41,7 +41,13 @@
       "Bash(do echo \"=== $file ===\")",
       "Bash(done)",
       "Bash(pnpm next:*)",
-      "Bash(cp:*)"
+      "Bash(cp:*)",
+      "Bash(for template in brand-network sophisticated-strokes border-effects nexus-ai-brand terra-eco-brand volt-electric-brand smart-hexagon organic-bark dynamic-diamond hand-sketch liquid-flow minimal-shape neon-glow architectural-grid)",
+      "Bash(do if [ -f \"templates/$template.ts\" ])",
+      "Bash(then echo \"✓ $template exists\")",
+      "Bash(else echo \"✗ $template missing\")",
+      "Bash(fi)",
+      "Bash(git restore:*)"
     ],
     "deny": []
   }

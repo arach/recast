@@ -28,8 +28,8 @@ export default function Home() {
   const [mounted, setMounted] = useState(false)
   const [forceRender, setForceRender] = useState(0)
   
-  // Store state
-  const { logos, selectedLogoId } = useLogoStore()
+  // Store state - only access what React needs
+  const { selectedLogoId } = useLogoStore()
   const { darkMode } = useUIStore()
   
   // Selected logo utilities
@@ -207,7 +207,7 @@ export default function Home() {
       />
       
       <DebugOverlay 
-        reactLogos={logos}
+        selectedLogo={selectedLogo}
         selectedLogoId={selectedLogoId}
         canvasOffset={(() => {
           if (typeof window !== 'undefined') {

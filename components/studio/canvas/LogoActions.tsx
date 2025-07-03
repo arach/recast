@@ -12,9 +12,10 @@ interface LogoActionsProps {
 }
 
 export function LogoActions({ className }: LogoActionsProps) {
-  const { logos, selectedLogoId, duplicateLogo, deleteLogo } = useLogoStore()
+  const { selectedLogoId, duplicateLogo, deleteLogo, getLogoCount } = useLogoStore()
   const { logo: selectedLogo } = useSelectedLogo()
   const [showCopyFeedback, setShowCopyFeedback] = useState(false)
+  const logoCount = getLogoCount()
   
   if (!selectedLogoId || !selectedLogo) return null
   
@@ -90,7 +91,7 @@ export function LogoActions({ className }: LogoActionsProps) {
           >
             <CopyPlus className="w-4 h-4" />
           </Button>
-          {logos.length > 1 && (
+          {logoCount > 1 && (
             <Button
               size="sm"
               variant="ghost"

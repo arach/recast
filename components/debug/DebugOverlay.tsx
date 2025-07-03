@@ -6,14 +6,14 @@ import { StateDebugger } from './StateDebugger';
 import './debug-animations.css';
 
 interface DebugOverlayProps {
-  reactLogos: any[];
+  selectedLogo: any;
   selectedLogoId: string;
   onClearCanvasPosition?: () => void;
   canvasOffset?: { x: number, y: number };
 }
 
 export function DebugOverlay({
-  reactLogos,
+  selectedLogo,
   selectedLogoId,
   onClearCanvasPosition,
   canvasOffset
@@ -63,7 +63,7 @@ export function DebugOverlay({
       {isOpen && (
         <div className="fixed bottom-20 right-8 z-[9998]">
           <StateDebugger
-            reactLogos={reactLogos}
+            selectedLogo={selectedLogo}
             selectedLogoId={selectedLogoId}
             onClearCanvasPosition={onClearCanvasPosition}
             canvasOffset={canvasOffset}

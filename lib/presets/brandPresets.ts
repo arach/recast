@@ -106,8 +106,11 @@ export class BrandPresets {
     
     // Clear existing logos except first
     const currentLogos = [...logoStore.logos]
+    
     if (currentLogos.length > 1) {
-      currentLogos.slice(1).forEach(logo => logoStore.deleteLogo(logo.id))
+      currentLogos.slice(1).forEach(logo => {
+        logoStore.deleteLogo(logo.id)
+      })
     }
     
     await new Promise(resolve => setTimeout(resolve, 200))
@@ -119,6 +122,7 @@ export class BrandPresets {
       import('@/templates/wave-bars'),
       import('@/templates/prism-google')
     ])
+    
     
     const positions = [
       { x: 0, y: 0 },
@@ -211,22 +215,22 @@ export class BrandPresets {
       if (i === 0 && logoStore.logos.length > 0) {
         // Update existing first logo
         logoId = logoStore.logos[0].id
-        logoStore.updateLogoPosition(logoId, config.position)
         logoStore.updateLogo(logoId, {
           templateId: config.templateId,
-          templateName: config.template.name,
-          code: config.template.code
+          templateName: config.template.name
         })
+        logoStore.updateLogoPosition(logoId, config.position)
       } else {
         // Create new logo
         logoId = logoStore.addLogo(config.templateId)
         await new Promise(resolve => setTimeout(resolve, 50))
-        logoStore.updateLogoPosition(logoId, config.position)
+        
+        // Immediately update with correct template info to ensure it sticks
         logoStore.updateLogo(logoId, {
           templateId: config.templateId,
-          templateName: config.template.name,
-          code: config.template.code
+          templateName: config.template.name
         })
+        logoStore.updateLogoPosition(logoId, config.position)
       }
       
       // Update parameters
@@ -242,13 +246,6 @@ export class BrandPresets {
     forceRender()
     
     const savedInstances = LogoIdManager.loadInstances()
-    console.log('')
-    console.log('✅ 4 logos created with ID tracking!')
-    console.log(`📍 Top left: ${logoIds[0]} - reflow wordmark (black)`)
-    console.log(`📍 Top right: ${logoIds[1]} - R lettermark (blue)`)
-    console.log(`📍 Bottom left: ${logoIds[2]} - Wave bars (gradient)`)
-    console.log(`📍 Bottom right: ${logoIds[3]} - Hexagon (black)`)
-    console.log('')
-    console.log('💾 Saved to localStorage:', savedInstances)
+    console.log('✅ Created 4 brand logos')
   }
 }

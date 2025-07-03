@@ -15,7 +15,7 @@ export class ParameterService {
       // First try to find the start
       const startMatch = code.match(/const\s+PARAMETERS\s*=\s*{/);
       if (!startMatch) {
-        console.log('❌ No PARAMETERS start found');
+        // console.log('❌ No PARAMETERS start found');
         return null;
       }
       
@@ -72,11 +72,11 @@ export class ParameterService {
       const match = fullMatch.match(/const\s+PARAMETERS\s*=\s*({[\s\S]*})/);
       
       if (!match) {
-        console.log('❌ No PARAMETERS match found in code');
+        // console.log('❌ No PARAMETERS match found in code');
         return null;
       }
       
-      console.log('✅ Found PARAMETERS definition');
+      // console.log('✅ Found PARAMETERS definition');
       const paramsCode = `(${match[1]})`;
       
       // Create a safe environment for eval with arrow function support
@@ -88,7 +88,7 @@ export class ParameterService {
       `;
       
       const paramsObj = eval(evalCode);
-      console.log('📦 Evaluated params object keys:', Object.keys(paramsObj));
+      // console.log('📦 Evaluated params object keys:', Object.keys(paramsObj));
       
       // Convert to our expected format
       const parameters: Record<string, ParameterDefinition> = {};

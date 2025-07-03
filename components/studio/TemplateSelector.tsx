@@ -46,14 +46,14 @@ export function TemplateSelector() {
       return
     }
     
-    console.log('Applying template to logo:', currentSelectedLogoId, 'Template:', templateId)
+    // console.log('Applying template to logo:', currentSelectedLogoId, 'Template:', templateId)
     
     try {
       if (templateId === 'custom') {
         // Reset to custom code (empty template)
-        console.log('Switching to custom code for logo:', currentSelectedLogoId)
+        // console.log('Switching to custom code for logo:', currentSelectedLogoId)
         updateLogo(currentSelectedLogoId, {
-          templateId: 'custom',
+          templateId: null, // Clear templateId to indicate custom code
           templateName: 'Custom',
           code: currentLogo.code || '// Custom code\nfunction drawVisualization(ctx, width, height, params, generator, time) {\n  // Your custom code here\n}',
           parameters: {
@@ -69,13 +69,13 @@ export function TemplateSelector() {
           return
         }
         
-        console.log('Loaded template:', template.name, 'Applying to logo:', currentSelectedLogoId)
+        // console.log('Loaded template:', template.name, 'Applying to logo:', currentSelectedLogoId)
         
         // Update the logo with the new template
         const updatedLogo = {
           templateId: template.id,
           templateName: template.name,
-          code: template.code,
+          // Don't store code - let the renderer look it up from the registry
           parameters: {
             ...currentLogo.parameters,
             custom: template.defaultParams || {}
@@ -90,7 +90,7 @@ export function TemplateSelector() {
   
   if (!logo) return null
   
-  console.log('Current logo state:', { templateId: logo.templateId, templateName: logo.templateName })
+  // console.log('Current logo state:', { templateId: logo.templateId, templateName: logo.templateName })
   const currentTemplate = availableTemplates.find(t => t.id === logo.templateId)
   
   return (

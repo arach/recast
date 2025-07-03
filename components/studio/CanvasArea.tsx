@@ -34,14 +34,15 @@ export function CanvasArea() {
   const { previewMode, togglePreviewMode, isRendering } = useUIStore()
   const { logo: selectedLogo } = useSelectedLogo()
   
-  // Initialize canvas centering
+  // Initialize canvas centering on selected logo
   useEffect(() => {
     const { centerView } = useCanvasStore.getState()
-    const { logos } = useLogoStore.getState()
+    const { getSelectedLogo } = useLogoStore.getState()
+    const selectedLogo = getSelectedLogo()
     
-    if (logos.length > 0) {
-      const positions = logos.map(logo => logo.position || { x: 0, y: 0 })
-      setTimeout(() => centerView(positions), 100)
+    if (selectedLogo) {
+      const position = selectedLogo.position || { x: 0, y: 0 }
+      setTimeout(() => centerView([position]), 100)
     }
   }, [])
   

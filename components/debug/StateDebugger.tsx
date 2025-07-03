@@ -9,7 +9,7 @@ import { StateTreeView } from './StateTreeView';
 import { copyExpandedState, formatForClipboard, copyToClipboard } from '@/lib/debug/copyExpandedState';
 
 interface StateDebuggerProps {
-  reactLogos: any[];
+  selectedLogo: any;
   selectedLogoId: string;
   onClearCanvasPosition?: () => void;
   canvasOffset?: { x: number, y: number };
@@ -19,7 +19,7 @@ interface StateDebuggerProps {
 type DebugTab = 'dashboard' | 'details' | 'utilities' | 'state';
 
 export function StateDebugger({ 
-  reactLogos, 
+  selectedLogo, 
   selectedLogoId,
   onClearCanvasPosition,
   canvasOffset,
@@ -36,7 +36,7 @@ export function StateDebugger({
     ui: Set<string>;
     localStorage: Set<string>;
   }>({
-    react: new Set(['reactState', 'reactState.logos']),
+    react: new Set(['reactState', 'reactState.selectedLogo']),
     logo: new Set(['logoStore', 'logoStore.logos']),
     ui: new Set(['uiStore']),
     localStorage: new Set(['localStorage'])
@@ -56,7 +56,7 @@ export function StateDebugger({
   // Get registered debug actions
   const { actions, categories } = useDebugActions();
   
-  const reactLogo = reactLogos.find(l => l.id === selectedLogoId);
+  const reactLogo = selectedLogo; // React now only knows about selected logo
   const zustandLogo = zustandLogos.find(l => l.id === zustandSelectedId);
 
   // Get saved offset from localStorage
@@ -82,24 +82,20 @@ export function StateDebugger({
     y: effectiveCenterY / zoom
   };
 
-  // Calculate logo bounding box
+  // Calculate logo bounding box for selected logo
   const logoSize = 600;
   let logoBounds = null;
-  if (reactLogos.length > 0) {
-    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
-    reactLogos.forEach(logo => {
-      const position = logo.position || { x: 0, y: 0 };
-      minX = Math.min(minX, position.x);
-      maxX = Math.max(maxX, position.x + logoSize);
-      minY = Math.min(minY, position.y);
-      maxY = Math.max(maxY, position.y + logoSize);
-    });
+  if (selectedLogo) {
+    const position = selectedLogo.position || { x: 0, y: 0 };
     logoBounds = {
-      minX, maxX, minY, maxY,
-      centerX: (minX + maxX) / 2,
-      centerY: (minY + maxY) / 2,
-      width: maxX - minX,
-      height: maxY - minY
+      minX: position.x,
+      maxX: position.x + logoSize,
+      minY: position.y,
+      maxY: position.y + logoSize,
+      centerX: position.x + logoSize / 2,
+      centerY: position.y + logoSize / 2,
+      width: logoSize,
+      height: logoSize
     };
   }
   
@@ -212,7 +208,7 @@ export function StateDebugger({
     
     const idsSynced = selectedLogoId === zustandSelectedId;
     const templatesSynced = reactLogo?.templateId === zustandLogo?.templateId;
-    const logoCountSynced = reactLogos.length === zustandLogos.length;
+    const logoCountSynced = (selectedLogo ? 1 : 0) === zustandLogos.filter(l => l.id === selectedLogoId).length;
     
     // Template loading status
     const templateLoaded = reactLogo?.templateId && reactLogo?.code;
@@ -307,8 +303,8 @@ export function StateDebugger({
                 <span className="ml-1 text-white font-medium">{selectedLogoId}</span>
               </div>
               <div>
-                <span className="text-gray-500">Logos:</span>
-                <span className="ml-1 text-white font-medium">{reactLogos.length}</span>
+                <span className="text-gray-500">Has Logo:</span>
+                <span className="ml-1 text-white font-medium">{selectedLogo ? 'Yes' : 'No'}</span>
               </div>
               <div>
                 <span className="text-gray-500">Template:</span>
@@ -539,7 +535,7 @@ export function StateDebugger({
           <div className="space-y-1 text-[10px] text-gray-500 font-mono">
             <div>ENV: {process.env.NODE_ENV}</div>
             <div>localStorage keys: {Object.keys(localStorage).length}</div>
-            <div>React: {reactLogos.length} logos</div>
+            <div>React: {selectedLogo ? '1 selected' : 'none'}</div>
             <div>Zustand: {zustandLogos.length} logos</div>
           </div>
         </div>
@@ -620,7 +616,7 @@ export function StateDebugger({
         <div className="pl-2">
           {logoBounds ? (
             <>
-              <div>Count: {reactLogos.length}</div>
+              <div>Has Logo: {selectedLogo ? 'Yes' : 'No'}</div>
               <div>Min: ({logoBounds.minX}, {logoBounds.minY})</div>
               <div>Max: ({logoBounds.maxX}, {logoBounds.maxY})</div>
               <div>Center: ({logoBounds.centerX.toFixed(1)}, {logoBounds.centerY.toFixed(1)})</div>
@@ -685,7 +681,7 @@ export function StateDebugger({
           <div className="p-3 bg-white/5 rounded-lg border border-gray-700/50">
             <pre className="text-[10px] text-gray-300 font-mono whitespace-pre-wrap overflow-x-auto">
               {JSON.stringify({
-                reactLogos,
+                selectedLogo,
                 selectedLogoId,
                 canvasOffset,
               }, null, 2)}
@@ -715,9 +711,9 @@ export function StateDebugger({
     const logoStoreState = fullLogoStore;
     const uiStoreState = fullUIStore;
     
-    // React state from props
+    // React state from props - Now only has selected logo
     const reactState = {
-      logos: reactLogos,
+      selectedLogo: selectedLogo,
       selectedLogoId,
       canvasOffset,
     };

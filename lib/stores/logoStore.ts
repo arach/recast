@@ -24,6 +24,7 @@ interface LogoStore {
   // Computed getters
   getSelectedLogo: () => Logo | null;
   getLogoById: (id: string) => Logo | null;
+  getLogoCount: () => number;
 }
 
 // Default parameters for new logos
@@ -306,6 +307,10 @@ function drawVisualization(ctx, width, height, params, generator, time) {
 
       getLogoById: (id) => {
         return get().logos.find((logo) => logo.id === id) || null;
+      },
+      
+      getLogoCount: () => {
+        return get().logos.length;
       },
     }),
       {

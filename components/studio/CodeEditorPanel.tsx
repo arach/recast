@@ -77,18 +77,18 @@ export function CodeEditorPanel({ onClose, onStateChange }: CodeEditorPanelProps
   }, [isCollapsed, width, onStateChange])
 
   // Debug log
-  useEffect(() => {
-    console.log('🎨 CodeEditorPanel state:', {
-      isCollapsed,
-      selectedLogoId: selectedLogo?.id,
-      selectedLogoIdFromStore: selectedLogoId,
-      logoFromHook: selectedLogo,
-      darkMode,
-      localCodeLength: localCode?.length,
-      hasUnsavedChanges,
-      templatesLoaded: availableTemplates.length
-    })
-  }, [isCollapsed, selectedLogo?.id, selectedLogoId, darkMode, localCode, hasUnsavedChanges, availableTemplates.length])
+  // useEffect(() => {
+  //   console.log('🎨 CodeEditorPanel state:', {
+  //     isCollapsed,
+  //     selectedLogoId: selectedLogo?.id,
+  //     selectedLogoIdFromStore: selectedLogoId,
+  //     logoFromHook: selectedLogo,
+  //     darkMode,
+  //     localCodeLength: localCode?.length,
+  //     hasUnsavedChanges,
+  //     templatesLoaded: availableTemplates.length
+  //   })
+  // }, [isCollapsed, selectedLogo?.id, selectedLogoId, darkMode, localCode, hasUnsavedChanges, availableTemplates.length])
 
   // Update local code when selected logo changes
   useEffect(() => {
@@ -348,7 +348,7 @@ export function CodeEditorPanel({ onClose, onStateChange }: CodeEditorPanelProps
                     updateLogo(currentSelectedLogoId, {
                       templateId: template.id,
                       templateName: template.name,
-                      code: template.code,
+                      // Don't store code - let the renderer look it up from the registry
                       parameters: {
                         ...currentLogo.parameters,
                         custom: {
@@ -357,6 +357,7 @@ export function CodeEditorPanel({ onClose, onStateChange }: CodeEditorPanelProps
                         }
                       }
                     })
+                    // Still update local code for editing
                     setLocalCode(template.code)
                     setHasUnsavedChanges(false)
                   }
