@@ -338,17 +338,21 @@ export function CodeEditorPanel({ onClose, onStateChange }: CodeEditorPanelProps
               value={selectedLogo?.templateId || 'custom'}
               onChange={async (e) => {
                 const templateId = e.target.value
-                if (templateId && selectedLogo) {
+                // Get the current selected logo ID directly from store to avoid stale closures
+                const currentSelectedLogoId = useLogoStore.getState().selectedLogoId
+                const currentLogo = useLogoStore.getState().logos.find(l => l.id === currentSelectedLogoId)
+                
+                if (templateId && currentLogo && currentSelectedLogoId) {
                   const template = availableTemplates.find(t => t.id === templateId)
                   if (template) {
-                    updateLogo(selectedLogo.id, {
+                    updateLogo(currentSelectedLogoId, {
                       templateId: template.id,
                       templateName: template.name,
                       code: template.code,
                       parameters: {
-                        ...selectedLogo.parameters,
+                        ...currentLogo.parameters,
                         custom: {
-                          ...selectedLogo.parameters.custom,
+                          ...currentLogo.parameters.custom,
                           ...template.defaultParams
                         }
                       }

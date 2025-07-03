@@ -23,22 +23,48 @@ export function usePageEffects(options: UsePageEffectsOptions = {}) {
     }
   }, [options.loadThemeById])
   
-  // Initialize brand presets
+  // Initialize brand presets with lazy loading to avoid circular dependencies
   useEffect(() => {
     if (options.updateCore && options.updateCustom && options.loadThemeById && options.forceRender) {
-      import('@/lib/presets/brandPresets').then(({ BrandPresets }) => {
-        BrandPresets.initializeReflowUtilities({
-          updateCore: options.updateCore,
-          updateCustom: options.updateCustom,
-          loadTheme: options.loadThemeById,
-          forceRender: options.forceRender
-        })
+      // Store the initialization in a flag to prevent re-initialization
+      let initialized = false;
+      
+      const initializeBrandPresets = async () => {
+        if (initialized) return;
         
-        // Load 4 logos utility
-        (window as any).load4Logos = () => BrandPresets.create4LogoGrid(options.forceRender)
-      }).catch(err => {
-        console.error('Failed to load BrandPresets:', err)
-      })
+        try {
+          // Use require to avoid webpack dynamic import issues
+          const { BrandPresets: BrandPresetsClass } = await import('@/lib/presets/brandPresets');
+          
+          if (!BrandPresetsClass || typeof BrandPresetsClass.initializeReflowUtilities !== 'function') {
+            console.error('BrandPresets not properly loaded');
+            return;
+          }
+          
+          initialized = true;
+          
+          BrandPresetsClass.initializeReflowUtilities({
+            updateCore: options.updateCore,
+            updateCustom: options.updateCustom,
+            loadTheme: options.loadThemeById,
+            forceRender: options.forceRender
+          });
+          
+          // Load 4 logos utility
+          (window as any).load4Logos = async () => {
+            try {
+              await BrandPresetsClass.create4LogoGrid(options.forceRender)
+            } catch (err) {
+              console.error('Failed to create 4 logo grid:', err)
+            }
+          }
+        } catch (err) {
+          console.error('Failed to initialize BrandPresets:', err);
+          // Don't retry - if it fails, it's likely a real issue
+        }
+      };
+      
+      initializeBrandPresets();
     }
   }, [options.updateCore, options.updateCustom, options.loadThemeById, options.forceRender])
   
