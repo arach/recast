@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useRef, useState, useEffect } from 'react'
+import React, { useRef, useState, useEffect, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { Play, Pause, Eye, Grid3x3 } from 'lucide-react'
 import { PreviewGrid } from './PreviewGrid'
@@ -46,9 +46,9 @@ export function CanvasAreaRefactored() {
   }, [])
   
   // Handle code editor state changes
-  const handleCodeEditorStateChange = (collapsed: boolean, width: number) => {
+  const handleCodeEditorStateChange = useCallback((collapsed: boolean, width: number) => {
     setCodeEditorState(collapsed, width)
-  }
+  }, [setCodeEditorState])
   
   return (
     <div 
