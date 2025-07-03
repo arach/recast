@@ -161,5 +161,5 @@ export function CanvasAreaRefactored() {
   )
 }
 
-// Import needed for initialization
+// Import stores for initialization
 import { useLogoStore } from '@/lib/stores/logoStore'
