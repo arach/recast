@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { devtools } from 'zustand/middleware';
+import { devtools, persist } from 'zustand/middleware';
 import { Logo, Parameters, Position } from '@/lib/types';
 import { LogoIdManager } from '@/lib/utils/logoIdManager';
 
@@ -19,6 +19,7 @@ interface LogoStore {
   duplicateLogo: (id: string) => string | null; // Returns new logo ID or null
   selectLogo: (id: string | null) => void;
   randomizeLogo: (id: string) => void; // Randomize all parameters
+  clearPersistedState: () => void; // Clear localStorage
   
   // Computed getters
   getSelectedLogo: () => Logo | null;
@@ -56,7 +57,8 @@ const defaultParameters: Parameters = {
 
 export const useLogoStore = create<LogoStore>()(
   devtools(
-    (set, get) => ({
+    persist(
+      (set, get) => ({
       // Initial state
       logos: [
         {
@@ -286,6 +288,15 @@ function drawVisualization(ctx, width, height, params, generator, time) {
         
         get().updateLogoParameters(id, updates);
       },
+      
+      clearPersistedState: () => {
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('recast-canvas-state');
+          // Also clear canvas position
+          localStorage.removeItem('recast-canvas-offset');
+          console.log('🗑️ Cleared persisted canvas state');
+        }
+      },
 
       // Computed getters
       getSelectedLogo: () => {
@@ -297,8 +308,17 @@ function drawVisualization(ctx, width, height, params, generator, time) {
         return get().logos.find((logo) => logo.id === id) || null;
       },
     }),
+      {
+        name: 'recast-canvas-state', // localStorage key
+        version: 1,
+        partialize: (state) => ({ 
+          logos: state.logos,
+          selectedLogoId: state.selectedLogoId 
+        }), // Only persist logos and selection
+      }
+    ),
     {
-      name: 'logo-store',
+      name: 'logo-store', // Devtools name
     }
   )
 );

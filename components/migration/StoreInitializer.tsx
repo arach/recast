@@ -258,28 +258,8 @@ export function StoreInitializer({
     return unsubscribe;
   }, [onSelectedLogoChange]);
   
-  // Subscribe to template changes in the store
-  useEffect(() => {
-    if (!onTemplateChange) return;
-    
-    // Get initial template from store
-    const initialState = useLogoStore.getState();
-    const initialLogo = initialState.logos.find(l => l.id === initialState.selectedLogoId);
-    let previousTemplateId: string | undefined = initialLogo?.templateId;
-    
-    const unsubscribe = useLogoStore.subscribe((state) => {
-      const currentLogo = state.logos.find(l => l.id === state.selectedLogoId);
-      if (currentLogo && currentLogo.templateId !== previousTemplateId) {
-        // Template has changed in the store
-        if (currentLogo.templateId) {
-          onTemplateChange(currentLogo.templateId);
-        }
-        previousTemplateId = currentLogo.templateId;
-      }
-    });
-    
-    return unsubscribe;
-  }, [onTemplateChange]);
+  // Template change subscription removed - templates are loaded explicitly
+  // This prevents double-loading and race conditions during multi-logo creation
   
   return null; // This component doesn't render anything
 }

@@ -39,7 +39,8 @@
       "Bash(timeout:*)",
       "Bash(for file in wave-bars audio-bars apex-vercel prism-google pulse-spotify infinity-loops wordmark letter-mark)",
       "Bash(do echo \"=== $file ===\")",
-      "Bash(done)"
+      "Bash(done)",
+      "Bash(pnpm next:*)"
     ],
     "deny": []
   }

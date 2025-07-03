@@ -46,18 +46,7 @@ export function ControlsPanel() {
   // Parse parameter definitions from code
   const parsedParams = ParameterService.parseParametersFromCode(logo.code);
   
-  // Debug logging
-  console.log('🔍 Parsing code for params. Code length:', logo.code?.length || 0);
-  console.log('📄 Code preview:', logo.code?.substring(0, 200) + '...');
-  if (parsedParams) {
-    console.log('📊 Parsed params:', Object.keys(parsedParams));
-    console.log('🔍 Full parsed params:', parsedParams);
-    // Check specifically for frame parameters
-    const frameParams = Object.keys(parsedParams).filter(key => key.includes('frame') || key.includes('Frame'));
-    console.log('🖼️ Frame-related params found:', frameParams);
-  } else {
-    console.log('❌ No parameters found in code');
-  }
+  // Debug logging removed for clarity
   
   // Universal control names to filter out
   const universalControlNames = [
@@ -73,18 +62,11 @@ export function ControlsPanel() {
       )
     : {};
   
-  console.log('🎯 Template params:', Object.keys(templateParams));
-  console.log('📝 Current values:', { customParams, contentParams });
-  
   // Filter visible parameters based on showIf conditions
   const visibleTemplateParams = ParameterService.filterVisibleParameters(
     templateParams,
     { ...customParams, ...contentParams }
   );
-  
-  console.log('👁️ Visible params after filtering:', Object.keys(visibleTemplateParams));
-  console.log('🔍 Current param values:', { customParams, contentParams });
-  console.log('🖼️ showFrame value:', customParams?.showFrame);
   
   return (
     <div className="w-96 border-l border-gray-200 bg-gray-50/30 overflow-y-auto">

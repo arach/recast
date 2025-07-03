@@ -32,6 +32,7 @@ import { useLogoStore } from '@/lib/stores/logoStore'
 import { useUIStore } from '@/lib/stores/uiStore'
 import { exportCanvasAsPNG } from '@/lib/export-utils'
 import { CodeEditorPanel } from './CodeEditorPanel'
+import { stateTracer } from '@/lib/debug/stateUpdateTracer'
 
 export function CanvasArea() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -91,11 +92,28 @@ export function CanvasArea() {
 
   // Helper to save canvas offset to localStorage
   const saveCanvasOffset = useCallback((offset: { x: number, y: number }) => {
+    stateTracer.trace({
+      type: 'both',
+      trigger: 'saveCanvasOffset',
+      oldValue: { 
+        selectedLogoId: selectedLogoId,
+        selectedLogoId: logos.find(l => l.id === selectedLogoId)?.id || 'none'
+      },
+      newValue: { 
+        selectedLogoId: selectedLogoId,
+        selectedLogoId: logos.find(l => l.id === selectedLogoId)?.id || 'none'
+      },
+      metadata: { 
+        canvasOffset: offset,
+        source: 'canvas-drag'
+      }
+    });
+    
     setCanvasOffset(offset)
     if (typeof window !== 'undefined') {
       localStorage.setItem('recast-canvas-offset', JSON.stringify(offset))
     }
-  }, [])
+  }, [selectedLogoId, logos])
   
   // Force render trigger
   const [forceRender, setForceRender] = useState(0)
@@ -160,10 +178,6 @@ export function CanvasArea() {
     const isInBounds = x >= position.x && x <= position.x + logoSize && 
                       y >= position.y && y <= position.y + logoSize
     
-    // Debug logging
-    if (isInBounds) {
-      console.log('📍 Point in logo:', logo.id, 'at position:', position)
-    }
     
     return isInBounds
   }
@@ -326,10 +340,7 @@ export function CanvasArea() {
           y: effectiveCenterY / zoom
         }
         
-        console.log('📍 Initial centering (new session):', { centerOffset, effectiveCenterX, effectiveCenterY, zoom, rect: { width: rect.width, height: rect.height } });
         saveCanvasOffset(centerOffset)
-      } else {
-        console.log('📍 Using saved canvas position from localStorage');
       }
       hasInitialCentered.current = true
     }
@@ -462,9 +473,6 @@ export function CanvasArea() {
     const canvasX = (mouseX / zoom) - canvasOffset.x
     const canvasY = (mouseY / zoom) - canvasOffset.y
     
-    // Debug logging for click coordinates
-    console.log('🖱️ Click at:', { mouseX, mouseY, canvasX, canvasY, zoom, canvasOffset })
-    
     // Check if click is on any logo (check in reverse order so top logos are selected first)
     let clickedLogo = null
     for (let i = logos.length - 1; i >= 0; i--) {
@@ -475,11 +483,25 @@ export function CanvasArea() {
     }
     
     if (clickedLogo) {
-      // Select the clicked logo - don't manually set state as this causes race conditions
-      selectLogo(clickedLogo.id)
+      stateTracer.trace({
+        type: 'both',
+        trigger: `Canvas click -> selectLogo(${clickedLogo.id})`,
+        oldValue: { 
+          selectedLogoId: selectedLogoId,
+          selectedLogoId: logos.find(l => l.id === selectedLogoId)?.id || 'none'
+        },
+        newValue: { 
+          selectedLogoId: clickedLogo.id,
+          selectedLogoId: clickedLogo.id
+        },
+        metadata: { 
+          clickCoords: { canvasX, canvasY },
+          logoPosition: { x: clickedLogo.position.x, y: clickedLogo.position.y }
+        }
+      });
       
-      // Log for debugging
-      console.log('🎯 Logo clicked:', clickedLogo.id, 'Previous selected:', selectedLogoId)
+      // Select the clicked logo
+      selectLogo(clickedLogo.id);
     }
     
     // Always start dragging (either logo or canvas)

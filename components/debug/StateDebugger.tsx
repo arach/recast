@@ -3,8 +3,10 @@
 import { useState, useEffect } from 'react';
 import { useLogoStore } from '@/lib/stores/logoStore';
 import { useUIStore } from '@/lib/stores/uiStore';
-import { Maximize2, Minimize2, ChevronDown, ChevronUp, X } from 'lucide-react';
+import { Maximize2, Minimize2, ChevronDown, ChevronUp, X, Copy, Check } from 'lucide-react';
 import { useDebugActions } from '@/lib/debug/debugRegistry';
+import { StateTreeView } from './StateTreeView';
+import { copyExpandedState, formatForClipboard, copyToClipboard } from '@/lib/debug/copyExpandedState';
 
 interface StateDebuggerProps {
   reactLogos: any[];
@@ -14,7 +16,7 @@ interface StateDebuggerProps {
   onClose?: () => void;
 }
 
-type DebugTab = 'dashboard' | 'details' | 'utilities';
+type DebugTab = 'dashboard' | 'details' | 'utilities' | 'state';
 
 export function StateDebugger({ 
   reactLogos, 
@@ -27,9 +29,29 @@ export function StateDebugger({
   const [isExpanded, setIsExpanded] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   
+  // State for tracking expanded paths per section
+  const [expandedPaths, setExpandedPaths] = useState<{
+    react: Set<string>;
+    logo: Set<string>;
+    ui: Set<string>;
+    localStorage: Set<string>;
+  }>({
+    react: new Set(['reactState', 'reactState.logos']),
+    logo: new Set(['logoStore', 'logoStore.logos']),
+    ui: new Set(['uiStore']),
+    localStorage: new Set(['localStorage'])
+  });
+  
+  // State for copy feedback
+  const [copiedSection, setCopiedSection] = useState<string | null>(null);
+  
   const zustandLogos = useLogoStore(state => state.logos);
   const zustandSelectedId = useLogoStore(state => state.selectedLogoId);
   const zoom = useUIStore(state => state.zoom);
+  
+  // Get full store states for state viewer
+  const fullLogoStore = useLogoStore();
+  const fullUIStore = useUIStore();
   
   // Get registered debug actions
   const { actions, categories } = useDebugActions();
@@ -86,7 +108,7 @@ export function StateDebugger({
                 bg-gray-900/95 dark:bg-black/95 
                 backdrop-blur-sm
                 border border-gray-700/50 dark:border-gray-800
-                transition-all duration-700 ease-[cubic-bezier(0.68,-0.55,0.265,1.55)]
+                transition-all duration-700
                 ${isExpanded ? 'w-[640px] shadow-[0_20px_50px_rgba(0,0,0,0.7)]' : 'w-[480px] shadow-2xl shadow-black/50'}
                 ${isMinimized ? 'shadow-xl' : ''}`}>
       {/* Header with tabs */}
@@ -126,14 +148,15 @@ export function StateDebugger({
       </div>
       
       {/* Collapsible Content */}
-      <div className={`overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.68,-0.55,0.265,1.55)]
+      <div className={`overflow-hidden transition-all duration-500
                       ${isMinimized ? 'max-h-0' : 'max-h-[800px]'}`}>
         {/* Tab Navigation */}
         <div className="flex border-b border-gray-700/50">
           {[
             { id: 'dashboard' as const, label: 'Dashboard', icon: '📊', title: 'Multi-state overview' },
             { id: 'details' as const, label: 'Details', icon: '🔍', title: 'Detailed state inspection' },
-            { id: 'utilities' as const, label: 'Utils', icon: '🔧', title: 'Developer utilities' }
+            { id: 'utilities' as const, label: 'Utils', icon: '🔧', title: 'Developer utilities' },
+            { id: 'state' as const, label: 'State', icon: '🌳', title: 'Full state tree' }
           ].map(tab => (
             <button
               key={tab.id}
@@ -158,7 +181,7 @@ export function StateDebugger({
         
         {/* Tab Content */}
         <div className={`p-4 overflow-y-auto text-gray-100 
-                        transition-all duration-700 ease-[cubic-bezier(0.68,-0.55,0.265,1.55)]
+                        transition-all duration-700
                         ${isExpanded ? 'max-h-[600px]' : 'max-h-[400px]'}`}>
           <div className="animate-in fade-in-0 slide-in-from-bottom-2 duration-300">
             {renderTabContent()}
@@ -176,6 +199,8 @@ export function StateDebugger({
         return renderDetails();
       case 'utilities':
         return renderUtilities();
+      case 'state':
+        return renderFullState();
     }
   }
   
@@ -616,6 +641,323 @@ export function StateDebugger({
         </div>
       </div>
       </>
+    );
+  }
+  
+  function renderFullState() {
+    return (
+      <div className="space-y-4">
+        <h4 className="font-semibold text-sm mb-3 flex items-center gap-2">
+          <span className="text-base">🌳</span>
+          Full State Tree
+        </h4>
+        
+        {/* Logo Store State */}
+        <div className="space-y-2">
+          <h5 className="text-xs font-medium text-gray-400 uppercase tracking-wider">Logo Store</h5>
+          <div className="p-3 bg-white/5 rounded-lg border border-gray-700/50">
+            <pre className="text-[10px] text-gray-300 font-mono whitespace-pre-wrap overflow-x-auto">
+              {JSON.stringify({
+                logos: fullLogoStore.logos,
+                selectedLogoId: fullLogoStore.selectedLogoId,
+                // Add other relevant logo store properties
+              }, null, 2)}
+            </pre>
+          </div>
+        </div>
+        
+        {/* UI Store State */}
+        <div className="space-y-2">
+          <h5 className="text-xs font-medium text-gray-400 uppercase tracking-wider">UI Store</h5>
+          <div className="p-3 bg-white/5 rounded-lg border border-gray-700/50">
+            <pre className="text-[10px] text-gray-300 font-mono whitespace-pre-wrap overflow-x-auto">
+              {JSON.stringify({
+                zoom: fullUIStore.zoom,
+                // Add other relevant UI store properties
+              }, null, 2)}
+            </pre>
+          </div>
+        </div>
+        
+        {/* Component Props */}
+        <div className="space-y-2">
+          <h5 className="text-xs font-medium text-gray-400 uppercase tracking-wider">Component Props</h5>
+          <div className="p-3 bg-white/5 rounded-lg border border-gray-700/50">
+            <pre className="text-[10px] text-gray-300 font-mono whitespace-pre-wrap overflow-x-auto">
+              {JSON.stringify({
+                reactLogos,
+                selectedLogoId,
+                canvasOffset,
+              }, null, 2)}
+            </pre>
+          </div>
+        </div>
+        
+        {/* localStorage State */}
+        <div className="space-y-2">
+          <h5 className="text-xs font-medium text-gray-400 uppercase tracking-wider">localStorage</h5>
+          <div className="p-3 bg-white/5 rounded-lg border border-gray-700/50">
+            <pre className="text-[10px] text-gray-300 font-mono whitespace-pre-wrap overflow-x-auto">
+              {JSON.stringify({
+                'recast-canvas-offset': savedOffset,
+                'parse-error': localStorageParseError,
+                'raw-value': savedCanvasOffset,
+              }, null, 2)}
+            </pre>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  
+  function renderFullState() {
+    // Get all zustand stores we can find
+    const logoStoreState = fullLogoStore;
+    const uiStoreState = fullUIStore;
+    
+    // React state from props
+    const reactState = {
+      logos: reactLogos,
+      selectedLogoId,
+      canvasOffset,
+    };
+    
+    // Filter out functions from store states
+    const cleanStoreState = (store: any) => {
+      const cleaned: any = {};
+      Object.keys(store).forEach(key => {
+        if (typeof store[key] !== 'function') {
+          cleaned[key] = store[key];
+        }
+      });
+      return cleaned;
+    };
+    
+    // Get localStorage data
+    const localStorageData: Record<string, any> = {};
+    if (typeof window !== 'undefined') {
+      Object.keys(localStorage).forEach(key => {
+        try {
+          const value = localStorage.getItem(key);
+          if (value) {
+            // Try to parse JSON values
+            try {
+              localStorageData[key] = JSON.parse(value);
+            } catch {
+              // If not JSON, store as string
+              localStorageData[key] = value;
+            }
+          }
+        } catch (e) {
+          localStorageData[key] = '[Error reading value]';
+        }
+      });
+    }
+    
+    // Handle expand/collapse for each section
+    const handleExpandedChange = (section: keyof typeof expandedPaths) => (path: string, expanded: boolean) => {
+      setExpandedPaths(prev => {
+        const newPaths = new Set(prev[section]);
+        if (expanded) {
+          newPaths.add(path);
+        } else {
+          newPaths.delete(path);
+        }
+        return { ...prev, [section]: newPaths };
+      });
+    };
+    
+    // Copy only expanded state
+    const handleCopy = async (section: keyof typeof expandedPaths, data: any) => {
+      const expandedData = copyExpandedState(data, expandedPaths[section]);
+      const formatted = formatForClipboard(expandedData);
+      const success = await copyToClipboard(formatted);
+      
+      if (success) {
+        setCopiedSection(section);
+        setTimeout(() => setCopiedSection(null), 2000);
+      }
+    };
+    
+    // Copy all expanded state from all sections
+    const handleCopyAll = async () => {
+      const allState = {
+        reactState: copyExpandedState({ reactState }, expandedPaths.react).reactState,
+        logoStore: copyExpandedState({ logoStore: cleanStoreState(logoStoreState) }, expandedPaths.logo).logoStore,
+        uiStore: copyExpandedState({ uiStore: cleanStoreState(uiStoreState) }, expandedPaths.ui).uiStore,
+        localStorage: copyExpandedState({ localStorage: localStorageData }, expandedPaths.localStorage).localStorage,
+        timestamp: new Date().toISOString(),
+        url: typeof window !== 'undefined' ? window.location.href : 'unknown'
+      };
+      
+      const formatted = formatForClipboard(allState);
+      const success = await copyToClipboard(formatted);
+      
+      if (success) {
+        setCopiedSection('all');
+        setTimeout(() => setCopiedSection(null), 2000);
+      }
+    };
+    
+    return (
+      <div className="space-y-4 text-[11px] font-mono">
+        <div className="flex items-center justify-between">
+          <h4 className="font-semibold text-sm flex items-center gap-2 font-sans">
+            <span className="text-base">🌳</span>
+            Full State Tree
+          </h4>
+          <button
+            onClick={handleCopyAll}
+            className="px-2 py-1 rounded text-xs font-medium bg-gray-700/50 hover:bg-gray-700 
+                       text-gray-300 hover:text-white transition-all duration-200 
+                       flex items-center gap-1"
+            title="Copy all expanded state"
+          >
+            {copiedSection === 'all' ? (
+              <>
+                <Check className="w-3.5 h-3.5 text-green-400" />
+                <span>Copied!</span>
+              </>
+            ) : (
+              <>
+                <Copy className="w-3.5 h-3.5" />
+                <span>Copy All</span>
+              </>
+            )}
+          </button>
+        </div>
+        
+        {/* React State */}
+        <div className="bg-gradient-to-r from-green-500/10 to-transparent rounded-lg border border-green-500/20 p-3">
+          <div className="flex items-center justify-between mb-2">
+            <h5 className="font-medium text-xs text-green-400 flex items-center gap-2 font-sans">
+              <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse"></div>
+              React State (Props)
+            </h5>
+            <button
+              onClick={() => handleCopy('react', { reactState })}
+              className="p-1 rounded hover:bg-white/10 transition-colors"
+              title="Copy expanded state"
+            >
+              {copiedSection === 'react' ? (
+                <Check className="w-3.5 h-3.5 text-green-400" />
+              ) : (
+                <Copy className="w-3.5 h-3.5 text-gray-400" />
+              )}
+            </button>
+          </div>
+          <StateTreeView 
+            name="reactState" 
+            data={reactState}
+            expandedPaths={expandedPaths.react}
+            onExpandedChange={handleExpandedChange('react')}
+          />
+        </div>
+        
+        {/* Logo Store State */}
+        <div className="bg-gradient-to-r from-blue-500/10 to-transparent rounded-lg border border-blue-500/20 p-3">
+          <div className="flex items-center justify-between mb-2">
+            <h5 className="font-medium text-xs text-blue-400 flex items-center gap-2 font-sans">
+              <div className="w-2 h-2 rounded-full bg-blue-400 animate-pulse"></div>
+              Zustand: Logo Store
+            </h5>
+            <button
+              onClick={() => handleCopy('logo', { logoStore: cleanStoreState(logoStoreState) })}
+              className="p-1 rounded hover:bg-white/10 transition-colors"
+              title="Copy expanded state"
+            >
+              {copiedSection === 'logo' ? (
+                <Check className="w-3.5 h-3.5 text-green-400" />
+              ) : (
+                <Copy className="w-3.5 h-3.5 text-gray-400" />
+              )}
+            </button>
+          </div>
+          <StateTreeView 
+            name="logoStore" 
+            data={cleanStoreState(logoStoreState)}
+            hideKeys={['code']} // Hide code fields
+            expandedPaths={expandedPaths.logo}
+            onExpandedChange={handleExpandedChange('logo')}
+          />
+        </div>
+        
+        {/* UI Store State */}
+        <div className="bg-gradient-to-r from-purple-500/10 to-transparent rounded-lg border border-purple-500/20 p-3">
+          <div className="flex items-center justify-between mb-2">
+            <h5 className="font-medium text-xs text-purple-400 flex items-center gap-2 font-sans">
+              <div className="w-2 h-2 rounded-full bg-purple-400 animate-pulse"></div>
+              Zustand: UI Store
+            </h5>
+            <button
+              onClick={() => handleCopy('ui', { uiStore: cleanStoreState(uiStoreState) })}
+              className="p-1 rounded hover:bg-white/10 transition-colors"
+              title="Copy expanded state"
+            >
+              {copiedSection === 'ui' ? (
+                <Check className="w-3.5 h-3.5 text-green-400" />
+              ) : (
+                <Copy className="w-3.5 h-3.5 text-gray-400" />
+              )}
+            </button>
+          </div>
+          <StateTreeView 
+            name="uiStore" 
+            data={cleanStoreState(uiStoreState)}
+            expandedPaths={expandedPaths.ui}
+            onExpandedChange={handleExpandedChange('ui')}
+          />
+        </div>
+        
+        {/* Browser State */}
+        <div className="bg-gradient-to-r from-orange-500/10 to-transparent rounded-lg border border-orange-500/20 p-3">
+          <div className="flex items-center justify-between mb-2">
+            <h5 className="font-medium text-xs text-orange-400 flex items-center gap-2 font-sans">
+              <div className="w-2 h-2 rounded-full bg-orange-400 animate-pulse"></div>
+              Browser State
+            </h5>
+            <button
+              onClick={() => handleCopy('localStorage', { localStorage: localStorageData })}
+              className="p-1 rounded hover:bg-white/10 transition-colors"
+              title="Copy expanded state"
+            >
+              {copiedSection === 'localStorage' ? (
+                <Check className="w-3.5 h-3.5 text-green-400" />
+              ) : (
+                <Copy className="w-3.5 h-3.5 text-gray-400" />
+              )}
+            </button>
+          </div>
+          <StateTreeView 
+            name="localStorage" 
+            data={localStorageData}
+            expandedPaths={expandedPaths.localStorage}
+            onExpandedChange={handleExpandedChange('localStorage')}
+          />
+        </div>
+        
+        {/* Actions Reference */}
+        <div className="bg-gradient-to-r from-gray-500/10 to-transparent rounded-lg border border-gray-500/20 p-3">
+          <h5 className="font-medium text-xs text-gray-400 mb-2 flex items-center gap-2 font-sans">
+            <div className="w-2 h-2 rounded-full bg-gray-400"></div>
+            Available Store Actions
+          </h5>
+          <div className="text-gray-500 space-y-1">
+            <div>
+              <span className="text-cyan-400">logoStore:</span>
+              <div className="ml-4 text-[10px]">
+                {Object.keys(fullLogoStore).filter(key => typeof (fullLogoStore as any)[key] === 'function').join(', ')}
+              </div>
+            </div>
+            <div>
+              <span className="text-cyan-400">uiStore:</span>
+              <div className="ml-4 text-[10px]">
+                {Object.keys(fullUIStore).filter(key => typeof (fullUIStore as any)[key] === 'function').join(', ')}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     );
   }
 }
