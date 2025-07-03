@@ -3,7 +3,6 @@
  */
 
 import { useLogoStore } from '@/lib/stores/logoStore';
-import { useParameterStore } from '@/lib/stores/parameterStore';
 import { Logo, Parameters } from '@/lib/types';
 
 export function useSelectedLogo() {
@@ -11,7 +10,6 @@ export function useSelectedLogo() {
   const logos = useLogoStore((state) => state.logos);
   const updateLogoParameters = useLogoStore((state) => state.updateLogoParameters);
   const updateLogo = useLogoStore((state) => state.updateLogo);
-  const parameterStore = useParameterStore();
   
   // Get the selected logo
   const selectedLogo = logos.find((logo) => logo.id === selectedLogoId) || null;
@@ -25,19 +23,27 @@ export function useSelectedLogo() {
   
   // Convenience setters that update the selected logo
   const updateCore = (params: Partial<Parameters['core']>) => {
-    parameterStore.updateCoreParameters(params);
+    if (selectedLogoId) {
+      updateLogoParameters(selectedLogoId, { core: params });
+    }
   };
   
   const updateStyle = (params: Partial<Parameters['style']>) => {
-    parameterStore.updateStyleParameters(params);
+    if (selectedLogoId) {
+      updateLogoParameters(selectedLogoId, { style: params });
+    }
   };
   
   const updateContent = (params: Partial<Parameters['content']>) => {
-    parameterStore.updateContentParameters(params);
+    if (selectedLogoId) {
+      updateLogoParameters(selectedLogoId, { content: params });
+    }
   };
   
   const updateCustom = (params: Record<string, any>) => {
-    parameterStore.updateCustomParameters(params);
+    if (selectedLogoId) {
+      updateLogoParameters(selectedLogoId, { custom: params });
+    }
   };
   
   // Update the selected logo's code

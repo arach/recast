@@ -1,6 +1,6 @@
 'use client';
 
-import { useLogoStore, useUIStore, useParameterStore } from '@/lib/stores';
+import { useLogoStore, useUIStore } from '@/lib/stores';
 import { useSelectedLogo } from '@/lib/hooks/useSelectedLogo';
 
 export function StoreTest() {
