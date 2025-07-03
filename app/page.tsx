@@ -21,7 +21,6 @@ import { useDebugAction } from '@/lib/debug/useDebugAction'
 
 // Services
 import { ThemeLoader } from '@/lib/services/themeLoader'
-import { BrandPresets } from '@/lib/presets/brandPresets'
 import { stateTracer } from '@/lib/debug/stateUpdateTracer'
 import { SavedShape, SavedLogo } from '@/lib/storage'
 
@@ -145,6 +144,7 @@ export default function Home() {
       category: 'Reflow Brand',
       icon: '🎨',
       handler: async () => {
+        const { BrandPresets } = await import('@/lib/presets/brandPresets')
         await BrandPresets.create4LogoGrid(() => setForceRender(prev => prev + 1))
       }
     },

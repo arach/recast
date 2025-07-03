@@ -1,7 +1,6 @@
 import { useEffect, useCallback } from 'react'
 import { useUIStore } from '@/lib/stores/uiStore'
 import { DevelopmentUtilities } from '@/lib/debug/developmentUtilities'
-import { BrandPresets } from '@/lib/presets/brandPresets'
 
 interface UsePageEffectsOptions {
   onRunCode?: () => void
@@ -27,15 +26,19 @@ export function usePageEffects(options: UsePageEffectsOptions = {}) {
   // Initialize brand presets
   useEffect(() => {
     if (options.updateCore && options.updateCustom && options.loadThemeById && options.forceRender) {
-      BrandPresets.initializeReflowUtilities({
-        updateCore: options.updateCore,
-        updateCustom: options.updateCustom,
-        loadTheme: options.loadThemeById,
-        forceRender: options.forceRender
+      import('@/lib/presets/brandPresets').then(({ BrandPresets }) => {
+        BrandPresets.initializeReflowUtilities({
+          updateCore: options.updateCore,
+          updateCustom: options.updateCustom,
+          loadTheme: options.loadThemeById,
+          forceRender: options.forceRender
+        })
+        
+        // Load 4 logos utility
+        (window as any).load4Logos = () => BrandPresets.create4LogoGrid(options.forceRender)
+      }).catch(err => {
+        console.error('Failed to load BrandPresets:', err)
       })
-      
-      // Load 4 logos utility
-      (window as any).load4Logos = () => BrandPresets.create4LogoGrid(options.forceRender)
     }
   }, [options.updateCore, options.updateCustom, options.loadThemeById, options.forceRender])
   
