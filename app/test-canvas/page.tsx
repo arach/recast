@@ -1,6 +1,6 @@
 'use client'
 
-import { CanvasAreaRefactored } from '@/components/studio/CanvasAreaRefactored'
+import { CanvasArea } from '@/components/studio/CanvasArea'
 
 export default function TestCanvasPage() {
   return (
@@ -11,7 +11,7 @@ export default function TestCanvasPage() {
       </div>
       
       <div className="flex flex-1 overflow-hidden">
-        <CanvasAreaRefactored />
+        <CanvasArea />
         
         <div className="w-96 border-l bg-gray-50/50 p-4">
           <div className="bg-yellow-100 border border-yellow-300 rounded-lg p-4">
