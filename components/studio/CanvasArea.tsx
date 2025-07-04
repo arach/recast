@@ -40,6 +40,18 @@ export function CanvasArea() {
   // Get canvas offset for grid movement
   const { offset, zoom } = useCanvasStore()
   
+  // Fixed grid spacing in canvas coordinates (not affected by zoom)
+  const GRID_SPACING = 40
+  
+  // Calculate dot size based on zoom level for visibility
+  const getDotSize = (zoom: number) => {
+    if (zoom < 0.5) return 2.0    // At 50% zoom: 1.0px actual size
+    if (zoom < 0.75) return 1.5   // At 67% zoom: 1.0px actual size
+    if (zoom < 1.25) return 1.5   // At 100% zoom: 1.5px actual size
+    if (zoom < 2) return 1.3      // At 150% zoom: 1.95px actual size
+    return 1.2                     // At 200%+ zoom: 2.4px+ actual size
+  }
+  
   // Initialize canvas centering on selected logo
   useEffect(() => {
     const { centerView } = useCanvasStore.getState()
@@ -108,12 +120,12 @@ export function CanvasArea() {
       className="flex-1 relative overflow-hidden canvas-container"
       style={{
         backgroundImage: darkMode 
-          ? `radial-gradient(circle, #4b5563 ${1.5 * zoom}px, transparent ${1.5 * zoom}px)`
-          : `radial-gradient(circle, #9ca3af ${1.2 * zoom}px, transparent ${1.2 * zoom}px)`,
+          ? `radial-gradient(circle, #4b5563 ${getDotSize(zoom) * zoom}px, transparent ${getDotSize(zoom) * zoom}px)`
+          : `radial-gradient(circle, #64748b ${getDotSize(zoom) * zoom}px, transparent ${getDotSize(zoom) * zoom}px)`,
         backgroundRepeat: 'repeat',
-        backgroundSize: `${40 * zoom}px ${40 * zoom}px`,
+        backgroundSize: `${GRID_SPACING * zoom}px ${GRID_SPACING * zoom}px`,
         backgroundPosition: `${offset.x * zoom}px ${offset.y * zoom}px`,
-        backgroundColor: darkMode ? '#0f172a' : '#f9fafb'
+        backgroundColor: darkMode ? '#0f172a' : '#f8fafc'
       }}
     >
       {/* Code Editor Panel */}
