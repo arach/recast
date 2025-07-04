@@ -56,36 +56,31 @@ export function CanvasControls({ className, style }: CanvasControlsProps) {
           </Button>
         </div>
         
-        {/* View Controls */}
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={handleCenterView}
-          className={`backdrop-blur-sm shadow-lg border ${
-            darkMode
-              ? 'bg-gray-900/90 border-gray-700 hover:bg-gray-800/90 text-white'
-              : 'bg-white/90 border-gray-200 hover:bg-gray-50/90'
-          }`}
-          title="Center view on logos"
-        >
-          <RotateCcw className="w-4 h-4 mr-2" />
-          Center
-        </Button>
-        
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={handleFitToView}
-          className={`backdrop-blur-sm shadow-lg border ${
-            darkMode
-              ? 'bg-gray-900/90 border-gray-700 hover:bg-gray-800/90 text-white'
-              : 'bg-white/90 border-gray-200 hover:bg-gray-50/90'
-          }`}
-          title="Fit all logos in view"
-        >
-          <Maximize2 className="w-4 h-4 mr-2" />
-          Fit All
-        </Button>
+        {/* View Controls - integrated with zoom */}
+        <div className={`flex items-center space-x-1 backdrop-blur-sm rounded-lg border shadow-lg p-1 ${
+          darkMode
+            ? 'bg-gray-900/90 border-gray-700'
+            : 'bg-white/90 border-gray-200'
+        }`}>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={handleCenterView}
+            className="h-7 w-7 p-0"
+            title="Center view on logos"
+          >
+            <RotateCcw className="w-3 h-3" />
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={handleFitToView}
+            className="h-7 w-7 p-0"
+            title="Fit all logos in view"
+          >
+            <Maximize2 className="w-3 h-3" />
+          </Button>
+        </div>
       </div>
     </div>
   )
