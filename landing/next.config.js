@@ -1,11 +1,15 @@
 /** @type {import('next').NextConfig} */
+const isProd = process.env.NODE_ENV === 'production'
+const isCustomDomain = process.env.CUSTOM_DOMAIN === 'true'
+
 const nextConfig = {
   output: 'export',
   images: {
     unoptimized: true,
   },
-  basePath: process.env.NODE_ENV === 'production' ? '' : '',
-  assetPrefix: process.env.NODE_ENV === 'production' ? '' : '',
+  // Use /recast base path for github.io, no base path for custom domain
+  basePath: isProd && !isCustomDomain ? '/recast' : '',
+  assetPrefix: isProd && !isCustomDomain ? '/recast/' : '/',
 }
 
 module.exports = nextConfig
