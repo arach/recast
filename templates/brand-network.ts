@@ -346,7 +346,7 @@ export const name = "Brand Network";
 export const description = "Clean, logo-ready network shapes optimized for brand identity and small sizes";
 export const defaultParams = metadata.defaultParams;
 export const parameters = PARAMETERS;
-export const draw = drawVisualization;
+export { drawVisualization };
 
 export const code = `// Brand Network - Logo-optimized network shapes
 const PARAMETERS = ${JSON.stringify(PARAMETERS, null, 2)};

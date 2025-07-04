@@ -487,6 +487,8 @@ function drawVisualization(ctx, width, height, params, _generator, time) {
   }
 }
 
+export { drawVisualization };
+
 export const metadata = {
   name: "◯ Golden Circle",
   description: "Fibonacci-based proportions with theme-aware colors and organic sophistication",

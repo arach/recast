@@ -627,7 +627,7 @@ export const name = "◆ Dynamic Diamond";
 export const description = "Luxury diamond cuts with proportional control and premium brilliance effects";
 export const defaultParams = metadata.defaultParams;
 export const parameters = PARAMETERS;
-export const draw = drawVisualization;
+export { drawVisualization };
 
 export const code = `// Dynamic Diamond
 const PARAMETERS = ${JSON.stringify(PARAMETERS, null, 2)};

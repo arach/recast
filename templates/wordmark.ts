@@ -30,11 +30,15 @@ const PARAMETERS = {
   frameStrokeStyle: { type: 'select', options: [{"value":"solid","label":"Solid"},{"value":"dashed","label":"Dashed"},{"value":"dotted","label":"Dotted"},{"value":"double","label":"Double"}], default: "solid", label: 'Frame Border Style', category: 'Frame', showIf: (params)=>params.showFrame && params.frameStyle === 'outline' },
   frameStrokeWidth: { type: 'slider', min: 1, max: 10, step: 1, default: 3, label: 'Frame Border Width', category: 'Frame', showIf: (params)=>params.showFrame && params.frameStyle === 'outline' },
   framePadding: { type: 'slider', min: 10, max: 100, step: 5, default: 40, label: 'Frame Padding', category: 'Frame', showIf: (params)=>params.showFrame },
-  frameRadius: { type: 'slider', min: 0, max: 50, step: 2, default: 0, label: 'Frame Corner Radius', category: 'Frame', showIf: (params)=>params.showFrame }
+  frameRadius: { type: 'slider', min: 0, max: 50, step: 2, default: 0, label: 'Frame Corner Radius', category: 'Frame', showIf: (params)=>params.showFrame },
+  backgroundOpacity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 1, label: 'Background Opacity', category: 'Background', showIf: (params)=>params.backgroundType !== 'transparent' }
 };
 
 function applyUniversalBackground(ctx, width, height, params) {
   if (!params.backgroundType || params.backgroundType === 'transparent') return;
+  
+  ctx.save();
+  ctx.globalAlpha = params.backgroundOpacity ?? 1;
   
   if (params.backgroundType === 'solid') {
     ctx.fillStyle = params.backgroundColor || '#ffffff';
@@ -53,6 +57,8 @@ function applyUniversalBackground(ctx, width, height, params) {
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, width, height);
   }
+  
+  ctx.restore();
 }
 
 function drawVisualization(ctx, width, height, params, generator, time) {
@@ -74,9 +80,11 @@ function drawVisualization(ctx, width, height, params, generator, time) {
   // Apply universal background
   applyUniversalBackground(ctx, width, height, params);
   
-  // Get theme colors
+  // Get theme colors and opacity
   const fillColor = params.fillColor || '#000000';
   const strokeColor = params.strokeColor || '#000000';
+  const fillOpacity = params.fillOpacity ?? 1;
+  const strokeOpacity = params.strokeOpacity ?? 1;
   
   // Extract parameters
   const text = params.text || 'BRAND';
@@ -176,7 +184,8 @@ function drawVisualization(ctx, width, height, params, generator, time) {
     
     // Draw based on frame style
     if (frameStyle === 'filled' || frameStyle === 'filled-inverse') {
-      // Filled rectangle
+      // Filled rectangle with opacity
+      ctx.globalAlpha = fillOpacity;
       ctx.fillStyle = frameStyle === 'filled' ? strokeColor : fillColor;
       if (frameRadius > 0) {
         ctx.beginPath();
@@ -194,7 +203,8 @@ function drawVisualization(ctx, width, height, params, generator, time) {
         ctx.restore();
       }
     } else {
-      // Outline rectangle
+      // Outline rectangle with opacity
+      ctx.globalAlpha = strokeOpacity;
       ctx.strokeStyle = strokeColor;
       ctx.lineWidth = frameStrokeWidth;
       
@@ -238,9 +248,13 @@ function drawVisualization(ctx, width, height, params, generator, time) {
     }
   }
   
-  // Draw each line
+  // Draw each line with proper opacity
   lines.forEach((line, index) => {
     const y = startY + index * fontSize * lineHeight;
+    
+    // Save context for opacity
+    ctx.save();
+    ctx.globalAlpha = fillOpacity;
     
     // Apply letter spacing manually for better control
     if (letterSpacing > 0) {
@@ -262,8 +276,14 @@ function drawVisualization(ctx, width, height, params, generator, time) {
       ctx.fillText(line, width / 2, y);
     }
     
+    // Restore opacity
+    ctx.restore();
+    
     // Draw underline if enabled
     if (underline && index === lines.length - 1) {
+      ctx.save();
+      ctx.globalAlpha = fillOpacity;
+      
       const metrics = ctx.measureText(line);
       const underlineY = y + fontSize / 2 + underlineOffset;
       const underlineWidth = metrics.width;
@@ -276,11 +296,15 @@ function drawVisualization(ctx, width, height, params, generator, time) {
       ctx.moveTo(width / 2 - underlineWidth / 2, underlineY);
       ctx.lineTo(width / 2 + underlineWidth / 2, underlineY);
       ctx.stroke();
+      
+      ctx.restore();
     }
   });
   
-  // Optional stroke effect
+  // Optional stroke effect with opacity
   if (params.strokeWidth && params.strokeWidth > 0) {
+    ctx.save();
+    ctx.globalAlpha = strokeOpacity;
     ctx.strokeStyle = strokeColor;
     ctx.lineWidth = params.strokeWidth;
     
@@ -288,6 +312,8 @@ function drawVisualization(ctx, width, height, params, generator, time) {
       const y = startY + index * fontSize * lineHeight;
       ctx.strokeText(line, width / 2, y);
     });
+    
+    ctx.restore();
   }
   
   // Restore context if we were in filled-inverse mode
@@ -375,11 +401,15 @@ const PARAMETERS = {
   frameStrokeStyle: { type: 'select', options: [{"value":"solid","label":"Solid"},{"value":"dashed","label":"Dashed"},{"value":"dotted","label":"Dotted"},{"value":"double","label":"Double"}], default: "solid", label: 'Frame Border Style', category: 'Frame', showIf: (params)=>params.showFrame && params.frameStyle === 'outline' },
   frameStrokeWidth: { type: 'slider', min: 1, max: 10, step: 1, default: 3, label: 'Frame Border Width', category: 'Frame', showIf: (params)=>params.showFrame && params.frameStyle === 'outline' },
   framePadding: { type: 'slider', min: 10, max: 100, step: 5, default: 40, label: 'Frame Padding', category: 'Frame', showIf: (params)=>params.showFrame },
-  frameRadius: { type: 'slider', min: 0, max: 50, step: 2, default: 0, label: 'Frame Corner Radius', category: 'Frame', showIf: (params)=>params.showFrame }
+  frameRadius: { type: 'slider', min: 0, max: 50, step: 2, default: 0, label: 'Frame Corner Radius', category: 'Frame', showIf: (params)=>params.showFrame },
+  backgroundOpacity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 1, label: 'Background Opacity', category: 'Background', showIf: (params)=>params.backgroundType !== 'transparent' }
 };
 
 function applyUniversalBackground(ctx, width, height, params) {
   if (!params.backgroundType || params.backgroundType === 'transparent') return;
+  
+  ctx.save();
+  ctx.globalAlpha = params.backgroundOpacity ?? 1;
   
   if (params.backgroundType === 'solid') {
     ctx.fillStyle = params.backgroundColor || '#ffffff';
@@ -398,6 +428,8 @@ function applyUniversalBackground(ctx, width, height, params) {
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, width, height);
   }
+  
+  ctx.restore();
 }
 
 function drawVisualization(ctx, width, height, params, generator, time) {
@@ -419,9 +451,11 @@ function drawVisualization(ctx, width, height, params, generator, time) {
   // Apply universal background
   applyUniversalBackground(ctx, width, height, params);
   
-  // Get theme colors
+  // Get theme colors and opacity
   const fillColor = params.fillColor || '#000000';
   const strokeColor = params.strokeColor || '#000000';
+  const fillOpacity = params.fillOpacity ?? 1;
+  const strokeOpacity = params.strokeOpacity ?? 1;
   
   // Extract parameters
   const text = params.text || 'BRAND';
@@ -521,7 +555,8 @@ function drawVisualization(ctx, width, height, params, generator, time) {
     
     // Draw based on frame style
     if (frameStyle === 'filled' || frameStyle === 'filled-inverse') {
-      // Filled rectangle
+      // Filled rectangle with opacity
+      ctx.globalAlpha = fillOpacity;
       ctx.fillStyle = frameStyle === 'filled' ? strokeColor : fillColor;
       if (frameRadius > 0) {
         ctx.beginPath();
@@ -539,7 +574,8 @@ function drawVisualization(ctx, width, height, params, generator, time) {
         ctx.restore();
       }
     } else {
-      // Outline rectangle
+      // Outline rectangle with opacity
+      ctx.globalAlpha = strokeOpacity;
       ctx.strokeStyle = strokeColor;
       ctx.lineWidth = frameStrokeWidth;
       
@@ -583,9 +619,13 @@ function drawVisualization(ctx, width, height, params, generator, time) {
     }
   }
   
-  // Draw each line
+  // Draw each line with proper opacity
   lines.forEach((line, index) => {
     const y = startY + index * fontSize * lineHeight;
+    
+    // Save context for opacity
+    ctx.save();
+    ctx.globalAlpha = fillOpacity;
     
     // Apply letter spacing manually for better control
     if (letterSpacing > 0) {
@@ -607,8 +647,14 @@ function drawVisualization(ctx, width, height, params, generator, time) {
       ctx.fillText(line, width / 2, y);
     }
     
+    // Restore opacity
+    ctx.restore();
+    
     // Draw underline if enabled
     if (underline && index === lines.length - 1) {
+      ctx.save();
+      ctx.globalAlpha = fillOpacity;
+      
       const metrics = ctx.measureText(line);
       const underlineY = y + fontSize / 2 + underlineOffset;
       const underlineWidth = metrics.width;
@@ -621,11 +667,15 @@ function drawVisualization(ctx, width, height, params, generator, time) {
       ctx.moveTo(width / 2 - underlineWidth / 2, underlineY);
       ctx.lineTo(width / 2 + underlineWidth / 2, underlineY);
       ctx.stroke();
+      
+      ctx.restore();
     }
   });
   
-  // Optional stroke effect
+  // Optional stroke effect with opacity
   if (params.strokeWidth && params.strokeWidth > 0) {
+    ctx.save();
+    ctx.globalAlpha = strokeOpacity;
     ctx.strokeStyle = strokeColor;
     ctx.lineWidth = params.strokeWidth;
     
@@ -633,6 +683,8 @@ function drawVisualization(ctx, width, height, params, generator, time) {
       const y = startY + index * fontSize * lineHeight;
       ctx.strokeText(line, width / 2, y);
     });
+    
+    ctx.restore();
   }
   
   // Restore context if we were in filled-inverse mode

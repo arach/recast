@@ -15,31 +15,29 @@ import { drawVisualization as spinningTrianglesDraw } from '@/templates/spinning
 import { drawVisualization as infinityLoopsDraw } from '@/templates/infinity-loops'
 import { drawVisualization as wordmarkDraw } from '@/templates/wordmark'
 import { drawVisualization as letterMarkDraw } from '@/templates/letter-mark'
-// Temporarily commented out templates with missing exports
-// import { drawVisualization as luxuryBrandDraw } from '@/templates/luxury-brand'
-// import { drawVisualization as premiumKineticDraw } from '@/templates/premium-kinetic'
-// import { drawVisualization as networkConstellationDraw } from '@/templates/network-constellation'
-// import { drawVisualization as brandNetworkDraw } from '@/templates/brand-network'
-// import { drawVisualization as sophisticatedStrokesDraw } from '@/templates/sophisticated-strokes'
-// import { drawVisualization as borderEffectsDraw } from '@/templates/border-effects'
-// import { drawVisualization as nexusAiBrandDraw } from '@/templates/nexus-ai-brand'
-// import { drawVisualization as terraEcoBrandDraw } from '@/templates/terra-eco-brand'
-// import { drawVisualization as voltElectricBrandDraw } from '@/templates/volt-electric-brand'
-// import { drawVisualization as cleanTriangleDraw } from '@/templates/clean-triangle'
-// import { drawVisualization as goldenCircleDraw } from '@/templates/golden-circle'
-// import { drawVisualization as smartHexagonDraw } from '@/templates/smart-hexagon'
-// import { drawVisualization as organicBarkDraw } from '@/templates/organic-bark'
-// import { drawVisualization as crystalBlocksDraw } from '@/templates/crystal-blocks'
-// import { drawVisualization as crystalLatticeDraw } from '@/templates/crystal-lattice'
-// import { drawVisualization as dynamicDiamondDraw } from '@/templates/dynamic-diamond'
-// import { drawVisualization as handSketchDraw } from '@/templates/hand-sketch'
-// import { drawVisualization as liquidFlowDraw } from '@/templates/liquid-flow'
-// import { drawVisualization as minimalLineDraw } from '@/templates/minimal-line'
-// import { drawVisualization as minimalShapeDraw } from '@/templates/minimal-shape'
-// import { drawVisualization as neonGlowDraw } from '@/templates/neon-glow'
-// import { drawVisualization as quantumFieldDraw } from '@/templates/quantum-field'
-// import { drawVisualization as simplePrismDraw } from '@/templates/simple-prism'
-// import { drawVisualization as architecturalGridDraw } from '@/templates/architectural-grid'
+// All templates with working exports
+import { drawVisualization as networkConstellationDraw } from '@/templates/network-constellation'
+import { drawVisualization as brandNetworkDraw } from '@/templates/brand-network'
+import { drawVisualization as sophisticatedStrokesDraw } from '@/templates/sophisticated-strokes'
+import { drawVisualization as borderEffectsDraw } from '@/templates/border-effects'
+import { drawVisualization as nexusAiBrandDraw } from '@/templates/nexus-ai-brand'
+import { drawVisualization as terraEcoBrandDraw } from '@/templates/terra-eco-brand'
+import { drawVisualization as voltElectricBrandDraw } from '@/templates/volt-electric-brand'
+import { drawVisualization as cleanTriangleDraw } from '@/templates/clean-triangle'
+import { drawVisualization as goldenCircleDraw } from '@/templates/golden-circle'
+import { drawVisualization as smartHexagonDraw } from '@/templates/smart-hexagon'
+import { drawVisualization as organicBarkDraw } from '@/templates/organic-bark'
+import { drawVisualization as crystalBlocksDraw } from '@/templates/crystal-blocks'
+import { drawVisualization as crystalLatticeDraw } from '@/templates/crystal-lattice'
+import { drawVisualization as dynamicDiamondDraw } from '@/templates/dynamic-diamond'
+import { drawVisualization as handSketchDraw } from '@/templates/hand-sketch'
+import { drawVisualization as liquidFlowDraw } from '@/templates/liquid-flow'
+import { drawVisualization as minimalLineDraw } from '@/templates/minimal-line'
+import { drawVisualization as minimalShapeDraw } from '@/templates/minimal-shape'
+import { drawVisualization as neonGlowDraw } from '@/templates/neon-glow'
+import { drawVisualization as quantumFieldDraw } from '@/templates/quantum-field'
+import { drawVisualization as simplePrismDraw } from '@/templates/simple-prism'
+import { drawVisualization as architecturalGridDraw } from '@/templates/architectural-grid'
 
 export type TemplateDrawFunction = (
   ctx: CanvasRenderingContext2D,
@@ -61,31 +59,29 @@ export const templateDrawFunctions: Record<string, TemplateDrawFunction> = {
   'infinity-loops': infinityLoopsDraw,
   'wordmark': wordmarkDraw,
   'letter-mark': letterMarkDraw,
-  // Temporarily disabled templates with missing exports
-  // 'luxury-brand': luxuryBrandDraw,
-  // 'premium-kinetic': premiumKineticDraw,
-  // 'network-constellation': networkConstellationDraw,
-  // 'brand-network': brandNetworkDraw,
-  // 'sophisticated-strokes': sophisticatedStrokesDraw,
-  // 'border-effects': borderEffectsDraw,
-  // 'nexus-ai-brand': nexusAiBrandDraw,
-  // 'terra-eco-brand': terraEcoBrandDraw,
-  // 'volt-electric-brand': voltElectricBrandDraw,
-  // 'clean-triangle': cleanTriangleDraw,
-  // 'golden-circle': goldenCircleDraw,
-  // 'smart-hexagon': smartHexagonDraw,
-  // 'organic-bark': organicBarkDraw,
-  // 'crystal-blocks': crystalBlocksDraw,
-  // 'crystal-lattice': crystalLatticeDraw,
-  // 'dynamic-diamond': dynamicDiamondDraw,
-  // 'hand-sketch': handSketchDraw,
-  // 'liquid-flow': liquidFlowDraw,
-  // 'minimal-line': minimalLineDraw,
-  // 'minimal-shape': minimalShapeDraw,
-  // 'neon-glow': neonGlowDraw,
-  // 'quantum-field': quantumFieldDraw,
-  // 'simple-prism': simplePrismDraw,
-  // 'architectural-grid': architecturalGridDraw
+  // All templates now active with working exports
+  'network-constellation': networkConstellationDraw,
+  'brand-network': brandNetworkDraw,
+  'sophisticated-strokes': sophisticatedStrokesDraw,
+  'border-effects': borderEffectsDraw,
+  'nexus-ai-brand': nexusAiBrandDraw,
+  'terra-eco-brand': terraEcoBrandDraw,
+  'volt-electric-brand': voltElectricBrandDraw,
+  'clean-triangle': cleanTriangleDraw,
+  'golden-circle': goldenCircleDraw,
+  'smart-hexagon': smartHexagonDraw,
+  'organic-bark': organicBarkDraw,
+  'crystal-blocks': crystalBlocksDraw,
+  'crystal-lattice': crystalLatticeDraw,
+  'dynamic-diamond': dynamicDiamondDraw,
+  'hand-sketch': handSketchDraw,
+  'liquid-flow': liquidFlowDraw,
+  'minimal-line': minimalLineDraw,
+  'minimal-shape': minimalShapeDraw,
+  'neon-glow': neonGlowDraw,
+  'quantum-field': quantumFieldDraw,
+  'simple-prism': simplePrismDraw,
+  'architectural-grid': architecturalGridDraw
 }
 
 /**
@@ -145,6 +141,7 @@ export function executeTemplate(
     strokeOpacity: params.style?.strokeOpacity ?? params.strokeOpacity ?? params.customParameters?.strokeOpacity ?? 1,
     backgroundColor: params.style?.backgroundColor || params.backgroundColor || params.customParameters?.backgroundColor,
     backgroundType: params.style?.backgroundType || params.backgroundType || params.customParameters?.backgroundType,
+    backgroundOpacity: params.style?.backgroundOpacity ?? params.backgroundOpacity ?? params.customParameters?.backgroundOpacity ?? 1,
   }
   
   console.log('Template Registry: Merged params:', {

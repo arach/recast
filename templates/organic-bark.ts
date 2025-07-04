@@ -1,31 +1,31 @@
 // 🌳 Organic Bark
 const PARAMETERS = {
   // Universal Background Controls
-  backgroundColor: { type: 'color', default: "#f8f6f0", label: 'Background Color', category: 'Background' },
+  backgroundColor: { type: 'color', default: "#f8f5f0", label: 'Background Color', category: 'Background' },
   backgroundType: { type: 'select', options: [{"value":"transparent","label":"Transparent"},{"value":"solid","label":"Solid Color"},{"value":"gradient","label":"Gradient"}], default: "gradient", label: 'Background Type', category: 'Background' },
-  backgroundGradientStart: { type: 'color', default: "#f8f6f0", label: 'Gradient Start', category: 'Background', showIf: (params)=>params.backgroundType === 'gradient' },
+  backgroundGradientStart: { type: 'color', default: "#faf8f5", label: 'Gradient Start', category: 'Background', showIf: (params)=>params.backgroundType === 'gradient' },
   backgroundGradientEnd: { type: 'color', default: "#f0ede0", label: 'Gradient End', category: 'Background', showIf: (params)=>params.backgroundType === 'gradient' },
-  backgroundGradientDirection: { type: 'slider', min: 0, max: 360, step: 15, default: 90, label: 'Gradient Direction', category: 'Background', showIf: (params)=>params.backgroundType === 'gradient' },
+  backgroundGradientDirection: { type: 'slider', min: 0, max: 360, step: 15, default: 45, label: 'Gradient Direction', category: 'Background', showIf: (params)=>params.backgroundType === 'gradient' },
   
   // Universal Fill Controls
   fillType: { type: 'select', options: [{"value":"none","label":"None"},{"value":"solid","label":"Solid Color"},{"value":"gradient","label":"Gradient"}], default: "gradient", label: 'Fill Type', category: 'Fill' },
-  fillColor: { type: 'color', default: "#8b7355", label: 'Fill Color', category: 'Fill', showIf: (params)=>params.fillType === 'solid' },
-  fillGradientStart: { type: 'color', default: "#a68a64", label: 'Gradient Start', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
-  fillGradientEnd: { type: 'color', default: "#5c4e3f", label: 'Gradient End', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
-  fillGradientDirection: { type: 'slider', min: 0, max: 360, step: 15, default: 45, label: 'Gradient Direction', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
+  fillColor: { type: 'color', default: "#8B4513", label: 'Fill Color', category: 'Fill', showIf: (params)=>params.fillType === 'solid' },
+  fillGradientStart: { type: 'color', default: "#A0522D", label: 'Gradient Start', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
+  fillGradientEnd: { type: 'color', default: "#654321", label: 'Gradient End', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
+  fillGradientDirection: { type: 'slider', min: 0, max: 360, step: 15, default: 90, label: 'Gradient Direction', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
   fillOpacity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.9, label: 'Fill Opacity', category: 'Fill', showIf: (params)=>params.fillType !== 'none' },
   
   // Universal Stroke Controls
   strokeType: { type: 'select', options: [{"value":"none","label":"None"},{"value":"solid","label":"Solid"},{"value":"dashed","label":"Dashed"},{"value":"dotted","label":"Dotted"}], default: "solid", label: 'Stroke Type', category: 'Stroke' },
-  strokeColor: { type: 'color', default: "#4a3e31", label: 'Stroke Color', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
+  strokeColor: { type: 'color', default: "#3E2723", label: 'Stroke Color', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
   strokeWidth: { type: 'slider', min: 0, max: 10, step: 0.5, default: 1.5, label: 'Stroke Width', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
   strokeOpacity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.8, label: 'Stroke Opacity', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
   
-  // Core organic properties
-  frequency: { type: 'slider', min: 0.2, max: 1.2, step: 0.05, default: 0.6, label: 'Growth Rhythm' },
-  amplitude: { type: 'slider', min: 80, max: 200, step: 5, default: 140, label: 'Bark Scale' },
+  // Core growth properties
+  frequency: { type: 'slider', min: 0.2, max: 1.5, step: 0.05, default: 0.6, label: 'Growth Rhythm' },
+  amplitude: { type: 'slider', min: 80, max: 200, step: 5, default: 140, label: 'Tree Scale' },
   
-  // Bark texture type
+  // Bark type selector
   barkType: {
     type: 'slider',
     min: 0,
@@ -35,33 +35,33 @@ const PARAMETERS = {
     label: 'Bark Type (0=Oak, 1=Pine, 2=Birch, 3=Redwood, 4=Ancient)'
   },
   
-  // Organic growth characteristics
+  // Growth characteristics
   growthComplexity: { type: 'slider', min: 0.3, max: 1, step: 0.05, default: 0.7, label: 'Growth Complexity' },
-  naturalVariation: { type: 'slider', min: 0.4, max: 1, step: 0.05, default: 0.8, label: 'Natural Variation' },
-  organicFlow: { type: 'slider', min: 0.5, max: 1, step: 0.05, default: 0.75, label: 'Organic Flow' },
+  naturalVariation: { type: 'slider', min: 0.5, max: 1, step: 0.05, default: 0.8, label: 'Natural Variation' },
+  organicFlow: { type: 'slider', min: 0.4, max: 1, step: 0.05, default: 0.75, label: 'Organic Flow' },
   
-  // Surface texture
+  // Bark texture properties
   barkRoughness: { type: 'slider', min: 0.2, max: 1, step: 0.05, default: 0.6, label: 'Bark Roughness' },
   ridgeDepth: { type: 'slider', min: 0.1, max: 0.8, step: 0.05, default: 0.4, label: 'Ridge Depth' },
   furrowWidth: { type: 'slider', min: 0.1, max: 0.6, step: 0.05, default: 0.3, label: 'Furrow Width' },
   
-  // Growth patterns
-  growthRings: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.5, label: 'Growth Ring Visibility' },
-  branchMarks: { type: 'slider', min: 0, max: 0.8, step: 0.05, default: 0.3, label: 'Branch Scar Marks' },
-  weathering: { type: 'slider', min: 0, max: 0.7, step: 0.05, default: 0.4, label: 'Weather Weathering' },
+  // Tree aging and history
+  growthRings: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.5, label: 'Growth Rings' },
+  branchMarks: { type: 'slider', min: 0, max: 0.8, step: 0.05, default: 0.3, label: 'Branch Scars' },
+  weathering: { type: 'slider', min: 0, max: 0.8, step: 0.05, default: 0.4, label: 'Weather Damage' },
   
-  // Natural effects
-  lichens: { type: 'slider', min: 0, max: 0.5, step: 0.05, default: 0.2, label: 'Lichen Growth' },
-  moss: { type: 'slider', min: 0, max: 0.4, step: 0.05, default: 0.15, label: 'Moss Patches' },
-  insects: { type: 'slider', min: 0, max: 0.3, step: 0.02, default: 0.1, label: 'Insect Holes' },
+  // Natural elements
+  lichens: { type: 'slider', min: 0, max: 0.6, step: 0.05, default: 0.2, label: 'Lichen Growth' },
+  moss: { type: 'slider', min: 0, max: 0.5, step: 0.05, default: 0.15, label: 'Moss Coverage' },
+  insects: { type: 'slider', min: 0, max: 0.4, step: 0.05, default: 0.1, label: 'Insect Holes' },
   
-  // Age and character
-  treeAge: { type: 'slider', min: 0.2, max: 1, step: 0.05, default: 0.6, label: 'Tree Age/Maturity' },
-  characterMarks: { type: 'slider', min: 0, max: 0.6, step: 0.05, default: 0.3, label: 'Character Marks' },
+  // Character and age
+  treeAge: { type: 'slider', min: 0.3, max: 1, step: 0.05, default: 0.6, label: 'Tree Age' },
+  characterMarks: { type: 'slider', min: 0, max: 0.8, step: 0.05, default: 0.3, label: 'Character Marks' },
   
-  // Color and material
-  woodHue: { type: 'slider', min: 0, max: 60, step: 5, default: 25, label: 'Wood Hue' },
-  weatheredTone: { type: 'slider', min: 0.3, max: 0.9, step: 0.05, default: 0.6, label: 'Weathered Tone' },
+  // Color properties
+  woodHue: { type: 'slider', min: 0, max: 60, step: 5, default: 25, label: 'Wood Hue (Brown Spectrum)' },
+  weatheredTone: { type: 'slider', min: 0.3, max: 1, step: 0.05, default: 0.6, label: 'Weathered Tone' },
   naturalSaturation: { type: 'slider', min: 0.3, max: 0.8, step: 0.05, default: 0.5, label: 'Natural Saturation' }
 };
 
@@ -69,17 +69,17 @@ function applyUniversalBackground(ctx, width, height, params) {
   if (!params.backgroundType || params.backgroundType === 'transparent') return;
   
   if (params.backgroundType === 'solid') {
-    ctx.fillStyle = params.backgroundColor || '#f8f6f0';
+    ctx.fillStyle = params.backgroundColor || '#f8f5f0';
     ctx.fillRect(0, 0, width, height);
   } else if (params.backgroundType === 'gradient') {
-    const direction = (params.backgroundGradientDirection || 90) * (Math.PI / 180);
+    const direction = (params.backgroundGradientDirection || 45) * (Math.PI / 180);
     const x1 = width / 2 - Math.cos(direction) * width / 2;
     const y1 = height / 2 - Math.sin(direction) * height / 2;
     const x2 = width / 2 + Math.cos(direction) * width / 2;
     const y2 = height / 2 + Math.sin(direction) * height / 2;
     
     const gradient = ctx.createLinearGradient(x1, y1, x2, y2);
-    gradient.addColorStop(0, params.backgroundGradientStart || '#f8f6f0');
+    gradient.addColorStop(0, params.backgroundGradientStart || '#faf8f5');
     gradient.addColorStop(0.5, '#f4f2e8');
     gradient.addColorStop(1, params.backgroundGradientEnd || '#f0ede0');
     
@@ -131,172 +131,255 @@ function drawVisualization(ctx, width, height, params, _generator, time) {
   const naturalSaturation = params.naturalSaturation || 0.5;
 
   // Organic scaling with natural proportions
-  const baseScale = Math.min(width, height) / 360;
+  const baseScale = Math.min(width, height) / 400;
   const scaledAmplitude = amplitude * baseScale;
   
-  // Organic growth with seasonal variation
-  const growthPhase = time * frequency * 0.8;
-  const seasonalPulse = 1 + Math.sin(growthPhase * 0.3) * 0.04; // Slow seasonal growth
+  // Gentle organic movement (trees grow slowly!)
+  const growthPhase = time * frequency * 0.3;
+  const organicPulse = 1 + Math.sin(growthPhase) * 0.03; // Very subtle growth
 
-  // Generate organic bark structure
-  const barkStructure = generateBarkStructure(
-    barkTypeNum, centerX, centerY, scaledAmplitude * seasonalPulse,
+  // Generate tree structure with organic growth patterns
+  const treeStructure = generateOrganicTreeStructure(
+    barkTypeNum, centerX, centerY, scaledAmplitude * organicPulse,
     growthComplexity, naturalVariation, organicFlow, treeAge, growthPhase
   );
 
-  // Bark color system
-  const barkColors = generateBarkColors(woodHue, weatheredTone, naturalSaturation, treeAge);
+  // Natural color palette based on bark type and weathering
+  const barkColors = generateBarkColors(woodHue, weatheredTone, naturalSaturation, barkTypeNum, treeAge);
 
-  // Render growth rings (background texture)
+  // Render bark base structure
+  renderBarkStructure(ctx, treeStructure, barkColors, barkRoughness, ridgeDepth, params);
+
+  // Add growth ring patterns
   if (growthRings > 0.1) {
-    renderGrowthRings(ctx, barkStructure, barkColors, growthRings, treeAge, scaledAmplitude);
+    renderGrowthRings(ctx, treeStructure, barkColors, growthRings, treeAge, scaledAmplitude);
   }
 
-  // Render main bark texture
-  renderBarkTexture(ctx, barkStructure, barkColors, barkRoughness, ridgeDepth, furrowWidth);
+  // Add bark texture and furrows
+  renderBarkTexture(ctx, treeStructure, barkColors, furrowWidth, barkRoughness, naturalVariation, scaledAmplitude);
 
-  // Render bark ridges and furrows
-  renderBarkSurface(ctx, barkStructure, barkColors, ridgeDepth, furrowWidth, naturalVariation);
+  // Add branch scars and character marks
+  if (branchMarks > 0.1 || characterMarks > 0.1) {
+    renderBranchMarks(ctx, treeStructure, barkColors, branchMarks, characterMarks, treeAge, scaledAmplitude);
+  }
 
-  // Render weathering effects
+  // Add weathering effects
   if (weathering > 0.1) {
-    renderWeathering(ctx, barkStructure, barkColors, weathering, time, scaledAmplitude);
+    renderWeathering(ctx, treeStructure, barkColors, weathering, treeAge, scaledAmplitude);
   }
 
-  // Render branch scars
-  if (branchMarks > 0.1) {
-    renderBranchScars(ctx, barkStructure, barkColors, branchMarks, treeAge, scaledAmplitude);
-  }
-
-  // Render natural growth (lichens and moss)
+  // Add natural elements (lichens, moss, insects)
   if (lichens > 0.05) {
-    renderLichenGrowth(ctx, barkStructure, barkColors, lichens, time, scaledAmplitude);
+    renderLichens(ctx, treeStructure, barkColors, lichens, naturalVariation, scaledAmplitude);
   }
 
   if (moss > 0.05) {
-    renderMossPatches(ctx, barkStructure, barkColors, moss, time, scaledAmplitude);
+    renderMoss(ctx, treeStructure, barkColors, moss, naturalVariation, scaledAmplitude);
   }
 
-  // Render character marks and insect activity
-  if (characterMarks > 0.1) {
-    renderCharacterMarks(ctx, barkStructure, barkColors, characterMarks, insects, scaledAmplitude);
+  if (insects > 0.05) {
+    renderInsectHoles(ctx, treeStructure, barkColors, insects, treeAge, scaledAmplitude);
   }
 
-  function generateBarkStructure(barkType, centerX, centerY, radius, complexity, variation, flow, age, phase) {
+  function generateOrganicTreeStructure(barkType, centerX, centerY, radius, complexity, variation, flow, age, phase) {
     const points = [];
-    const basePoints = Math.floor(12 + complexity * 20); // 12-32 points for organic detail
+    
+    // Determine structure based on bark type
+    const basePoints = Math.floor(6 + complexity * 12); // More complexity = more detailed structure
     
     for (let i = 0; i < basePoints; i++) {
       const t = i / basePoints;
       const angle = t * Math.PI * 2;
       
-      let barkRadius = radius;
+      let organicRadius = radius;
       
-      // Generate bark-type specific geometry
+      // Generate bark-type specific organic patterns
       switch (barkType) {
-        case 0: // Oak - deep furrows, irregular
-          const oak1 = Math.sin(angle * 7 + phase) * variation * 0.3;
-          const oak2 = Math.sin(angle * 13 + phase * 1.3) * complexity * 0.15;
-          const oak3 = Math.sin(angle * 19 + phase * 0.7) * flow * 0.1;
-          barkRadius = radius * (0.75 + oak1 + oak2 + oak3);
+        case 0: // Oak - irregular, deeply furrowed
+          const oak1 = Math.sin(angle * 3 + phase) * variation * 0.15;
+          const oak2 = Math.sin(angle * 7 + phase * 0.7) * complexity * 0.12;
+          const oakFurrows = Math.floor(Math.sin(angle * 11 + phase) * 3) / 3 * flow * 0.1;
+          organicRadius = radius * (0.85 + oak1 + oak2 + oakFurrows);
           break;
           
-        case 1: // Pine - scaly, plated texture
-          const pine1 = Math.sin(angle * 11 + phase) * variation * 0.25;
-          const pine2 = Math.sin(angle * 17 + phase * 1.5) * complexity * 0.12;
-          const pineScale = Math.floor(Math.sin(angle * 23 + phase * 2) * 3) / 3 * variation * 0.08;
-          barkRadius = radius * (0.8 + pine1 + pine2 + pineScale);
+        case 1: // Pine - plated, scaly texture
+          const pine1 = Math.sin(angle * 5 + phase) * variation * 0.1;
+          const pine2 = Math.sin(angle * 9 + phase * 1.2) * complexity * 0.08;
+          const pinePlates = Math.floor(Math.sin(angle * 13 + phase * 0.8) * 2) / 2 * flow * 0.08;
+          organicRadius = radius * (0.88 + pine1 + pine2 + pinePlates);
           break;
           
-        case 2: // Birch - smooth with horizontal lines
-          const birch1 = Math.sin(angle * 5 + phase) * variation * 0.15;
-          const birch2 = Math.sin(angle * 29 + phase * 0.5) * complexity * 0.08;
-          const birchLines = Math.sin(angle * 41 + phase * 1.8) * flow * 0.06;
-          barkRadius = radius * (0.9 + birch1 + birch2 + birchLines);
+        case 2: // Birch - smooth with horizontal marks
+          const birch1 = Math.sin(angle * 2 + phase) * variation * 0.06;
+          const birch2 = Math.sin(angle * 8 + phase * 0.9) * complexity * 0.05;
+          const birchMarks = Math.sin(angle * 16 + phase) * flow * 0.04;
+          organicRadius = radius * (0.92 + birch1 + birch2 + birchMarks);
           break;
           
-        case 3: // Redwood - fibrous, vertical ridges
-          const redwood1 = Math.sin(angle * 3 + phase) * variation * 0.35;
-          const redwood2 = Math.sin(angle * 9 + phase * 0.8) * complexity * 0.18;
-          const redwoodFiber = Math.sin(angle * 31 + phase * 2.2) * flow * 0.12;
-          barkRadius = radius * (0.7 + redwood1 + redwood2 + redwoodFiber);
+        case 3: // Redwood - thick, fibrous
+          const redwood1 = Math.sin(angle * 4 + phase) * variation * 0.12;
+          const redwood2 = Math.sin(angle * 6 + phase * 1.1) * complexity * 0.1;
+          const redwoodFibers = Math.floor(Math.sin(angle * 14 + phase * 1.3) * 4) / 4 * flow * 0.09;
+          organicRadius = radius * (0.87 + redwood1 + redwood2 + redwoodFibers);
           break;
           
-        case 4: // Ancient - gnarled, complex, aged
-          const ancient1 = Math.sin(angle * 8 + phase) * variation * 0.4;
-          const ancient2 = Math.sin(angle * 14 + phase * 1.7) * complexity * 0.25;
-          const ancient3 = Math.sin(angle * 22 + phase * 0.9) * flow * 0.15;
-          const ancientGnarl = Math.sin(angle * 37 + phase * 2.5) * age * 0.2;
-          barkRadius = radius * (0.6 + ancient1 + ancient2 + ancient3 + ancientGnarl);
+        case 4: // Ancient - gnarled, deeply characterized
+          const ancient1 = Math.sin(angle * 6 + phase) * variation * 0.2;
+          const ancient2 = Math.sin(angle * 10 + phase * 1.5) * complexity * 0.18;
+          const ancientGnarls = Math.floor(Math.sin(angle * 17 + phase * 2) * 5) / 5 * flow * 0.15;
+          organicRadius = radius * (0.8 + ancient1 + ancient2 + ancientGnarls);
           break;
       }
       
-      // Add natural organic variation
-      const organicVariation = Math.sin(angle * 16 + phase * 1.4) * variation * 0.1;
-      const flowVariation = Math.sin(angle * 12 + phase * flow) * flow * 0.08;
-      const ageVariation = (1 - age) * Math.sin(angle * 6 + phase * 0.6) * 0.05;
+      // Apply age-related organic distortion
+      const ageDistortion = Math.sin(angle * (3 + age * 5) + phase) * age * 0.1;
+      const organicComplexity = Math.sin(angle * (8 + complexity * 7) + phase * flow) * complexity * 0.08;
       
-      const finalRadius = barkRadius * (1 + organicVariation + flowVariation + ageVariation);
+      const finalRadius = organicRadius * (1 + ageDistortion + organicComplexity);
       
       points.push({
         x: centerX + Math.cos(angle) * finalRadius,
         y: centerY + Math.sin(angle) * finalRadius,
         angle: angle,
         radius: finalRadius,
-        roughness: 0.3 + Math.sin(angle * 7 + phase) * 0.7,
-        growth: 0.2 + Math.sin(angle * 5 + phase * 0.4) * 0.8,
-        weatherPattern: Math.sin(angle * 11 + phase * 1.2),
-        textureDepth: complexity + Math.sin(angle * 3) * 0.2
+        organicFlow: flow + Math.sin(angle * 4 + phase) * 0.3,
+        textureDepth: complexity + Math.sin(angle * 6 + phase) * 0.2,
+        weatheringLevel: Math.sin(angle * 3 + phase) * 0.5 + 0.5,
+        growthDirection: Math.sin(angle * 2 + phase) * variation
       });
     }
     
     return points;
   }
 
-  function generateBarkColors(hue, weathered, saturation, age) {
-    const baseSaturation = saturation * 40; // Natural wood has low saturation
-    const baseLightness = 30 + weathered * 35; // Weathered wood is lighter
-    const ageAdjustment = age * 0.8; // Older wood is darker
+  function generateBarkColors(hue, weathered, saturation, barkType, age) {
+    const baseSaturation = saturation * 100;
+    const baseLightness = 35 + weathered * 25;
+    
+    // Bark type affects color characteristics
+    const barkAdjustments = [
+      { hueShift: 0, satMult: 1.0, lightMult: 1.0 },   // Oak - standard brown
+      { hueShift: 5, satMult: 0.8, lightMult: 1.1 },   // Pine - slightly lighter, less saturated
+      { hueShift: -10, satMult: 0.3, lightMult: 1.8 }, // Birch - much lighter, desaturated
+      { hueShift: 10, satMult: 1.2, lightMult: 0.8 },  // Redwood - reddish, darker
+      { hueShift: -5, satMult: 0.6, lightMult: 0.6 }   // Ancient - darker, weathered
+    ];
+    
+    const adjustment = barkAdjustments[barkType] || barkAdjustments[0];
+    const adjustedHue = hue + adjustment.hueShift;
+    const adjustedSat = baseSaturation * adjustment.satMult;
+    const adjustedLight = baseLightness * adjustment.lightMult;
+    
+    // Age affects coloration
+    const ageShift = age * 0.8; // Older = slightly more weathered tones
     
     return {
-      primary: "hsl(" + hue + ", " + baseSaturation + "%, " + (baseLightness - ageAdjustment * 10) + "%)",
-      light: "hsl(" + hue + ", " + (baseSaturation * 0.7) + "%, " + (baseLightness + 20) + "%)",
-      dark: "hsl(" + hue + ", " + (baseSaturation * 1.3) + "%, " + (baseLightness - 25 - ageAdjustment * 5) + "%)",
-      weathered: "hsl(" + (hue + 10) + ", " + (baseSaturation * 0.5) + "%, " + (baseLightness + 15) + "%)",
-      lichen: "hsl(90, 30%, 45%)", // Greenish lichen
-      moss: "hsl(110, 40%, 35%)", // Deeper green moss
-      growth: "hsl(" + (hue - 5) + ", " + (baseSaturation * 0.8) + "%, " + (baseLightness - 10) + "%)"
+      base: `hsl(${adjustedHue}, ${adjustedSat}%, ${adjustedLight}%)`,
+      light: `hsl(${adjustedHue}, ${adjustedSat * 0.8}%, ${Math.min(adjustedLight + 15 + ageShift * 10, 85)}%)`,
+      dark: `hsl(${adjustedHue}, ${adjustedSat * 1.2}%, ${adjustedLight - 15 - ageShift * 5}%)`,
+      ridge: `hsl(${adjustedHue - 3}, ${adjustedSat * 0.9}%, ${adjustedLight - 8}%)`,
+      furrow: `hsl(${adjustedHue + 2}, ${adjustedSat * 1.1}%, ${adjustedLight - 20}%)`,
+      weathered: `hsl(${adjustedHue + 5}, ${adjustedSat * 0.7}%, ${adjustedLight + 8}%)`,
+      lichen: `hsl(120, 40%, 65%)`, // Greenish for lichens
+      moss: `hsl(100, 60%, 45%)`,   // Deeper green for moss
+      scar: `hsl(${adjustedHue - 8}, ${adjustedSat * 0.6}%, ${adjustedLight - 25}%)`
     };
   }
 
-  function renderGrowthRings(ctx, structure, colors, rings, age, scale) {
+  function renderBarkStructure(ctx, structure, colors, roughness, depth, params) {
     ctx.save();
-    ctx.globalAlpha = rings * 0.3;
-    ctx.strokeStyle = colors.growth;
-    ctx.lineWidth = 0.5;
+    
+    // Main bark body
+    const bounds = getBounds(structure);
+    
+    // Apply universal fill/stroke
+    drawOrganicPath(ctx, structure, roughness);
+    
+    // Apply universal fill
+    if (params.fillType && params.fillType !== 'none') {
+      ctx.save();
+      ctx.globalAlpha = params.fillOpacity || 0.9;
+      
+      if (params.fillType === 'solid') {
+        ctx.fillStyle = params.fillColor || colors.base;
+      } else if (params.fillType === 'gradient') {
+        const direction = (params.fillGradientDirection || 90) * (Math.PI / 180);
+        const x1 = bounds.centerX - Math.cos(direction) * bounds.width / 2;
+        const y1 = bounds.centerY - Math.sin(direction) * bounds.height / 2;
+        const x2 = bounds.centerX + Math.cos(direction) * bounds.width / 2;
+        const y2 = bounds.centerY + Math.sin(direction) * bounds.height / 2;
+        
+        const gradient = ctx.createLinearGradient(x1, y1, x2, y2);
+        gradient.addColorStop(0, params.fillGradientStart || colors.light);
+        gradient.addColorStop(0.3, colors.base);
+        gradient.addColorStop(0.7, colors.ridge);
+        gradient.addColorStop(1, params.fillGradientEnd || colors.dark);
+        
+        ctx.fillStyle = gradient;
+      }
+      
+      ctx.fill();
+      ctx.restore();
+    }
+    
+    // Apply universal stroke
+    if (params.strokeType && params.strokeType !== 'none') {
+      ctx.save();
+      ctx.globalAlpha = params.strokeOpacity || 0.8;
+      ctx.strokeStyle = params.strokeColor || colors.dark;
+      ctx.lineWidth = params.strokeWidth || (1 + depth * 3);
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      
+      // Apply stroke pattern
+      switch (params.strokeType) {
+        case 'dashed':
+          ctx.setLineDash([ctx.lineWidth * 3, ctx.lineWidth * 2]);
+          break;
+        case 'dotted':
+          ctx.setLineDash([ctx.lineWidth, ctx.lineWidth]);
+          break;
+        default:
+          ctx.setLineDash([]);
+      }
+      
+      ctx.stroke();
+      ctx.restore();
+    }
+    
+    ctx.restore();
+  }
+
+  function renderGrowthRings(ctx, structure, colors, ringStrength, age, scale) {
+    ctx.save();
+    ctx.globalAlpha = ringStrength * 0.6;
     
     const bounds = getBounds(structure);
-    const ringCount = Math.floor(age * 12); // More rings for older trees
+    const ringCount = Math.floor(age * 8 + 3); // More rings with age
     
-    for (let r = 0; r < ringCount; r++) {
-      const ringRadius = scale * (0.3 + r * 0.08);
-      const ringVariation = Math.sin(r * 0.7) * scale * 0.05;
+    for (let r = 1; r <= ringCount; r++) {
+      const ringRadius = (bounds.width / 2) * (r / ringCount) * 0.8;
+      const ringAlpha = (1 - r / ringCount) * ringStrength;
       
+      ctx.globalAlpha = ringAlpha * 0.4;
+      ctx.strokeStyle = colors.ridge;
+      ctx.lineWidth = 0.5 + age;
+      
+      // Organic ring shape (not perfect circles)
       ctx.beginPath();
-      
-      // Irregular growth rings
-      for (let angle = 0; angle < Math.PI * 2; angle += 0.1) {
-        const radius = ringRadius + ringVariation * Math.sin(angle * 3);
+      for (let i = 0; i <= 64; i++) {
+        const angle = (i / 64) * Math.PI * 2;
+        const organicVariation = Math.sin(angle * 3 + r) * scale * 0.02;
+        const radius = ringRadius + organicVariation;
         const x = bounds.centerX + Math.cos(angle) * radius;
         const y = bounds.centerY + Math.sin(angle) * radius;
         
-        if (angle === 0) {
+        if (i === 0) {
           ctx.moveTo(x, y);
         } else {
           ctx.lineTo(x, y);
         }
       }
-      
       ctx.closePath();
       ctx.stroke();
     }
@@ -304,310 +387,300 @@ function drawVisualization(ctx, width, height, params, _generator, time) {
     ctx.restore();
   }
 
-  function renderBarkTexture(ctx, structure, colors, roughness, ridgeDepth, furrowWidth) {
+  function renderBarkTexture(ctx, structure, colors, furrowWidth, roughness, variation, scale) {
     ctx.save();
     
-    // Main bark body with textured gradient
     const bounds = getBounds(structure);
-    const barkGradient = ctx.createRadialGradient(
-      bounds.centerX - bounds.width * 0.3, bounds.centerY - bounds.height * 0.3, 0,
-      bounds.centerX, bounds.centerY, Math.max(bounds.width, bounds.height) * 0.8
-    );
+    const furrowCount = Math.floor(roughness * variation * 12);
     
-    barkGradient.addColorStop(0, colors.light);
-    barkGradient.addColorStop(0.4, colors.primary);
-    barkGradient.addColorStop(0.8, colors.dark);
-    barkGradient.addColorStop(1, colors.growth);
-    
-    ctx.fillStyle = barkGradient;
-    drawBarkPath(ctx, structure, roughness);
-    ctx.fill();
-    
-    // Bark edge with natural irregularity
-    ctx.strokeStyle = colors.dark;
-    ctx.lineWidth = 1.5 + roughness * 2;
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-    drawBarkPath(ctx, structure, roughness);
-    ctx.stroke();
-    
-    ctx.restore();
-  }
-
-  function renderBarkSurface(ctx, structure, colors, ridgeDepth, furrowWidth, variation) {
-    ctx.save();
-    
-    for (let i = 0; i < structure.length; i++) {
-      const current = structure[i];
-      const next = structure[(i + 1) % structure.length];
+    for (let f = 0; f < furrowCount; f++) {
+      const furrowAngle = (f / furrowCount) * Math.PI * 2;
+      const furrowLength = scale * (0.1 + variation * 0.15);
+      const furrowDepth = furrowWidth * 3;
       
-      if (current.roughness > 0.5) {
-        ctx.globalAlpha = current.roughness * ridgeDepth * 0.6;
-        
-        // Ridge highlight
-        ctx.strokeStyle = colors.light;
-        ctx.lineWidth = 1 + variation;
-        ctx.beginPath();
-        ctx.moveTo(current.x, current.y);
-        ctx.lineTo(next.x, next.y);
-        ctx.stroke();
-        
-        // Furrow shadow
-        ctx.globalAlpha = current.textureDepth * furrowWidth * 0.4;
-        ctx.strokeStyle = colors.dark;
-        ctx.lineWidth = furrowWidth * 3;
-        
-        const furrowOffset = furrowWidth * 5;
-        const furrowX1 = current.x + Math.cos(current.angle + Math.PI/2) * furrowOffset;
-        const furrowY1 = current.y + Math.sin(current.angle + Math.PI/2) * furrowOffset;
-        const furrowX2 = next.x + Math.cos(next.angle + Math.PI/2) * furrowOffset;
-        const furrowY2 = next.y + Math.sin(next.angle + Math.PI/2) * furrowOffset;
-        
-        ctx.beginPath();
-        ctx.moveTo(furrowX1, furrowY1);
-        ctx.lineTo(furrowX2, furrowY2);
-        ctx.stroke();
-      }
-    }
-    
-    ctx.restore();
-  }
-
-  function renderWeathering(ctx, structure, colors, weathering, time, scale) {
-    ctx.save();
-    ctx.globalAlpha = weathering * 0.4;
-    
-    const weatherCount = Math.floor(weathering * 15);
-    
-    for (let w = 0; w < weatherCount; w++) {
-      const weatherPhase = time * 0.3 + w * 0.9;
-      const weatherLife = (Math.sin(weatherPhase) + 1) / 2;
+      // Furrow start position (on bark surface)
+      const startRadius = bounds.width / 2 * (0.7 + Math.sin(furrowAngle * 3) * 0.2);
+      const startX = bounds.centerX + Math.cos(furrowAngle) * startRadius;
+      const startY = bounds.centerY + Math.sin(furrowAngle) * startRadius;
       
-      if (weatherLife > 0.2) {
-        const angle = (w / weatherCount) * Math.PI * 2 + time * 0.1;
-        const distance = scale * (0.6 + Math.sin(weatherPhase * 1.2) * 0.3);
-        const weatherX = structure[0].x + Math.cos(angle) * distance;
-        const weatherY = structure[0].y + Math.sin(angle) * distance;
-        const weatherSize = scale * 0.08 * weatherLife;
-        
-        // Weathered spot
-        const weatherGradient = ctx.createRadialGradient(
-          weatherX, weatherY, 0,
-          weatherX, weatherY, weatherSize
-        );
-        weatherGradient.addColorStop(0, colors.weathered);
-        weatherGradient.addColorStop(0.7, colors.light);
-        weatherGradient.addColorStop(1, 'transparent');
-        
-        ctx.fillStyle = weatherGradient;
-        ctx.beginPath();
-        ctx.arc(weatherX, weatherY, weatherSize, 0, Math.PI * 2);
-        ctx.fill();
-      }
-    }
-    
-    ctx.restore();
-  }
-
-  function renderBranchScars(ctx, structure, colors, branchMarks, age, scale) {
-    ctx.save();
-    ctx.globalAlpha = branchMarks * age * 0.5;
-    
-    const branchCount = Math.floor(branchMarks * age * 8);
-    
-    for (let b = 0; b < branchCount; b++) {
-      const branchAngle = (b / branchCount) * Math.PI * 2;
-      const distance = scale * (0.4 + Math.random() * 0.4);
-      const branchX = structure[0].x + Math.cos(branchAngle) * distance;
-      const branchY = structure[0].y + Math.sin(branchAngle) * distance;
-      const scarSize = scale * (0.02 + Math.random() * 0.04);
+      // Furrow direction (radial outward with organic variation)
+      const furrowDirX = Math.cos(furrowAngle + Math.sin(furrowAngle * 5) * variation * 0.3);
+      const furrowDirY = Math.sin(furrowAngle + Math.sin(furrowAngle * 5) * variation * 0.3);
       
-      // Branch scar (slightly oval)
-      ctx.fillStyle = colors.dark;
-      ctx.save();
-      ctx.translate(branchX, branchY);
-      ctx.rotate(branchAngle);
-      ctx.scale(1, 0.6); // Make oval
+      ctx.globalAlpha = roughness * 0.8;
+      ctx.strokeStyle = colors.furrow;
+      ctx.lineWidth = furrowDepth;
+      ctx.lineCap = 'round';
+      
       ctx.beginPath();
-      ctx.arc(0, 0, scarSize, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
-      
-      // Scar rim
-      ctx.strokeStyle = colors.growth;
-      ctx.lineWidth = 0.5;
-      ctx.save();
-      ctx.translate(branchX, branchY);
-      ctx.rotate(branchAngle);
-      ctx.scale(1, 0.6);
-      ctx.beginPath();
-      ctx.arc(0, 0, scarSize * 1.3, 0, Math.PI * 2);
-      ctx.stroke();
-      ctx.restore();
-    }
-    
-    ctx.restore();
-  }
-
-  function renderLichenGrowth(ctx, structure, colors, lichens, time, scale) {
-    ctx.save();
-    
-    const lichenCount = Math.floor(lichens * 12);
-    
-    for (let l = 0; l < lichenCount; l++) {
-      const lichenPhase = time * 0.2 + l * 1.1;
-      const lichenLife = (Math.sin(lichenPhase) + 1) / 2;
-      
-      if (lichenLife > 0.3) {
-        const angle = (l / lichenCount) * Math.PI * 2 + time * 0.05;
-        const distance = scale * (0.5 + Math.sin(lichenPhase * 0.8) * 0.3);
-        const lichenX = structure[0].x + Math.cos(angle) * distance;
-        const lichenY = structure[0].y + Math.sin(angle) * distance;
-        const lichenSize = scale * 0.06 * lichenLife;
-        
-        ctx.globalAlpha = lichens * lichenLife * 0.6;
-        
-        // Lichen patch (irregular)
-        const lichenGradient = ctx.createRadialGradient(
-          lichenX, lichenY, 0,
-          lichenX, lichenY, lichenSize * 1.5
-        );
-        lichenGradient.addColorStop(0, colors.lichen);
-        lichenGradient.addColorStop(0.6, colors.moss);
-        lichenGradient.addColorStop(1, 'transparent');
-        
-        ctx.fillStyle = lichenGradient;
-        
-        // Irregular lichen shape
-        ctx.beginPath();
-        for (let a = 0; a < Math.PI * 2; a += 0.3) {
-          const r = lichenSize * (0.7 + Math.sin(a * 3 + lichenPhase) * 0.3);
-          const x = lichenX + Math.cos(a) * r;
-          const y = lichenY + Math.sin(a) * r;
-          if (a === 0) ctx.moveTo(x, y);
-          else ctx.lineTo(x, y);
-        }
-        ctx.closePath();
-        ctx.fill();
-      }
-    }
-    
-    ctx.restore();
-  }
-
-  function renderMossPatches(ctx, structure, colors, moss, time, scale) {
-    ctx.save();
-    
-    const mossCount = Math.floor(moss * 10);
-    
-    for (let m = 0; m < mossCount; m++) {
-      const mossPhase = time * 0.15 + m * 1.3;
-      const mossLife = (Math.sin(mossPhase) + 1) / 2;
-      
-      if (mossLife > 0.4) {
-        const angle = (m / mossCount) * Math.PI * 2 + time * 0.03;
-        const distance = scale * (0.6 + Math.sin(mossPhase * 0.6) * 0.2);
-        const mossX = structure[0].x + Math.cos(angle) * distance;
-        const mossY = structure[0].y + Math.sin(angle) * distance;
-        const mossSize = scale * 0.04 * mossLife;
-        
-        ctx.globalAlpha = moss * mossLife * 0.7;
-        ctx.fillStyle = colors.moss;
-        
-        // Small moss clusters
-        for (let cluster = 0; cluster < 3; cluster++) {
-          const clusterX = mossX + (Math.random() - 0.5) * mossSize;
-          const clusterY = mossY + (Math.random() - 0.5) * mossSize;
-          ctx.beginPath();
-          ctx.arc(clusterX, clusterY, mossSize * (0.5 + Math.random() * 0.5), 0, Math.PI * 2);
-          ctx.fill();
-        }
-      }
-    }
-    
-    ctx.restore();
-  }
-
-  function renderCharacterMarks(ctx, structure, colors, character, insects, scale) {
-    ctx.save();
-    
-    // Character marks (scratches, gouges)
-    const markCount = Math.floor(character * 8);
-    ctx.globalAlpha = character * 0.5;
-    
-    for (let mark = 0; mark < markCount; mark++) {
-      const markAngle = Math.random() * Math.PI * 2;
-      const distance = scale * (0.3 + Math.random() * 0.5);
-      const markX = structure[0].x + Math.cos(markAngle) * distance;
-      const markY = structure[0].y + Math.sin(markAngle) * distance;
-      const markLength = scale * (0.02 + Math.random() * 0.08);
-      
-      ctx.strokeStyle = colors.dark;
-      ctx.lineWidth = 0.5 + Math.random() * 1;
-      ctx.beginPath();
-      ctx.moveTo(markX, markY);
+      ctx.moveTo(startX, startY);
       ctx.lineTo(
-        markX + Math.cos(markAngle + Math.random() - 0.5) * markLength,
-        markY + Math.sin(markAngle + Math.random() - 0.5) * markLength
+        startX + furrowDirX * furrowLength,
+        startY + furrowDirY * furrowLength
+      );
+      ctx.stroke();
+      
+      // Add ridge highlights
+      ctx.globalAlpha = roughness * 0.4;
+      ctx.strokeStyle = colors.ridge;
+      ctx.lineWidth = furrowDepth * 0.3;
+      
+      ctx.beginPath();
+      ctx.moveTo(
+        startX - furrowDirY * furrowDepth * 0.5,
+        startY + furrowDirX * furrowDepth * 0.5
+      );
+      ctx.lineTo(
+        startX + furrowDirX * furrowLength - furrowDirY * furrowDepth * 0.5,
+        startY + furrowDirY * furrowLength + furrowDirX * furrowDepth * 0.5
       );
       ctx.stroke();
     }
     
-    // Insect holes
-    const holeCount = Math.floor(insects * 15);
-    ctx.globalAlpha = insects * 0.8;
+    ctx.restore();
+  }
+
+  function renderBranchMarks(ctx, structure, colors, branchStrength, characterStrength, age, scale) {
+    ctx.save();
     
-    for (let hole = 0; hole < holeCount; hole++) {
-      const holeAngle = Math.random() * Math.PI * 2;
-      const distance = scale * (0.4 + Math.random() * 0.4);
-      const holeX = structure[0].x + Math.cos(holeAngle) * distance;
-      const holeY = structure[0].y + Math.sin(holeAngle) * distance;
-      const holeSize = scale * (0.005 + Math.random() * 0.01);
+    const bounds = getBounds(structure);
+    const markCount = Math.floor((branchStrength + characterStrength) * age * 6);
+    
+    for (let m = 0; m < markCount; m++) {
+      const markAngle = Math.random() * Math.PI * 2;
+      const markRadius = bounds.width / 2 * (0.6 + Math.random() * 0.3);
+      const markX = bounds.centerX + Math.cos(markAngle) * markRadius;
+      const markY = bounds.centerY + Math.sin(markAngle) * markRadius;
       
-      ctx.fillStyle = colors.dark;
+      if (Math.random() < branchStrength) {
+        // Branch scar - circular
+        const scarSize = scale * (0.02 + age * 0.03);
+        ctx.globalAlpha = branchStrength * 0.8;
+        ctx.fillStyle = colors.scar;
+        ctx.beginPath();
+        ctx.arc(markX, markY, scarSize, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Scar highlight
+        ctx.globalAlpha = branchStrength * 0.4;
+        ctx.fillStyle = colors.weathered;
+        ctx.beginPath();
+        ctx.arc(markX - scarSize * 0.3, markY - scarSize * 0.3, scarSize * 0.6, 0, Math.PI * 2);
+        ctx.fill();
+      } else {
+        // Character mark - linear scratch/gouge
+        const markLength = scale * (0.03 + characterStrength * 0.05);
+        const markDirection = Math.random() * Math.PI * 2;
+        
+        ctx.globalAlpha = characterStrength * 0.7;
+        ctx.strokeStyle = colors.scar;
+        ctx.lineWidth = scale * 0.01;
+        ctx.lineCap = 'round';
+        
+        ctx.beginPath();
+        ctx.moveTo(markX, markY);
+        ctx.lineTo(
+          markX + Math.cos(markDirection) * markLength,
+          markY + Math.sin(markDirection) * markLength
+        );
+        ctx.stroke();
+      }
+    }
+    
+    ctx.restore();
+  }
+
+  function renderWeathering(ctx, structure, colors, weatheringLevel, age, scale) {
+    ctx.save();
+    
+    const bounds = getBounds(structure);
+    const weatherSpots = Math.floor(weatheringLevel * age * 15);
+    
+    for (let w = 0; w < weatherSpots; w++) {
+      const spotX = bounds.minX + Math.random() * bounds.width;
+      const spotY = bounds.minY + Math.random() * bounds.height;
+      const spotSize = scale * (0.01 + Math.random() * 0.03);
+      
+      ctx.globalAlpha = weatheringLevel * 0.5;
+      
+      // Weathered spot
+      ctx.fillStyle = colors.weathered;
       ctx.beginPath();
-      ctx.arc(holeX, holeY, holeSize, 0, Math.PI * 2);
+      ctx.arc(spotX, spotY, spotSize, 0, Math.PI * 2);
+      ctx.fill();
+      
+      // Small weathering streaks
+      if (Math.random() < 0.3) {
+        const streakLength = spotSize * 2;
+        const streakAngle = Math.random() * Math.PI * 2;
+        
+        ctx.strokeStyle = colors.weathered;
+        ctx.lineWidth = spotSize * 0.3;
+        ctx.globalAlpha = weatheringLevel * 0.3;
+        
+        ctx.beginPath();
+        ctx.moveTo(spotX, spotY);
+        ctx.lineTo(
+          spotX + Math.cos(streakAngle) * streakLength,
+          spotY + Math.sin(streakAngle) * streakLength
+        );
+        ctx.stroke();
+      }
+    }
+    
+    ctx.restore();
+  }
+
+  function renderLichens(ctx, structure, colors, lichenLevel, variation, scale) {
+    ctx.save();
+    
+    const bounds = getBounds(structure);
+    const lichenPatches = Math.floor(lichenLevel * variation * 8);
+    
+    for (let l = 0; l < lichenPatches; l++) {
+      const patchX = bounds.minX + Math.random() * bounds.width;
+      const patchY = bounds.minY + Math.random() * bounds.height;
+      const patchSize = scale * (0.015 + Math.random() * 0.025);
+      
+      ctx.globalAlpha = lichenLevel * (0.4 + Math.random() * 0.3);
+      ctx.fillStyle = colors.lichen;
+      
+      // Organic lichen shape
+      ctx.beginPath();
+      for (let i = 0; i <= 8; i++) {
+        const angle = (i / 8) * Math.PI * 2;
+        const radius = patchSize * (0.7 + Math.sin(angle * 3) * 0.3);
+        const x = patchX + Math.cos(angle) * radius;
+        const y = patchY + Math.sin(angle) * radius;
+        
+        if (i === 0) {
+          ctx.moveTo(x, y);
+        } else {
+          ctx.lineTo(x, y);
+        }
+      }
+      ctx.closePath();
       ctx.fill();
     }
     
     ctx.restore();
   }
 
-  function drawBarkPath(ctx, points, roughness) {
+  function renderMoss(ctx, structure, colors, mossLevel, variation, scale) {
+    ctx.save();
+    
+    const bounds = getBounds(structure);
+    const mossCount = Math.floor(mossLevel * variation * 20);
+    
+    for (let m = 0; m < mossCount; m++) {
+      const mossX = bounds.minX + Math.random() * bounds.width;
+      const mossY = bounds.minY + Math.random() * bounds.height;
+      const mossSize = scale * (0.005 + Math.random() * 0.015);
+      
+      ctx.globalAlpha = mossLevel * (0.3 + Math.random() * 0.4);
+      ctx.fillStyle = colors.moss;
+      
+      // Small moss dots/clusters
+      ctx.beginPath();
+      ctx.arc(mossX, mossY, mossSize, 0, Math.PI * 2);
+      ctx.fill();
+      
+      // Occasional moss strands
+      if (Math.random() < 0.2) {
+        const strandLength = mossSize * 3;
+        const strandAngle = Math.random() * Math.PI * 2;
+        
+        ctx.strokeStyle = colors.moss;
+        ctx.lineWidth = mossSize * 0.3;
+        ctx.globalAlpha = mossLevel * 0.5;
+        
+        ctx.beginPath();
+        ctx.moveTo(mossX, mossY);
+        ctx.lineTo(
+          mossX + Math.cos(strandAngle) * strandLength,
+          mossY + Math.sin(strandAngle) * strandLength
+        );
+        ctx.stroke();
+      }
+    }
+    
+    ctx.restore();
+  }
+
+  function renderInsectHoles(ctx, structure, colors, insectLevel, age, scale) {
+    ctx.save();
+    
+    const bounds = getBounds(structure);
+    const holeCount = Math.floor(insectLevel * age * 5);
+    
+    for (let h = 0; h < holeCount; h++) {
+      const holeX = bounds.minX + Math.random() * bounds.width;
+      const holeY = bounds.minY + Math.random() * bounds.height;
+      const holeSize = scale * (0.008 + Math.random() * 0.015);
+      
+      ctx.globalAlpha = insectLevel * 0.9;
+      
+      // Dark hole
+      ctx.fillStyle = colors.scar;
+      ctx.beginPath();
+      ctx.arc(holeX, holeY, holeSize, 0, Math.PI * 2);
+      ctx.fill();
+      
+      // Hole rim highlight
+      ctx.globalAlpha = insectLevel * 0.4;
+      ctx.strokeStyle = colors.ridge;
+      ctx.lineWidth = holeSize * 0.2;
+      ctx.beginPath();
+      ctx.arc(holeX, holeY, holeSize * 1.2, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+    
+    ctx.restore();
+  }
+
+  function drawOrganicPath(ctx, points, roughness) {
     if (points.length < 3) return;
     
     ctx.beginPath();
     ctx.moveTo(points[0].x, points[0].y);
     
-    // Organic, irregular curves
+    // Organic curves with natural flow
     for (let i = 1; i < points.length; i++) {
       const current = points[i];
       const previous = points[i - 1];
       const next = points[(i + 1) % points.length];
       
-      // Bark surface irregularity
-      const organicTension = 0.5 + roughness * 0.5;
-      const roughnessVariation = current.roughness * roughness * 0.1;
+      // Natural organic flow with bark-specific roughness
+      const organicFlow = current.organicFlow || 0.7;
+      const textureRoughness = roughness * 0.2;
       
-      const cp1x = previous.x + (current.x - (points[i - 2] || previous).x) * organicTension * 0.3;
-      const cp1y = previous.y + (current.y - (points[i - 2] || previous).y) * organicTension * 0.3;
-      const cp2x = current.x - (next.x - previous.x) * organicTension * 0.3 + roughnessVariation;
-      const cp2y = current.y - (next.y - previous.y) * organicTension * 0.3 + roughnessVariation;
+      const cp1x = previous.x + (current.x - (points[i - 2] || previous).x) * organicFlow * 0.2;
+      const cp1y = previous.y + (current.y - (points[i - 2] || previous).y) * organicFlow * 0.2;
+      const cp2x = current.x - (next.x - previous.x) * organicFlow * 0.2;
+      const cp2y = current.y - (next.y - previous.y) * organicFlow * 0.2;
       
-      ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, current.x, current.y);
+      // Add subtle texture roughness
+      const roughX = (Math.random() - 0.5) * textureRoughness * 2;
+      const roughY = (Math.random() - 0.5) * textureRoughness * 2;
+      
+      ctx.bezierCurveTo(
+        cp1x + roughX, cp1y + roughY,
+        cp2x + roughX, cp2y + roughY,
+        current.x, current.y
+      );
     }
     
-    // Close the organic shape
+    // Close the organic form with natural flow
     const first = points[0];
     const last = points[points.length - 1];
     const secondLast = points[points.length - 2];
     const second = points[1];
     
-    const organicTension = 0.5 + roughness * 0.5;
-    const cp1x = last.x + (first.x - secondLast.x) * organicTension * 0.3;
-    const cp1y = last.y + (first.y - secondLast.y) * organicTension * 0.3;
-    const cp2x = first.x - (second.x - last.x) * organicTension * 0.3;
-    const cp2y = first.y - (second.y - last.y) * organicTension * 0.3;
+    const organicFlow = 0.7;
+    const cp1x = last.x + (first.x - secondLast.x) * organicFlow * 0.2;
+    const cp1y = last.y + (first.y - secondLast.y) * organicFlow * 0.2;
+    const cp2x = first.x - (second.x - last.x) * organicFlow * 0.2;
+    const cp2y = first.y - (second.y - last.y) * organicFlow * 0.2;
     
     ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, first.x, first.y);
     ctx.closePath();
@@ -630,6 +703,8 @@ function drawVisualization(ctx, width, height, params, _generator, time) {
     };
   }
 }
+
+export { drawVisualization };
 
 export const metadata = {
   name: "🌳 Organic Bark",
@@ -689,31 +764,31 @@ export const defaultParams = {
 export const code = `// 🌳 Organic Bark
 const PARAMETERS = {
   // Universal Background Controls
-  backgroundColor: { type: 'color', default: "#f8f6f0", label: 'Background Color', category: 'Background' },
+  backgroundColor: { type: 'color', default: "#f8f5f0", label: 'Background Color', category: 'Background' },
   backgroundType: { type: 'select', options: [{"value":"transparent","label":"Transparent"},{"value":"solid","label":"Solid Color"},{"value":"gradient","label":"Gradient"}], default: "gradient", label: 'Background Type', category: 'Background' },
-  backgroundGradientStart: { type: 'color', default: "#f8f6f0", label: 'Gradient Start', category: 'Background', showIf: (params)=>params.backgroundType === 'gradient' },
+  backgroundGradientStart: { type: 'color', default: "#faf8f5", label: 'Gradient Start', category: 'Background', showIf: (params)=>params.backgroundType === 'gradient' },
   backgroundGradientEnd: { type: 'color', default: "#f0ede0", label: 'Gradient End', category: 'Background', showIf: (params)=>params.backgroundType === 'gradient' },
-  backgroundGradientDirection: { type: 'slider', min: 0, max: 360, step: 15, default: 90, label: 'Gradient Direction', category: 'Background', showIf: (params)=>params.backgroundType === 'gradient' },
+  backgroundGradientDirection: { type: 'slider', min: 0, max: 360, step: 15, default: 45, label: 'Gradient Direction', category: 'Background', showIf: (params)=>params.backgroundType === 'gradient' },
   
   // Universal Fill Controls
   fillType: { type: 'select', options: [{"value":"none","label":"None"},{"value":"solid","label":"Solid Color"},{"value":"gradient","label":"Gradient"}], default: "gradient", label: 'Fill Type', category: 'Fill' },
-  fillColor: { type: 'color', default: "#8b7355", label: 'Fill Color', category: 'Fill', showIf: (params)=>params.fillType === 'solid' },
-  fillGradientStart: { type: 'color', default: "#a68a64", label: 'Gradient Start', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
-  fillGradientEnd: { type: 'color', default: "#5c4e3f", label: 'Gradient End', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
-  fillGradientDirection: { type: 'slider', min: 0, max: 360, step: 15, default: 45, label: 'Gradient Direction', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
+  fillColor: { type: 'color', default: "#8B4513", label: 'Fill Color', category: 'Fill', showIf: (params)=>params.fillType === 'solid' },
+  fillGradientStart: { type: 'color', default: "#A0522D", label: 'Gradient Start', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
+  fillGradientEnd: { type: 'color', default: "#654321", label: 'Gradient End', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
+  fillGradientDirection: { type: 'slider', min: 0, max: 360, step: 15, default: 90, label: 'Gradient Direction', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
   fillOpacity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.9, label: 'Fill Opacity', category: 'Fill', showIf: (params)=>params.fillType !== 'none' },
   
   // Universal Stroke Controls
   strokeType: { type: 'select', options: [{"value":"none","label":"None"},{"value":"solid","label":"Solid"},{"value":"dashed","label":"Dashed"},{"value":"dotted","label":"Dotted"}], default: "solid", label: 'Stroke Type', category: 'Stroke' },
-  strokeColor: { type: 'color', default: "#4a3e31", label: 'Stroke Color', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
+  strokeColor: { type: 'color', default: "#3E2723", label: 'Stroke Color', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
   strokeWidth: { type: 'slider', min: 0, max: 10, step: 0.5, default: 1.5, label: 'Stroke Width', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
   strokeOpacity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.8, label: 'Stroke Opacity', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
   
-  // Core organic properties
-  frequency: { type: 'slider', min: 0.2, max: 1.2, step: 0.05, default: 0.6, label: 'Growth Rhythm' },
-  amplitude: { type: 'slider', min: 80, max: 200, step: 5, default: 140, label: 'Bark Scale' },
+  // Core growth properties
+  frequency: { type: 'slider', min: 0.2, max: 1.5, step: 0.05, default: 0.6, label: 'Growth Rhythm' },
+  amplitude: { type: 'slider', min: 80, max: 200, step: 5, default: 140, label: 'Tree Scale' },
   
-  // Bark texture type
+  // Bark type selector
   barkType: {
     type: 'slider',
     min: 0,
@@ -723,33 +798,33 @@ const PARAMETERS = {
     label: 'Bark Type (0=Oak, 1=Pine, 2=Birch, 3=Redwood, 4=Ancient)'
   },
   
-  // Organic growth characteristics
+  // Growth characteristics
   growthComplexity: { type: 'slider', min: 0.3, max: 1, step: 0.05, default: 0.7, label: 'Growth Complexity' },
-  naturalVariation: { type: 'slider', min: 0.4, max: 1, step: 0.05, default: 0.8, label: 'Natural Variation' },
-  organicFlow: { type: 'slider', min: 0.5, max: 1, step: 0.05, default: 0.75, label: 'Organic Flow' },
+  naturalVariation: { type: 'slider', min: 0.5, max: 1, step: 0.05, default: 0.8, label: 'Natural Variation' },
+  organicFlow: { type: 'slider', min: 0.4, max: 1, step: 0.05, default: 0.75, label: 'Organic Flow' },
   
-  // Surface texture
+  // Bark texture properties
   barkRoughness: { type: 'slider', min: 0.2, max: 1, step: 0.05, default: 0.6, label: 'Bark Roughness' },
   ridgeDepth: { type: 'slider', min: 0.1, max: 0.8, step: 0.05, default: 0.4, label: 'Ridge Depth' },
   furrowWidth: { type: 'slider', min: 0.1, max: 0.6, step: 0.05, default: 0.3, label: 'Furrow Width' },
   
-  // Growth patterns
-  growthRings: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.5, label: 'Growth Ring Visibility' },
-  branchMarks: { type: 'slider', min: 0, max: 0.8, step: 0.05, default: 0.3, label: 'Branch Scar Marks' },
-  weathering: { type: 'slider', min: 0, max: 0.7, step: 0.05, default: 0.4, label: 'Weather Weathering' },
+  // Tree aging and history
+  growthRings: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.5, label: 'Growth Rings' },
+  branchMarks: { type: 'slider', min: 0, max: 0.8, step: 0.05, default: 0.3, label: 'Branch Scars' },
+  weathering: { type: 'slider', min: 0, max: 0.8, step: 0.05, default: 0.4, label: 'Weather Damage' },
   
-  // Natural effects
-  lichens: { type: 'slider', min: 0, max: 0.5, step: 0.05, default: 0.2, label: 'Lichen Growth' },
-  moss: { type: 'slider', min: 0, max: 0.4, step: 0.05, default: 0.15, label: 'Moss Patches' },
-  insects: { type: 'slider', min: 0, max: 0.3, step: 0.02, default: 0.1, label: 'Insect Holes' },
+  // Natural elements
+  lichens: { type: 'slider', min: 0, max: 0.6, step: 0.05, default: 0.2, label: 'Lichen Growth' },
+  moss: { type: 'slider', min: 0, max: 0.5, step: 0.05, default: 0.15, label: 'Moss Coverage' },
+  insects: { type: 'slider', min: 0, max: 0.4, step: 0.05, default: 0.1, label: 'Insect Holes' },
   
-  // Age and character
-  treeAge: { type: 'slider', min: 0.2, max: 1, step: 0.05, default: 0.6, label: 'Tree Age/Maturity' },
-  characterMarks: { type: 'slider', min: 0, max: 0.6, step: 0.05, default: 0.3, label: 'Character Marks' },
+  // Character and age
+  treeAge: { type: 'slider', min: 0.3, max: 1, step: 0.05, default: 0.6, label: 'Tree Age' },
+  characterMarks: { type: 'slider', min: 0, max: 0.8, step: 0.05, default: 0.3, label: 'Character Marks' },
   
-  // Color and material
-  woodHue: { type: 'slider', min: 0, max: 60, step: 5, default: 25, label: 'Wood Hue' },
-  weatheredTone: { type: 'slider', min: 0.3, max: 0.9, step: 0.05, default: 0.6, label: 'Weathered Tone' },
+  // Color properties
+  woodHue: { type: 'slider', min: 0, max: 60, step: 5, default: 25, label: 'Wood Hue (Brown Spectrum)' },
+  weatheredTone: { type: 'slider', min: 0.3, max: 1, step: 0.05, default: 0.6, label: 'Weathered Tone' },
   naturalSaturation: { type: 'slider', min: 0.3, max: 0.8, step: 0.05, default: 0.5, label: 'Natural Saturation' }
 };
 
@@ -757,17 +832,17 @@ function applyUniversalBackground(ctx, width, height, params) {
   if (!params.backgroundType || params.backgroundType === 'transparent') return;
   
   if (params.backgroundType === 'solid') {
-    ctx.fillStyle = params.backgroundColor || '#f8f6f0';
+    ctx.fillStyle = params.backgroundColor || '#f8f5f0';
     ctx.fillRect(0, 0, width, height);
   } else if (params.backgroundType === 'gradient') {
-    const direction = (params.backgroundGradientDirection || 90) * (Math.PI / 180);
+    const direction = (params.backgroundGradientDirection || 45) * (Math.PI / 180);
     const x1 = width / 2 - Math.cos(direction) * width / 2;
     const y1 = height / 2 - Math.sin(direction) * height / 2;
     const x2 = width / 2 + Math.cos(direction) * width / 2;
     const y2 = height / 2 + Math.sin(direction) * height / 2;
     
     const gradient = ctx.createLinearGradient(x1, y1, x2, y2);
-    gradient.addColorStop(0, params.backgroundGradientStart || '#f8f6f0');
+    gradient.addColorStop(0, params.backgroundGradientStart || '#faf8f5');
     gradient.addColorStop(0.5, '#f4f2e8');
     gradient.addColorStop(1, params.backgroundGradientEnd || '#f0ede0');
     
@@ -819,172 +894,255 @@ function drawVisualization(ctx, width, height, params, _generator, time) {
   const naturalSaturation = params.naturalSaturation || 0.5;
 
   // Organic scaling with natural proportions
-  const baseScale = Math.min(width, height) / 360;
+  const baseScale = Math.min(width, height) / 400;
   const scaledAmplitude = amplitude * baseScale;
   
-  // Organic growth with seasonal variation
-  const growthPhase = time * frequency * 0.8;
-  const seasonalPulse = 1 + Math.sin(growthPhase * 0.3) * 0.04; // Slow seasonal growth
+  // Gentle organic movement (trees grow slowly!)
+  const growthPhase = time * frequency * 0.3;
+  const organicPulse = 1 + Math.sin(growthPhase) * 0.03; // Very subtle growth
 
-  // Generate organic bark structure
-  const barkStructure = generateBarkStructure(
-    barkTypeNum, centerX, centerY, scaledAmplitude * seasonalPulse,
+  // Generate tree structure with organic growth patterns
+  const treeStructure = generateOrganicTreeStructure(
+    barkTypeNum, centerX, centerY, scaledAmplitude * organicPulse,
     growthComplexity, naturalVariation, organicFlow, treeAge, growthPhase
   );
 
-  // Bark color system
-  const barkColors = generateBarkColors(woodHue, weatheredTone, naturalSaturation, treeAge);
+  // Natural color palette based on bark type and weathering
+  const barkColors = generateBarkColors(woodHue, weatheredTone, naturalSaturation, barkTypeNum, treeAge);
 
-  // Render growth rings (background texture)
+  // Render bark base structure
+  renderBarkStructure(ctx, treeStructure, barkColors, barkRoughness, ridgeDepth, params);
+
+  // Add growth ring patterns
   if (growthRings > 0.1) {
-    renderGrowthRings(ctx, barkStructure, barkColors, growthRings, treeAge, scaledAmplitude);
+    renderGrowthRings(ctx, treeStructure, barkColors, growthRings, treeAge, scaledAmplitude);
   }
 
-  // Render main bark texture
-  renderBarkTexture(ctx, barkStructure, barkColors, barkRoughness, ridgeDepth, furrowWidth);
+  // Add bark texture and furrows
+  renderBarkTexture(ctx, treeStructure, barkColors, furrowWidth, barkRoughness, naturalVariation, scaledAmplitude);
 
-  // Render bark ridges and furrows
-  renderBarkSurface(ctx, barkStructure, barkColors, ridgeDepth, furrowWidth, naturalVariation);
+  // Add branch scars and character marks
+  if (branchMarks > 0.1 || characterMarks > 0.1) {
+    renderBranchMarks(ctx, treeStructure, barkColors, branchMarks, characterMarks, treeAge, scaledAmplitude);
+  }
 
-  // Render weathering effects
+  // Add weathering effects
   if (weathering > 0.1) {
-    renderWeathering(ctx, barkStructure, barkColors, weathering, time, scaledAmplitude);
+    renderWeathering(ctx, treeStructure, barkColors, weathering, treeAge, scaledAmplitude);
   }
 
-  // Render branch scars
-  if (branchMarks > 0.1) {
-    renderBranchScars(ctx, barkStructure, barkColors, branchMarks, treeAge, scaledAmplitude);
-  }
-
-  // Render natural growth (lichens and moss)
+  // Add natural elements (lichens, moss, insects)
   if (lichens > 0.05) {
-    renderLichenGrowth(ctx, barkStructure, barkColors, lichens, time, scaledAmplitude);
+    renderLichens(ctx, treeStructure, barkColors, lichens, naturalVariation, scaledAmplitude);
   }
 
   if (moss > 0.05) {
-    renderMossPatches(ctx, barkStructure, barkColors, moss, time, scaledAmplitude);
+    renderMoss(ctx, treeStructure, barkColors, moss, naturalVariation, scaledAmplitude);
   }
 
-  // Render character marks and insect activity
-  if (characterMarks > 0.1) {
-    renderCharacterMarks(ctx, barkStructure, barkColors, characterMarks, insects, scaledAmplitude);
+  if (insects > 0.05) {
+    renderInsectHoles(ctx, treeStructure, barkColors, insects, treeAge, scaledAmplitude);
   }
 
-  function generateBarkStructure(barkType, centerX, centerY, radius, complexity, variation, flow, age, phase) {
+  function generateOrganicTreeStructure(barkType, centerX, centerY, radius, complexity, variation, flow, age, phase) {
     const points = [];
-    const basePoints = Math.floor(12 + complexity * 20); // 12-32 points for organic detail
+    
+    // Determine structure based on bark type
+    const basePoints = Math.floor(6 + complexity * 12); // More complexity = more detailed structure
     
     for (let i = 0; i < basePoints; i++) {
       const t = i / basePoints;
       const angle = t * Math.PI * 2;
       
-      let barkRadius = radius;
+      let organicRadius = radius;
       
-      // Generate bark-type specific geometry
+      // Generate bark-type specific organic patterns
       switch (barkType) {
-        case 0: // Oak - deep furrows, irregular
-          const oak1 = Math.sin(angle * 7 + phase) * variation * 0.3;
-          const oak2 = Math.sin(angle * 13 + phase * 1.3) * complexity * 0.15;
-          const oak3 = Math.sin(angle * 19 + phase * 0.7) * flow * 0.1;
-          barkRadius = radius * (0.75 + oak1 + oak2 + oak3);
+        case 0: // Oak - irregular, deeply furrowed
+          const oak1 = Math.sin(angle * 3 + phase) * variation * 0.15;
+          const oak2 = Math.sin(angle * 7 + phase * 0.7) * complexity * 0.12;
+          const oakFurrows = Math.floor(Math.sin(angle * 11 + phase) * 3) / 3 * flow * 0.1;
+          organicRadius = radius * (0.85 + oak1 + oak2 + oakFurrows);
           break;
           
-        case 1: // Pine - scaly, plated texture
-          const pine1 = Math.sin(angle * 11 + phase) * variation * 0.25;
-          const pine2 = Math.sin(angle * 17 + phase * 1.5) * complexity * 0.12;
-          const pineScale = Math.floor(Math.sin(angle * 23 + phase * 2) * 3) / 3 * variation * 0.08;
-          barkRadius = radius * (0.8 + pine1 + pine2 + pineScale);
+        case 1: // Pine - plated, scaly texture
+          const pine1 = Math.sin(angle * 5 + phase) * variation * 0.1;
+          const pine2 = Math.sin(angle * 9 + phase * 1.2) * complexity * 0.08;
+          const pinePlates = Math.floor(Math.sin(angle * 13 + phase * 0.8) * 2) / 2 * flow * 0.08;
+          organicRadius = radius * (0.88 + pine1 + pine2 + pinePlates);
           break;
           
-        case 2: // Birch - smooth with horizontal lines
-          const birch1 = Math.sin(angle * 5 + phase) * variation * 0.15;
-          const birch2 = Math.sin(angle * 29 + phase * 0.5) * complexity * 0.08;
-          const birchLines = Math.sin(angle * 41 + phase * 1.8) * flow * 0.06;
-          barkRadius = radius * (0.9 + birch1 + birch2 + birchLines);
+        case 2: // Birch - smooth with horizontal marks
+          const birch1 = Math.sin(angle * 2 + phase) * variation * 0.06;
+          const birch2 = Math.sin(angle * 8 + phase * 0.9) * complexity * 0.05;
+          const birchMarks = Math.sin(angle * 16 + phase) * flow * 0.04;
+          organicRadius = radius * (0.92 + birch1 + birch2 + birchMarks);
           break;
           
-        case 3: // Redwood - fibrous, vertical ridges
-          const redwood1 = Math.sin(angle * 3 + phase) * variation * 0.35;
-          const redwood2 = Math.sin(angle * 9 + phase * 0.8) * complexity * 0.18;
-          const redwoodFiber = Math.sin(angle * 31 + phase * 2.2) * flow * 0.12;
-          barkRadius = radius * (0.7 + redwood1 + redwood2 + redwoodFiber);
+        case 3: // Redwood - thick, fibrous
+          const redwood1 = Math.sin(angle * 4 + phase) * variation * 0.12;
+          const redwood2 = Math.sin(angle * 6 + phase * 1.1) * complexity * 0.1;
+          const redwoodFibers = Math.floor(Math.sin(angle * 14 + phase * 1.3) * 4) / 4 * flow * 0.09;
+          organicRadius = radius * (0.87 + redwood1 + redwood2 + redwoodFibers);
           break;
           
-        case 4: // Ancient - gnarled, complex, aged
-          const ancient1 = Math.sin(angle * 8 + phase) * variation * 0.4;
-          const ancient2 = Math.sin(angle * 14 + phase * 1.7) * complexity * 0.25;
-          const ancient3 = Math.sin(angle * 22 + phase * 0.9) * flow * 0.15;
-          const ancientGnarl = Math.sin(angle * 37 + phase * 2.5) * age * 0.2;
-          barkRadius = radius * (0.6 + ancient1 + ancient2 + ancient3 + ancientGnarl);
+        case 4: // Ancient - gnarled, deeply characterized
+          const ancient1 = Math.sin(angle * 6 + phase) * variation * 0.2;
+          const ancient2 = Math.sin(angle * 10 + phase * 1.5) * complexity * 0.18;
+          const ancientGnarls = Math.floor(Math.sin(angle * 17 + phase * 2) * 5) / 5 * flow * 0.15;
+          organicRadius = radius * (0.8 + ancient1 + ancient2 + ancientGnarls);
           break;
       }
       
-      // Add natural organic variation
-      const organicVariation = Math.sin(angle * 16 + phase * 1.4) * variation * 0.1;
-      const flowVariation = Math.sin(angle * 12 + phase * flow) * flow * 0.08;
-      const ageVariation = (1 - age) * Math.sin(angle * 6 + phase * 0.6) * 0.05;
+      // Apply age-related organic distortion
+      const ageDistortion = Math.sin(angle * (3 + age * 5) + phase) * age * 0.1;
+      const organicComplexity = Math.sin(angle * (8 + complexity * 7) + phase * flow) * complexity * 0.08;
       
-      const finalRadius = barkRadius * (1 + organicVariation + flowVariation + ageVariation);
+      const finalRadius = organicRadius * (1 + ageDistortion + organicComplexity);
       
       points.push({
         x: centerX + Math.cos(angle) * finalRadius,
         y: centerY + Math.sin(angle) * finalRadius,
         angle: angle,
         radius: finalRadius,
-        roughness: 0.3 + Math.sin(angle * 7 + phase) * 0.7,
-        growth: 0.2 + Math.sin(angle * 5 + phase * 0.4) * 0.8,
-        weatherPattern: Math.sin(angle * 11 + phase * 1.2),
-        textureDepth: complexity + Math.sin(angle * 3) * 0.2
+        organicFlow: flow + Math.sin(angle * 4 + phase) * 0.3,
+        textureDepth: complexity + Math.sin(angle * 6 + phase) * 0.2,
+        weatheringLevel: Math.sin(angle * 3 + phase) * 0.5 + 0.5,
+        growthDirection: Math.sin(angle * 2 + phase) * variation
       });
     }
     
     return points;
   }
 
-  function generateBarkColors(hue, weathered, saturation, age) {
-    const baseSaturation = saturation * 40; // Natural wood has low saturation
-    const baseLightness = 30 + weathered * 35; // Weathered wood is lighter
-    const ageAdjustment = age * 0.8; // Older wood is darker
+  function generateBarkColors(hue, weathered, saturation, barkType, age) {
+    const baseSaturation = saturation * 100;
+    const baseLightness = 35 + weathered * 25;
+    
+    // Bark type affects color characteristics
+    const barkAdjustments = [
+      { hueShift: 0, satMult: 1.0, lightMult: 1.0 },   // Oak - standard brown
+      { hueShift: 5, satMult: 0.8, lightMult: 1.1 },   // Pine - slightly lighter, less saturated
+      { hueShift: -10, satMult: 0.3, lightMult: 1.8 }, // Birch - much lighter, desaturated
+      { hueShift: 10, satMult: 1.2, lightMult: 0.8 },  // Redwood - reddish, darker
+      { hueShift: -5, satMult: 0.6, lightMult: 0.6 }   // Ancient - darker, weathered
+    ];
+    
+    const adjustment = barkAdjustments[barkType] || barkAdjustments[0];
+    const adjustedHue = hue + adjustment.hueShift;
+    const adjustedSat = baseSaturation * adjustment.satMult;
+    const adjustedLight = baseLightness * adjustment.lightMult;
+    
+    // Age affects coloration
+    const ageShift = age * 0.8; // Older = slightly more weathered tones
     
     return {
-      primary: "hsl(" + hue + ", " + baseSaturation + "%, " + (baseLightness - ageAdjustment * 10) + "%)",
-      light: "hsl(" + hue + ", " + (baseSaturation * 0.7) + "%, " + (baseLightness + 20) + "%)",
-      dark: "hsl(" + hue + ", " + (baseSaturation * 1.3) + "%, " + (baseLightness - 25 - ageAdjustment * 5) + "%)",
-      weathered: "hsl(" + (hue + 10) + ", " + (baseSaturation * 0.5) + "%, " + (baseLightness + 15) + "%)",
-      lichen: "hsl(90, 30%, 45%)", // Greenish lichen
-      moss: "hsl(110, 40%, 35%)", // Deeper green moss
-      growth: "hsl(" + (hue - 5) + ", " + (baseSaturation * 0.8) + "%, " + (baseLightness - 10) + "%)"
+      base: \`hsl(\${adjustedHue}, \${adjustedSat}%, \${adjustedLight}%)\`,
+      light: \`hsl(\${adjustedHue}, \${adjustedSat * 0.8}%, \${Math.min(adjustedLight + 15 + ageShift * 10, 85)}%)\`,
+      dark: \`hsl(\${adjustedHue}, \${adjustedSat * 1.2}%, \${adjustedLight - 15 - ageShift * 5}%)\`,
+      ridge: \`hsl(\${adjustedHue - 3}, \${adjustedSat * 0.9}%, \${adjustedLight - 8}%)\`,
+      furrow: \`hsl(\${adjustedHue + 2}, \${adjustedSat * 1.1}%, \${adjustedLight - 20}%)\`,
+      weathered: \`hsl(\${adjustedHue + 5}, \${adjustedSat * 0.7}%, \${adjustedLight + 8}%)\`,
+      lichen: \`hsl(120, 40%, 65%)\`, // Greenish for lichens
+      moss: \`hsl(100, 60%, 45%)\`,   // Deeper green for moss
+      scar: \`hsl(\${adjustedHue - 8}, \${adjustedSat * 0.6}%, \${adjustedLight - 25}%)\`
     };
   }
 
-  function renderGrowthRings(ctx, structure, colors, rings, age, scale) {
+  function renderBarkStructure(ctx, structure, colors, roughness, depth, params) {
     ctx.save();
-    ctx.globalAlpha = rings * 0.3;
-    ctx.strokeStyle = colors.growth;
-    ctx.lineWidth = 0.5;
+    
+    // Main bark body
+    const bounds = getBounds(structure);
+    
+    // Apply universal fill/stroke
+    drawOrganicPath(ctx, structure, roughness);
+    
+    // Apply universal fill
+    if (params.fillType && params.fillType !== 'none') {
+      ctx.save();
+      ctx.globalAlpha = params.fillOpacity || 0.9;
+      
+      if (params.fillType === 'solid') {
+        ctx.fillStyle = params.fillColor || colors.base;
+      } else if (params.fillType === 'gradient') {
+        const direction = (params.fillGradientDirection || 90) * (Math.PI / 180);
+        const x1 = bounds.centerX - Math.cos(direction) * bounds.width / 2;
+        const y1 = bounds.centerY - Math.sin(direction) * bounds.height / 2;
+        const x2 = bounds.centerX + Math.cos(direction) * bounds.width / 2;
+        const y2 = bounds.centerY + Math.sin(direction) * bounds.height / 2;
+        
+        const gradient = ctx.createLinearGradient(x1, y1, x2, y2);
+        gradient.addColorStop(0, params.fillGradientStart || colors.light);
+        gradient.addColorStop(0.3, colors.base);
+        gradient.addColorStop(0.7, colors.ridge);
+        gradient.addColorStop(1, params.fillGradientEnd || colors.dark);
+        
+        ctx.fillStyle = gradient;
+      }
+      
+      ctx.fill();
+      ctx.restore();
+    }
+    
+    // Apply universal stroke
+    if (params.strokeType && params.strokeType !== 'none') {
+      ctx.save();
+      ctx.globalAlpha = params.strokeOpacity || 0.8;
+      ctx.strokeStyle = params.strokeColor || colors.dark;
+      ctx.lineWidth = params.strokeWidth || (1 + depth * 3);
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      
+      // Apply stroke pattern
+      switch (params.strokeType) {
+        case 'dashed':
+          ctx.setLineDash([ctx.lineWidth * 3, ctx.lineWidth * 2]);
+          break;
+        case 'dotted':
+          ctx.setLineDash([ctx.lineWidth, ctx.lineWidth]);
+          break;
+        default:
+          ctx.setLineDash([]);
+      }
+      
+      ctx.stroke();
+      ctx.restore();
+    }
+    
+    ctx.restore();
+  }
+
+  function renderGrowthRings(ctx, structure, colors, ringStrength, age, scale) {
+    ctx.save();
+    ctx.globalAlpha = ringStrength * 0.6;
     
     const bounds = getBounds(structure);
-    const ringCount = Math.floor(age * 12); // More rings for older trees
+    const ringCount = Math.floor(age * 8 + 3); // More rings with age
     
-    for (let r = 0; r < ringCount; r++) {
-      const ringRadius = scale * (0.3 + r * 0.08);
-      const ringVariation = Math.sin(r * 0.7) * scale * 0.05;
+    for (let r = 1; r <= ringCount; r++) {
+      const ringRadius = (bounds.width / 2) * (r / ringCount) * 0.8;
+      const ringAlpha = (1 - r / ringCount) * ringStrength;
       
+      ctx.globalAlpha = ringAlpha * 0.4;
+      ctx.strokeStyle = colors.ridge;
+      ctx.lineWidth = 0.5 + age;
+      
+      // Organic ring shape (not perfect circles)
       ctx.beginPath();
-      
-      // Irregular growth rings
-      for (let angle = 0; angle < Math.PI * 2; angle += 0.1) {
-        const radius = ringRadius + ringVariation * Math.sin(angle * 3);
+      for (let i = 0; i <= 64; i++) {
+        const angle = (i / 64) * Math.PI * 2;
+        const organicVariation = Math.sin(angle * 3 + r) * scale * 0.02;
+        const radius = ringRadius + organicVariation;
         const x = bounds.centerX + Math.cos(angle) * radius;
         const y = bounds.centerY + Math.sin(angle) * radius;
         
-        if (angle === 0) {
+        if (i === 0) {
           ctx.moveTo(x, y);
         } else {
           ctx.lineTo(x, y);
         }
       }
-      
       ctx.closePath();
       ctx.stroke();
     }
@@ -992,310 +1150,300 @@ function drawVisualization(ctx, width, height, params, _generator, time) {
     ctx.restore();
   }
 
-  function renderBarkTexture(ctx, structure, colors, roughness, ridgeDepth, furrowWidth) {
+  function renderBarkTexture(ctx, structure, colors, furrowWidth, roughness, variation, scale) {
     ctx.save();
     
-    // Main bark body with textured gradient
     const bounds = getBounds(structure);
-    const barkGradient = ctx.createRadialGradient(
-      bounds.centerX - bounds.width * 0.3, bounds.centerY - bounds.height * 0.3, 0,
-      bounds.centerX, bounds.centerY, Math.max(bounds.width, bounds.height) * 0.8
-    );
+    const furrowCount = Math.floor(roughness * variation * 12);
     
-    barkGradient.addColorStop(0, colors.light);
-    barkGradient.addColorStop(0.4, colors.primary);
-    barkGradient.addColorStop(0.8, colors.dark);
-    barkGradient.addColorStop(1, colors.growth);
-    
-    ctx.fillStyle = barkGradient;
-    drawBarkPath(ctx, structure, roughness);
-    ctx.fill();
-    
-    // Bark edge with natural irregularity
-    ctx.strokeStyle = colors.dark;
-    ctx.lineWidth = 1.5 + roughness * 2;
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-    drawBarkPath(ctx, structure, roughness);
-    ctx.stroke();
-    
-    ctx.restore();
-  }
-
-  function renderBarkSurface(ctx, structure, colors, ridgeDepth, furrowWidth, variation) {
-    ctx.save();
-    
-    for (let i = 0; i < structure.length; i++) {
-      const current = structure[i];
-      const next = structure[(i + 1) % structure.length];
+    for (let f = 0; f < furrowCount; f++) {
+      const furrowAngle = (f / furrowCount) * Math.PI * 2;
+      const furrowLength = scale * (0.1 + variation * 0.15);
+      const furrowDepth = furrowWidth * 3;
       
-      if (current.roughness > 0.5) {
-        ctx.globalAlpha = current.roughness * ridgeDepth * 0.6;
-        
-        // Ridge highlight
-        ctx.strokeStyle = colors.light;
-        ctx.lineWidth = 1 + variation;
-        ctx.beginPath();
-        ctx.moveTo(current.x, current.y);
-        ctx.lineTo(next.x, next.y);
-        ctx.stroke();
-        
-        // Furrow shadow
-        ctx.globalAlpha = current.textureDepth * furrowWidth * 0.4;
-        ctx.strokeStyle = colors.dark;
-        ctx.lineWidth = furrowWidth * 3;
-        
-        const furrowOffset = furrowWidth * 5;
-        const furrowX1 = current.x + Math.cos(current.angle + Math.PI/2) * furrowOffset;
-        const furrowY1 = current.y + Math.sin(current.angle + Math.PI/2) * furrowOffset;
-        const furrowX2 = next.x + Math.cos(next.angle + Math.PI/2) * furrowOffset;
-        const furrowY2 = next.y + Math.sin(next.angle + Math.PI/2) * furrowOffset;
-        
-        ctx.beginPath();
-        ctx.moveTo(furrowX1, furrowY1);
-        ctx.lineTo(furrowX2, furrowY2);
-        ctx.stroke();
-      }
-    }
-    
-    ctx.restore();
-  }
-
-  function renderWeathering(ctx, structure, colors, weathering, time, scale) {
-    ctx.save();
-    ctx.globalAlpha = weathering * 0.4;
-    
-    const weatherCount = Math.floor(weathering * 15);
-    
-    for (let w = 0; w < weatherCount; w++) {
-      const weatherPhase = time * 0.3 + w * 0.9;
-      const weatherLife = (Math.sin(weatherPhase) + 1) / 2;
+      // Furrow start position (on bark surface)
+      const startRadius = bounds.width / 2 * (0.7 + Math.sin(furrowAngle * 3) * 0.2);
+      const startX = bounds.centerX + Math.cos(furrowAngle) * startRadius;
+      const startY = bounds.centerY + Math.sin(furrowAngle) * startRadius;
       
-      if (weatherLife > 0.2) {
-        const angle = (w / weatherCount) * Math.PI * 2 + time * 0.1;
-        const distance = scale * (0.6 + Math.sin(weatherPhase * 1.2) * 0.3);
-        const weatherX = structure[0].x + Math.cos(angle) * distance;
-        const weatherY = structure[0].y + Math.sin(angle) * distance;
-        const weatherSize = scale * 0.08 * weatherLife;
-        
-        // Weathered spot
-        const weatherGradient = ctx.createRadialGradient(
-          weatherX, weatherY, 0,
-          weatherX, weatherY, weatherSize
-        );
-        weatherGradient.addColorStop(0, colors.weathered);
-        weatherGradient.addColorStop(0.7, colors.light);
-        weatherGradient.addColorStop(1, 'transparent');
-        
-        ctx.fillStyle = weatherGradient;
-        ctx.beginPath();
-        ctx.arc(weatherX, weatherY, weatherSize, 0, Math.PI * 2);
-        ctx.fill();
-      }
-    }
-    
-    ctx.restore();
-  }
-
-  function renderBranchScars(ctx, structure, colors, branchMarks, age, scale) {
-    ctx.save();
-    ctx.globalAlpha = branchMarks * age * 0.5;
-    
-    const branchCount = Math.floor(branchMarks * age * 8);
-    
-    for (let b = 0; b < branchCount; b++) {
-      const branchAngle = (b / branchCount) * Math.PI * 2;
-      const distance = scale * (0.4 + Math.random() * 0.4);
-      const branchX = structure[0].x + Math.cos(branchAngle) * distance;
-      const branchY = structure[0].y + Math.sin(branchAngle) * distance;
-      const scarSize = scale * (0.02 + Math.random() * 0.04);
+      // Furrow direction (radial outward with organic variation)
+      const furrowDirX = Math.cos(furrowAngle + Math.sin(furrowAngle * 5) * variation * 0.3);
+      const furrowDirY = Math.sin(furrowAngle + Math.sin(furrowAngle * 5) * variation * 0.3);
       
-      // Branch scar (slightly oval)
-      ctx.fillStyle = colors.dark;
-      ctx.save();
-      ctx.translate(branchX, branchY);
-      ctx.rotate(branchAngle);
-      ctx.scale(1, 0.6); // Make oval
+      ctx.globalAlpha = roughness * 0.8;
+      ctx.strokeStyle = colors.furrow;
+      ctx.lineWidth = furrowDepth;
+      ctx.lineCap = 'round';
+      
       ctx.beginPath();
-      ctx.arc(0, 0, scarSize, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
-      
-      // Scar rim
-      ctx.strokeStyle = colors.growth;
-      ctx.lineWidth = 0.5;
-      ctx.save();
-      ctx.translate(branchX, branchY);
-      ctx.rotate(branchAngle);
-      ctx.scale(1, 0.6);
-      ctx.beginPath();
-      ctx.arc(0, 0, scarSize * 1.3, 0, Math.PI * 2);
-      ctx.stroke();
-      ctx.restore();
-    }
-    
-    ctx.restore();
-  }
-
-  function renderLichenGrowth(ctx, structure, colors, lichens, time, scale) {
-    ctx.save();
-    
-    const lichenCount = Math.floor(lichens * 12);
-    
-    for (let l = 0; l < lichenCount; l++) {
-      const lichenPhase = time * 0.2 + l * 1.1;
-      const lichenLife = (Math.sin(lichenPhase) + 1) / 2;
-      
-      if (lichenLife > 0.3) {
-        const angle = (l / lichenCount) * Math.PI * 2 + time * 0.05;
-        const distance = scale * (0.5 + Math.sin(lichenPhase * 0.8) * 0.3);
-        const lichenX = structure[0].x + Math.cos(angle) * distance;
-        const lichenY = structure[0].y + Math.sin(angle) * distance;
-        const lichenSize = scale * 0.06 * lichenLife;
-        
-        ctx.globalAlpha = lichens * lichenLife * 0.6;
-        
-        // Lichen patch (irregular)
-        const lichenGradient = ctx.createRadialGradient(
-          lichenX, lichenY, 0,
-          lichenX, lichenY, lichenSize * 1.5
-        );
-        lichenGradient.addColorStop(0, colors.lichen);
-        lichenGradient.addColorStop(0.6, colors.moss);
-        lichenGradient.addColorStop(1, 'transparent');
-        
-        ctx.fillStyle = lichenGradient;
-        
-        // Irregular lichen shape
-        ctx.beginPath();
-        for (let a = 0; a < Math.PI * 2; a += 0.3) {
-          const r = lichenSize * (0.7 + Math.sin(a * 3 + lichenPhase) * 0.3);
-          const x = lichenX + Math.cos(a) * r;
-          const y = lichenY + Math.sin(a) * r;
-          if (a === 0) ctx.moveTo(x, y);
-          else ctx.lineTo(x, y);
-        }
-        ctx.closePath();
-        ctx.fill();
-      }
-    }
-    
-    ctx.restore();
-  }
-
-  function renderMossPatches(ctx, structure, colors, moss, time, scale) {
-    ctx.save();
-    
-    const mossCount = Math.floor(moss * 10);
-    
-    for (let m = 0; m < mossCount; m++) {
-      const mossPhase = time * 0.15 + m * 1.3;
-      const mossLife = (Math.sin(mossPhase) + 1) / 2;
-      
-      if (mossLife > 0.4) {
-        const angle = (m / mossCount) * Math.PI * 2 + time * 0.03;
-        const distance = scale * (0.6 + Math.sin(mossPhase * 0.6) * 0.2);
-        const mossX = structure[0].x + Math.cos(angle) * distance;
-        const mossY = structure[0].y + Math.sin(angle) * distance;
-        const mossSize = scale * 0.04 * mossLife;
-        
-        ctx.globalAlpha = moss * mossLife * 0.7;
-        ctx.fillStyle = colors.moss;
-        
-        // Small moss clusters
-        for (let cluster = 0; cluster < 3; cluster++) {
-          const clusterX = mossX + (Math.random() - 0.5) * mossSize;
-          const clusterY = mossY + (Math.random() - 0.5) * mossSize;
-          ctx.beginPath();
-          ctx.arc(clusterX, clusterY, mossSize * (0.5 + Math.random() * 0.5), 0, Math.PI * 2);
-          ctx.fill();
-        }
-      }
-    }
-    
-    ctx.restore();
-  }
-
-  function renderCharacterMarks(ctx, structure, colors, character, insects, scale) {
-    ctx.save();
-    
-    // Character marks (scratches, gouges)
-    const markCount = Math.floor(character * 8);
-    ctx.globalAlpha = character * 0.5;
-    
-    for (let mark = 0; mark < markCount; mark++) {
-      const markAngle = Math.random() * Math.PI * 2;
-      const distance = scale * (0.3 + Math.random() * 0.5);
-      const markX = structure[0].x + Math.cos(markAngle) * distance;
-      const markY = structure[0].y + Math.sin(markAngle) * distance;
-      const markLength = scale * (0.02 + Math.random() * 0.08);
-      
-      ctx.strokeStyle = colors.dark;
-      ctx.lineWidth = 0.5 + Math.random() * 1;
-      ctx.beginPath();
-      ctx.moveTo(markX, markY);
+      ctx.moveTo(startX, startY);
       ctx.lineTo(
-        markX + Math.cos(markAngle + Math.random() - 0.5) * markLength,
-        markY + Math.sin(markAngle + Math.random() - 0.5) * markLength
+        startX + furrowDirX * furrowLength,
+        startY + furrowDirY * furrowLength
+      );
+      ctx.stroke();
+      
+      // Add ridge highlights
+      ctx.globalAlpha = roughness * 0.4;
+      ctx.strokeStyle = colors.ridge;
+      ctx.lineWidth = furrowDepth * 0.3;
+      
+      ctx.beginPath();
+      ctx.moveTo(
+        startX - furrowDirY * furrowDepth * 0.5,
+        startY + furrowDirX * furrowDepth * 0.5
+      );
+      ctx.lineTo(
+        startX + furrowDirX * furrowLength - furrowDirY * furrowDepth * 0.5,
+        startY + furrowDirY * furrowLength + furrowDirX * furrowDepth * 0.5
       );
       ctx.stroke();
     }
     
-    // Insect holes
-    const holeCount = Math.floor(insects * 15);
-    ctx.globalAlpha = insects * 0.8;
+    ctx.restore();
+  }
+
+  function renderBranchMarks(ctx, structure, colors, branchStrength, characterStrength, age, scale) {
+    ctx.save();
     
-    for (let hole = 0; hole < holeCount; hole++) {
-      const holeAngle = Math.random() * Math.PI * 2;
-      const distance = scale * (0.4 + Math.random() * 0.4);
-      const holeX = structure[0].x + Math.cos(holeAngle) * distance;
-      const holeY = structure[0].y + Math.sin(holeAngle) * distance;
-      const holeSize = scale * (0.005 + Math.random() * 0.01);
+    const bounds = getBounds(structure);
+    const markCount = Math.floor((branchStrength + characterStrength) * age * 6);
+    
+    for (let m = 0; m < markCount; m++) {
+      const markAngle = Math.random() * Math.PI * 2;
+      const markRadius = bounds.width / 2 * (0.6 + Math.random() * 0.3);
+      const markX = bounds.centerX + Math.cos(markAngle) * markRadius;
+      const markY = bounds.centerY + Math.sin(markAngle) * markRadius;
       
-      ctx.fillStyle = colors.dark;
+      if (Math.random() < branchStrength) {
+        // Branch scar - circular
+        const scarSize = scale * (0.02 + age * 0.03);
+        ctx.globalAlpha = branchStrength * 0.8;
+        ctx.fillStyle = colors.scar;
+        ctx.beginPath();
+        ctx.arc(markX, markY, scarSize, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Scar highlight
+        ctx.globalAlpha = branchStrength * 0.4;
+        ctx.fillStyle = colors.weathered;
+        ctx.beginPath();
+        ctx.arc(markX - scarSize * 0.3, markY - scarSize * 0.3, scarSize * 0.6, 0, Math.PI * 2);
+        ctx.fill();
+      } else {
+        // Character mark - linear scratch/gouge
+        const markLength = scale * (0.03 + characterStrength * 0.05);
+        const markDirection = Math.random() * Math.PI * 2;
+        
+        ctx.globalAlpha = characterStrength * 0.7;
+        ctx.strokeStyle = colors.scar;
+        ctx.lineWidth = scale * 0.01;
+        ctx.lineCap = 'round';
+        
+        ctx.beginPath();
+        ctx.moveTo(markX, markY);
+        ctx.lineTo(
+          markX + Math.cos(markDirection) * markLength,
+          markY + Math.sin(markDirection) * markLength
+        );
+        ctx.stroke();
+      }
+    }
+    
+    ctx.restore();
+  }
+
+  function renderWeathering(ctx, structure, colors, weatheringLevel, age, scale) {
+    ctx.save();
+    
+    const bounds = getBounds(structure);
+    const weatherSpots = Math.floor(weatheringLevel * age * 15);
+    
+    for (let w = 0; w < weatherSpots; w++) {
+      const spotX = bounds.minX + Math.random() * bounds.width;
+      const spotY = bounds.minY + Math.random() * bounds.height;
+      const spotSize = scale * (0.01 + Math.random() * 0.03);
+      
+      ctx.globalAlpha = weatheringLevel * 0.5;
+      
+      // Weathered spot
+      ctx.fillStyle = colors.weathered;
       ctx.beginPath();
-      ctx.arc(holeX, holeY, holeSize, 0, Math.PI * 2);
+      ctx.arc(spotX, spotY, spotSize, 0, Math.PI * 2);
+      ctx.fill();
+      
+      // Small weathering streaks
+      if (Math.random() < 0.3) {
+        const streakLength = spotSize * 2;
+        const streakAngle = Math.random() * Math.PI * 2;
+        
+        ctx.strokeStyle = colors.weathered;
+        ctx.lineWidth = spotSize * 0.3;
+        ctx.globalAlpha = weatheringLevel * 0.3;
+        
+        ctx.beginPath();
+        ctx.moveTo(spotX, spotY);
+        ctx.lineTo(
+          spotX + Math.cos(streakAngle) * streakLength,
+          spotY + Math.sin(streakAngle) * streakLength
+        );
+        ctx.stroke();
+      }
+    }
+    
+    ctx.restore();
+  }
+
+  function renderLichens(ctx, structure, colors, lichenLevel, variation, scale) {
+    ctx.save();
+    
+    const bounds = getBounds(structure);
+    const lichenPatches = Math.floor(lichenLevel * variation * 8);
+    
+    for (let l = 0; l < lichenPatches; l++) {
+      const patchX = bounds.minX + Math.random() * bounds.width;
+      const patchY = bounds.minY + Math.random() * bounds.height;
+      const patchSize = scale * (0.015 + Math.random() * 0.025);
+      
+      ctx.globalAlpha = lichenLevel * (0.4 + Math.random() * 0.3);
+      ctx.fillStyle = colors.lichen;
+      
+      // Organic lichen shape
+      ctx.beginPath();
+      for (let i = 0; i <= 8; i++) {
+        const angle = (i / 8) * Math.PI * 2;
+        const radius = patchSize * (0.7 + Math.sin(angle * 3) * 0.3);
+        const x = patchX + Math.cos(angle) * radius;
+        const y = patchY + Math.sin(angle) * radius;
+        
+        if (i === 0) {
+          ctx.moveTo(x, y);
+        } else {
+          ctx.lineTo(x, y);
+        }
+      }
+      ctx.closePath();
       ctx.fill();
     }
     
     ctx.restore();
   }
 
-  function drawBarkPath(ctx, points, roughness) {
+  function renderMoss(ctx, structure, colors, mossLevel, variation, scale) {
+    ctx.save();
+    
+    const bounds = getBounds(structure);
+    const mossCount = Math.floor(mossLevel * variation * 20);
+    
+    for (let m = 0; m < mossCount; m++) {
+      const mossX = bounds.minX + Math.random() * bounds.width;
+      const mossY = bounds.minY + Math.random() * bounds.height;
+      const mossSize = scale * (0.005 + Math.random() * 0.015);
+      
+      ctx.globalAlpha = mossLevel * (0.3 + Math.random() * 0.4);
+      ctx.fillStyle = colors.moss;
+      
+      // Small moss dots/clusters
+      ctx.beginPath();
+      ctx.arc(mossX, mossY, mossSize, 0, Math.PI * 2);
+      ctx.fill();
+      
+      // Occasional moss strands
+      if (Math.random() < 0.2) {
+        const strandLength = mossSize * 3;
+        const strandAngle = Math.random() * Math.PI * 2;
+        
+        ctx.strokeStyle = colors.moss;
+        ctx.lineWidth = mossSize * 0.3;
+        ctx.globalAlpha = mossLevel * 0.5;
+        
+        ctx.beginPath();
+        ctx.moveTo(mossX, mossY);
+        ctx.lineTo(
+          mossX + Math.cos(strandAngle) * strandLength,
+          mossY + Math.sin(strandAngle) * strandLength
+        );
+        ctx.stroke();
+      }
+    }
+    
+    ctx.restore();
+  }
+
+  function renderInsectHoles(ctx, structure, colors, insectLevel, age, scale) {
+    ctx.save();
+    
+    const bounds = getBounds(structure);
+    const holeCount = Math.floor(insectLevel * age * 5);
+    
+    for (let h = 0; h < holeCount; h++) {
+      const holeX = bounds.minX + Math.random() * bounds.width;
+      const holeY = bounds.minY + Math.random() * bounds.height;
+      const holeSize = scale * (0.008 + Math.random() * 0.015);
+      
+      ctx.globalAlpha = insectLevel * 0.9;
+      
+      // Dark hole
+      ctx.fillStyle = colors.scar;
+      ctx.beginPath();
+      ctx.arc(holeX, holeY, holeSize, 0, Math.PI * 2);
+      ctx.fill();
+      
+      // Hole rim highlight
+      ctx.globalAlpha = insectLevel * 0.4;
+      ctx.strokeStyle = colors.ridge;
+      ctx.lineWidth = holeSize * 0.2;
+      ctx.beginPath();
+      ctx.arc(holeX, holeY, holeSize * 1.2, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+    
+    ctx.restore();
+  }
+
+  function drawOrganicPath(ctx, points, roughness) {
     if (points.length < 3) return;
     
     ctx.beginPath();
     ctx.moveTo(points[0].x, points[0].y);
     
-    // Organic, irregular curves
+    // Organic curves with natural flow
     for (let i = 1; i < points.length; i++) {
       const current = points[i];
       const previous = points[i - 1];
       const next = points[(i + 1) % points.length];
       
-      // Bark surface irregularity
-      const organicTension = 0.5 + roughness * 0.5;
-      const roughnessVariation = current.roughness * roughness * 0.1;
+      // Natural organic flow with bark-specific roughness
+      const organicFlow = current.organicFlow || 0.7;
+      const textureRoughness = roughness * 0.2;
       
-      const cp1x = previous.x + (current.x - (points[i - 2] || previous).x) * organicTension * 0.3;
-      const cp1y = previous.y + (current.y - (points[i - 2] || previous).y) * organicTension * 0.3;
-      const cp2x = current.x - (next.x - previous.x) * organicTension * 0.3 + roughnessVariation;
-      const cp2y = current.y - (next.y - previous.y) * organicTension * 0.3 + roughnessVariation;
+      const cp1x = previous.x + (current.x - (points[i - 2] || previous).x) * organicFlow * 0.2;
+      const cp1y = previous.y + (current.y - (points[i - 2] || previous).y) * organicFlow * 0.2;
+      const cp2x = current.x - (next.x - previous.x) * organicFlow * 0.2;
+      const cp2y = current.y - (next.y - previous.y) * organicFlow * 0.2;
       
-      ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, current.x, current.y);
+      // Add subtle texture roughness
+      const roughX = (Math.random() - 0.5) * textureRoughness * 2;
+      const roughY = (Math.random() - 0.5) * textureRoughness * 2;
+      
+      ctx.bezierCurveTo(
+        cp1x + roughX, cp1y + roughY,
+        cp2x + roughX, cp2y + roughY,
+        current.x, current.y
+      );
     }
     
-    // Close the organic shape
+    // Close the organic form with natural flow
     const first = points[0];
     const last = points[points.length - 1];
     const secondLast = points[points.length - 2];
     const second = points[1];
     
-    const organicTension = 0.5 + roughness * 0.5;
-    const cp1x = last.x + (first.x - secondLast.x) * organicTension * 0.3;
-    const cp1y = last.y + (first.y - secondLast.y) * organicTension * 0.3;
-    const cp2x = first.x - (second.x - last.x) * organicTension * 0.3;
-    const cp2y = first.y - (second.y - last.y) * organicTension * 0.3;
+    const organicFlow = 0.7;
+    const cp1x = last.x + (first.x - secondLast.x) * organicFlow * 0.2;
+    const cp1y = last.y + (first.y - secondLast.y) * organicFlow * 0.2;
+    const cp2x = first.x - (second.x - last.x) * organicFlow * 0.2;
+    const cp2y = first.y - (second.y - last.y) * organicFlow * 0.2;
     
     ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, first.x, first.y);
     ctx.closePath();
@@ -1317,4 +1465,61 @@ function drawVisualization(ctx, width, height, params, _generator, time) {
       centerY: (minY + maxY) / 2
     };
   }
-}`;
+}
+
+export { drawVisualization };
+
+export const metadata = {
+  name: "🌳 Organic Bark",
+  description: "Natural wood textures with growth patterns, weathering, and organic character marks",
+  defaultParams: {
+    seed: "organic-bark-natural",
+    frequency: 0.6,
+    amplitude: 140,
+    barkType: 1,
+    growthComplexity: 0.7,
+    naturalVariation: 0.8,
+    organicFlow: 0.75,
+    barkRoughness: 0.6,
+    ridgeDepth: 0.4,
+    furrowWidth: 0.3,
+    growthRings: 0.5,
+    branchMarks: 0.3,
+    weathering: 0.4,
+    lichens: 0.2,
+    moss: 0.15,
+    insects: 0.1,
+    treeAge: 0.6,
+    characterMarks: 0.3,
+    woodHue: 25,
+    weatheredTone: 0.6,
+    naturalSaturation: 0.5
+  }
+};
+
+export const id = 'organic-bark';
+export const name = "🌳 Organic Bark";
+export const description = "Natural wood textures with growth patterns, weathering, and organic character marks";
+export const defaultParams = {
+  seed: "organic-bark-natural",
+  frequency: 0.6,
+  amplitude: 140,
+  barkType: 1,
+  growthComplexity: 0.7,
+  naturalVariation: 0.8,
+  organicFlow: 0.75,
+  barkRoughness: 0.6,
+  ridgeDepth: 0.4,
+  furrowWidth: 0.3,
+  growthRings: 0.5,
+  branchMarks: 0.3,
+  weathering: 0.4,
+  lichens: 0.2,
+  moss: 0.15,
+  insects: 0.1,
+  treeAge: 0.6,
+  characterMarks: 0.3,
+  woodHue: 25,
+  weatheredTone: 0.6,
+  naturalSaturation: 0.5
+};`;

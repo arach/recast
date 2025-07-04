@@ -23,11 +23,15 @@ const PARAMETERS = {
   layers: { type: 'slider', min: 1, max: 8, step: 1, default: 2, label: 'Layers', category: 'Wave' },
   radius: { type: 'slider', min: 10, max: 200, step: 1, default: 50, label: 'Base Radius', category: 'Circles' },
   colorVariation: { type: 'slider', min: 0, max: 1, step: 0.01, default: 0.5, label: 'Color Variation', category: 'Circles' },
-  colorMode: { type: 'select', options: [{"value":"spotify","label":"Spotify Green"},{"value":"theme","label":"Use Theme Colors"}], default: 'theme', label: 'Color Mode', category: 'Colors' }
+  colorMode: { type: 'select', options: [{"value":"spotify","label":"Spotify Green"},{"value":"theme","label":"Use Theme Colors"}], default: 'theme', label: 'Color Mode', category: 'Colors' },
+  backgroundOpacity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 1, label: 'Background Opacity', category: 'Background', showIf: (params)=>params.backgroundType !== 'transparent' }
 };
 
 function applyUniversalBackground(ctx, width, height, params) {
   if (!params.backgroundType || params.backgroundType === 'transparent') return;
+  
+  ctx.save();
+  ctx.globalAlpha = params.backgroundOpacity ?? 1;
   
   if (params.backgroundType === 'solid') {
     ctx.fillStyle = params.backgroundColor || '#000000';
@@ -46,6 +50,8 @@ function applyUniversalBackground(ctx, width, height, params) {
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, width, height);
   }
+  
+  ctx.restore();
 }
 
 function drawVisualization(ctx, width, height, params, _generator, time) {
@@ -104,6 +110,10 @@ function drawVisualization(ctx, width, height, params, _generator, time) {
   const baseRadius = params.radius || 50;
   const layers = params.layers || 4;
   
+  // Extract opacity values with defaults
+  const strokeOpacity = params.strokeOpacity ?? 0.8;
+  const fillOpacity = params.fillOpacity ?? 1;
+  
   // Generate multiple layers of circles
   for (let layer = 0; layer < layers; layer++) {
     const layerPhase = (layer / layers) * Math.PI * 2 + time * 0.5;
@@ -127,15 +137,21 @@ function drawVisualization(ctx, width, height, params, _generator, time) {
       lightness = baseLum + layer * 10;
     }
     
-    ctx.beginPath();
-    ctx.strokeStyle = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
-    ctx.lineWidth = params.strokeWidth || 3;
-    ctx.globalAlpha = (0.8 - layer * 0.1) * (params.strokeOpacity || 1);
-    ctx.arc(centerX, centerY, finalRadius, 0, Math.PI * 2);
-    ctx.stroke();
+    // Draw main circles with stroke
+    if (params.strokeType !== 'none') {
+      ctx.save();
+      ctx.strokeStyle = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+      ctx.lineWidth = params.strokeWidth || 3;
+      ctx.globalAlpha = (0.8 - layer * 0.1) * strokeOpacity;
+      
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, finalRadius, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+    }
     
     // Add complexity with orbital elements
-    if (params.complexity > 0.3) {
+    if (params.complexity > 0.3 && params.fillType !== 'none') {
       const orbitCount = Math.floor(params.complexity * 8);
       for (let i = 0; i < orbitCount; i++) {
         const orbitAngle = (i / orbitCount) * Math.PI * 2 + layerPhase;
@@ -143,16 +159,17 @@ function drawVisualization(ctx, width, height, params, _generator, time) {
         const orbitY = centerY + Math.sin(orbitAngle) * finalRadius * 0.7;
         const orbitRadius = 5 + layer * 2;
         
-        ctx.beginPath();
+        ctx.save();
         ctx.fillStyle = `hsl(${(hue + 10) % 360}, ${Math.min(100, saturation + 10)}%, ${Math.min(90, lightness + 20)}%)`;
-        ctx.globalAlpha = 0.6 * (params.fillOpacity || 1);
+        ctx.globalAlpha = 0.6 * fillOpacity;
+        
+        ctx.beginPath();
         ctx.arc(orbitX, orbitY, orbitRadius, 0, Math.PI * 2);
         ctx.fill();
+        ctx.restore();
       }
     }
   }
-  
-  ctx.globalAlpha = 1;
 }
 
 export const metadata = {
@@ -213,11 +230,15 @@ const PARAMETERS = {
   layers: { type: 'slider', min: 1, max: 8, step: 1, default: 2, label: 'Layers', category: 'Wave' },
   radius: { type: 'slider', min: 10, max: 200, step: 1, default: 50, label: 'Base Radius', category: 'Circles' },
   colorVariation: { type: 'slider', min: 0, max: 1, step: 0.01, default: 0.5, label: 'Color Variation', category: 'Circles' },
-  colorMode: { type: 'select', options: [{"value":"spotify","label":"Spotify Green"},{"value":"theme","label":"Use Theme Colors"}], default: 'theme', label: 'Color Mode', category: 'Colors' }
+  colorMode: { type: 'select', options: [{"value":"spotify","label":"Spotify Green"},{"value":"theme","label":"Use Theme Colors"}], default: 'theme', label: 'Color Mode', category: 'Colors' },
+  backgroundOpacity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 1, label: 'Background Opacity', category: 'Background', showIf: (params)=>params.backgroundType !== 'transparent' }
 };
 
 function applyUniversalBackground(ctx, width, height, params) {
   if (!params.backgroundType || params.backgroundType === 'transparent') return;
+  
+  ctx.save();
+  ctx.globalAlpha = params.backgroundOpacity ?? 1;
   
   if (params.backgroundType === 'solid') {
     ctx.fillStyle = params.backgroundColor || '#000000';
@@ -236,6 +257,8 @@ function applyUniversalBackground(ctx, width, height, params) {
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, width, height);
   }
+  
+  ctx.restore();
 }
 
 function drawVisualization(ctx, width, height, params, _generator, time) {

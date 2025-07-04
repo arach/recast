@@ -30,11 +30,15 @@ const PARAMETERS = {
   frameStrokeStyle: { type: 'select', options: [{"value":"solid","label":"Solid"},{"value":"dashed","label":"Dashed"},{"value":"dotted","label":"Dotted"},{"value":"double","label":"Double"}], default: "solid", label: 'Frame Border Style', category: 'Frame', showIf: (params)=>params.showFrame && params.frameStyle === 'outline' },
   frameStrokeWidth: { type: 'slider', min: 1, max: 10, step: 1, default: 3, label: 'Frame Border Width', category: 'Frame', showIf: (params)=>params.showFrame && params.frameStyle === 'outline' },
   framePadding: { type: 'slider', min: 10, max: 100, step: 5, default: 40, label: 'Frame Padding', category: 'Frame', showIf: (params)=>params.showFrame },
-  frameRadius: { type: 'slider', min: 0, max: 50, step: 2, default: 0, label: 'Frame Corner Radius', category: 'Frame', showIf: (params)=>params.showFrame }
+  frameRadius: { type: 'slider', min: 0, max: 50, step: 2, default: 0, label: 'Frame Corner Radius', category: 'Frame', showIf: (params)=>params.showFrame },
+  backgroundOpacity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 1, label: 'Background Opacity', category: 'Background', showIf: (params)=>params.backgroundType !== 'transparent' }
 };
 
 function applyUniversalBackground(ctx, width, height, params) {
   if (!params.backgroundType || params.backgroundType === 'transparent') return;
+  
+  ctx.save();
+  ctx.globalAlpha = params.backgroundOpacity ?? 1;
   
   if (params.backgroundType === 'solid') {
     ctx.fillStyle = params.backgroundColor || '#ffffff';
@@ -53,6 +57,8 @@ function applyUniversalBackground(ctx, width, height, params) {
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, width, height);
   }
+  
+  ctx.restore();
 }
 
 function drawVisualization(ctx, width, height, params, generator, time) {
@@ -345,3 +351,421 @@ export const name = "Aa Wordmark";
 export const description = "Professional text-based logos with customizable typography";
 export { drawVisualization };
 export const defaultParams = metadata.defaultParams;
+
+export const code = `// Aa Wordmark - Fixed with proper opacity support
+const PARAMETERS = {
+  backgroundColor: { type: 'color', default: "#ffffff", label: 'Background Color', category: 'Background' },
+  backgroundType: { type: 'select', options: [{"value":"transparent","label":"Transparent"},{"value":"solid","label":"Solid Color"},{"value":"gradient","label":"Gradient"}], default: "transparent", label: 'Background Type', category: 'Background' },
+  backgroundGradientStart: { type: 'color', default: "#ffffff", label: 'Gradient Start', category: 'Background', showIf: (params)=>params.backgroundType === 'gradient' },
+  backgroundGradientEnd: { type: 'color', default: "#f0f0f0", label: 'Gradient End', category: 'Background', showIf: (params)=>params.backgroundType === 'gradient' },
+  backgroundGradientDirection: { type: 'slider', min: 0, max: 360, step: 15, default: 0, label: 'Gradient Direction', category: 'Background', showIf: (params)=>params.backgroundType === 'gradient' },
+  fillType: { type: 'select', options: [{"value":"none","label":"None"},{"value":"solid","label":"Solid Color"},{"value":"gradient","label":"Gradient"}], default: "solid", label: 'Fill Type', category: 'Fill' },
+  fillColor: { type: 'color', default: "#000000", label: 'Fill Color', category: 'Fill', showIf: (params)=>params.fillType === 'solid' },
+  fillGradientStart: { type: 'color', default: "#000000", label: 'Gradient Start', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
+  fillGradientEnd: { type: 'color', default: "#333333", label: 'Gradient End', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
+  fillGradientDirection: { type: 'slider', min: 0, max: 360, step: 15, default: 45, label: 'Gradient Direction', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
+  fillOpacity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 1, label: 'Fill Opacity', category: 'Fill', showIf: (params)=>params.fillType !== 'none' },
+  strokeType: { type: 'select', options: [{"value":"none","label":"None"},{"value":"solid","label":"Solid"},{"value":"dashed","label":"Dashed"},{"value":"dotted","label":"Dotted"}], default: "none", label: 'Stroke Type', category: 'Stroke' },
+  strokeColor: { type: 'color', default: "#000000", label: 'Stroke Color', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
+  strokeWidth: { type: 'slider', min: 0, max: 10, step: 0.5, default: 2, label: 'Stroke Width', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
+  strokeOpacity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 1, label: 'Stroke Opacity', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
+  text: { type: 'text', default: 'BRAND', label: 'Brand Name', category: 'Text' },
+  fontStyle: { type: 'select', options: [{"value":"modern","label":"Modern Sans"},{"value":"tech","label":"Tech/Mono"},{"value":"elegant","label":"Elegant"},{"value":"bold","label":"Bold Display"},{"value":"minimal","label":"Minimal"},{"value":"silkscreen","label":"Silkscreen"},{"value":"orbitron","label":"Orbitron"},{"value":"doto","label":"DOTO"}], default: "modern", label: 'Font Style', category: 'Typography' },
+  fontWeight: { type: 'select', options: [{"value":"300","label":"Light"},{"value":"400","label":"Regular"},{"value":"500","label":"Medium"},{"value":"600","label":"Semibold"},{"value":"700","label":"Bold"},{"value":"900","label":"Black"}], default: "500", label: 'Weight', category: 'Typography' },
+  letterSpacing: { type: 'slider', min: -0.05, max: 0.3, step: 0.01, default: 0.05, label: 'Letter Spacing', category: 'Typography' },
+  size: { type: 'slider', min: 0.1, max: 0.9, step: 0.05, default: 0.5, label: 'Size', category: 'Layout' },
+  lineHeight: { type: 'slider', min: 0.8, max: 1.5, step: 0.1, default: 1.2, label: 'Line Height', category: 'Layout' },
+  textTransform: { type: 'select', options: [{"value":"none","label":"As Typed"},{"value":"uppercase","label":"UPPERCASE"},{"value":"lowercase","label":"lowercase"},{"value":"capitalize","label":"Capitalize"}], default: "uppercase", label: 'Case', category: 'Typography' },
+  underline: { type: 'toggle', default: false, label: 'Underline', category: 'Effects' },
+  underlineWeight: { type: 'slider', min: 1, max: 10, step: 1, default: 3, label: 'Underline Weight', category: 'Effects', showIf: (params)=>params.underline },
+  underlineOffset: { type: 'slider', min: 0, max: 20, step: 1, default: 5, label: 'Underline Offset', category: 'Effects', showIf: (params)=>params.underline },
+  showFrame: { type: 'toggle', default: false, label: 'Show Frame', category: 'Frame' },
+  frameStyle: { type: 'select', options: [{"value":"outline","label":"Outline"},{"value":"filled","label":"Filled"},{"value":"filled-inverse","label":"Filled (Inverse)"}], default: "outline", label: 'Frame Style', category: 'Frame', showIf: (params)=>params.showFrame },
+  frameStrokeStyle: { type: 'select', options: [{"value":"solid","label":"Solid"},{"value":"dashed","label":"Dashed"},{"value":"dotted","label":"Dotted"},{"value":"double","label":"Double"}], default: "solid", label: 'Frame Border Style', category: 'Frame', showIf: (params)=>params.showFrame && params.frameStyle === 'outline' },
+  frameStrokeWidth: { type: 'slider', min: 1, max: 10, step: 1, default: 3, label: 'Frame Border Width', category: 'Frame', showIf: (params)=>params.showFrame && params.frameStyle === 'outline' },
+  framePadding: { type: 'slider', min: 10, max: 100, step: 5, default: 40, label: 'Frame Padding', category: 'Frame', showIf: (params)=>params.showFrame },
+  frameRadius: { type: 'slider', min: 0, max: 50, step: 2, default: 0, label: 'Frame Corner Radius', category: 'Frame', showIf: (params)=>params.showFrame },
+  backgroundOpacity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 1, label: 'Background Opacity', category: 'Background', showIf: (params)=>params.backgroundType !== 'transparent' }
+};
+
+function applyUniversalBackground(ctx, width, height, params) {
+  if (!params.backgroundType || params.backgroundType === 'transparent') return;
+  
+  ctx.save();
+  ctx.globalAlpha = params.backgroundOpacity ?? 1;
+  
+  if (params.backgroundType === 'solid') {
+    ctx.fillStyle = params.backgroundColor || '#ffffff';
+    ctx.fillRect(0, 0, width, height);
+  } else if (params.backgroundType === 'gradient') {
+    const direction = (params.backgroundGradientDirection || 0) * (Math.PI / 180);
+    const x1 = width / 2 - Math.cos(direction) * width / 2;
+    const y1 = height / 2 - Math.sin(direction) * height / 2;
+    const x2 = width / 2 + Math.cos(direction) * width / 2;
+    const y2 = height / 2 + Math.sin(direction) * height / 2;
+    
+    const gradient = ctx.createLinearGradient(x1, y1, x2, y2);
+    gradient.addColorStop(0, params.backgroundGradientStart || '#ffffff');
+    gradient.addColorStop(1, params.backgroundGradientEnd || '#f0f0f0');
+    
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, width, height);
+  }
+  
+  ctx.restore();
+}
+
+function drawVisualization(ctx, width, height, params, generator, time) {
+  // Ensure color parameters are available at the root level
+  if (params.customParameters) {
+    params.fillColor = params.fillColor || params.customParameters.fillColor;
+    params.strokeColor = params.strokeColor || params.customParameters.strokeColor;
+    params.backgroundColor = params.backgroundColor || params.customParameters.backgroundColor;
+    params.textColor = params.textColor || params.customParameters.textColor;
+    
+    // Also make sure all custom parameters are available at root level for convenience
+    Object.keys(params.customParameters).forEach(key => {
+      if (params[key] === undefined) {
+        params[key] = params.customParameters[key];
+      }
+    });
+  }
+
+  // Apply universal background
+  applyUniversalBackground(ctx, width, height, params);
+  
+  // Get theme colors and opacity
+  const fillColor = params.fillColor || '#000000';
+  const strokeColor = params.strokeColor || '#000000';
+  const fillOpacity = params.fillOpacity ?? 1;
+  const strokeOpacity = params.strokeOpacity ?? 1;
+  
+  // Extract parameters
+  const text = params.text || 'BRAND';
+  const fontStyle = params.fontStyle || 'modern';
+  const fontWeight = params.fontWeight || '500';
+  const letterSpacing = params.letterSpacing || 0.05;
+  const size = params.size || 0.5;
+  const lineHeight = params.lineHeight || 1.2;
+  const textTransform = params.textTransform || 'uppercase';
+  const underline = params.underline || false;
+  const underlineWeight = params.underlineWeight || 3;
+  const underlineOffset = params.underlineOffset || 5;
+  
+  // Frame parameters
+  const showFrame = params.showFrame || false;
+  const frameStyle = params.frameStyle || 'outline';
+  const frameStrokeStyle = params.frameStrokeStyle || 'solid';
+  const frameStrokeWidth = params.frameStrokeWidth || 3;
+  const framePadding = params.framePadding || 40;
+  const frameRadius = params.frameRadius || 0;
+  
+  // Transform text based on setting
+  let displayText = text;
+  switch (textTransform) {
+    case 'uppercase': displayText = text.toUpperCase(); break;
+    case 'lowercase': displayText = text.toLowerCase(); break;
+    case 'capitalize': displayText = text.replace(/\\b\\w/g, l => l.toUpperCase()); break;
+  }
+  
+  // Calculate font size based on canvas dimensions and size parameter
+  const baseFontSize = Math.min(width, height) * size * 0.3;
+  
+  // Get font family based on style
+  let fontFamily;
+  switch (fontStyle) {
+    case 'tech': fontFamily = '"SF Mono", Monaco, "Courier New", monospace'; break;
+    case 'elegant': fontFamily = '"Playfair Display", Georgia, serif'; break;
+    case 'bold': fontFamily = '"Archivo Black", "Arial Black", sans-serif'; break;
+    case 'minimal': fontFamily = '"Inter", -apple-system, sans-serif'; break;
+    case 'silkscreen': fontFamily = '"Silkscreen", "Courier New", monospace'; break;
+    case 'orbitron': fontFamily = '"Orbitron", sans-serif'; break;
+    case 'doto': fontFamily = '"DOTO", sans-serif'; break;
+    default: fontFamily = '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+  }
+  
+  // Split text into lines (in case of multi-line)
+  const lines = displayText.split('\\n');
+  const totalHeight = baseFontSize * lineHeight * lines.length;
+  
+  // Calculate positioning
+  let startY = (height - totalHeight) / 2 + baseFontSize * 0.8;
+  
+  // If frame is enabled, calculate text bounds first
+  let textBounds = null;
+  if (showFrame) {
+    ctx.save();
+    ctx.font = \`\${fontWeight} \${baseFontSize}px \${fontFamily}\`;
+    
+    let maxWidth = 0;
+    lines.forEach(line => {
+      const metrics = ctx.measureText(line);
+      maxWidth = Math.max(maxWidth, metrics.width);
+    });
+    
+    textBounds = {
+      x: (width - maxWidth) / 2 - framePadding,
+      y: startY - baseFontSize - framePadding,
+      width: maxWidth + framePadding * 2,
+      height: totalHeight + framePadding * 2
+    };
+    
+    ctx.restore();
+  }
+  
+  // Draw frame if enabled
+  if (showFrame && textBounds) {
+    ctx.save();
+    
+    if (frameStyle === 'filled' || frameStyle === 'filled-inverse') {
+      // For filled frame, draw the background
+      ctx.globalAlpha = fillOpacity;
+      ctx.fillStyle = frameStyle === 'filled' ? fillColor : params.backgroundColor || '#ffffff';
+      
+      if (frameRadius > 0) {
+        roundRect(ctx, textBounds.x, textBounds.y, textBounds.width, textBounds.height, frameRadius);
+        ctx.fill();
+      } else {
+        ctx.fillRect(textBounds.x, textBounds.y, textBounds.width, textBounds.height);
+      }
+    }
+    
+    if (frameStyle === 'outline' || frameStyle === 'filled-inverse') {
+      // Draw frame border
+      ctx.globalAlpha = strokeOpacity;
+      ctx.strokeStyle = frameStyle === 'filled-inverse' ? fillColor : strokeColor;
+      ctx.lineWidth = frameStrokeWidth;
+      
+      // Apply stroke style
+      switch (frameStrokeStyle) {
+        case 'dashed':
+          ctx.setLineDash([frameStrokeWidth * 3, frameStrokeWidth * 2]);
+          break;
+        case 'dotted':
+          ctx.setLineDash([frameStrokeWidth, frameStrokeWidth]);
+          break;
+        case 'double':
+          // Draw double border
+          if (frameRadius > 0) {
+            roundRect(ctx, textBounds.x, textBounds.y, textBounds.width, textBounds.height, frameRadius);
+            ctx.stroke();
+            const inset = frameStrokeWidth * 2;
+            roundRect(ctx, textBounds.x + inset, textBounds.y + inset, 
+                     textBounds.width - inset * 2, textBounds.height - inset * 2, 
+                     Math.max(0, frameRadius - inset));
+            ctx.stroke();
+          } else {
+            ctx.strokeRect(textBounds.x, textBounds.y, textBounds.width, textBounds.height);
+            const inset = frameStrokeWidth * 2;
+            ctx.strokeRect(textBounds.x + inset, textBounds.y + inset, 
+                          textBounds.width - inset * 2, textBounds.height - inset * 2);
+          }
+          ctx.restore();
+          ctx.save();
+          break;
+        default:
+          ctx.setLineDash([]);
+      }
+      
+      if (frameStrokeStyle !== 'double') {
+        if (frameRadius > 0) {
+          roundRect(ctx, textBounds.x, textBounds.y, textBounds.width, textBounds.height, frameRadius);
+          ctx.stroke();
+        } else {
+          ctx.strokeRect(textBounds.x, textBounds.y, textBounds.width, textBounds.height);
+        }
+      }
+    }
+    
+    ctx.restore();
+  }
+  
+  // Set up text rendering
+  ctx.save();
+  ctx.font = \`\${fontWeight} \${baseFontSize}px \${fontFamily}\`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  
+  // Apply letter spacing by rendering each character individually
+  lines.forEach((line, lineIndex) => {
+    const y = startY + lineIndex * baseFontSize * lineHeight;
+    
+    if (letterSpacing === 0) {
+      // Regular text rendering for no letter spacing
+      
+      // Handle fill
+      if (params.fillType && params.fillType !== 'none') {
+        ctx.save();
+        ctx.globalAlpha = fillOpacity;
+        
+        if (params.fillType === 'solid') {
+          ctx.fillStyle = frameStyle === 'filled-inverse' ? (params.backgroundColor || '#ffffff') : fillColor;
+        } else if (params.fillType === 'gradient') {
+          const direction = (params.fillGradientDirection || 45) * (Math.PI / 180);
+          const gradientLength = Math.sqrt(width * width + height * height);
+          const x1 = width / 2 - Math.cos(direction) * gradientLength / 2;
+          const y1 = height / 2 - Math.sin(direction) * gradientLength / 2;
+          const x2 = width / 2 + Math.cos(direction) * gradientLength / 2;
+          const y2 = height / 2 + Math.sin(direction) * gradientLength / 2;
+          
+          const gradient = ctx.createLinearGradient(x1, y1, x2, y2);
+          gradient.addColorStop(0, params.fillGradientStart || '#000000');
+          gradient.addColorStop(1, params.fillGradientEnd || '#333333');
+          ctx.fillStyle = gradient;
+        }
+        
+        ctx.fillText(line, width / 2, y);
+        ctx.restore();
+      }
+      
+      // Handle stroke
+      if (params.strokeType && params.strokeType !== 'none') {
+        ctx.save();
+        ctx.globalAlpha = strokeOpacity;
+        ctx.strokeStyle = frameStyle === 'filled-inverse' ? (params.backgroundColor || '#ffffff') : strokeColor;
+        ctx.lineWidth = params.strokeWidth || 2;
+        
+        // Apply stroke pattern
+        switch (params.strokeType) {
+          case 'dashed':
+            ctx.setLineDash([ctx.lineWidth * 3, ctx.lineWidth * 2]);
+            break;
+          case 'dotted':
+            ctx.setLineDash([ctx.lineWidth, ctx.lineWidth]);
+            break;
+        }
+        
+        ctx.strokeText(line, width / 2, y);
+        ctx.restore();
+      }
+      
+    } else {
+      // Custom letter spacing rendering
+      const chars = line.split('');
+      const charWidths = chars.map(char => ctx.measureText(char).width);
+      const totalWidth = charWidths.reduce((sum, w) => sum + w, 0) + letterSpacing * baseFontSize * (chars.length - 1);
+      
+      let x = (width - totalWidth) / 2;
+      
+      chars.forEach((char, i) => {
+        // Handle fill
+        if (params.fillType && params.fillType !== 'none') {
+          ctx.save();
+          ctx.globalAlpha = fillOpacity;
+          
+          if (params.fillType === 'solid') {
+            ctx.fillStyle = frameStyle === 'filled-inverse' ? (params.backgroundColor || '#ffffff') : fillColor;
+          } else if (params.fillType === 'gradient') {
+            const direction = (params.fillGradientDirection || 45) * (Math.PI / 180);
+            const gradientLength = Math.sqrt(width * width + height * height);
+            const x1 = width / 2 - Math.cos(direction) * gradientLength / 2;
+            const y1 = height / 2 - Math.sin(direction) * gradientLength / 2;
+            const x2 = width / 2 + Math.cos(direction) * gradientLength / 2;
+            const y2 = height / 2 + Math.sin(direction) * gradientLength / 2;
+            
+            const gradient = ctx.createLinearGradient(x1, y1, x2, y2);
+            gradient.addColorStop(0, params.fillGradientStart || '#000000');
+            gradient.addColorStop(1, params.fillGradientEnd || '#333333');
+            ctx.fillStyle = gradient;
+          }
+          
+          ctx.textAlign = 'left';
+          ctx.fillText(char, x, y);
+          ctx.restore();
+        }
+        
+        // Handle stroke
+        if (params.strokeType && params.strokeType !== 'none') {
+          ctx.save();
+          ctx.globalAlpha = strokeOpacity;
+          ctx.strokeStyle = frameStyle === 'filled-inverse' ? (params.backgroundColor || '#ffffff') : strokeColor;
+          ctx.lineWidth = params.strokeWidth || 2;
+          ctx.textAlign = 'left';
+          
+          // Apply stroke pattern
+          switch (params.strokeType) {
+            case 'dashed':
+              ctx.setLineDash([ctx.lineWidth * 3, ctx.lineWidth * 2]);
+              break;
+            case 'dotted':
+              ctx.setLineDash([ctx.lineWidth, ctx.lineWidth]);
+              break;
+          }
+          
+          ctx.strokeText(char, x, y);
+          ctx.restore();
+        }
+        
+        x += charWidths[i] + letterSpacing * baseFontSize;
+      });
+    }
+    
+    // Draw underline if enabled
+    if (underline) {
+      ctx.save();
+      ctx.globalAlpha = fillOpacity;
+      ctx.strokeStyle = frameStyle === 'filled-inverse' ? (params.backgroundColor || '#ffffff') : fillColor;
+      ctx.lineWidth = underlineWeight;
+      ctx.lineCap = 'round';
+      
+      const lineWidth = letterSpacing === 0 ? 
+        ctx.measureText(line).width : 
+        lines[lineIndex].split('').reduce((sum, char) => sum + ctx.measureText(char).width, 0) + 
+          letterSpacing * baseFontSize * (lines[lineIndex].length - 1);
+      
+      const underlineY = y + baseFontSize / 2 + underlineOffset;
+      ctx.beginPath();
+      ctx.moveTo((width - lineWidth) / 2, underlineY);
+      ctx.lineTo((width + lineWidth) / 2, underlineY);
+      ctx.stroke();
+      ctx.restore();
+    }
+  });
+  
+  ctx.restore();
+}
+
+// Helper function for rounded rectangles
+function roundRect(ctx, x, y, width, height, radius) {
+  ctx.beginPath();
+  ctx.moveTo(x + radius, y);
+  ctx.lineTo(x + width - radius, y);
+  ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+  ctx.lineTo(x + width, y + height - radius);
+  ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+  ctx.lineTo(x + radius, y + height);
+  ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+  ctx.lineTo(x, y + radius);
+  ctx.quadraticCurveTo(x, y, x + radius, y);
+  ctx.closePath();
+}
+
+export const metadata = {
+  name: "Aa Wordmark",
+  description: "Professional text-based logos with customizable typography",
+  defaultParams: {
+    seed: "wordmark",
+    text: 'BRAND',
+    fontStyle: 'modern',
+    fontWeight: '500',
+    letterSpacing: 0.05,
+    size: 0.5,
+    lineHeight: 1.2,
+    textTransform: 'uppercase',
+    underline: false,
+    underlineWeight: 3,
+    underlineOffset: 5,
+    showFrame: false,
+    frameStyle: 'outline',
+    frameStrokeStyle: 'solid',
+    frameStrokeWidth: 3,
+    framePadding: 40,
+    frameRadius: 0
+  }
+};
+
+export const id = 'wordmark';
+export const name = "Aa Wordmark";
+export const description = "Professional text-based logos with customizable typography";
+export { drawVisualization };
+export const defaultParams = metadata.defaultParams;`;

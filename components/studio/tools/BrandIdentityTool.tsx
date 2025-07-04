@@ -21,25 +21,42 @@ export function BrandIdentityTool() {
   return (
     <div className="space-y-2">
       {/* Background - Compact Row */}
-      <div className="flex items-center gap-2">
-        <label className="text-xs font-medium text-gray-700 w-12">BG</label>
-        <select
-          value={styleParams.backgroundType || 'transparent'}
-          onChange={(e) => updateStyle({ backgroundType: e.target.value as any })}
-          className="text-xs px-1 py-0.5 border rounded bg-white flex-1"
-        >
-          <option value="transparent">None</option>
-          <option value="solid">Solid</option>
-          <option value="gradient">Gradient</option>
-        </select>
-        {styleParams.backgroundType !== 'transparent' && (
-          <input
-            type="color"
-            value={styleParams.backgroundColor}
-            onChange={(e) => updateStyle({ backgroundColor: e.target.value })}
-            className="w-5 h-5 border border-gray-300 rounded cursor-pointer"
-          />
-        )}
+      <div className="space-y-1">
+        <div className="flex items-center gap-2">
+          <label className="text-xs font-medium text-gray-700 w-12">BG</label>
+          <select
+            value={styleParams.backgroundType || 'transparent'}
+            onChange={(e) => updateStyle({ backgroundType: e.target.value as any })}
+            className="text-xs px-1 py-0.5 border rounded bg-white flex-1"
+          >
+            <option value="transparent">None</option>
+            <option value="solid">Solid</option>
+            <option value="gradient">Gradient</option>
+          </select>
+          {styleParams.backgroundType !== 'transparent' && (
+            <>
+              <input
+                type="color"
+                value={styleParams.backgroundColor}
+                onChange={(e) => updateStyle({ backgroundColor: e.target.value })}
+                className="w-5 h-5 border border-gray-300 rounded cursor-pointer"
+              />
+              <div className="flex items-center gap-1 flex-1">
+                <Slider
+                  value={[styleParams.backgroundOpacity ?? 1]}
+                  onValueChange={([value]) => updateStyle({ backgroundOpacity: value })}
+                  min={0}
+                  max={1}
+                  step={0.05}
+                  className="flex-1 h-4"
+                />
+                <span className="text-xs text-gray-500 w-8 text-right">
+                  {Math.round((styleParams.backgroundOpacity ?? 1) * 100)}%
+                </span>
+              </div>
+            </>
+          )}
+        </div>
       </div>
       
       {/* Fill - Compact Row */}

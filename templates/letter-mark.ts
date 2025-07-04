@@ -22,11 +22,15 @@ const PARAMETERS = {
   size: { type: 'slider', min: 0.3, max: 0.9, step: 0.05, default: 0.7, label: 'Size', category: 'Layout' },
   letterSpacing: { type: 'slider', min: -0.1, max: 0.3, step: 0.02, default: 0, label: 'Letter Spacing', category: 'Typography' },
   container: { type: 'select', options: [{"value":"none","label":"None"},{"value":"circle","label":"Circle"},{"value":"square","label":"Square"},{"value":"rounded","label":"Rounded Square"}], default: "none", label: 'Container', category: 'Container' },
-  containerPadding: { type: 'slider', min: 0.1, max: 0.4, step: 0.05, default: 0.2, label: 'Container Padding', category: 'Container' }
+  containerPadding: { type: 'slider', min: 0.1, max: 0.4, step: 0.05, default: 0.2, label: 'Container Padding', category: 'Container' },
+  backgroundOpacity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 1, label: 'Background Opacity', category: 'Background', showIf: (params)=>params.backgroundType !== 'transparent' }
 };
 
 function applyUniversalBackground(ctx, width, height, params) {
   if (!params.backgroundType || params.backgroundType === 'transparent') return;
+  
+  ctx.save();
+  ctx.globalAlpha = params.backgroundOpacity ?? 1;
   
   if (params.backgroundType === 'solid') {
     ctx.fillStyle = params.backgroundColor || '#ffffff';
@@ -45,6 +49,8 @@ function applyUniversalBackground(ctx, width, height, params) {
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, width, height);
   }
+  
+  ctx.restore();
 }
 
 function drawVisualization(ctx, width, height, params, generator, time) {
@@ -111,13 +117,19 @@ function drawVisualization(ctx, width, height, params, generator, time) {
   if (alignment === 'left') textX = width * 0.1;
   else if (alignment === 'right') textX = width * 0.9;
   
+  // Extract opacity values with defaults
+  const fillOpacity = params.fillOpacity ?? 1;
+  const strokeOpacity = params.strokeOpacity ?? 1;
+  
   // Draw container if specified
-  if (container !== 'none') {
+  if (container !== 'none' && params.fillType !== 'none') {
     const metrics = ctx.measureText(letter);
     const textWidth = metrics.width;
     const textHeight = fontSize;
     const padding = minDim * containerPadding;
     
+    ctx.save();
+    ctx.globalAlpha = fillOpacity;
     ctx.fillStyle = fillColor;
     
     if (container === 'circle') {
@@ -145,19 +157,28 @@ function drawVisualization(ctx, width, height, params, generator, time) {
       // Invert text color for contrast
       ctx.fillStyle = backgroundColor;
     }
+    ctx.restore();
   } else {
     // No container, use fill color for text
     ctx.fillStyle = fillColor;
   }
   
   // Draw the letter(s)
-  ctx.fillText(letter, textX, centerY);
+  if (params.fillType !== 'none') {
+    ctx.save();
+    ctx.globalAlpha = fillOpacity;
+    ctx.fillText(letter, textX, centerY);
+    ctx.restore();
+  }
   
   // Optional: Add subtle depth with stroke
-  if (params.strokeWidth && params.strokeWidth > 0) {
+  if (params.strokeType !== 'none' && params.strokeWidth && params.strokeWidth > 0) {
+    ctx.save();
+    ctx.globalAlpha = strokeOpacity;
     ctx.strokeStyle = strokeColor;
     ctx.lineWidth = params.strokeWidth;
     ctx.strokeText(letter, textX, centerY);
+    ctx.restore();
   }
 }
 
@@ -216,11 +237,15 @@ const PARAMETERS = {
   size: { type: 'slider', min: 0.3, max: 0.9, step: 0.05, default: 0.7, label: 'Size', category: 'Layout' },
   letterSpacing: { type: 'slider', min: -0.1, max: 0.3, step: 0.02, default: 0, label: 'Letter Spacing', category: 'Typography' },
   container: { type: 'select', options: [{"value":"none","label":"None"},{"value":"circle","label":"Circle"},{"value":"square","label":"Square"},{"value":"rounded","label":"Rounded Square"}], default: "none", label: 'Container', category: 'Container' },
-  containerPadding: { type: 'slider', min: 0.1, max: 0.4, step: 0.05, default: 0.2, label: 'Container Padding', category: 'Container' }
+  containerPadding: { type: 'slider', min: 0.1, max: 0.4, step: 0.05, default: 0.2, label: 'Container Padding', category: 'Container' },
+  backgroundOpacity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 1, label: 'Background Opacity', category: 'Background', showIf: (params)=>params.backgroundType !== 'transparent' }
 };
 
 function applyUniversalBackground(ctx, width, height, params) {
   if (!params.backgroundType || params.backgroundType === 'transparent') return;
+  
+  ctx.save();
+  ctx.globalAlpha = params.backgroundOpacity ?? 1;
   
   if (params.backgroundType === 'solid') {
     ctx.fillStyle = params.backgroundColor || '#ffffff';
@@ -239,6 +264,8 @@ function applyUniversalBackground(ctx, width, height, params) {
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, width, height);
   }
+  
+  ctx.restore();
 }
 
 function drawVisualization(ctx, width, height, params, generator, time) {
@@ -305,13 +332,19 @@ function drawVisualization(ctx, width, height, params, generator, time) {
   if (alignment === 'left') textX = width * 0.1;
   else if (alignment === 'right') textX = width * 0.9;
   
+  // Extract opacity values with defaults
+  const fillOpacity = params.fillOpacity ?? 1;
+  const strokeOpacity = params.strokeOpacity ?? 1;
+  
   // Draw container if specified
-  if (container !== 'none') {
+  if (container !== 'none' && params.fillType !== 'none') {
     const metrics = ctx.measureText(letter);
     const textWidth = metrics.width;
     const textHeight = fontSize;
     const padding = minDim * containerPadding;
     
+    ctx.save();
+    ctx.globalAlpha = fillOpacity;
     ctx.fillStyle = fillColor;
     
     if (container === 'circle') {
@@ -339,18 +372,27 @@ function drawVisualization(ctx, width, height, params, generator, time) {
       // Invert text color for contrast
       ctx.fillStyle = backgroundColor;
     }
+    ctx.restore();
   } else {
     // No container, use fill color for text
     ctx.fillStyle = fillColor;
   }
   
   // Draw the letter(s)
-  ctx.fillText(letter, textX, centerY);
+  if (params.fillType !== 'none') {
+    ctx.save();
+    ctx.globalAlpha = fillOpacity;
+    ctx.fillText(letter, textX, centerY);
+    ctx.restore();
+  }
   
   // Optional: Add subtle depth with stroke
-  if (params.strokeWidth && params.strokeWidth > 0) {
+  if (params.strokeType !== 'none' && params.strokeWidth && params.strokeWidth > 0) {
+    ctx.save();
+    ctx.globalAlpha = strokeOpacity;
     ctx.strokeStyle = strokeColor;
     ctx.lineWidth = params.strokeWidth;
     ctx.strokeText(letter, textX, centerY);
+    ctx.restore();
   }
 }`;

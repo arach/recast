@@ -584,7 +584,7 @@ export const name = "✏️ Hand Sketch";
 export const description = "Organic hand-drawn aesthetic with tremor, pressure variation, and artistic imperfection";
 export const defaultParams = metadata.defaultParams;
 export const parameters = PARAMETERS;
-export const draw = drawVisualization;
+export { drawVisualization };
 
 export const code = `// Hand Sketch
 const PARAMETERS = ${JSON.stringify(PARAMETERS, null, 2)};

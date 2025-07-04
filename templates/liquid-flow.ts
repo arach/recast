@@ -590,7 +590,7 @@ export const name = "💧 Liquid Flow";
 export const description = "Fluid organic shapes with surface tension, caustics, and realistic liquid behavior";
 export const defaultParams = metadata.defaultParams;
 export const parameters: Record<string, ParameterDefinition> = PARAMETERS;
-export const draw = drawVisualization;
+export { drawVisualization };
 export const code = `// Liquid Flow - Fluid, organic shapes with surface tension for beauty/wellness brands
 
 // This template creates fluid, organic shapes with realistic liquid behavior including

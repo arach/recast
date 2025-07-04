@@ -199,7 +199,11 @@ export function CanvasArea() {
           )}
         </>
       ) : (
-        <PreviewGrid />
+        <div className={`w-full h-full flex items-center justify-center ${
+          darkMode ? 'bg-gray-900 text-gray-400' : 'bg-gray-50 text-gray-500'
+        }`}>
+          <p className="text-lg">Preview mode temporarily disabled</p>
+        </div>
       )}
     </div>
   )

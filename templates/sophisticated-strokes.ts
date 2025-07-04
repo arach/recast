@@ -627,7 +627,7 @@ export const name = "Sophisticated Strokes";
 export const description = "Advanced line and fill styling with sophisticated color harmony and stroke techniques";
 export const defaultParams = metadata.defaultParams;
 export const parameters = PARAMETERS;
-export const draw = drawVisualization;
+export { drawVisualization };
 
 export const code = `// Sophisticated Strokes - Advanced line and fill styling
 const PARAMETERS = ${JSON.stringify(PARAMETERS, null, 2)};

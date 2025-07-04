@@ -105,11 +105,11 @@ export const StateDebugger = forwardRef<any, StateDebuggerProps>(({
     };
   }
   
-  // Collapsed state - just show the bug button
-  if (isCollapsed) {
-    return (
+  return (
+    <>
+      {/* Bug button overlay - always visible */}
       <button
-        onClick={() => setIsCollapsed(false)}
+        onClick={() => setIsCollapsed(!isCollapsed)}
         className="fixed bottom-4 right-4 w-12 h-12 rounded-full
                    bg-gray-900/95 dark:bg-black/95
                    backdrop-blur-sm
@@ -120,16 +120,16 @@ export const StateDebugger = forwardRef<any, StateDebuggerProps>(({
                    hover:bg-gray-800/95
                    transition-all duration-200
                    hover:scale-110 active:scale-95
-                   group z-50"
-        title="Show debug toolbar"
+                   group z-[51]"
+        title={isCollapsed ? "Show debug toolbar" : "Hide debug toolbar"}
       >
-        <Bug className="w-5 h-5 rotate-180 group-hover:rotate-180 transition-transform" />
+        <Bug className={`w-5 h-5 transition-transform duration-200 ${
+          isCollapsed ? '' : 'rotate-180'
+        }`} />
       </button>
-    );
-  }
 
-  // Expanded state - full toolbar
-  return (
+      {/* Debug toolbar - only visible when not collapsed */}
+      {!isCollapsed && (
     <div className={`fixed bottom-4 right-4 rounded-xl text-xs font-sans z-50 
                 bg-gray-900/95 dark:bg-black/95 
                 backdrop-blur-sm
@@ -143,17 +143,6 @@ export const StateDebugger = forwardRef<any, StateDebuggerProps>(({
           <h3 className="font-semibold text-white">Debug Toolbar</h3>
         </div>
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => setIsCollapsed(true)}
-            className="w-7 h-7 rounded-full flex items-center justify-center
-                       bg-gray-700/50 hover:bg-gray-600/50
-                       text-gray-400 hover:text-white
-                       transition-all duration-200
-                       hover:scale-110 active:scale-95"
-            title="Minimize to bug icon"
-          >
-            <Bug className="w-3.5 h-3.5 rotate-180" />
-          </button>
           <button
             onClick={() => setIsExpanded(!isExpanded)}
             className="w-7 h-7 rounded-full flex items-center justify-center
@@ -218,7 +207,9 @@ export const StateDebugger = forwardRef<any, StateDebuggerProps>(({
           {renderTabContent()}
         </div>
       </div>
-    </div>
+        </div>
+      )}
+    </>
   );
   
   function renderTabContent() {

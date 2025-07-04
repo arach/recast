@@ -21,11 +21,15 @@ const PARAMETERS = {
   chaos: { type: 'slider', min: 0, max: 1, step: 0.01, default: 0.1, label: 'Organic Variance', category: 'Effects' },
   damping: { type: 'slider', min: 0.3, max: 1, step: 0.01, default: 0.9, label: 'Layer Scale', category: 'Shape' },
   layers: { type: 'slider', min: 1, max: 6, step: 1, default: 2, label: 'Nested Loops', category: 'Shape' },
-  scale: { type: 'slider', min: 0.3, max: 3, step: 0.1, default: 1.0, label: 'Overall Scale', category: 'Shape' }
+  scale: { type: 'slider', min: 0.3, max: 3, step: 0.1, default: 1.0, label: 'Overall Scale', category: 'Shape' },
+  backgroundOpacity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 1, label: 'Background Opacity', category: 'Background', showIf: (params)=>params.backgroundType !== 'transparent' }
 };
 
 function applyUniversalBackground(ctx, width, height, params) {
   if (!params.backgroundType || params.backgroundType === 'transparent') return;
+  
+  ctx.save();
+  ctx.globalAlpha = params.backgroundOpacity ?? 1;
   
   if (params.backgroundType === 'solid') {
     ctx.fillStyle = params.backgroundColor || '#ffffff';
@@ -44,6 +48,8 @@ function applyUniversalBackground(ctx, width, height, params) {
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, width, height);
   }
+  
+  ctx.restore();
 }
 
 function drawVisualization(ctx, width, height, params, generator, time) {
@@ -121,6 +127,10 @@ function drawVisualization(ctx, width, height, params, generator, time) {
     return seed / 233280;
   }
 
+  // Extract opacity values with defaults
+  const strokeOpacity = params.strokeOpacity ?? 1;
+  const fillOpacity = params.fillOpacity ?? 0.8;
+  
   // Add glow effect for mystical appearance using theme color
   const [baseHue, baseSat] = hexToHsl(fillColor);
   ctx.shadowColor = `hsla(${baseHue}, ${baseSat}%, 70%, 0.4)`;
@@ -140,16 +150,17 @@ function drawVisualization(ctx, width, height, params, generator, time) {
     const layerStrokeColor = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
     
     // Draw infinity loop using lemniscate equation
-    ctx.save();
-    ctx.globalAlpha = 0.8 - (layer * 0.15);
-    ctx.strokeStyle = layerStrokeColor;
-    ctx.lineWidth = Math.max(1, layerAmplitude / 25);
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-    
-    ctx.beginPath();
-    const resolution = 120;
-    let firstPoint = true;
+    if (params.strokeType !== 'none') {
+      ctx.save();
+      ctx.globalAlpha = (0.8 - (layer * 0.15)) * strokeOpacity;
+      ctx.strokeStyle = layerStrokeColor;
+      ctx.lineWidth = params.strokeWidth || Math.max(1, layerAmplitude / 25);
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      
+      ctx.beginPath();
+      const resolution = 120;
+      let firstPoint = true;
     
     for (let i = 0; i <= resolution; i++) {
       const t = (i / resolution) * Math.PI * 2;
@@ -179,13 +190,14 @@ function drawVisualization(ctx, width, height, params, generator, time) {
       } else {
         ctx.lineTo(x, y);
       }
+      }
+      
+      ctx.stroke();
+      ctx.restore();
     }
     
-    ctx.stroke();
-    ctx.restore();
-    
     // Add complexity: flowing particles
-    if (complexity > 0) {
+    if (complexity > 0 && params.fillType !== 'none') {
       const particleCount = Math.ceil(complexity * 8);
       
       for (let p = 0; p < particleCount; p++) {
@@ -211,7 +223,7 @@ function drawVisualization(ctx, width, height, params, generator, time) {
             particleY > particleSize && particleY < height - particleSize) {
           
           ctx.save();
-          ctx.globalAlpha = 0.6 + Math.sin(particlePhase) * 0.3;
+          ctx.globalAlpha = (0.6 + Math.sin(particlePhase) * 0.3) * fillOpacity;
           ctx.fillStyle = `hsla(${hue + 30}, ${saturation}%, ${lightness + 20}%, 0.7)`;
           
           ctx.beginPath();
@@ -225,24 +237,25 @@ function drawVisualization(ctx, width, height, params, generator, time) {
   }
 
   // Enhanced glow pass for main curves using theme color
-  ctx.shadowColor = `hsla(${baseHue}, ${baseSat}%, 80%, 0.6)`;
-  ctx.shadowBlur = 20;
-  
-  for (let layer = 0; layer < Math.min(layers, 2); layer++) {
-    const layerPhase = (layer / layers) * frequency * Math.PI * 2 + time;
-    const layerScale = scale * Math.pow(damping, layer);
-    const layerAmplitude = amplitude * layerScale;
+  if (params.strokeType !== 'none') {
+    ctx.shadowColor = `hsla(${baseHue}, ${baseSat}%, 80%, 0.6)`;
+    ctx.shadowBlur = 20;
     
-    const hueShift = (layer / layers) * 60 + time * 15; // Subtle hue variation
-    const glowHue = (baseHue + hueShift) % 360;
-    const glowSaturation = baseSat - (layer * 10);
-    const glowLightness = 50 + Math.sin(layerPhase) * 20;
-    
-    ctx.save();
-    ctx.globalAlpha = 0.3;
-    ctx.strokeStyle = `hsl(${glowHue}, ${glowSaturation}%, ${glowLightness}%)`;
-    ctx.lineWidth = Math.max(2, layerAmplitude / 15);
-    ctx.lineCap = 'round';
+    for (let layer = 0; layer < Math.min(layers, 2); layer++) {
+      const layerPhase = (layer / layers) * frequency * Math.PI * 2 + time;
+      const layerScale = scale * Math.pow(damping, layer);
+      const layerAmplitude = amplitude * layerScale;
+      
+      const hueShift = (layer / layers) * 60 + time * 15; // Subtle hue variation
+      const glowHue = (baseHue + hueShift) % 360;
+      const glowSaturation = baseSat - (layer * 10);
+      const glowLightness = 50 + Math.sin(layerPhase) * 20;
+      
+      ctx.save();
+      ctx.globalAlpha = 0.3 * strokeOpacity;
+      ctx.strokeStyle = `hsl(${glowHue}, ${glowSaturation}%, ${glowLightness}%)`;
+      ctx.lineWidth = Math.max(2, layerAmplitude / 15);
+      ctx.lineCap = 'round';
     
     ctx.beginPath();
     const resolution = 60; // Lower resolution for glow
@@ -274,6 +287,7 @@ function drawVisualization(ctx, width, height, params, generator, time) {
   // Reset shadow
   ctx.shadowColor = 'transparent';
   ctx.shadowBlur = 0;
+}
 
   // Add subtle starfield background
   ctx.save();
@@ -342,11 +356,15 @@ const PARAMETERS = {
   chaos: { type: 'slider', min: 0, max: 1, step: 0.01, default: 0.1, label: 'Organic Variance', category: 'Effects' },
   damping: { type: 'slider', min: 0.3, max: 1, step: 0.01, default: 0.9, label: 'Layer Scale', category: 'Shape' },
   layers: { type: 'slider', min: 1, max: 6, step: 1, default: 2, label: 'Nested Loops', category: 'Shape' },
-  scale: { type: 'slider', min: 0.3, max: 3, step: 0.1, default: 1.0, label: 'Overall Scale', category: 'Shape' }
+  scale: { type: 'slider', min: 0.3, max: 3, step: 0.1, default: 1.0, label: 'Overall Scale', category: 'Shape' },
+  backgroundOpacity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 1, label: 'Background Opacity', category: 'Background', showIf: (params)=>params.backgroundType !== 'transparent' }
 };
 
 function applyUniversalBackground(ctx, width, height, params) {
   if (!params.backgroundType || params.backgroundType === 'transparent') return;
+  
+  ctx.save();
+  ctx.globalAlpha = params.backgroundOpacity ?? 1;
   
   if (params.backgroundType === 'solid') {
     ctx.fillStyle = params.backgroundColor || '#ffffff';
@@ -365,6 +383,8 @@ function applyUniversalBackground(ctx, width, height, params) {
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, width, height);
   }
+  
+  ctx.restore();
 }
 
 function drawVisualization(ctx, width, height, params, generator, time) {
@@ -461,16 +481,17 @@ function drawVisualization(ctx, width, height, params, generator, time) {
     const layerStrokeColor = \`hsl(\${hue}, \${saturation}%, \${lightness}%)\`;
     
     // Draw infinity loop using lemniscate equation
-    ctx.save();
-    ctx.globalAlpha = 0.8 - (layer * 0.15);
-    ctx.strokeStyle = layerStrokeColor;
-    ctx.lineWidth = Math.max(1, layerAmplitude / 25);
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-    
-    ctx.beginPath();
-    const resolution = 120;
-    let firstPoint = true;
+    if (params.strokeType !== 'none') {
+      ctx.save();
+      ctx.globalAlpha = (0.8 - (layer * 0.15)) * strokeOpacity;
+      ctx.strokeStyle = layerStrokeColor;
+      ctx.lineWidth = params.strokeWidth || Math.max(1, layerAmplitude / 25);
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      
+      ctx.beginPath();
+      const resolution = 120;
+      let firstPoint = true;
     
     for (let i = 0; i <= resolution; i++) {
       const t = (i / resolution) * Math.PI * 2;
@@ -500,13 +521,14 @@ function drawVisualization(ctx, width, height, params, generator, time) {
       } else {
         ctx.lineTo(x, y);
       }
+      }
+      
+      ctx.stroke();
+      ctx.restore();
     }
     
-    ctx.stroke();
-    ctx.restore();
-    
     // Add complexity: flowing particles
-    if (complexity > 0) {
+    if (complexity > 0 && params.fillType !== 'none') {
       const particleCount = Math.ceil(complexity * 8);
       
       for (let p = 0; p < particleCount; p++) {
@@ -595,6 +617,7 @@ function drawVisualization(ctx, width, height, params, generator, time) {
   // Reset shadow
   ctx.shadowColor = 'transparent';
   ctx.shadowBlur = 0;
+}
 
   // Add subtle starfield background
   ctx.save();

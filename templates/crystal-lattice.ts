@@ -633,4 +633,4 @@ ${drawVisualization.toString()}`;
 
 // Re-export for compatibility
 export const parameters = PARAMETERS;
-export const draw = drawVisualization;
+export { drawVisualization };

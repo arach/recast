@@ -23,11 +23,15 @@ const PARAMETERS = {
   layers: { type: 'slider', min: 1, max: 5, step: 1, default: 2, label: 'Layers' },
   barCount: { type: 'slider', min: 20, max: 100, step: 5, default: 40, label: 'Number of Bars' },
   barSpacing: { type: 'slider', min: 0, max: 10, step: 1, default: 2, label: 'Bar Spacing' },
-  colorMode: { type: 'select', options: [{"value":"spectrum","label":"Rainbow Spectrum"},{"value":"theme","label":"Use Theme Colors"},{"value":"toneShift","label":"Theme Tone Shift"}], default: "spectrum", label: 'Color Mode' }
+  colorMode: { type: 'select', options: [{"value":"spectrum","label":"Rainbow Spectrum"},{"value":"theme","label":"Use Theme Colors"},{"value":"toneShift","label":"Theme Tone Shift"}], default: "spectrum", label: 'Color Mode' },
+  backgroundOpacity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 1, label: 'Background Opacity', category: 'Background', showIf: (params)=>params.backgroundType !== 'transparent' }
 };
 
 function applyUniversalBackground(ctx, width, height, params) {
   if (!params.backgroundType || params.backgroundType === 'transparent') return;
+  
+  ctx.save();
+  ctx.globalAlpha = params.backgroundOpacity ?? 1;
   
   if (params.backgroundType === 'solid') {
     ctx.fillStyle = params.backgroundColor || '#ffffff';
@@ -46,6 +50,8 @@ function applyUniversalBackground(ctx, width, height, params) {
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, width, height);
   }
+  
+  ctx.restore();
 }
 
 function drawVisualization(ctx, width, height, params, generator, time) {
@@ -71,6 +77,10 @@ function drawVisualization(ctx, width, height, params, generator, time) {
   const fillColor = params.fillColor || '#3b82f6';
   const strokeColor = params.strokeColor || '#1e40af';
   const colorMode = params.colorMode || 'spectrum';
+  
+  // Get opacity values
+  const fillOpacity = params.fillOpacity ?? 1;
+  const strokeOpacity = params.strokeOpacity ?? 1;
   
   // Helper to create color variations
   const adjustColor = (color, lightness) => {
@@ -156,6 +166,9 @@ function drawVisualization(ctx, width, height, params, generator, time) {
       gradient.addColorStop(1, `hsla(${hue}, ${baseSat}%, ${baseLum + 10}%, 0.9)`);
     }
     
+    // Save context and apply fill opacity
+    ctx.save();
+    ctx.globalAlpha = fillOpacity;
     ctx.fillStyle = gradient;
     
     const radius = barWidth / 3;
@@ -169,15 +182,17 @@ function drawVisualization(ctx, width, height, params, generator, time) {
       ctx.arc(x + barWidth/2, waveY + barHeight/2 + 4, barWidth/2.5, 0, Math.PI * 2);
       ctx.fill();
     }
+    
+    // Restore context
+    ctx.restore();
   }
   
   // Simple wave guide line
+  ctx.save();
+  // Apply stroke opacity combined with the reduced opacity for guide line
+  ctx.globalAlpha = strokeOpacity * 0.15;
   ctx.beginPath();
-  // Use stroke color with reduced opacity for guide line
-  const strokeRgb = strokeColor.startsWith('#') ? 
-    `rgba(${parseInt(strokeColor.substr(1,2), 16)}, ${parseInt(strokeColor.substr(3,2), 16)}, ${parseInt(strokeColor.substr(5,2), 16)}, 0.15)` :
-    strokeColor.replace(/rgb\(/, 'rgba(').replace(/\)/, ', 0.15)');
-  ctx.strokeStyle = strokeRgb;
+  ctx.strokeStyle = strokeColor;
   ctx.lineWidth = 1;
   ctx.setLineDash([5, 5]);
   for (let i = 0; i < params.barCount; i++) {
@@ -192,6 +207,7 @@ function drawVisualization(ctx, width, height, params, generator, time) {
   }
   ctx.stroke();
   ctx.setLineDash([]);
+  ctx.restore();
 }
 
 export const metadata = {
@@ -252,11 +268,15 @@ const PARAMETERS = {
   layers: { type: 'slider', min: 1, max: 5, step: 1, default: 2, label: 'Layers' },
   barCount: { type: 'slider', min: 20, max: 100, step: 5, default: 40, label: 'Number of Bars' },
   barSpacing: { type: 'slider', min: 0, max: 10, step: 1, default: 2, label: 'Bar Spacing' },
-  colorMode: { type: 'select', options: [{"value":"spectrum","label":"Rainbow Spectrum"},{"value":"theme","label":"Use Theme Colors"},{"value":"toneShift","label":"Theme Tone Shift"}], default: "spectrum", label: 'Color Mode' }
+  colorMode: { type: 'select', options: [{"value":"spectrum","label":"Rainbow Spectrum"},{"value":"theme","label":"Use Theme Colors"},{"value":"toneShift","label":"Theme Tone Shift"}], default: "spectrum", label: 'Color Mode' },
+  backgroundOpacity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 1, label: 'Background Opacity', category: 'Background', showIf: (params)=>params.backgroundType !== 'transparent' }
 };
 
 function applyUniversalBackground(ctx, width, height, params) {
   if (!params.backgroundType || params.backgroundType === 'transparent') return;
+  
+  ctx.save();
+  ctx.globalAlpha = params.backgroundOpacity ?? 1;
   
   if (params.backgroundType === 'solid') {
     ctx.fillStyle = params.backgroundColor || '#ffffff';
@@ -275,6 +295,8 @@ function applyUniversalBackground(ctx, width, height, params) {
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, width, height);
   }
+  
+  ctx.restore();
 }
 
 function drawVisualization(ctx, width, height, params, generator, time) {
@@ -300,6 +322,10 @@ function drawVisualization(ctx, width, height, params, generator, time) {
   const fillColor = params.fillColor || '#3b82f6';
   const strokeColor = params.strokeColor || '#1e40af';
   const colorMode = params.colorMode || 'spectrum';
+  
+  // Get opacity values
+  const fillOpacity = params.fillOpacity ?? 1;
+  const strokeOpacity = params.strokeOpacity ?? 1;
   
   // Helper to create color variations
   const adjustColor = (color, lightness) => {
@@ -385,6 +411,9 @@ function drawVisualization(ctx, width, height, params, generator, time) {
       gradient.addColorStop(1, \`hsla(\${hue}, \${baseSat}%, \${baseLum + 10}%, 0.9)\`);
     }
     
+    // Save context and apply fill opacity
+    ctx.save();
+    ctx.globalAlpha = fillOpacity;
     ctx.fillStyle = gradient;
     
     const radius = barWidth / 3;
@@ -398,6 +427,9 @@ function drawVisualization(ctx, width, height, params, generator, time) {
       ctx.arc(x + barWidth/2, waveY + barHeight/2 + 4, barWidth/2.5, 0, Math.PI * 2);
       ctx.fill();
     }
+    
+    // Restore context
+    ctx.restore();
   }
   
   // Simple wave guide line

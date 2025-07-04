@@ -597,6 +597,8 @@ function drawVisualization(ctx, width, height, params, _generator, time) {
   }
 }
 
+export { drawVisualization };
+
 export const metadata = {
   name: "🔮 Simple Prism",
   description: "Professional 3D isometric prism with surface-projected text - perfect for Scout's voice processing identity",

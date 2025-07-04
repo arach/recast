@@ -338,7 +338,7 @@ export const name = "NEXUS AI";
 export const description = "Neural kinetic energy brand with synaptic connections and high-tech carbon materials";
 export const defaultParams = metadata.defaultParams;
 export const parameters = PARAMETERS;
-export const draw = drawVisualization;
+export { drawVisualization };
 
 export const code = `${applyUniversalBackground.toString()}
 

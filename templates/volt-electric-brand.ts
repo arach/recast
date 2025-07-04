@@ -483,7 +483,7 @@ export const description = "High-energy electric vehicle brand with voltage bord
 export const defaultParams = metadata.defaultParams;
 
 export const parameters: Record<string, ParameterDefinition> = PARAMETERS;
-export const draw = drawVisualization;
+export { drawVisualization };
 
 export const code = `// VOLT Electric Brand - High-energy borders with electric flow
 const PARAMETERS = ${JSON.stringify(PARAMETERS, null, 2)};

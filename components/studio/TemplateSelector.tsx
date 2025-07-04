@@ -13,12 +13,14 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Palette, ChevronDown } from 'lucide-react'
 import { useLogoStore } from '@/lib/stores/logoStore'
+import { useUIStore } from '@/lib/stores/uiStore'
 import { useSelectedLogo } from '@/lib/hooks/useSelectedLogo'
 import { loadTemplate, getAllTemplateInfo, type TemplateInfo } from '@/lib/template-registry-direct'
 
 export function TemplateSelector() {
   const [availableTemplates, setAvailableTemplates] = useState<TemplateInfo[]>([])
   const { updateLogo, selectedLogoId, getLogoById } = useLogoStore()
+  const { darkMode } = useUIStore()
   const { logo } = useSelectedLogo()
   
   // Load all available templates
@@ -104,7 +106,11 @@ export function TemplateSelector() {
           <ChevronDown className="w-4 h-4 opacity-50" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="w-[200px] bg-white/95 backdrop-blur-sm border-gray-200">
+      <DropdownMenuContent align="start" className={`w-[200px] backdrop-blur-sm ${
+        darkMode
+          ? 'bg-gray-900/95 border-gray-700'
+          : 'bg-white/95 border-gray-200'
+      }`}>
         <DropdownMenuLabel>Templates</DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={() => handleTemplateChange('custom')}>

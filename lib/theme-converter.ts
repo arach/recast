@@ -471,8 +471,6 @@ export async function getAllTemplatesAsLegacy() {
     'infinity-loops',
     'network-constellation',
     'brand-network',
-    'luxury-brand',
-    'premium-kinetic',
     'sophisticated-strokes',
     'border-effects',
     'nexus-ai-brand',

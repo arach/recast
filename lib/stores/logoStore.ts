@@ -48,6 +48,7 @@ const defaultParameters: Parameters = {
     strokeOpacity: 1,
     backgroundColor: '#ffffff',
     backgroundType: 'transparent',
+    backgroundOpacity: 1,
   },
   content: {},
   custom: {

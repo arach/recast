@@ -23,11 +23,15 @@ const PARAMETERS = {
   layers: { type: 'slider', min: 1, max: 8, step: 1, default: 1, label: 'Layers', category: 'Wave' },
   barCount: { type: 'slider', min: 20, max: 100, step: 5, default: 30, label: 'Number of Bars', category: 'Bars' },
   barSpacing: { type: 'slider', min: 0, max: 5, step: 1, default: 5, label: 'Bar Spacing', category: 'Bars' },
-  sharpness: { type: 'slider', min: 0.1, max: 2, step: 0.1, default: 1.2, label: 'Triangle Sharpness', category: 'Bars' }
+  sharpness: { type: 'slider', min: 0.1, max: 2, step: 0.1, default: 1.2, label: 'Triangle Sharpness', category: 'Bars' },
+  backgroundOpacity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 1, label: 'Background Opacity', category: 'Background', showIf: (params)=>params.backgroundType !== 'transparent' }
 };
 
 function applyUniversalBackground(ctx, width, height, params) {
   if (!params.backgroundType || params.backgroundType === 'transparent') return;
+  
+  ctx.save();
+  ctx.globalAlpha = params.backgroundOpacity ?? 1;
   
   if (params.backgroundType === 'solid') {
     ctx.fillStyle = params.backgroundColor || '#000000';
@@ -46,6 +50,8 @@ function applyUniversalBackground(ctx, width, height, params) {
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, width, height);
   }
+  
+  ctx.restore();
 }
 
 function drawVisualization(ctx, width, height, params, _generator, time) {
@@ -112,6 +118,9 @@ function drawVisualization(ctx, width, height, params, _generator, time) {
   const barWidth = (width - totalSpacing - 60) / barCount; 
   const startX = 30;
   
+  // Extract opacity values with defaults
+  const fillOpacity = params.fillOpacity ?? 1;
+  
   // Dynamic animated wave using simple sine calculations for performance
   for (let i = 0; i < barCount; i++) {
     const x = startX + i * (barWidth + barSpacing);
@@ -139,7 +148,11 @@ function drawVisualization(ctx, width, height, params, _generator, time) {
     const saturation = baseSat + intensity * 20;
     const lightness = baseLum + intensity * 30;
     
-    // Create dynamic gradient per bar
+    // Save context before applying opacity
+    ctx.save();
+    ctx.globalAlpha = fillOpacity;
+    
+    // Create dynamic gradient per bar with opacity already baked in
     const gradient = ctx.createLinearGradient(x, height - barHeight, x, height);
     gradient.addColorStop(0, `hsla(${hue}, ${saturation}%, ${lightness}%, 0.9)`);
     gradient.addColorStop(0.6, `hsla(${hue}, ${saturation * 0.8}%, ${lightness * 0.7}%, 0.7)`);
@@ -168,26 +181,37 @@ function drawVisualization(ctx, width, height, params, _generator, time) {
       ctx.shadowColor = 'transparent';
       ctx.shadowBlur = 0;
     }
+    
+    // Restore context after drawing
+    ctx.restore();
   }
   
   // Add subtle wave guide line
-  ctx.beginPath();
-  // Use stroke color with reduced opacity
-  const strokeRgb = hexToRgb(strokeColor);
-  ctx.strokeStyle = `rgba(${strokeRgb.r}, ${strokeRgb.g}, ${strokeRgb.b}, ${params.strokeOpacity || 0.2})`;
-  ctx.lineWidth = params.strokeWidth || 1;
-  for (let i = 0; i < barCount; i++) {
-    const x = startX + i * (barWidth + barSpacing) + barWidth / 2;
-    const t = i / barCount;
-    const y = height - Math.abs(Math.sin((t * params.frequency * Math.PI * 2) + time * 2) * params.amplitude);
+  if (params.strokeType !== 'none') {
+    const strokeOpacity = params.strokeOpacity ?? 0.2;
     
-    if (i === 0) {
-      ctx.moveTo(x, y);
-    } else {
-      ctx.lineTo(x, y);
+    ctx.save();
+    ctx.globalAlpha = strokeOpacity;
+    
+    ctx.beginPath();
+    ctx.strokeStyle = strokeColor;
+    ctx.lineWidth = params.strokeWidth || 1;
+    
+    for (let i = 0; i < barCount; i++) {
+      const x = startX + i * (barWidth + barSpacing) + barWidth / 2;
+      const t = i / barCount;
+      const y = height - Math.abs(Math.sin((t * params.frequency * Math.PI * 2) + time * 2) * params.amplitude);
+      
+      if (i === 0) {
+        ctx.moveTo(x, y);
+      } else {
+        ctx.lineTo(x, y);
+      }
     }
+    ctx.stroke();
+    
+    ctx.restore();
   }
-  ctx.stroke();
 }
 
 export const metadata = {
@@ -248,11 +272,15 @@ const PARAMETERS = {
   layers: { type: 'slider', min: 1, max: 8, step: 1, default: 1, label: 'Layers', category: 'Wave' },
   barCount: { type: 'slider', min: 20, max: 100, step: 5, default: 30, label: 'Number of Bars', category: 'Bars' },
   barSpacing: { type: 'slider', min: 0, max: 5, step: 1, default: 5, label: 'Bar Spacing', category: 'Bars' },
-  sharpness: { type: 'slider', min: 0.1, max: 2, step: 0.1, default: 1.2, label: 'Triangle Sharpness', category: 'Bars' }
+  sharpness: { type: 'slider', min: 0.1, max: 2, step: 0.1, default: 1.2, label: 'Triangle Sharpness', category: 'Bars' },
+  backgroundOpacity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 1, label: 'Background Opacity', category: 'Background', showIf: (params)=>params.backgroundType !== 'transparent' }
 };
 
 function applyUniversalBackground(ctx, width, height, params) {
   if (!params.backgroundType || params.backgroundType === 'transparent') return;
+  
+  ctx.save();
+  ctx.globalAlpha = params.backgroundOpacity ?? 1;
   
   if (params.backgroundType === 'solid') {
     ctx.fillStyle = params.backgroundColor || '#000000';
@@ -271,6 +299,8 @@ function applyUniversalBackground(ctx, width, height, params) {
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, width, height);
   }
+  
+  ctx.restore();
 }
 
 function drawVisualization(ctx, width, height, params, _generator, time) {

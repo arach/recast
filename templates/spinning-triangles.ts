@@ -22,11 +22,15 @@ const PARAMETERS = {
   damping: { type: 'slider', min: 0.5, max: 1, step: 0.01, default: 0.85, label: 'Layer Decay', category: 'Wave' },
   layers: { type: 'slider', min: 1, max: 8, step: 1, default: 3, label: 'Layers', category: 'Wave' },
   sides: { type: 'slider', min: 3, max: 12, step: 1, default: 3, label: 'Polygon Sides', category: 'Shape' },
-  rotation: { type: 'slider', min: 0, max: 360, step: 15, default: 0, label: 'Base Rotation', category: 'Shape' }
+  rotation: { type: 'slider', min: 0, max: 360, step: 15, default: 0, label: 'Base Rotation', category: 'Shape' },
+  backgroundOpacity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 1, label: 'Background Opacity', category: 'Background', showIf: (params)=>params.backgroundType !== 'transparent' }
 };
 
 function applyUniversalBackground(ctx, width, height, params) {
   if (!params.backgroundType || params.backgroundType === 'transparent') return;
+  
+  ctx.save();
+  ctx.globalAlpha = params.backgroundOpacity ?? 1;
   
   if (params.backgroundType === 'solid') {
     ctx.fillStyle = params.backgroundColor || '#0a0a0a';
@@ -45,6 +49,8 @@ function applyUniversalBackground(ctx, width, height, params) {
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, width, height);
   }
+  
+  ctx.restore();
 }
 
 function drawVisualization(ctx, width, height, params, _generator, time) {
@@ -221,43 +227,48 @@ function drawVisualization(ctx, width, height, params, _generator, time) {
     }
   }
 
-  // Add glow effect
-  ctx.save();
-  ctx.shadowColor = 'rgba(100, 150, 255, 0.3)';
-  ctx.shadowBlur = 15;
-  
-  // Second pass for glow on main triangles only
-  for (let layer = 0; layer < Math.min(layers, 2); layer++) {
-    const layerPhase = (layer / layers) * frequency * Math.PI * 2 + time;
-    const layerSize = (amplitude * Math.min(width, height) / 400) * Math.pow(damping, layer);
-    const layerRotation = baseRotation + (layerPhase * 180 / Math.PI);
+  // Add glow effect only if stroke is enabled
+  if (params.strokeType !== 'none') {
+    ctx.save();
+    ctx.shadowColor = 'rgba(100, 150, 255, 0.3)';
+    ctx.shadowBlur = 15;
     
-    const finalX = centerX;
-    const finalY = centerY;
-    const hue = (layer / layers) * 120 + time * 20 + 240;
-    const saturation = 70 - (layer * 5);
-    const lightness = 45 + Math.sin(layerPhase) * 15;
+    // Extract stroke opacity with default
+    const strokeOpacity = params.strokeOpacity ?? 1;
     
-    const rotationRad = (layerRotation * Math.PI) / 180;
-    const angleStep = (Math.PI * 2) / sides;
-    
-    ctx.globalAlpha = 0.3;
-    ctx.strokeStyle = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
-    ctx.lineWidth = Math.max(2, layerSize / 15);
-    
-    ctx.beginPath();
-    for (let i = 0; i < sides; i++) {
-      const angle = (i * angleStep) + rotationRad;
-      const x = finalX + Math.cos(angle) * layerSize;
-      const y = finalY + Math.sin(angle) * layerSize;
-      if (i === 0) ctx.moveTo(x, y);
-      else ctx.lineTo(x, y);
+    // Second pass for glow on main triangles only
+    for (let layer = 0; layer < Math.min(layers, 2); layer++) {
+      const layerPhase = (layer / layers) * frequency * Math.PI * 2 + time;
+      const layerSize = (amplitude * Math.min(width, height) / 400) * Math.pow(damping, layer);
+      const layerRotation = baseRotation + (layerPhase * 180 / Math.PI);
+      
+      const finalX = centerX;
+      const finalY = centerY;
+      const hue = (layer / layers) * 120 + time * 20 + 240;
+      const saturation = 70 - (layer * 5);
+      const lightness = 45 + Math.sin(layerPhase) * 15;
+      
+      const rotationRad = (layerRotation * Math.PI) / 180;
+      const angleStep = (Math.PI * 2) / sides;
+      
+      ctx.globalAlpha = 0.3 * strokeOpacity;
+      ctx.strokeStyle = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+      ctx.lineWidth = Math.max(2, layerSize / 15);
+      
+      ctx.beginPath();
+      for (let i = 0; i < sides; i++) {
+        const angle = (i * angleStep) + rotationRad;
+        const x = finalX + Math.cos(angle) * layerSize;
+        const y = finalY + Math.sin(angle) * layerSize;
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.closePath();
+      ctx.stroke();
     }
-    ctx.closePath();
-    ctx.stroke();
+    
+    ctx.restore();
   }
-  
-  ctx.restore();
 }
 
 export const metadata = {
@@ -315,11 +326,15 @@ const PARAMETERS = {
   damping: { type: 'slider', min: 0.5, max: 1, step: 0.01, default: 0.85, label: 'Layer Decay', category: 'Wave' },
   layers: { type: 'slider', min: 1, max: 8, step: 1, default: 3, label: 'Layers', category: 'Wave' },
   sides: { type: 'slider', min: 3, max: 12, step: 1, default: 3, label: 'Polygon Sides', category: 'Shape' },
-  rotation: { type: 'slider', min: 0, max: 360, step: 15, default: 0, label: 'Base Rotation', category: 'Shape' }
+  rotation: { type: 'slider', min: 0, max: 360, step: 15, default: 0, label: 'Base Rotation', category: 'Shape' },
+  backgroundOpacity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 1, label: 'Background Opacity', category: 'Background', showIf: (params)=>params.backgroundType !== 'transparent' }
 };
 
 function applyUniversalBackground(ctx, width, height, params) {
   if (!params.backgroundType || params.backgroundType === 'transparent') return;
+  
+  ctx.save();
+  ctx.globalAlpha = params.backgroundOpacity ?? 1;
   
   if (params.backgroundType === 'solid') {
     ctx.fillStyle = params.backgroundColor || '#0a0a0a';
@@ -338,6 +353,8 @@ function applyUniversalBackground(ctx, width, height, params) {
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, width, height);
   }
+  
+  ctx.restore();
 }
 
 function drawVisualization(ctx, width, height, params, _generator, time) {

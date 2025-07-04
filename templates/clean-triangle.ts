@@ -444,6 +444,8 @@ function drawVisualization(ctx, width, height, params, _generator, _time) {
   }
 }
 
+export { drawVisualization };
+
 export const metadata = {
   name: "▲ Clean Triangle",
   description: "Perfect geometric triangles with theme-aware colors and mathematical precision",
