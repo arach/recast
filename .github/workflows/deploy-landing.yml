@@ -1,8 +1,11 @@
-name: Deploy to GitHub Pages
+name: Deploy Landing Page to GitHub Pages
 
 on:
   push:
-    branches: [ main ]
+    branches: [ master ]
+    paths:
+      - 'landing/**'
+      - '.github/workflows/deploy-landing.yml'
   workflow_dispatch:
 
 permissions:
@@ -33,16 +36,18 @@ jobs:
           
       - name: Install dependencies
         run: pnpm install
+        working-directory: ./landing
         
-      - name: Build
+      - name: Build and Export
         run: pnpm run export
+        working-directory: ./landing
         env:
           NODE_ENV: production
           
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ./out
+          path: ./landing/out
 
   deploy:
     environment:
