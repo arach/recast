@@ -1,3 +1,5 @@
+import { applyUniversalBackground, adjustColor, hexToHsl, flattenParameters } from './template-utils'
+
 export function generateVisualization(
   ctx: CanvasRenderingContext2D,
   code: string,
@@ -7,70 +9,65 @@ export function generateVisualization(
   height: number
 ) {
   try {
-    // Flatten nested parameters for template compatibility
-    const flatParams = {
-      ...parameters,
-      // Flatten core parameters
-      ...(parameters.core || {}),
-      // Flatten style parameters  
-      ...(parameters.style || {}),
-      // Flatten custom parameters
-      ...(parameters.custom || {}),
-      // Flatten content parameters
-      ...(parameters.content || {})
-    }
+    // Use the shared parameter flattening utility
+    const flatParams = flattenParameters(parameters)
     
-    // WORKING HARDCODED APPROACH: Perfect wave bars rendering
-    // (Logging removed for performance during animation)
+    // Remove export and import statements - they can't be used in Function constructor
+    let cleanCode = code
+      // Remove ALL import statements (including type imports)
+      .replace(/import\s+.*?from\s+['"].*?['"];?\s*/g, '')
+      // Remove simple export { ... } statements
+      .replace(/export\s*{\s*[^}]+\s*};?/g, '')
+      // Remove export const { ... } = metadata (destructuring)
+      .replace(/export\s+const\s*{\s*[^}]+\s*}\s*=\s*metadata\s*;?/g, '')
+      // Convert export const/function to just const/function
+      .replace(/export\s+const\s+/g, 'const ')
+      .replace(/export\s+function\s+/g, 'function ')
+      .replace(/export\s+default\s+/g, '')
+      // Remove TypeScript type annotations from function parameters
+      // This handles: (ctx: CanvasRenderingContext2D, width: number, ...) => (ctx, width, ...)
+      .replace(/(\w+)\s*:\s*[A-Za-z_]\w*(?:<[^>]+>)?(?:\[\])?/g, '$1')
+      // Remove interface/type declarations
+      .replace(/^(interface|type)\s+\w+\s*=?\s*{[^}]*}\s*;?\s*$/gm, '');
     
-    // Set defaults from the manual implementation that works
-    const params = {
-      frequency: flatParams.frequency || 3,
-      amplitude: flatParams.amplitude || 50,
-      barCount: flatParams.barCount || 40,
-      barSpacing: flatParams.barSpacing || 2,
-      colorMode: flatParams.colorMode || 'spectrum',
-      fillOpacity: flatParams.fillOpacity || 1,
-      strokeOpacity: flatParams.strokeOpacity || 1
-    }
+    // Create utilities object for dependency injection
+    const utils = {
+      applyUniversalBackground,
+      adjustColor,
+      hexToHsl
+    };
     
-    // Draw wave bars using the exact working manual code
-    const barWidth = (width - params.barSpacing * (params.barCount - 1)) / params.barCount
+    // Create a wrapper function that includes the template code
+    const wrapperCode = `
+      ${cleanCode}
+      
+      // Call the drawVisualization function with utils
+      if (typeof drawVisualization === 'function') {
+        drawVisualization(ctx, width, height, params, currentTime, utils);
+      } else {
+        throw new Error('drawVisualization function not found in template');
+      }
+    `;
     
-    for (let i = 0; i < params.barCount; i++) {
-      const x = i * (barWidth + params.barSpacing)
-      
-      // Simple sine wave for center line
-      const t = i / params.barCount
-      const waveY = height / 2 + Math.sin((t * params.frequency * Math.PI * 2) + currentTime) * params.amplitude
-      
-      // Simple sine wave for bar height
-      const barHeight = Math.abs(Math.sin((t * params.frequency * 3 * Math.PI * 2) + currentTime * 2) * 40) + 20
-      
-      // Create gradient
-      const gradient = ctx.createLinearGradient(x, waveY - barHeight/2, x, waveY + barHeight/2)
-      
-      // Rainbow spectrum
-      const hue = (i / params.barCount) * 360
-      gradient.addColorStop(0, `hsla(${hue}, 70%, 60%, 0.9)`)
-      gradient.addColorStop(0.5, `hsla(${hue}, 80%, 50%, 1)`)
-      gradient.addColorStop(1, `hsla(${hue}, 70%, 60%, 0.9)`)
-      
-      // Draw bar
-      ctx.save()
-      ctx.globalAlpha = params.fillOpacity
-      ctx.fillStyle = gradient
-      
-      const radius = barWidth / 3
-      ctx.beginPath()
-      ctx.roundRect(x, waveY - barHeight/2, barWidth, barHeight, radius)
-      ctx.fill()
-      
-      ctx.restore()
-    }
+    // Create the function and execute it with utils
+    const executeTemplate = new Function('ctx', 'width', 'height', 'params', 'currentTime', 'utils', wrapperCode);
+    executeTemplate(ctx, width, height, flatParams, currentTime, utils);
     
   } catch (error) {
     console.error('Error executing visualization:', error)
-    throw error
+    console.error('Full error:', error.message)
+    console.error('Code that failed:', code.substring(0, 500) + '...');
+    console.error('Clean code preview:', cleanCode.substring(0, 500) + '...');
+    console.error('Wrapper code:', wrapperCode.substring(0, 1000) + '...');
+    // Draw error indicator
+    ctx.fillStyle = '#fee2e2'
+    ctx.fillRect(0, 0, width, height)
+    ctx.fillStyle = '#dc2626'
+    ctx.font = '14px sans-serif'
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'middle'
+    ctx.fillText('Template Error', width / 2, height / 2)
+    ctx.font = '12px sans-serif'
+    ctx.fillText(error.message, width / 2, height / 2 + 20)
   }
 }

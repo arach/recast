@@ -17,6 +17,7 @@ interface LogoCanvasProps {
 }
 
 // Pure rendering component - no interaction logic
+// Note: React.memo might prevent re-renders when templateId changes
 const LogoCanvas = React.memo(function LogoCanvas({ id, templateId, parameters, width, height, currentTime = 0 }: LogoCanvasProps) {
   const { code } = useTemplateCode(templateId)
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -48,15 +49,11 @@ const LogoCanvas = React.memo(function LogoCanvas({ id, templateId, parameters, 
         ctx.fillText('No template selected', width / 2, height / 2)
       }
     } catch (error) {
-      console.error(`❌ Error rendering logo ${id}:`, {
-        error,
-        errorMessage: error?.message,
-        errorName: error?.name,
-        errorStack: error?.stack,
+      console.error(`❌ Error rendering logo ${id}:`, error)
+      console.error('Error details:', {
+        errorMessage: error?.message || 'No message',
+        errorString: String(error),
         templateId,
-        templateIdType: typeof templateId,
-        parameters,
-        parametersKeys: Object.keys(parameters || {}),
         hasCode: !!code,
         codeLength: code?.length
       })
@@ -85,7 +82,9 @@ interface HybridCanvasProps {
   animating?: boolean
 }
 
-export function HybridCanvas({ animating: animatingProp = false }: HybridCanvasProps) {
+export function HybridCanvas({ 
+  animating: animatingProp = false
+}: HybridCanvasProps) {
   const { offset, zoom, setOffset, setZoom } = useCanvasStore()
   const { logos, selectedLogoId, selectLogo, updateLogo } = useLogoStore()
   const { darkMode } = useUIStore()
@@ -115,6 +114,20 @@ export function HybridCanvas({ animating: animatingProp = false }: HybridCanvasP
   }, [])
   
   const viewBox = `${-offset.x} ${-offset.y} ${viewport.width / zoom} ${viewport.height / zoom}`
+  
+  // Add non-passive wheel event listener to prevent default scrolling
+  useEffect(() => {
+    const svg = svgRef.current
+    if (!svg) return
+    
+    const handleWheelNative = (e: WheelEvent) => {
+      e.preventDefault()
+      // The actual zoom logic is handled by the React onWheel handler
+    }
+    
+    svg.addEventListener('wheel', handleWheelNative, { passive: false })
+    return () => svg.removeEventListener('wheel', handleWheelNative)
+  }, [])
   
   // Animation loop
   useEffect(() => {
@@ -203,7 +216,8 @@ export function HybridCanvas({ animating: animatingProp = false }: HybridCanvasP
   
   // Handle zoom
   const handleWheel = (e: React.WheelEvent) => {
-    e.preventDefault()
+    // Note: preventDefault is called but won't work in passive listeners
+    // The actual prevention happens via useEffect below
     const delta = e.deltaY > 0 ? 0.9 : 1.1
     const newZoom = Math.max(0.1, Math.min(5, zoom * delta))
     
@@ -256,7 +270,7 @@ export function HybridCanvas({ animating: animatingProp = false }: HybridCanvasP
           <circle 
             cx="20" 
             cy="20" 
-            r={darkMode ? "1.5" : "1.2"} 
+            r="1.5" 
             fill={darkMode ? "#4b5563" : "#64748b"}
           />
         </pattern>
@@ -293,6 +307,29 @@ export function HybridCanvas({ animating: animatingProp = false }: HybridCanvasP
             key={logo.id}
             transform={`translate(${logo.position.x}, ${logo.position.y})`}
           >
+            {/* White background with rounded corners */}
+            <rect
+              x="-10"
+              y="-10"
+              width="620"
+              height="620"
+              rx="12"
+              fill="white"
+              filter="drop-shadow(0 1px 2px rgba(0, 0, 0, 0.05))"
+            />
+            
+            {/* Border */}
+            <rect
+              x="-10"
+              y="-10"
+              width="620"
+              height="620"
+              rx="12"
+              fill="none"
+              stroke={selectedLogoId === logo.id ? '#3b82f6' : '#f3f4f6'}
+              strokeWidth={selectedLogoId === logo.id ? "2" : "1"}
+            />
+            
             {/* Canvas in foreignObject */}
             <foreignObject 
               width="600" 
@@ -300,6 +337,7 @@ export function HybridCanvas({ animating: animatingProp = false }: HybridCanvasP
               style={{ pointerEvents: 'none' }}
             >
               <LogoCanvas
+                key={`${logo.id}-${logo.templateId}`}
                 id={logo.id}
                 templateId={logo.templateId}
                 parameters={logo.parameters}
@@ -311,23 +349,16 @@ export function HybridCanvas({ animating: animatingProp = false }: HybridCanvasP
             
             {/* Invisible interaction rectangle */}
             <rect
-            width="600"
-            height="600"
-            fill="transparent"
-            stroke={
-              selectedLogoId === logo.id 
-                ? '#3b82f6' 
-                : hoveredLogoId === logo.id 
-                  ? '#94a3b8' 
-                  : 'none'
-            }
-            strokeWidth={selectedLogoId === logo.id ? "2" : "1"}
-            strokeDasharray={hoveredLogoId === logo.id && selectedLogoId !== logo.id ? "5,5" : "none"}
-            style={{ cursor: draggedLogoId === logo.id ? 'move' : 'pointer' }}
-            onMouseEnter={() => setHoveredLogoId(logo.id)}
-            onMouseLeave={() => setHoveredLogoId(null)}
-            onMouseDown={(e) => handleLogoMouseDown(e, logo.id)}
-          />
+              x="-10"
+              y="-10"
+              width="620"
+              height="620"
+              fill="transparent"
+              style={{ cursor: draggedLogoId === logo.id ? 'move' : 'pointer' }}
+              onMouseEnter={() => setHoveredLogoId(logo.id)}
+              onMouseLeave={() => setHoveredLogoId(null)}
+              onMouseDown={(e) => handleLogoMouseDown(e, logo.id)}
+            />
           
           {/* Selection handles */}
           {selectedLogoId === logo.id && (

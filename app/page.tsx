@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react'
 import { StudioHeader } from '@/components/studio/StudioHeader'
-import { CanvasArea } from '@/components/studio/CanvasArea'
+import { CanvasAreaNew } from '@/components/studio/CanvasAreaNew'
 import { ToolsContainer } from '@/components/studio/tools/ToolsContainer'
 import { Dialogs } from '@/components/studio/Dialogs'
 import { DebugOverlay } from '@/components/debug/DebugOverlay'
@@ -172,9 +172,11 @@ export default function Home() {
     <div className="h-screen overflow-hidden bg-gradient-to-br from-gray-50 to-white flex flex-col">
       <StudioHeader />
 
-      <div className="flex flex-1 overflow-hidden">
-        <CanvasArea />
+      <div className="relative flex-1 overflow-hidden">
+        {/* Canvas takes full space */}
+        <CanvasAreaNew />
         
+        {/* Tools panel overlays on the right */}
         <ToolsContainer />
       </div>
       

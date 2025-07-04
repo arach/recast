@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react'
 import dynamic from 'next/dynamic'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Code, Play, Copy, Check, ChevronLeft, ChevronRight, GripVertical, X, RotateCcw, PanelLeftClose, PanelLeft, Palette, Save, Sparkles, ChevronRightCircle } from 'lucide-react'
+import { Code, Play, Copy, Check, ChevronLeft, ChevronRight, GripVertical, X, RotateCcw, PanelLeftClose, PanelLeft, Palette, Save, Sparkles } from 'lucide-react'
 import { useLogoStore } from '@/lib/stores/logoStore'
 import { useUIStore } from '@/lib/stores/uiStore'
 import { useSelectedLogo } from '@/lib/hooks/useSelectedLogo'
@@ -46,7 +46,7 @@ export function CodeEditorPanel({ onClose, onStateChange }: CodeEditorPanelProps
   useEffect(() => {
     const style = document.createElement('style')
     style.textContent = `
-      @keyframes slideIn {
+      @keyframes slideInLeft {
         from {
           transform: translateX(-100%);
           opacity: 0;
@@ -56,20 +56,14 @@ export function CodeEditorPanel({ onClose, onStateChange }: CodeEditorPanelProps
           opacity: 1;
         }
       }
-      @keyframes slideOut {
-        from {
-          transform: translateX(0);
-          opacity: 1;
-        }
-        to {
-          transform: translateX(-100%);
-          opacity: 0;
-        }
+      .animate-slideInLeft {
+        animation: slideInLeft 200ms ease-out;
       }
     `
     document.head.appendChild(style)
     return () => document.head.removeChild(style)
   }, [])
+  
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null)
   const isDragging = useRef(false)
   const startX = useRef(0)
@@ -265,18 +259,18 @@ export function CodeEditorPanel({ onClose, onStateChange }: CodeEditorPanelProps
   if (isCollapsed) {
     return (
       <div 
-        className={`absolute top-0 left-0 h-full flex flex-col cursor-pointer ${
+        className={`absolute top-0 left-0 h-full flex flex-col cursor-pointer shadow-2xl ${
           darkMode ? 'bg-gray-900/95 border-r border-gray-800 hover:bg-gray-800/95' : 'bg-white/95 border-r border-gray-200 hover:bg-gray-50/95'
-        } z-30 transition-all duration-300 ease-out backdrop-blur-sm`}
+        } z-30 backdrop-blur-sm`}
         style={{ width: '40px' }}
         onClick={() => setIsCollapsed(false)}
         title="Expand code editor"
       >
         {/* Expand chevron tab */}
         <button
-          className={`absolute -right-5 top-20 w-5 h-12 rounded-r-lg flex items-center justify-center transition-all duration-200 hover:w-6 ${
+          className={`absolute -right-5 top-1/2 -translate-y-1/2 w-5 h-12 rounded-r-lg flex items-center justify-center transition-all duration-200 hover:h-20 hover:translate-x-1 ${
             darkMode 
-              ? 'bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white' 
+              ? 'bg-zinc-800 hover:bg-zinc-700 text-gray-400 hover:text-white' 
               : 'bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-900'
           } shadow-md`}
           title="Expand code editor"
@@ -343,18 +337,10 @@ export function CodeEditorPanel({ onClose, onStateChange }: CodeEditorPanelProps
   console.log('🎨 Rendering expanded panel, selectedLogo:', selectedLogo?.id, 'localCode length:', localCode?.length)
   
   return (
-    <>
-      {/* Subtle background overlay for code editor area */}
-      <div 
-        className="absolute top-0 left-0 h-full bg-transparent z-20 transition-all duration-300 pointer-events-none"
-        style={{ width: `${width}px` }}
-      />
-      
-      <div 
-        className={`absolute top-0 left-0 h-full shadow-lg flex flex-col ${darkMode ? 'bg-gray-900' : 'bg-white'} z-30 transition-all duration-300 ease-out`}
+    <div 
+        className={`absolute top-0 left-0 h-full shadow-2xl flex flex-col ${darkMode ? 'bg-gray-900' : 'bg-white'} z-30 animate-slideInLeft`}
         style={{ 
-          width: `${width}px`,
-          animation: isCollapsed ? 'slideOut 0.3s ease-out' : 'slideIn 0.3s ease-out'
+          width: `${width}px`
         }}
       >
       
@@ -376,9 +362,9 @@ export function CodeEditorPanel({ onClose, onStateChange }: CodeEditorPanelProps
       {/* Collapse chevron tab - protruding from expanded state */}
       <button
         onClick={() => setIsCollapsed(true)}
-        className={`absolute -right-5 top-20 w-5 h-12 rounded-r-lg flex items-center justify-center transition-all duration-200 hover:w-6 z-50 ${
+        className={`absolute -right-5 top-1/2 -translate-y-1/2 w-5 h-12 rounded-r-lg flex items-center justify-center transition-all duration-200 hover:h-20 hover:translate-x-1 z-50 ${
           darkMode 
-            ? 'bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white' 
+            ? 'bg-zinc-800 hover:bg-zinc-700 text-gray-400 hover:text-white' 
             : 'bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-900'
         } shadow-md`}
         title="Collapse code editor"
@@ -600,6 +586,5 @@ export function CodeEditorPanel({ onClose, onStateChange }: CodeEditorPanelProps
         </CardContent>
       </Card>
     </div>
-    </>
   )
 }
