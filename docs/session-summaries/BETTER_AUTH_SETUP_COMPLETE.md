@@ -8,7 +8,7 @@
 
 2. **Database Initialization**: Better Auth needs its tables created
    - Used `npx @better-auth/cli migrate` to create required tables
-   - Database file `recast-auth.db` created successfully
+   - Database file `reflow-auth.db` created successfully
 
 3. **Turbopack Compatibility**: 
    - Documented known issue with Turbopack

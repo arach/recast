@@ -106,7 +106,7 @@ With auth in place, we can now add:
 ## Key Achievement
 
 Users can now:
-1. Use ReCast anonymously with local storage
+1. Use ReFlow anonymously with local storage
 2. Sign up to persist settings across devices
 3. Manage their own API keys securely
 4. Have a personalized experience

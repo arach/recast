@@ -153,7 +153,7 @@ function generateWaveBarsSVG(
     <svg 
       viewBox="0 0 ${width} ${height}" 
       xmlns="http://www.w3.org/2000/svg"
-      class="recast-logo"
+      class="reflow-logo"
     >
       ${bars.join('')}
     </svg>
@@ -187,7 +187,7 @@ export default function ${componentName}Logo({
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const svgRef = useRef<SVGSVGElement>(null)
   
-  // Configuration from ReCast
+  // Configuration from ReFlow
   const config = ${JSON.stringify(config, null, 4).split('\n').map((line, i) => i === 0 ? line : '  ' + line).join('\n')}
   
   // Generate SVG elements by rendering to canvas and extracting data
@@ -458,8 +458,8 @@ export function generateAnimationScript(config: ExportConfig): string {
 
 export function generateEmbedCode(svgString: string, animationScript: string): string {
   return `
-<!-- ReCast Dynamic Logo -->
-<div class="recast-logo-container" style="display: inline-block;">
+<!-- ReFlow Dynamic Logo -->
+<div class="reflow-logo-container" style="display: inline-block;">
   ${svgString}
   <script>
   ${animationScript}

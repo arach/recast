@@ -1,6 +1,6 @@
 # Template Quick Reference
 
-Quick reference for ReCast template development.
+Quick reference for ReFlow template development.
 
 ## Template Boilerplate
 

@@ -7,9 +7,9 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-  // Use /recast base path for github.io, no base path for custom domain
-  basePath: isProd && !isCustomDomain ? '/recast' : '',
-  assetPrefix: isProd && !isCustomDomain ? '/recast/' : '/',
+  // Use /reflow base path for github.io, no base path for custom domain
+  basePath: isProd && !isCustomDomain ? '/reflow' : '',
+  assetPrefix: isProd && !isCustomDomain ? '/reflow/' : '/',
 }
 
 module.exports = nextConfig

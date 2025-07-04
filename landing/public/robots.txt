@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://recast.arach.io/sitemap.xml
+Sitemap: https://reflow.arach.io/sitemap.xml

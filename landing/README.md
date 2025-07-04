@@ -1,6 +1,6 @@
-# ReCast Landing Page
+# ReFlow Landing Page
 
-Marketing landing page for ReCast - the dynamic brand identity system.
+Marketing landing page for ReFlow - the dynamic brand identity system.
 
 ## Tech Stack
 
@@ -59,7 +59,7 @@ The site is configured for GitHub Pages deployment:
 2. GitHub Action builds and exports the site
 3. Deploys to GitHub Pages
 
-The site will be available at: `https://recast.arach.io`
+The site will be available at: `https://reflow.arach.io`
 
 ## Features
 
@@ -78,10 +78,10 @@ Edit the theme colors in `tailwind.config.ts`:
 
 ```js
 colors: {
-  'recast-blue': '#3b82f6',
-  'recast-purple': '#8b5cf6',
-  'recast-pink': '#ec4899',
-  'recast-dark': '#0f172a',
+  'reflow-blue': '#3b82f6',
+  'reflow-purple': '#8b5cf6',
+  'reflow-pink': '#ec4899',
+  'reflow-dark': '#0f172a',
 }
 ```
 

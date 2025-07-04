@@ -102,7 +102,7 @@ export default function Templates() {
                 onClick={() => setSelectedCategory(cat.id)}
                 className={`px-4 py-2 rounded-full transition ${
                   selectedCategory === cat.id
-                    ? 'bg-recast-blue text-white'
+                    ? 'bg-reflow-blue text-white'
                     : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
                 }`}
               >

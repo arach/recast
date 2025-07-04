@@ -1,5 +1,5 @@
 /**
- * Template preset system for ReCast
+ * Template preset system for ReFlow
  * Provides curated parameter combinations for specific templates
  * These presets control shape, size, effects - NOT colors
  */

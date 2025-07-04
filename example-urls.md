@@ -1,4 +1,4 @@
-# Example URLs for ReCast
+# Example URLs for ReFlow
 
 Here are some example URLs you can use to quickly load specific templates and configurations:
 

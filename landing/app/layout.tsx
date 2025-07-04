@@ -5,21 +5,21 @@ import './globals.css'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://recast.arach.io'),
-  title: 'ReCast - Dynamic Brand Identity System',
+  metadataBase: new URL('https://reflow.arach.io'),
+  title: 'ReFlow - Dynamic Brand Identity System',
   description: 'Transform your brand into living code. Create adaptive identities that respond to context while maintaining consistency.',
   keywords: 'brand identity, dynamic logos, generative design, brand system, identity design',
-  authors: [{ name: 'ReCast' }],
+  authors: [{ name: 'ReFlow' }],
   openGraph: {
-    title: 'ReCast - Dynamic Brand Identity System',
+    title: 'ReFlow - Dynamic Brand Identity System',
     description: 'Transform your brand into living code',
     type: 'website',
-    url: 'https://recast.arach.io',
+    url: 'https://reflow.arach.io',
     images: ['/og-image.png'],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'ReCast - Dynamic Brand Identity System',
+    title: 'ReFlow - Dynamic Brand Identity System',
     description: 'Transform your brand into living code',
     images: ['/og-image.png'],
   },

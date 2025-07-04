@@ -16,7 +16,7 @@ export function generateLogoCanvas(logo: any, time: number = 0): HTMLCanvasEleme
   ctx.fillStyle = '#ffffff'
   ctx.fillRect(0, 0, canvas.width, canvas.height)
   
-  // Add subtle gradient for ReCast identity
+  // Add subtle gradient for ReFlow identity
   if (logo.parameters.core.frequency === 4) {
     const gradient = ctx.createRadialGradient(
       canvas.width / 2, canvas.height / 2, 0,

@@ -40,7 +40,7 @@ You made excellent points about Better Auth:
 ```typescript
 // lib/auth.ts
 export const auth = betterAuth({
-  database: new Database("./recast-auth.db"),
+  database: new Database("./reflow-auth.db"),
   secret: process.env.BETTER_AUTH_SECRET,
   emailAndPassword: { enabled: true },
   socialProviders: { github, google },

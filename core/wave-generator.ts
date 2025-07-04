@@ -1,5 +1,5 @@
 /**
- * Wave-based generator for ReCast
+ * Wave-based generator for ReFlow
  * Implements mathematical wave functions within the generative engine framework
  */
 

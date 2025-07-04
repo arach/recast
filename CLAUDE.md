@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-ReCast is a programmatic identity system that treats brand design as living code. It generates dynamic logos and brand elements using mathematical wave functions, enabling brands to have adaptive identities that respond to different contexts while maintaining consistency.
+ReFlow is a programmatic identity system that treats brand design as living code. It generates dynamic logos and brand elements using mathematical wave functions, enabling brands to have adaptive identities that respond to different contexts while maintaining consistency.
 
 ## Technology Stack
 
@@ -51,7 +51,7 @@ pnpm start            # Start production server (requires build first)
 
 ### Project Structure
 ```
-recast/
+reflow/
 ├── core/              # Mathematical wave generation engine ✓
 │   └── wave-generator.ts  # Core WaveGenerator class
 ├── studio/            # Interactive design interface (planned)
@@ -118,10 +118,10 @@ The `WaveGenerator` class in `core/wave-generator.ts` provides:
 
 ## Debug Toolbar Architecture
 
-ReCast features a comprehensive debug toolbar designed to solve the core challenge of **state fragmentation** in complex React applications. Modern React apps scatter state across multiple systems, and when they get out of sync, debugging becomes a nightmare of console.log statements and page refreshes.
+ReFlow features a comprehensive debug toolbar designed to solve the core challenge of **state fragmentation** in complex React applications. Modern React apps scatter state across multiple systems, and when they get out of sync, debugging becomes a nightmare of console.log statements and page refreshes.
 
 ### The Problem: State Fragmentation
-ReCast state is distributed across:
+ReFlow state is distributed across:
 - **Component State**: `useState` for local UI state
 - **Global Stores**: Zustand for shared application state  
 - **Persistence Layers**: localStorage for user preferences and canvas position
@@ -181,7 +181,7 @@ The debug toolbar accelerates development by providing immediate visibility into
 
 ## Template Development
 
-ReCast uses a consistent template system for generating dynamic brand identities. All templates follow the NEW format pattern.
+ReFlow uses a consistent template system for generating dynamic brand identities. All templates follow the NEW format pattern.
 
 ### Template Documentation
 - **[TEMPLATE_DEVELOPMENT_GUIDE.md](./TEMPLATE_DEVELOPMENT_GUIDE.md)** - Complete guide for creating templates

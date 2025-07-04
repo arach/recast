@@ -4,7 +4,7 @@
  */
 
 export class LogoIdManager {
-  private static readonly STORAGE_KEY = 'recast-logo-instances';
+  private static readonly STORAGE_KEY = 'reflow-logo-instances';
   private static readonly ID_PREFIX = 'logo';
   
   /**

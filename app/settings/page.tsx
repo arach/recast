@@ -62,9 +62,9 @@ export default function SettingsPage() {
         setMessage('Settings saved successfully!');
         // Also update localStorage for immediate use
         if (apiKey) {
-          localStorage.setItem('recast_openai_key', apiKey);
+          localStorage.setItem('reflow_openai_key', apiKey);
         } else {
-          localStorage.removeItem('recast_openai_key');
+          localStorage.removeItem('reflow_openai_key');
         }
       } else {
         setMessage('Failed to save settings. Please try again.');

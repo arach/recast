@@ -66,7 +66,7 @@ export const StateDebugger = forwardRef<any, StateDebuggerProps>(({
   const zustandLogo = zustandLogos.find(l => l.id === zustandSelectedId);
 
   // Get saved offset from localStorage
-  const savedCanvasOffset = typeof window !== 'undefined' ? localStorage.getItem('recast-canvas-offset') : null;
+  const savedCanvasOffset = typeof window !== 'undefined' ? localStorage.getItem('reflow-canvas-offset') : null;
   let savedOffset = { x: 0, y: 0 };
   let localStorageParseError = false;
   try {
@@ -484,7 +484,7 @@ export const StateDebugger = forwardRef<any, StateDebuggerProps>(({
                        transition-all duration-200"
             onClick={() => {
               if (canvasOffset && typeof window !== 'undefined') {
-                localStorage.setItem('recast-canvas-offset', JSON.stringify(canvasOffset));
+                localStorage.setItem('reflow-canvas-offset', JSON.stringify(canvasOffset));
                 console.log('🔄 Synced canvas state to localStorage');
                 // Trigger re-render to show sync status update
                 window.dispatchEvent(new Event('storage'));
@@ -520,8 +520,8 @@ export const StateDebugger = forwardRef<any, StateDebuggerProps>(({
                        transition-all duration-200"
             onClick={() => {
               if (confirm('Clear localStorage and keep page state?')) {
-                localStorage.removeItem('recast-canvas-offset');
-                localStorage.removeItem('recast-logos');
+                localStorage.removeItem('reflow-canvas-offset');
+                localStorage.removeItem('reflow-logos');
                 if (typeof window !== 'undefined' && (window as any).clearLogoIds) {
                   (window as any).clearLogoIds();
                 }
@@ -615,7 +615,7 @@ export const StateDebugger = forwardRef<any, StateDebuggerProps>(({
         <h4 className="font-medium text-sm mb-2 text-purple-400 flex items-center gap-2"><span className="text-base">💾</span>LocalStorage</h4>
         <div className="pl-2">
           <div className="text-xs">
-            Key: <span className="text-gray-400">recast-canvas-offset</span>
+            Key: <span className="text-gray-400">reflow-canvas-offset</span>
           </div>
           {savedCanvasOffset ? (
             <>
@@ -720,7 +720,7 @@ export const StateDebugger = forwardRef<any, StateDebuggerProps>(({
           <div className="p-3 bg-white/5 rounded-lg border border-gray-700/50">
             <pre className="text-[10px] text-gray-300 font-mono whitespace-pre-wrap overflow-x-auto">
               {JSON.stringify({
-                'recast-canvas-offset': savedOffset,
+                'reflow-canvas-offset': savedOffset,
                 'parse-error': localStorageParseError,
                 'raw-value': savedCanvasOffset,
               }, null, 2)}

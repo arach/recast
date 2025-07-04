@@ -1,5 +1,5 @@
 /**
- * Core Generative Engine for ReCast
+ * Core Generative Engine for ReFlow
  * Mathematical foundation for creating parametric visual identities
  */
 

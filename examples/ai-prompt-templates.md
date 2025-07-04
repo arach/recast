@@ -4,7 +4,7 @@
 
 ### 1. **Generic Brand Preset Generator**
 ```
-Generate brand parameters for ReCast's mathematical logo system. I need a JSON preset for a [BRAND_TYPE] brand that feels [PERSONALITY_TRAITS].
+Generate brand parameters for ReFlow's mathematical logo system. I need a JSON preset for a [BRAND_TYPE] brand that feels [PERSONALITY_TRAITS].
 
 Available presets to choose from:
 - clean-triangle: Perfect geometric triangles (tech, modern, forward-thinking)

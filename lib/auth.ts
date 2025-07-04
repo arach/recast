@@ -2,7 +2,7 @@ import { betterAuth } from "better-auth";
 import Database from "better-sqlite3";
 
 // Create database instance
-const db = new Database("./recast-auth.db");
+const db = new Database("./reflow-auth.db");
 
 // Server-only auth configuration
 export const auth = betterAuth({

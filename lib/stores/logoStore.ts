@@ -69,7 +69,7 @@ export const useLogoStore = create<LogoStore>()(
           templateName: 'Wave Bars',
           parameters: defaultParameters,
           position: { x: 0, y: 0 },
-          code: `// Default ReCast Logo
+          code: `// Default ReFlow Logo
 const PARAMETERS = {
   barCount: { type: 'slider', min: 20, max: 100, step: 5, default: 40, label: 'Number of Bars' },
   barSpacing: { type: 'slider', min: 0, max: 10, step: 1, default: 2, label: 'Bar Spacing' }
@@ -294,9 +294,9 @@ function drawVisualization(ctx, width, height, params, generator, time) {
       
       clearPersistedState: () => {
         if (typeof window !== 'undefined') {
-          localStorage.removeItem('recast-canvas-state');
+          localStorage.removeItem('reflow-canvas-state');
           // Also clear canvas position
-          localStorage.removeItem('recast-canvas-offset');
+          localStorage.removeItem('reflow-canvas-offset');
           console.log('🗑️ Cleared persisted canvas state');
         }
       },
@@ -316,7 +316,7 @@ function drawVisualization(ctx, width, height, params, generator, time) {
       },
     }),
       {
-        name: 'recast-canvas-state', // localStorage key
+        name: 'reflow-canvas-state', // localStorage key
         version: 1,
         partialize: (state) => ({ 
           logos: state.logos,

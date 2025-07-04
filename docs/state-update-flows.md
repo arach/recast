@@ -1,7 +1,7 @@
-# ReCast State Update Flows
+# ReFlow State Update Flows
 
 ## Overview
-ReCast uses a hybrid state management approach where:
+ReFlow uses a hybrid state management approach where:
 - **React State**: Tracks the currently selected logo for UI editing
 - **Zustand Store**: Manages all logos for canvas rendering and persistence
 

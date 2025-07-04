@@ -67,7 +67,7 @@ export default function Features() {
             Beyond Static Design
           </h2>
           <p className="text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
-            ReCast reimagines brand identity for the digital age. Every aspect is dynamic, responsive, and alive.
+            ReFlow reimagines brand identity for the digital age. Every aspect is dynamic, responsive, and alive.
           </p>
         </motion.div>
         
@@ -98,7 +98,7 @@ export default function Features() {
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.4 }}
           viewport={{ once: true }}
-          className="mt-16 bg-gradient-to-r from-recast-blue to-recast-purple rounded-3xl p-8 md:p-12 text-white"
+          className="mt-16 bg-gradient-to-r from-reflow-blue to-reflow-purple rounded-3xl p-8 md:p-12 text-white"
         >
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
             <div className="flex flex-col items-center">

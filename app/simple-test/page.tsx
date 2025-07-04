@@ -12,8 +12,8 @@ export default function SimpleTest() {
   useEffect(() => {
     // FORCE clear localStorage completely
     if (typeof window !== 'undefined') {
-      localStorage.removeItem('recast-canvas-state')
-      localStorage.removeItem('recast-canvas-offset')
+      localStorage.removeItem('reflow-canvas-state')
+      localStorage.removeItem('reflow-canvas-offset')
       localStorage.clear() // Nuclear option
       console.log('🧹 Cleared ALL localStorage')
       

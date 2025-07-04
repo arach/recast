@@ -1,6 +1,6 @@
-# ReCast Documentation
+# ReFlow Documentation
 
-Welcome to the ReCast documentation! This directory contains all the technical documentation, setup guides, and development notes for the project.
+Welcome to the ReFlow documentation! This directory contains all the technical documentation, setup guides, and development notes for the project.
 
 ## 📁 Directory Structure
 

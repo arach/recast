@@ -1,4 +1,4 @@
-# ReCast Design Philosophy
+# ReFlow Design Philosophy
 
 ## The Core Human Need
 "I built something I care about. I want it to feel alive and unique. I don't know how to make that happen."

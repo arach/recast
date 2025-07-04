@@ -8,8 +8,8 @@ import { useCanvasStore } from '@/lib/stores/canvasStore'
 import { LogoTreeModule } from './modules/LogoTreeModule'
 import { LogoDetailsModule } from './modules/LogoDetailsModule'
 
-const STORAGE_KEY_WIDTH = 'recast-left-sidebar-width'
-const STORAGE_KEY_COLLAPSED = 'recast-left-sidebar-collapsed'
+const STORAGE_KEY_WIDTH = 'reflow-left-sidebar-width'
+const STORAGE_KEY_COLLAPSED = 'reflow-left-sidebar-collapsed'
 
 export function LeftSidebar() {
   const { darkMode } = useUIStore()

@@ -1,5 +1,5 @@
 {
-  "name": "recast",
+  "name": "reflow",
   "version": "0.1.0",
   "description": "Programmatic identity system for generative logos and brand elements",
   "main": "dist/index.js",

@@ -43,7 +43,7 @@
 }
 
 .gradient-text {
-  @apply bg-clip-text text-transparent bg-gradient-to-r from-recast-blue via-recast-purple to-recast-pink;
+  @apply bg-clip-text text-transparent bg-gradient-to-r from-reflow-blue via-reflow-purple to-reflow-pink;
 }
 
 .gradient-border {
@@ -54,5 +54,5 @@
 }
 
 .gradient-border > * {
-  @apply bg-white dark:bg-recast-dark rounded-md;
+  @apply bg-white dark:bg-reflow-dark rounded-md;
 }

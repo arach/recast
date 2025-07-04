@@ -1,5 +1,5 @@
 /**
- * Circle-based generator for ReCast
+ * Circle-based generator for ReFlow
  * Creates pulsing circles, orbital motion, and nested ring patterns
  */
 

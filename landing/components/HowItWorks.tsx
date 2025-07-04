@@ -59,7 +59,7 @@ export default function HowItWorks() {
           className="text-center mb-16"
         >
           <h2 className="text-4xl lg:text-5xl font-bold mb-4">
-            How ReCast Works
+            How ReFlow Works
           </h2>
           <p className="text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
             From concept to production in minutes, not weeks. Here's how we transform your brand into living code.
@@ -79,14 +79,14 @@ export default function HowItWorks() {
               }`}
             >
               <div className="flex-1">
-                <div className="inline-flex p-3 rounded-xl bg-gradient-to-r from-recast-blue to-recast-purple mb-4">
+                <div className="inline-flex p-3 rounded-xl bg-gradient-to-r from-reflow-blue to-reflow-purple mb-4">
                   <step.icon size={24} className="text-white" />
                 </div>
                 <h3 className="text-3xl font-bold mb-4">{step.title}</h3>
                 <p className="text-lg text-gray-600 dark:text-gray-400 mb-6">
                   {step.description}
                 </p>
-                <div className="inline-flex items-center text-recast-blue font-medium">
+                <div className="inline-flex items-center text-reflow-blue font-medium">
                   Step {index + 1} of {steps.length}
                 </div>
               </div>

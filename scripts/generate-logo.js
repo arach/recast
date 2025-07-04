@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Generate ReCast logo files from the programmatic definition
+ * Generate ReFlow logo files from the programmatic definition
  */
 
 const { createCanvas } = require('canvas');
@@ -11,11 +11,11 @@ const path = require('path');
 // Import the WaveGenerator (we'll need to compile TypeScript first)
 const { WaveGenerator } = require('../dist/core/wave-generator');
 
-// ReCast Logo preset configuration
+// ReFlow Logo preset configuration
 const logoConfig = {
   mode: 'wavebars',
   params: {
-    seed: 'recast-identity',
+    seed: 'reflow-identity',
     frequency: 5,
     amplitude: 80,
     complexity: 0.6,
@@ -110,7 +110,7 @@ function generateWaveBars(ctx, width, height, params) {
 }
 
 async function generateLogo() {
-  console.log('🎨 Generating ReCast logos...\n');
+  console.log('🎨 Generating ReFlow logos...\n');
 
   for (const { size, name } of sizes) {
     const canvas = createCanvas(size, size);

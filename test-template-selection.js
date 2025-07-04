@@ -9,7 +9,7 @@ const getStoreState = () => {
   const uiStore = window.useUIStore?.getState();
   
   if (!logoStore) {
-    console.error('❌ Logo store not available. Make sure you\'re on the ReCast page.');
+    console.error('❌ Logo store not available. Make sure you\'re on the ReFlow page.');
     return null;
   }
   

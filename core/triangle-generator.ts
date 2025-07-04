@@ -1,5 +1,5 @@
 /**
- * Triangle-based generator for ReCast
+ * Triangle-based generator for ReFlow
  * Creates spinning triangles, constellation patterns, and geometric formations
  */
 

@@ -27,10 +27,10 @@ export interface LegacySavedTheme {
 }
 
 const STORAGE_KEYS = {
-  SHAPES: 'recast_saved_shapes',
-  LOGOS: 'recast_saved_logos',
-  THEMES: 'recast_saved_themes', // Legacy key
-  PRESETS: 'recast_saved_presets', // Legacy key
+  SHAPES: 'reflow_saved_shapes',
+  LOGOS: 'reflow_saved_logos',
+  THEMES: 'reflow_saved_themes', // Legacy key
+  PRESETS: 'reflow_saved_presets', // Legacy key
 }
 
 // Shape management
@@ -209,7 +209,7 @@ export const exportData = () => {
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
-  a.download = `recast-backup-${new Date().toISOString().split('T')[0]}.json`
+  a.download = `reflow-backup-${new Date().toISOString().split('T')[0]}.json`
   a.click()
   URL.revokeObjectURL(url)
 }

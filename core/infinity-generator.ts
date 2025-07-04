@@ -1,5 +1,5 @@
 /**
- * Infinity-based generator for ReCast
+ * Infinity-based generator for ReFlow
  * Creates figure-8 loops, lemniscate curves, and flowing path patterns
  */
 

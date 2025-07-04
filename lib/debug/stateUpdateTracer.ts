@@ -2,7 +2,7 @@
  * State Update Tracer
  * 
  * This utility helps trace and understand when React state updates occur
- * for selectedLogoId and selectedLogo in the ReCast application.
+ * for selectedLogoId and selectedLogo in the ReFlow application.
  */
 
 export interface StateUpdateEvent {

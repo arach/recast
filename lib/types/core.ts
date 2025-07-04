@@ -1,4 +1,4 @@
-// Core type definitions for ReCast
+// Core type definitions for ReFlow
 
 // Shape: The visualization algorithm
 export interface Shape {

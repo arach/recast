@@ -1,7 +1,7 @@
 # Universal Controls System Context
 
 ## Overview
-We implemented a revolutionary universal controls system for ReCast that provides baseline parameters (Background, Fill, Stroke) automatically for ALL templates. This was born from user feedback that templates like Crystal Lattice were too esoteric with parameters like "crystalline order" and "facet precision" - users want familiar controls.
+We implemented a revolutionary universal controls system for ReFlow that provides baseline parameters (Background, Fill, Stroke) automatically for ALL templates. This was born from user feedback that templates like Crystal Lattice were too esoteric with parameters like "crystalline order" and "facet precision" - users want familiar controls.
 
 ## Key Implementation Details
 

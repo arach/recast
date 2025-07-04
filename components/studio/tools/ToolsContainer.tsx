@@ -92,9 +92,9 @@ const tools: Tool[] = [
   },
 ];
 
-const STORAGE_KEY_WIDTH = 'recast-tools-width';
-const STORAGE_KEY_EXPANDED = 'recast-tools-expanded';
-const STORAGE_KEY_COLLAPSED = 'recast-tools-collapsed';
+const STORAGE_KEY_WIDTH = 'reflow-tools-width';
+const STORAGE_KEY_EXPANDED = 'reflow-tools-expanded';
+const STORAGE_KEY_COLLAPSED = 'reflow-tools-collapsed';
 
 export function ToolsContainer() {
   const { darkMode } = useUIStore();

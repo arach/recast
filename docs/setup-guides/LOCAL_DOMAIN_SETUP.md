@@ -2,7 +2,7 @@
 
 ## Why Use a Local Domain?
 
-Using `local.recast.dev` instead of `localhost:3002` provides:
+Using `local.reflow.dev` instead of `localhost:3002` provides:
 - Better OAuth redirect handling
 - More production-like environment
 - Easier to remember URLs
@@ -16,7 +16,7 @@ Using `local.recast.dev` instead of `localhost:3002` provides:
 Add this line to your `/etc/hosts` file:
 
 ```bash
-sudo echo "127.0.0.1 local.recast.dev" >> /etc/hosts
+sudo echo "127.0.0.1 local.reflow.dev" >> /etc/hosts
 ```
 
 Or manually edit:
@@ -26,7 +26,7 @@ sudo nano /etc/hosts
 
 Add:
 ```
-127.0.0.1 local.recast.dev
+127.0.0.1 local.reflow.dev
 ```
 
 ### Windows
@@ -35,7 +35,7 @@ Add:
 2. Open `C:\Windows\System32\drivers\etc\hosts`
 3. Add this line:
 ```
-127.0.0.1 local.recast.dev
+127.0.0.1 local.reflow.dev
 ```
 4. Save the file
 
@@ -45,22 +45,22 @@ If you're using OAuth providers, update your redirect URIs:
 
 ### Google OAuth
 In Google Cloud Console, add:
-- `http://local.recast.dev:3002/api/auth/callback/google`
+- `http://local.reflow.dev:3002/api/auth/callback/google`
 
 ### GitHub OAuth
 In GitHub Developer Settings, update callback URL to:
-- `http://local.recast.dev:3002/api/auth/callback/github`
+- `http://local.reflow.dev:3002/api/auth/callback/github`
 
 ## Access Your Dev Environment
 
-After setup, access ReCast at:
+After setup, access ReFlow at:
 ```
-http://local.recast.dev:3002
+http://local.reflow.dev:3002
 ```
 
 ## Troubleshooting
 
-1. **Can't access local.recast.dev**
+1. **Can't access local.reflow.dev**
    - Verify hosts file entry
    - Try flushing DNS: `sudo dscacheutil -flushcache` (macOS)
    - Restart your browser

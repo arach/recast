@@ -77,4 +77,4 @@ No further steps needed - all 31 templates are:
 - Properly exported with `export { drawVisualization };`
 - Registered in the template registry
 - Supporting full opacity controls (fill, stroke, background)
-- Ready for use in the ReCast studio interface
+- Ready for use in the ReFlow studio interface

@@ -87,12 +87,12 @@ export default function Pricing() {
               viewport={{ once: true }}
               className={`relative rounded-2xl ${
                 plan.popular 
-                  ? 'bg-gradient-to-b from-recast-blue/10 to-recast-purple/10 p-[2px]' 
+                  ? 'bg-gradient-to-b from-reflow-blue/10 to-reflow-purple/10 p-[2px]' 
                   : 'bg-gray-200 dark:bg-gray-800 p-[1px]'
               }`}
             >
               {plan.popular && (
-                <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-3 py-1 bg-gradient-to-r from-recast-blue to-recast-purple text-white text-sm rounded-full">
+                <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-3 py-1 bg-gradient-to-r from-reflow-blue to-reflow-purple text-white text-sm rounded-full">
                   Most Popular
                 </div>
               )}
@@ -122,7 +122,7 @@ export default function Pricing() {
                 
                 <button className={`w-full py-3 rounded-lg font-medium transition ${
                   plan.popular
-                    ? 'bg-gradient-to-r from-recast-blue to-recast-purple text-white hover:shadow-lg'
+                    ? 'bg-gradient-to-r from-reflow-blue to-reflow-purple text-white hover:shadow-lg'
                     : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700'
                 }`}>
                   {plan.cta}

@@ -1,5 +1,5 @@
 /**
- * Color theme system for ReCast
+ * Color theme system for ReFlow
  * Provides curated color palettes that override universal controls
  * Designed to give instant brand personality after industry selection
  */

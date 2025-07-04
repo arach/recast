@@ -14,7 +14,7 @@ export default function Hero() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
           >
-            <div className="inline-flex items-center px-3 py-1 rounded-full bg-recast-blue/10 text-recast-blue text-sm mb-6">
+            <div className="inline-flex items-center px-3 py-1 rounded-full bg-reflow-blue/10 text-reflow-blue text-sm mb-6">
               <Sparkles size={16} className="mr-2" />
               Introducing the future of brand identity
             </div>
@@ -25,15 +25,15 @@ export default function Hero() {
             </h1>
             
             <p className="text-xl text-gray-600 dark:text-gray-400 mb-8">
-              Transform static logos into dynamic identities. ReCast generates adaptive brand systems that respond to context while maintaining consistency.
+              Transform static logos into dynamic identities. ReFlow generates adaptive brand systems that respond to context while maintaining consistency.
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4">
-              <button className="inline-flex items-center justify-center px-6 py-3 bg-recast-blue text-white rounded-lg hover:bg-blue-600 transition group">
+              <button className="inline-flex items-center justify-center px-6 py-3 bg-reflow-blue text-white rounded-lg hover:bg-blue-600 transition group">
                 Start Creating
                 <ArrowRight size={20} className="ml-2 group-hover:translate-x-1 transition-transform" />
               </button>
-              <button className="inline-flex items-center justify-center px-6 py-3 border border-gray-300 dark:border-gray-700 rounded-lg hover:border-recast-blue transition">
+              <button className="inline-flex items-center justify-center px-6 py-3 border border-gray-300 dark:border-gray-700 rounded-lg hover:border-reflow-blue transition">
                 View Templates
               </button>
             </div>
@@ -63,7 +63,7 @@ export default function Hero() {
             <div className="relative z-10">
               <AnimatedLogo />
             </div>
-            <div className="absolute inset-0 bg-gradient-to-r from-recast-blue/20 via-recast-purple/20 to-recast-pink/20 blur-3xl animate-pulse-slow" />
+            <div className="absolute inset-0 bg-gradient-to-r from-reflow-blue/20 via-reflow-purple/20 to-reflow-pink/20 blur-3xl animate-pulse-slow" />
           </motion.div>
         </div>
       </div>

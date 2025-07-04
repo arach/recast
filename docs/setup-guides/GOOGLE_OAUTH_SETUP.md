@@ -15,14 +15,14 @@
    - Click "Create Credentials" → "OAuth client ID"
    - If prompted, configure the OAuth consent screen first:
      - Choose "External" for user type
-     - Fill in app name (e.g., "ReCast")
+     - Fill in app name (e.g., "ReFlow")
      - Add your email as support email
      - Add authorized domains: `localhost` for development
      - Save and continue through scopes (you can skip optional scopes)
 
 4. **Configure OAuth Client**
    - Application type: "Web application"
-   - Name: "ReCast Development" (or similar)
+   - Name: "ReFlow Development" (or similar)
    - Authorized JavaScript origins:
      ```
      http://localhost:3002

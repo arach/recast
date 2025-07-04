@@ -1,4 +1,4 @@
-# ReCast Logo Selection Architecture - Debugging Guide
+# ReFlow Logo Selection Architecture - Debugging Guide
 
 ## The Problem
 When clicking on logos 2-4 on the canvas, the selection always reverts to logo 1 ("main"). This creates a frustrating UX where users can't select and edit different logos.

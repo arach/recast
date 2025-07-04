@@ -1,4 +1,4 @@
-# ReCast - Programmatic Logo Generation
+# ReFlow - Programmatic Logo Generation
 
 <div align="center">
   <img src="https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" />
@@ -9,7 +9,7 @@
 
 ## 🎨 Transform Code into Visual Identity
 
-ReCast is a revolutionary approach to brand identity that treats logos as living code rather than static images. Using mathematical wave functions and programmatic generation, ReCast enables brands to have dynamic, adaptable identities that maintain consistency while responding to different contexts.
+ReFlow is a revolutionary approach to brand identity that treats logos as living code rather than static images. Using mathematical wave functions and programmatic generation, ReFlow enables brands to have dynamic, adaptable identities that maintain consistency while responding to different contexts.
 
 ### ✨ Key Features
 
@@ -32,8 +32,8 @@ ReCast is a revolutionary approach to brand identity that treats logos as living
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/recast.git
-cd recast
+git clone https://github.com/yourusername/reflow.git
+cd reflow
 
 # Install dependencies (pnpm required)
 pnpm install
@@ -48,13 +48,13 @@ cp .env.local.example .env.local
 pnpm dev
 ```
 
-Open [http://localhost:3002](http://localhost:3002) to see ReCast in action.
+Open [http://localhost:3002](http://localhost:3002) to see ReFlow in action.
 
-> **💡 Pro Tip**: Set up a local domain for better development experience. See [LOCAL_DOMAIN_SETUP.md](docs/setup-guides/LOCAL_DOMAIN_SETUP.md) to use `http://local.recast.dev:3002` instead.
+> **💡 Pro Tip**: Set up a local domain for better development experience. See [LOCAL_DOMAIN_SETUP.md](docs/setup-guides/LOCAL_DOMAIN_SETUP.md) to use `http://local.reflow.dev:3002` instead.
 
 ### 🏃 Quick Start (No Auth Required)
 
-You can start using ReCast immediately without any authentication setup:
+You can start using ReFlow immediately without any authentication setup:
 
 1. Visit http://localhost:3002
 2. Click "Continue as Guest" or start designing right away
@@ -63,7 +63,7 @@ You can start using ReCast immediately without any authentication setup:
 
 ### 🔐 Authentication Setup (Optional but Recommended)
 
-ReCast uses [Better Auth](https://better-auth.com) for authentication, providing:
+ReFlow uses [Better Auth](https://better-auth.com) for authentication, providing:
 - 🏠 **Self-hosted authentication** - No external services required
 - 💾 **Local SQLite database** - Your data stays on your machine
 - 🔑 **Secure API key storage** - Save OpenAI keys per user account
@@ -87,7 +87,7 @@ ReCast uses [Better Auth](https://better-auth.com) for authentication, providing
    ```bash
    npx @better-auth/cli migrate
    ```
-   This creates `recast-auth.db` with user tables.
+   This creates `reflow-auth.db` with user tables.
 
 #### Optional OAuth Setup
 
@@ -116,14 +116,14 @@ Enable social sign-in by adding OAuth providers:
 #### Database Details
 
 - **Type**: SQLite 3 (via better-sqlite3)
-- **Location**: `./recast-auth.db` (auto-created)
+- **Location**: `./reflow-auth.db` (auto-created)
 - **Tables**: user, session, account, verification
 - **Backup**: Simply copy the `.db` file
 - **Reset**: Delete `.db` file and run migration again
 
 ### AI Features
 
-ReCast includes several AI-powered features to help create the perfect brand identity:
+ReFlow includes several AI-powered features to help create the perfect brand identity:
 
 #### Option 1: Server-Side AI (Using Project API Key)
 For quick setup during development:
@@ -159,7 +159,7 @@ The AI Brand Consultant allows users to use their own OpenAI API keys:
 ### Core Components
 
 ```
-recast/
+reflow/
 ├── app/                      # Next.js app directory
 │   ├── page.tsx             # Main application UI
 │   ├── layout.tsx           # Root layout
@@ -182,7 +182,7 @@ recast/
 
 ### Wave Generation System
 
-The heart of ReCast is the `WaveGenerator` class, which implements:
+The heart of ReFlow is the `WaveGenerator` class, which implements:
 
 ```typescript
 interface WaveParameters {
@@ -280,7 +280,7 @@ MIT License - see [LICENSE](LICENSE) file for details.
 
 ## 🌟 Vision
 
-ReCast represents a paradigm shift in brand identity. Instead of static logo files scattered across your organization, you have a single source of truth - code that generates your identity on demand. This enables:
+ReFlow represents a paradigm shift in brand identity. Instead of static logo files scattered across your organization, you have a single source of truth - code that generates your identity on demand. This enables:
 
 - **Consistency**: One algorithm, infinite applications
 - **Adaptability**: Respond to context while maintaining identity
@@ -290,7 +290,7 @@ ReCast represents a paradigm shift in brand identity. Instead of static logo fil
 ---
 
 <div align="center">
-  <p>Built with ❤️ by the ReCast Team</p>
+  <p>Built with ❤️ by the ReFlow Team</p>
   <p>
     <a href="#-transform-code-into-visual-identity">Back to top ↑</a>
   </p>

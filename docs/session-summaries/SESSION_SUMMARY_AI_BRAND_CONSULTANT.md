@@ -14,7 +14,7 @@ A natural language interface for brand design that allows users to:
 ### 1. User-Provided API Keys
 ```typescript
 // Store in localStorage
-localStorage.setItem('recast_openai_key', apiKey);
+localStorage.setItem('reflow_openai_key', apiKey);
 
 // Send with requests
 headers: {
@@ -36,7 +36,7 @@ The AI analyzes:
 - Visual references
 - Industry context
 
-Then maps these to ReCast parameters:
+Then maps these to ReFlow parameters:
 - `frequency` - Pattern dynamics
 - `amplitude` - Visual boldness
 - `complexity` - Detail level

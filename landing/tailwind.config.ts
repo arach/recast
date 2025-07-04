@@ -9,10 +9,10 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        'recast-blue': '#3b82f6',
-        'recast-purple': '#8b5cf6',
-        'recast-pink': '#ec4899',
-        'recast-dark': '#0f172a',
+        'reflow-blue': '#3b82f6',
+        'reflow-purple': '#8b5cf6',
+        'reflow-pink': '#ec4899',
+        'reflow-dark': '#0f172a',
       },
       animation: {
         'float': 'float 3s ease-in-out infinite',

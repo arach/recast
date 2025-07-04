@@ -88,13 +88,13 @@ export class DevelopmentUtilities {
   }
   
   private static registerBrandPresets() {
-    // Reflow brand utilities are registered in BrandPresets module
+    // ReFlow brand utilities are registered in BrandPresets module
   }
   
   private static showStartupMessage() {
     setTimeout(() => {
       console.log('')
-      console.log('🚀 RECAST DEVELOPMENT MODE')
+      console.log('🚀 REFLOW DEVELOPMENT MODE')
       console.log('═══════════════════════════')
       console.log('')
       console.log('🐛 Debug Toolbar: Look for the bug icon button in the bottom-right corner!')

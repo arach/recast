@@ -12,7 +12,7 @@ export default function CTA() {
           whileInView={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.6 }}
           viewport={{ once: true }}
-          className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-recast-blue via-recast-purple to-recast-pink p-12 md:p-16 text-center"
+          className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-reflow-blue via-reflow-purple to-reflow-pink p-12 md:p-16 text-center"
         >
           {/* Background pattern */}
           <div className="absolute inset-0 opacity-20">
@@ -33,11 +33,11 @@ export default function CTA() {
               Ready to Transform Your Brand?
             </h2>
             <p className="text-xl text-white/90 mb-8 max-w-2xl mx-auto">
-              Join thousands of designers and brands using ReCast to create dynamic, living identities.
+              Join thousands of designers and brands using ReFlow to create dynamic, living identities.
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <button className="inline-flex items-center justify-center px-8 py-4 bg-white text-recast-blue rounded-lg hover:bg-gray-100 transition font-semibold group">
+              <button className="inline-flex items-center justify-center px-8 py-4 bg-white text-reflow-blue rounded-lg hover:bg-gray-100 transition font-semibold group">
                 Start Creating Free
                 <ArrowRight size={20} className="ml-2 group-hover:translate-x-1 transition-transform" />
               </button>

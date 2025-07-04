@@ -204,7 +204,7 @@ export const useCanvasStore = create<CanvasState>()(
         }
       }),
       {
-        name: 'recast-canvas',
+        name: 'reflow-canvas',
         partialize: (state) => ({
           offset: state.offset,
           zoom: state.zoom,

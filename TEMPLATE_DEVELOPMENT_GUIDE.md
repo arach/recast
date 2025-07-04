@@ -1,12 +1,12 @@
 # Template Development Guide
 
-Complete guide for creating and editing ReCast templates using the NEW format.
+Complete guide for creating and editing ReFlow templates using the NEW format.
 
 ## Quick Start
 
 ### Template Structure
 
-Every ReCast template follows this structure:
+Every ReFlow template follows this structure:
 
 ```typescript
 import type { TemplateUtils } from '@/lib/template-utils';
@@ -157,7 +157,7 @@ const parameters = {
 
 ## Universal Styling System
 
-ReCast automatically provides universal styling controls. **Never** define these parameters yourself:
+ReFlow automatically provides universal styling controls. **Never** define these parameters yourself:
 
 ### Automatic Parameters
 - `fillColor` - Fill color picker

@@ -63,7 +63,7 @@ export default function SignUpPage() {
       <div className="w-full max-w-md">
         <Link href="/" className="inline-flex items-center text-sm text-gray-600 hover:text-gray-900 mb-8">
           <ArrowLeft className="h-4 w-4 mr-1" />
-          Back to ReCast
+          Back to ReFlow
         </Link>
         
         <Card>

@@ -11,7 +11,7 @@ import Navigation from '@/components/Navigation'
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-gradient-to-b from-white to-gray-50 dark:from-recast-dark dark:to-gray-900">
+    <main className="min-h-screen bg-gradient-to-b from-white to-gray-50 dark:from-reflow-dark dark:to-gray-900">
       <Navigation />
       <Hero />
       <Features />

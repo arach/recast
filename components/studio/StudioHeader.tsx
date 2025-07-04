@@ -22,7 +22,7 @@ import {
   Moon,
   Sun,
 } from 'lucide-react'
-import RecastLogo from '@/components/ReCast'
+import ReFlowLogo from '@/components/ReFlow'
 import { useUIStore } from '@/lib/stores/uiStore'
 import { useLogoStore } from '@/lib/stores/logoStore'
 import { useExportStore } from '@/lib/stores/exportStore'
@@ -116,7 +116,7 @@ export function StudioHeader() {
         generateWaveBars(ctx, targetSize, targetSize, execParams)
       }
       
-      const defaultFilename = filename || `recast-${logo.templateName || 'logo'}${size ? `-${size}x${size}` : ''}.png`
+      const defaultFilename = filename || `reflow-${logo.templateName || 'logo'}${size ? `-${size}x${size}` : ''}.png`
       await exportCanvasAsPNG(logoCanvas, defaultFilename)
       console.log('PNG exported successfully')
     } catch (error) {
@@ -137,7 +137,7 @@ export function StudioHeader() {
       
       const sizes = [16, 32, 64, 128, 256, 512, 1024]
       const templateName = logo.templateName || 'logo'
-      const baseFilename = `recast-${templateName.toLowerCase().replace(/\s+/g, '-')}`
+      const baseFilename = `reflow-${templateName.toLowerCase().replace(/\s+/g, '-')}`
       
       for (const size of sizes) {
         await exportAsPNG(size, `${baseFilename}-${size}x${size}.png`)
@@ -193,11 +193,11 @@ export function StudioHeader() {
       <div className="flex items-center justify-between px-8 py-4">
         <div className="flex items-center space-x-6">
           <div className="flex items-center space-x-3">
-            <RecastLogo width={48} height={48} animated={false} />
+            <ReFlowLogo width={48} height={48} animated={false} />
             <div>
               <h1 className={`text-xl font-semibold tracking-tight ${
                 darkMode ? 'text-gray-100' : 'text-gray-900'
-              }`}>ReCast</h1>
+              }`}>ReFlow</h1>
               <p className={`text-xs -mt-0.5 ${
                 darkMode ? 'text-gray-400' : 'text-gray-500'
               }`}>

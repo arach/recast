@@ -57,7 +57,7 @@ export function AIBrandConsultant({
       }
       
       // Fall back to localStorage
-      const savedKey = localStorage.getItem('recast_openai_key');
+      const savedKey = localStorage.getItem('reflow_openai_key');
       if (savedKey) {
         setApiKey(savedKey);
       }
@@ -95,7 +95,7 @@ export function AIBrandConsultant({
   });
 
   const saveApiKey = () => {
-    localStorage.setItem('recast_openai_key', apiKey);
+    localStorage.setItem('reflow_openai_key', apiKey);
     setShowApiKeyInput(false);
   };
 

@@ -2,19 +2,19 @@
 
 import { useMemo, useEffect, useState } from 'react'
 
-interface RecastIdentityLogoProps {
+interface ReFlowIdentityLogoProps {
   width?: number
   height?: number
   animated?: boolean
   className?: string
 }
 
-export default function RecastIdentityLogo({ 
+export default function ReFlowIdentityLogo({ 
   width = 120, 
   height = 120, 
   animated = false,
   className = ''
-}: RecastIdentityLogoProps) {
+}: ReFlowIdentityLogoProps) {
   const [mounted, setMounted] = useState(false)
   const [animationTime, setAnimationTime] = useState(0)
   const [isHovered, setIsHovered] = useState(false)
@@ -23,7 +23,7 @@ export default function RecastIdentityLogo({
     setMounted(true)
   }, [])
   
-  // Generate wave data based on ReCast parameters
+  // Generate wave data based on ReFlow parameters
   const bars = useMemo(() => {
     // Scale parameters based on logo size
     const baseBarCount = 80
@@ -42,7 +42,7 @@ export default function RecastIdentityLogo({
     for (let i = 0; i < barCount; i++) {
       const x = i * totalBarWidth + spacing / 2
       
-      // Wave calculation (simplified from ReCast WaveGenerator)
+      // Wave calculation (simplified from ReFlow WaveGenerator)
       const wavePhase = (i / barCount) * frequency * Math.PI * 2
       const waveHeight = Math.sin(wavePhase + animationTime) * amplitude * 0.15
       
@@ -116,7 +116,7 @@ export default function RecastIdentityLogo({
 
 // Configuration used to generate this logo:
 // // {
-//   "seed": "recast-identity",
+//   "seed": "reflow-identity",
 //   "mode": "wavebars",
 //   "frequency": 3,
 //   "amplitude": 80,

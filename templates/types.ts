@@ -1,4 +1,4 @@
-// Template type definitions for ReCast visualization templates
+// Template type definitions for ReFlow visualization templates
 
 export interface ParameterDefinition {
   type: 'slider' | 'select' | 'color' | 'toggle' | 'text';
