@@ -5,6 +5,7 @@ import './globals.css'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://recast.arach.io'),
   title: 'ReCast - Dynamic Brand Identity System',
   description: 'Transform your brand into living code. Create adaptive identities that respond to context while maintaining consistency.',
   keywords: 'brand identity, dynamic logos, generative design, brand system, identity design',
