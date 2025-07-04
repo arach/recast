@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react'
 import { StudioHeader } from '@/components/studio/StudioHeader'
-import { CanvasAreaNew } from '@/components/studio/CanvasAreaNew'
+import { CanvasArea } from '@/components/studio/CanvasArea'
 import { ToolsContainer } from '@/components/studio/tools/ToolsContainer'
 import { Dialogs } from '@/components/studio/Dialogs'
 import { DebugOverlay } from '@/components/debug/DebugOverlay'
@@ -174,7 +174,7 @@ export default function Home() {
 
       <div className="relative flex-1 overflow-hidden">
         {/* Canvas takes full space */}
-        <CanvasAreaNew />
+        <CanvasArea />
         
         {/* Tools panel overlays on the right */}
         <ToolsContainer />

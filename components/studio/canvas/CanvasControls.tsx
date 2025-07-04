@@ -8,9 +8,10 @@ import { useUIStore } from '@/lib/stores/uiStore'
 
 interface CanvasControlsProps {
   className?: string
+  style?: React.CSSProperties
 }
 
-export function CanvasControls({ className }: CanvasControlsProps) {
+export function CanvasControls({ className, style }: CanvasControlsProps) {
   const {
     zoom,
     handleZoomIn,
@@ -22,7 +23,7 @@ export function CanvasControls({ className }: CanvasControlsProps) {
   const { darkMode } = useUIStore()
   
   return (
-    <div className={className}>
+    <div className={className} style={style}>
       <div className="flex flex-col gap-2">
         {/* Zoom Controls */}
         <div className={`flex items-center space-x-1 backdrop-blur-sm rounded-lg border shadow-lg p-1 ${

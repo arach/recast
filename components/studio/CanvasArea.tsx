@@ -1,56 +1,28 @@
 'use client'
 
-import React, { useRef, useState, useEffect, useCallback } from 'react'
+// Canvas Area Component - renamed from CanvasAreaNew
+import React, { useState, useEffect, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Play, Pause, Eye, Grid3x3 } from 'lucide-react'
+import { HybridCanvas } from './canvas/HybridCanvas'
 import { PreviewGrid } from './PreviewGrid'
 import { CodeEditorPanel } from './CodeEditorPanel'
-import { CanvasRenderer } from './canvas/CanvasRenderer'
 import { CanvasControls } from './canvas/CanvasControls'
 import { CanvasToolbar } from './canvas/CanvasToolbar'
 import { LogoActions } from './canvas/LogoActions'
-import { useCanvas } from '@/lib/hooks/useCanvas'
-import { useCanvasAnimation } from '@/lib/hooks/useCanvasAnimation'
 import { useCanvasStore } from '@/lib/stores/canvasStore'
 import { useUIStore } from '@/lib/stores/uiStore'
 import { useSelectedLogo } from '@/lib/hooks/useSelectedLogo'
 import { useLogoStore } from '@/lib/stores/logoStore'
 
 export function CanvasArea() {
-  const canvasRef = useRef<HTMLCanvasElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
+  const [animating, setAnimating] = useState(false)
   const [codeError, setCodeError] = useState<string | null>(null)
   
-  // Canvas state and interactions
-  const { setCodeEditorState, toolMode } = useCanvasStore()
-  const { 
-    isDragging,
-    handleMouseDown,
-    handleMouseMove,
-    handleMouseUp
-  } = useCanvas(canvasRef)
-  
-  // Animation state
-  const { animating, currentTime, toggleAnimation } = useCanvasAnimation()
-  
-  // UI state
-  const { previewMode, togglePreviewMode, isRendering, darkMode } = useUIStore()
+  const { codeEditor, toolsPanel, setDimensions } = useCanvasStore()
+  const { previewMode, togglePreviewMode, darkMode } = useUIStore()
   const { logo: selectedLogo } = useSelectedLogo()
-  
-  // Get canvas offset for grid movement
-  const { offset, zoom } = useCanvasStore()
-  
-  // Fixed grid spacing in canvas coordinates (not affected by zoom)
-  const GRID_SPACING = 40
-  
-  // Calculate dot size based on zoom level for visibility
-  const getDotSize = (zoom: number) => {
-    if (zoom < 0.5) return 2.0    // At 50% zoom: 1.0px actual size
-    if (zoom < 0.75) return 1.5   // At 67% zoom: 1.0px actual size
-    if (zoom < 1.25) return 1.5   // At 100% zoom: 1.5px actual size
-    if (zoom < 2) return 1.3      // At 150% zoom: 1.95px actual size
-    return 1.2                     // At 200%+ zoom: 2.4px+ actual size
-  }
   
   // Initialize canvas centering on selected logo
   useEffect(() => {
@@ -64,29 +36,24 @@ export function CanvasArea() {
     }
   }, [])
   
-  // Handle canvas resizing when container size changes
+  // Handle container resizing
   useEffect(() => {
     let resizeTimeout: NodeJS.Timeout
     
-    const resizeCanvas = () => {
-      if (canvasRef.current && containerRef.current) {
+    const handleResize = () => {
+      if (containerRef.current) {
         const { width, height } = containerRef.current.getBoundingClientRect()
-        canvasRef.current.width = width
-        canvasRef.current.height = height
-        
-        // Force re-render after resize
-        const { setRenderTrigger } = useUIStore.getState()
-        setRenderTrigger(Date.now())
+        setDimensions(width, height)
       }
     }
     
     // Debounced resize handler
     const debouncedResize = () => {
       clearTimeout(resizeTimeout)
-      resizeTimeout = setTimeout(resizeCanvas, 100)
+      resizeTimeout = setTimeout(handleResize, 100)
     }
     
-    resizeCanvas()
+    handleResize()
     window.addEventListener('resize', debouncedResize)
     
     // Use ResizeObserver to detect container size changes
@@ -100,36 +67,15 @@ export function CanvasArea() {
       resizeObserver.disconnect()
       clearTimeout(resizeTimeout)
     }
-  }, [])
+  }, [setDimensions])
   
-  // Handle code editor state changes
-  const handleCodeEditorStateChange = useCallback((collapsed: boolean, width: number) => {
-    // When collapsed, the sidebar is 40px wide
-    const effectiveWidth = collapsed ? 40 : width
-    setCodeEditorState(collapsed, effectiveWidth)
-    
-    // Force canvas repaint on state change
-    setTimeout(() => {
-      window.dispatchEvent(new Event('resize'))
-    }, 300) // Wait for animation to complete
-  }, [setCodeEditorState])
+  // Show error overlay if there's a code error
+  const showError = codeError && selectedLogo
   
   return (
-    <div 
-      ref={containerRef}
-      className="flex-1 relative overflow-hidden canvas-container"
-      style={{
-        backgroundImage: darkMode 
-          ? `radial-gradient(circle, #4b5563 ${getDotSize(zoom) * zoom}px, transparent ${getDotSize(zoom) * zoom}px)`
-          : `radial-gradient(circle, #64748b ${getDotSize(zoom) * zoom}px, transparent ${getDotSize(zoom) * zoom}px)`,
-        backgroundRepeat: 'repeat',
-        backgroundSize: `${GRID_SPACING * zoom}px ${GRID_SPACING * zoom}px`,
-        backgroundPosition: `${offset.x * zoom}px ${offset.y * zoom}px`,
-        backgroundColor: darkMode ? '#0f172a' : '#f8fafc'
-      }}
-    >
+    <div ref={containerRef} className="absolute inset-0 overflow-hidden">
       {/* Code Editor Panel */}
-      <CodeEditorPanel onStateChange={handleCodeEditorStateChange} />
+      <CodeEditorPanel />
       
       {/* Preview Toggle */}
       <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 z-20">
@@ -137,10 +83,8 @@ export function CanvasArea() {
           variant={previewMode ? "default" : "outline"}
           size="sm"
           onClick={togglePreviewMode}
-          className={`gap-2 backdrop-blur-sm shadow-lg border ${
-            darkMode 
-              ? 'bg-gray-900/90 border-gray-700 hover:bg-gray-800/90' 
-              : 'bg-white/90 border-gray-200 hover:bg-gray-50/90'
+          className={`gap-2 backdrop-blur-sm shadow-lg ${
+            darkMode ? 'bg-gray-800/90 hover:bg-gray-700/90' : ''
           }`}
         >
           {previewMode ? <Grid3x3 className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -148,79 +92,59 @@ export function CanvasArea() {
         </Button>
       </div>
       
-      {/* Play/Pause Button */}
-      {!previewMode && (
-        <Button
-          onClick={toggleAnimation}
-          className={`absolute top-6 right-6 h-10 w-10 rounded-full shadow-lg backdrop-blur-sm border z-20 ${
-            darkMode
-              ? 'bg-gray-900/90 border-gray-700 hover:bg-gray-800/90 text-white'
-              : 'bg-white/90 border-gray-200 hover:bg-white'
-          }`}
-          size="sm"
-          variant="outline"
-          title={animating ? "Pause Animation" : "Play Animation"}
-        >
-          {animating ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-        </Button>
-      )}
-      
-      {/* Canvas Toolbar */}
-      {!previewMode && (
-        <CanvasToolbar />
-      )}
-      
-      {/* Logo Actions Toolbar */}
-      {!previewMode && selectedLogo && (
-        <LogoActions className="absolute top-6 right-20 z-20" />
-      )}
-      
-      {/* Canvas or Preview */}
+      {/* Canvas or Preview Grid */}
       {!previewMode ? (
         <>
-          <canvas
-            ref={canvasRef}
-            className="absolute inset-0 w-full h-full"
-            style={{ 
-              cursor: toolMode === 'select' 
-                ? 'default' 
-                : isDragging ? 'grabbing' : 'grab' 
-            }}
-            onMouseDown={handleMouseDown}
-            onMouseMove={handleMouseMove}
-            onMouseUp={handleMouseUp}
-            onMouseLeave={handleMouseUp}
+          {/* Main Canvas Area with dark mode background */}
+          <div className={`absolute inset-0 ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
+            <HybridCanvas 
+              animating={animating}
+            />
+          </div>
+          
+          {/* Play/Pause Button */}
+          <Button
+            onClick={() => setAnimating(!animating)}
+            className="absolute top-6 h-10 w-10 rounded-full shadow-lg z-20 transition-all duration-200"
+            style={{ right: !toolsPanel.collapsed ? `${toolsPanel.width + 24}px` : '72px' }}
+            size="sm"
+            variant="outline"
+          >
+            {animating ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+          </Button>
+          
+          {/* Canvas Toolbar */}
+          <CanvasToolbar 
+            leftOffset={!codeEditor.collapsed ? codeEditor.width + 20 : 60}
           />
           
-          {/* Canvas Renderer */}
-          <CanvasRenderer
-            canvasRef={canvasRef}
-            currentTime={currentTime}
-            onCodeError={setCodeError}
-          />
+          {/* Logo Actions */}
+          {selectedLogo && (
+            <LogoActions 
+              className="absolute top-6 z-20 transition-all duration-200" 
+              style={{ right: !toolsPanel.collapsed ? `${toolsPanel.width + 84}px` : '132px' }}
+            />
+          )}
           
           {/* Canvas Controls */}
-          <CanvasControls className="absolute bottom-6 right-6 z-20" />
+          <CanvasControls 
+            className="absolute bottom-6 z-20 transition-all duration-200" 
+            style={{ right: !toolsPanel.collapsed ? `${toolsPanel.width + 24}px` : '72px' }}
+          />
           
-          {/* Code Error Display */}
-          {codeError && (
-            <div className={`absolute top-4 left-4 right-4 z-30 p-3 rounded-lg ${
-              darkMode
-                ? 'bg-red-900/20 border border-red-800 backdrop-blur-sm'
-                : 'bg-red-50 border border-red-200'
-            }`}>
-              <p className={`text-sm font-mono ${
-                darkMode ? 'text-red-400' : 'text-red-800'
-              }`}>{codeError}</p>
+          {/* Error Overlay */}
+          {showError && (
+            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-30">
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4 max-w-md">
+                <h3 className="text-red-800 font-medium mb-2">Code Error</h3>
+                <pre className="text-red-600 text-sm whitespace-pre-wrap">{codeError}</pre>
+              </div>
             </div>
           )}
         </>
       ) : (
-        <div className={`w-full h-full flex items-center justify-center ${
-          darkMode ? 'bg-gray-900 text-gray-400' : 'bg-gray-50 text-gray-500'
-        }`}>
-          <p className="text-lg">Preview mode temporarily disabled</p>
-        </div>
+        // Preview Grid
+        <PreviewGrid />
       )}
     </div>
   )

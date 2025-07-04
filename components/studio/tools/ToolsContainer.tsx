@@ -14,6 +14,7 @@ import { AISuggestions } from '../AISuggestions';
 import { Palette, Layers, Package, Sparkles, Brain, Lightbulb, Sliders, Paintbrush, Type, Settings2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useUIStore } from '@/lib/stores/uiStore';
 import { useSelectedLogo } from '@/lib/hooks/useSelectedLogo';
+import { useCanvasStore } from '@/lib/stores/canvasStore';
 
 interface Tool {
   id: string;
@@ -98,6 +99,7 @@ const STORAGE_KEY_COLLAPSED = 'recast-tools-collapsed';
 export function ToolsContainer() {
   const { darkMode } = useUIStore();
   const { logo: selectedLogo } = useSelectedLogo();
+  const { setToolsPanelState } = useCanvasStore();
   
   // Add CSS animations
   useEffect(() => {
@@ -178,10 +180,10 @@ export function ToolsContainer() {
 
   // Persist width changes
   useEffect(() => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined' && !isResizing) {
       localStorage.setItem(STORAGE_KEY_WIDTH, width.toString());
     }
-  }, [width]);
+  }, [width, isResizing]);
 
   // Persist expanded tools changes
   useEffect(() => {
@@ -196,6 +198,11 @@ export function ToolsContainer() {
       localStorage.setItem(STORAGE_KEY_COLLAPSED, String(isCollapsed));
     }
   }, [isCollapsed]);
+  
+  // Update store when state changes
+  useEffect(() => {
+    setToolsPanelState(isCollapsed, width);
+  }, [isCollapsed, width, setToolsPanelState]);
 
   const toggleTool = (toolId: string) => {
     setExpandedTools(prev => {

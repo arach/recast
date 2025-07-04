@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Code, Play, Copy, Check, ChevronLeft, ChevronRight, GripVertical, X, RotateCcw, PanelLeftClose, PanelLeft, Palette, Save, Sparkles } from 'lucide-react'
 import { useLogoStore } from '@/lib/stores/logoStore'
 import { useUIStore } from '@/lib/stores/uiStore'
+import { useCanvasStore } from '@/lib/stores/canvasStore'
 import { useSelectedLogo } from '@/lib/hooks/useSelectedLogo'
 import { visualizationTypes } from '@/lib/monaco-types'
 import { loadTemplate, getAllTemplateInfo } from '@/lib/template-registry-direct'
@@ -31,10 +32,9 @@ const MonacoEditor = dynamic(
 
 interface CodeEditorPanelProps {
   onClose?: () => void
-  onStateChange?: (isCollapsed: boolean, width: number) => void
 }
 
-export function CodeEditorPanel({ onClose, onStateChange }: CodeEditorPanelProps) {
+export function CodeEditorPanel({ onClose }: CodeEditorPanelProps) {
   const [copied, setCopied] = useState(false)
   const [width, setWidth] = useState(500)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
@@ -74,6 +74,7 @@ export function CodeEditorPanel({ onClose, onStateChange }: CodeEditorPanelProps
   const updateLogo = useLogoStore(state => state.updateLogo)
   const logos = useLogoStore(state => state.logos)
   const selectedLogoId = useLogoStore(state => state.selectedLogoId)
+  const { setCodeEditorState } = useCanvasStore()
   
   const [localCode, setLocalCode] = useState(selectedLogo?.code || '')
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
@@ -94,10 +95,10 @@ export function CodeEditorPanel({ onClose, onStateChange }: CodeEditorPanelProps
     loadTemplates()
   }, [])
   
-  // Notify parent of state changes
+  // Update canvas store when state changes
   useEffect(() => {
-    onStateChange?.(isCollapsed, width)
-  }, [isCollapsed, width, onStateChange])
+    setCodeEditorState(isCollapsed, width)
+  }, [isCollapsed, width, setCodeEditorState])
 
   // Debug log
   // useEffect(() => {

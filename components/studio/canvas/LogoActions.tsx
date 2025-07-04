@@ -17,9 +17,10 @@ import {
 
 interface LogoActionsProps {
   className?: string
+  style?: React.CSSProperties
 }
 
-export function LogoActions({ className }: LogoActionsProps) {
+export function LogoActions({ className, style }: LogoActionsProps) {
   const { selectedLogoId, duplicateLogo, deleteLogo, getLogoCount, logos } = useLogoStore()
   const { logo: selectedLogo } = useSelectedLogo()
   const [showCopyFeedback, setShowCopyFeedback] = useState(false)
@@ -70,7 +71,7 @@ export function LogoActions({ className }: LogoActionsProps) {
   
   return (
     <>
-      <div className={className}>
+      <div className={className} style={style}>
         <div className="bg-white/95 backdrop-blur-sm rounded-lg border shadow-lg p-1 flex items-center gap-1">
           <Button
             size="sm"
