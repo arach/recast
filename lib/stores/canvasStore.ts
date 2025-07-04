@@ -57,7 +57,7 @@ export const useCanvasStore = create<CanvasState>()(
         offset: { x: 0, y: 0 },
         zoom: 1,
         isDragging: false,
-        toolMode: 'select' as const,
+        toolMode: 'pan' as const,
         draggedLogoId: null,
         dragOffset: { x: 0, y: 0 },
         dimensions: { width: 0, height: 0 },

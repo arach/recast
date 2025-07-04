@@ -37,6 +37,9 @@ export function CanvasArea() {
   const { previewMode, togglePreviewMode, isRendering, darkMode } = useUIStore()
   const { logo: selectedLogo } = useSelectedLogo()
   
+  // Get canvas offset for grid movement
+  const { offset, zoom } = useCanvasStore()
+  
   // Initialize canvas centering on selected logo
   useEffect(() => {
     const { centerView } = useCanvasStore.getState()
@@ -102,12 +105,14 @@ export function CanvasArea() {
   return (
     <div 
       ref={containerRef}
-      className="flex-1 relative transition-all duration-300 overflow-hidden canvas-container"
+      className="flex-1 relative overflow-hidden canvas-container"
       style={{
-        background: darkMode 
-          ? 'radial-gradient(circle, #374151 0.8px, transparent 0.8px)'
-          : 'radial-gradient(circle, #d1d5db 0.8px, transparent 0.8px)',
-        backgroundSize: '20px 20px',
+        backgroundImage: darkMode 
+          ? `radial-gradient(circle, #4b5563 ${1.5 * zoom}px, transparent ${1.5 * zoom}px)`
+          : `radial-gradient(circle, #9ca3af ${1.2 * zoom}px, transparent ${1.2 * zoom}px)`,
+        backgroundRepeat: 'repeat',
+        backgroundSize: `${40 * zoom}px ${40 * zoom}px`,
+        backgroundPosition: `${offset.x * zoom}px ${offset.y * zoom}px`,
         backgroundColor: darkMode ? '#0f172a' : '#f9fafb'
       }}
     >
