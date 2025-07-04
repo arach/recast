@@ -179,6 +179,48 @@ if (process.env.NODE_ENV === 'development') {
 
 The debug toolbar accelerates development by providing immediate visibility into state discrepancies and tools to fix them without page refreshes or complex setup scenarios.
 
+## Template Development
+
+ReCast uses a consistent template system for generating dynamic brand identities. All templates follow the NEW format pattern.
+
+### Template Documentation
+- **[TEMPLATE_DEVELOPMENT_GUIDE.md](./TEMPLATE_DEVELOPMENT_GUIDE.md)** - Complete guide for creating templates
+- **[TEMPLATE_QUICK_REFERENCE.md](./TEMPLATE_QUICK_REFERENCE.md)** - Quick reference and boilerplate
+- **[TEMPLATE_CONVERSION_PATTERN.md](./TEMPLATE_CONVERSION_PATTERN.md)** - Migration history (archived)
+
+### Template Structure
+```typescript
+import type { TemplateUtils } from '@/lib/template-utils';
+
+const parameters = {
+  frequency: { default: 1.0, range: [0.1, 5.0, 0.1] }
+  // Template-specific parameters only
+};
+
+function drawVisualization(ctx: CanvasRenderingContext2D, width: number, height: number, params: any, time: number, utils: TemplateUtils) {
+  // Universal background/fill/stroke handled automatically
+  utils.applyUniversalBackground(ctx, width, height, params);
+  // Your template logic here
+}
+
+const metadata = {
+  id: 'template-id',
+  name: "🎨 Template Name",
+  description: "What this template does",
+  parameters,
+  defaultParams: { frequency: 1.0 }
+};
+
+export { parameters, metadata, drawVisualization };
+```
+
+### Key Principles
+1. **Universal Styling**: Background, fill, stroke handled by TemplateUtils
+2. **Simplified Parameters**: No complex type definitions
+3. **Animation Support**: Use `time` parameter for smooth animation
+4. **Responsive Design**: Scale based on canvas dimensions
+5. **TypeScript**: Proper typing throughout
+
 ## Development Process
 
 - **Use dev:alt for all interaction with your dev process**
