@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button'
 import { Play, Pause, Eye, Grid3x3 } from 'lucide-react'
 import { HybridCanvas } from './canvas/HybridCanvas'
 import { PreviewGrid } from './PreviewGrid'
-import { CodeEditorPanel } from './CodeEditorPanel'
 import { CanvasControls } from './canvas/CanvasControls'
 import { CanvasToolbar } from './canvas/CanvasToolbar'
 import { LogoActions } from './canvas/LogoActions'
@@ -74,9 +73,6 @@ export function CanvasArea() {
   
   return (
     <div ref={containerRef} className="absolute inset-0 overflow-hidden">
-      {/* Code Editor Panel */}
-      <CodeEditorPanel />
-      
       {/* Preview Toggle */}
       <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 z-20">
         <Button

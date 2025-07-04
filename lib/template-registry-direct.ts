@@ -50,6 +50,9 @@ export interface TemplateInfo {
   code: string;
 }
 
+// Type alias for better code clarity
+export type LoadedTemplate = TemplateInfo;
+
 /**
  * Load a single template directly
  */
