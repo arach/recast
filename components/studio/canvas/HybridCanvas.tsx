@@ -32,10 +32,21 @@ function LogoCanvas({ id, templateId, parameters, width, height, currentTime = 0
     ctx.clearRect(0, 0, width, height)
     
     try {
+      // Debug logging
+      console.log(`🎨 Rendering logo ${id}:`, {
+        templateId,
+        hasCode: !!code,
+        codeLength: code?.length || 0,
+        parameters: Object.keys(parameters || {}),
+        dimensions: { width, height }
+      })
+      
       // Generate and render the actual logo
       if (code) {
         generateVisualization(ctx, code, parameters, currentTime, width, height)
+        console.log(`✅ Successfully rendered logo ${id}`)
       } else {
+        console.log(`⚠️ No code for logo ${id}, showing placeholder`)
         // Fallback placeholder
         ctx.fillStyle = '#e5e7eb'
         ctx.fillRect(0, 0, width, height)
@@ -46,7 +57,18 @@ function LogoCanvas({ id, templateId, parameters, width, height, currentTime = 0
         ctx.fillText('No template selected', width / 2, height / 2)
       }
     } catch (error) {
-      console.error(`Error rendering logo ${id}:`, error)
+      console.error(`❌ Error rendering logo ${id}:`, {
+        error,
+        errorMessage: error?.message,
+        errorName: error?.name,
+        errorStack: error?.stack,
+        templateId,
+        templateIdType: typeof templateId,
+        parameters,
+        parametersKeys: Object.keys(parameters || {}),
+        hasCode: !!code,
+        codeLength: code?.length
+      })
       // Error state
       ctx.fillStyle = '#fee2e2'
       ctx.fillRect(0, 0, width, height)
@@ -259,29 +281,39 @@ export function HybridCanvas({ animating: animatingProp = false }: HybridCanvasP
       />
       
       {/* Logos */}
-      {logos.map(logo => (
-        <g 
-          key={logo.id}
-          transform={`translate(${logo.position.x}, ${logo.position.y})`}
-        >
-          {/* Canvas in foreignObject */}
-          <foreignObject 
-            width="600" 
-            height="600"
-            style={{ pointerEvents: 'none' }}
+      {logos.map(logo => {
+        // Debug logging for templateId issues
+        if (typeof logo.templateId !== 'string') {
+          console.error(`🚨 Invalid templateId for logo ${logo.id}:`, {
+            templateId: logo.templateId,
+            type: typeof logo.templateId,
+            logoData: logo
+          })
+        }
+        
+        return (
+          <g 
+            key={logo.id}
+            transform={`translate(${logo.position.x}, ${logo.position.y})`}
           >
-            <LogoCanvas
-              id={logo.id}
-              templateId={logo.templateId}
-              parameters={logo.parameters}
-              width={600}
-              height={600}
-              currentTime={currentTime}
-            />
-          </foreignObject>
-          
-          {/* Invisible interaction rectangle */}
-          <rect
+            {/* Canvas in foreignObject */}
+            <foreignObject 
+              width="600" 
+              height="600"
+              style={{ pointerEvents: 'none' }}
+            >
+              <LogoCanvas
+                id={logo.id}
+                templateId={logo.templateId}
+                parameters={logo.parameters}
+                width={600}
+                height={600}
+                currentTime={currentTime}
+              />
+            </foreignObject>
+            
+            {/* Invisible interaction rectangle */}
+            <rect
             width="600"
             height="600"
             fill="transparent"
@@ -311,7 +343,8 @@ export function HybridCanvas({ animating: animatingProp = false }: HybridCanvasP
             </>
           )}
         </g>
-      ))}
+        )
+      })}
     </svg>
   )
 }

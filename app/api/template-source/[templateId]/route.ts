@@ -4,10 +4,10 @@ import path from 'path';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { templateId: string } }
+  { params }: { params: Promise<{ templateId: string }> }
 ) {
   try {
-    const templateId = params.templateId;
+    const { templateId } = await params;
     
     // Security: validate template ID to prevent directory traversal
     if (!templateId.match(/^[a-zA-Z0-9-]+$/)) {

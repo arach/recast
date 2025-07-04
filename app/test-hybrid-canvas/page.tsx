@@ -9,9 +9,13 @@ import { Plus, Play, Pause } from 'lucide-react'
 export default function TestHybridCanvas() {
   const { logos, addLogo, updateLogo, updateLogoPosition } = useLogoStore()
   const [animating, setAnimating] = useState(false)
+  const [testLogosCreated, setTestLogosCreated] = useState(false)
   
   // Add some test logos on mount - only run once
   useEffect(() => {
+    // Only create test logos if we haven't created them yet
+    if (testLogosCreated) return
+    
     // Only create test logos if we don't have any with our test names
     const hasTestLogos = logos.some(logo => 
       typeof logo.templateName === 'string' && logo.templateName.includes('Wave Bars -')
@@ -77,9 +81,12 @@ export default function TestHybridCanvas() {
           }
         })
         updateLogoPosition(logo3Id, { x: 450, y: 400 })
+        
+        // Mark that we've created test logos
+        setTestLogosCreated(true)
       }, 100)
     }
-  }, [logos.length])
+  }, [logos.length, testLogosCreated, addLogo, updateLogo, updateLogoPosition])
   
   const handleAddLogo = () => {
     const colors = [

@@ -42,7 +42,13 @@ export function generateVisualization(
       throw new Error('Could not find matching closing backtick in template code')
     }
     
-    const functionBody = code.substring(startPos, endPos)
+    let functionBody = code.substring(startPos, endPos)
+    
+    // Unescape template literals and other escaped sequences
+    functionBody = functionBody
+      .replace(/\\`/g, '`')           // Unescape backticks
+      .replace(/\\\$/g, '$')          // Unescape dollar signs
+      .replace(/\\\\/g, '\\')         // Unescape backslashes (do this last)
     
     // Create a function from the template code
     const func = new Function('ctx', 'parameters', 'currentTime', 'width', 'height', functionBody)
