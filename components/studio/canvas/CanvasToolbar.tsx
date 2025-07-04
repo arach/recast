@@ -4,9 +4,11 @@ import { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Hand, MousePointer } from 'lucide-react';
 import { useCanvasStore } from '@/lib/stores/canvasStore';
+import { useUIStore } from '@/lib/stores/uiStore';
 
 export function CanvasToolbar() {
   const { toolMode, setToolMode } = useCanvasStore();
+  const { darkMode } = useUIStore();
 
   // Handle keyboard shortcuts
   useEffect(() => {
@@ -33,7 +35,11 @@ export function CanvasToolbar() {
   }, [setToolMode]);
 
   return (
-    <div className="absolute top-6 left-14 z-20 flex gap-1 bg-white/90 backdrop-blur-sm rounded-lg shadow-lg p-1">
+    <div className={`absolute top-6 left-14 z-20 flex gap-1 backdrop-blur-sm rounded-lg shadow-lg p-1 ${
+      darkMode
+        ? 'bg-gray-900/90 border border-gray-700'
+        : 'bg-white/90'
+    }`}>
       <Button
         variant={toolMode === 'select' ? 'default' : 'ghost'}
         size="sm"

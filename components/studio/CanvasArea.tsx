@@ -34,7 +34,7 @@ export function CanvasArea() {
   const { animating, currentTime, toggleAnimation } = useCanvasAnimation()
   
   // UI state
-  const { previewMode, togglePreviewMode, isRendering } = useUIStore()
+  const { previewMode, togglePreviewMode, isRendering, darkMode } = useUIStore()
   const { logo: selectedLogo } = useSelectedLogo()
   
   // Initialize canvas centering on selected logo
@@ -104,9 +104,11 @@ export function CanvasArea() {
       ref={containerRef}
       className="flex-1 relative transition-all duration-300 overflow-hidden canvas-container"
       style={{
-        background: 'radial-gradient(circle, #d1d5db 0.8px, transparent 0.8px)',
+        background: darkMode 
+          ? 'radial-gradient(circle, #374151 0.8px, transparent 0.8px)'
+          : 'radial-gradient(circle, #d1d5db 0.8px, transparent 0.8px)',
         backgroundSize: '20px 20px',
-        backgroundColor: '#f9fafb'
+        backgroundColor: darkMode ? '#0f172a' : '#f9fafb'
       }}
     >
       {/* Code Editor Panel */}
@@ -118,7 +120,11 @@ export function CanvasArea() {
           variant={previewMode ? "default" : "outline"}
           size="sm"
           onClick={togglePreviewMode}
-          className="gap-2 bg-white/90 backdrop-blur-sm shadow-lg border"
+          className={`gap-2 backdrop-blur-sm shadow-lg border ${
+            darkMode 
+              ? 'bg-gray-900/90 border-gray-700 hover:bg-gray-800/90' 
+              : 'bg-white/90 border-gray-200 hover:bg-gray-50/90'
+          }`}
         >
           {previewMode ? <Grid3x3 className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
           {previewMode ? "Back to Canvas" : "Preview Sizes"}
@@ -129,7 +135,11 @@ export function CanvasArea() {
       {!previewMode && (
         <Button
           onClick={toggleAnimation}
-          className="absolute top-6 right-6 h-10 w-10 rounded-full shadow-lg bg-white/90 backdrop-blur-sm border hover:bg-white z-20"
+          className={`absolute top-6 right-6 h-10 w-10 rounded-full shadow-lg backdrop-blur-sm border z-20 ${
+            darkMode
+              ? 'bg-gray-900/90 border-gray-700 hover:bg-gray-800/90 text-white'
+              : 'bg-white/90 border-gray-200 hover:bg-white'
+          }`}
           size="sm"
           variant="outline"
           title={animating ? "Pause Animation" : "Play Animation"}
@@ -177,8 +187,14 @@ export function CanvasArea() {
           
           {/* Code Error Display */}
           {codeError && (
-            <div className="absolute top-4 left-4 right-4 z-30 p-3 bg-red-50 border border-red-200 rounded-lg">
-              <p className="text-sm text-red-800 font-mono">{codeError}</p>
+            <div className={`absolute top-4 left-4 right-4 z-30 p-3 rounded-lg ${
+              darkMode
+                ? 'bg-red-900/20 border border-red-800 backdrop-blur-sm'
+                : 'bg-red-50 border border-red-200'
+            }`}>
+              <p className={`text-sm font-mono ${
+                darkMode ? 'text-red-400' : 'text-red-800'
+              }`}>{codeError}</p>
             </div>
           )}
         </>

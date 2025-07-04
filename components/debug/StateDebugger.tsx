@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { useLogoStore } from '@/lib/stores/logoStore';
 import { useUIStore } from '@/lib/stores/uiStore';
-import { Maximize2, Minimize2, Minus, Plus, X, Copy, Check } from 'lucide-react';
+import { Maximize2, Minimize2, Bug, X, Copy, Check } from 'lucide-react';
 import { useDebugActions } from '@/lib/debug/debugRegistry';
 import { StateTreeView } from './StateTreeView';
 import { copyExpandedState, formatForClipboard, copyToClipboard } from '@/lib/debug/copyExpandedState';
@@ -18,16 +18,22 @@ interface StateDebuggerProps {
 
 type DebugTab = 'dashboard' | 'details' | 'utilities' | 'state';
 
-export function StateDebugger({ 
+export const StateDebugger = forwardRef<any, StateDebuggerProps>(({ 
   selectedLogo, 
   selectedLogoId,
   onClearCanvasPosition,
   canvasOffset,
   onClose
-}: StateDebuggerProps) {
+}, ref) => {
   const [activeTab, setActiveTab] = useState<DebugTab>('dashboard');
   const [isExpanded, setIsExpanded] = useState(false);
-  const [isMinimized, setIsMinimized] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false); // Just bug button visible
+  
+  // Expose methods to parent
+  useImperativeHandle(ref, () => ({
+    setIsCollapsed: (collapsed: boolean) => setIsCollapsed(collapsed),
+    toggleCollapsed: () => setIsCollapsed(prev => !prev)
+  }), [])
   
   // State for tracking expanded paths per section
   const [expandedPaths, setExpandedPaths] = useState<{
@@ -99,28 +105,54 @@ export function StateDebugger({
     };
   }
   
+  // Collapsed state - just show the bug button
+  if (isCollapsed) {
+    return (
+      <button
+        onClick={() => setIsCollapsed(false)}
+        className="fixed bottom-4 right-4 w-12 h-12 rounded-full
+                   bg-gray-900/95 dark:bg-black/95
+                   backdrop-blur-sm
+                   border border-gray-700/50 dark:border-gray-800
+                   shadow-lg shadow-black/50
+                   flex items-center justify-center
+                   text-gray-400 hover:text-white
+                   hover:bg-gray-800/95
+                   transition-all duration-200
+                   hover:scale-110 active:scale-95
+                   group z-50"
+        title="Show debug toolbar"
+      >
+        <Bug className="w-5 h-5 rotate-180 group-hover:rotate-180 transition-transform" />
+      </button>
+    );
+  }
+
+  // Expanded state - full toolbar
   return (
     <div className={`fixed bottom-4 right-4 rounded-xl text-xs font-sans z-50 
                 bg-gray-900/95 dark:bg-black/95 
                 backdrop-blur-sm
                 border border-gray-700/50 dark:border-gray-800
                 transition-all duration-700
-                ${isExpanded ? 'w-[640px] shadow-[0_20px_50px_rgba(0,0,0,0.7)]' : 'w-[480px] shadow-2xl shadow-black/50'}
-                ${isMinimized ? 'shadow-xl' : ''}`}>
+                ${isExpanded ? 'w-[640px] shadow-[0_20px_50px_rgba(0,0,0,0.7)]' : 'w-[480px] shadow-2xl shadow-black/50'}`}>
       {/* Header with tabs */}
       <div className="flex items-center justify-between p-3 border-b border-gray-700/50">
-        <h3 className="font-semibold text-white">Debug Toolbar</h3>
+        <div className="flex items-center gap-2">
+          <Bug className="w-4 h-4 text-gray-400" />
+          <h3 className="font-semibold text-white">Debug Toolbar</h3>
+        </div>
         <div className="flex items-center gap-2">
           <button
-            onClick={() => setIsMinimized(!isMinimized)}
+            onClick={() => setIsCollapsed(true)}
             className="w-7 h-7 rounded-full flex items-center justify-center
                        bg-gray-700/50 hover:bg-gray-600/50
                        text-gray-400 hover:text-white
                        transition-all duration-200
                        hover:scale-110 active:scale-95"
-            title={isMinimized ? "Show content" : "Hide content"}
+            title="Minimize to bug icon"
           >
-            {isMinimized ? <Plus className="w-3.5 h-3.5" /> : <Minus className="w-3.5 h-3.5" />}
+            <Bug className="w-3.5 h-3.5 rotate-180" />
           </button>
           <button
             onClick={() => setIsExpanded(!isExpanded)}
@@ -149,45 +181,41 @@ export function StateDebugger({
         </div>
       </div>
       
-      {/* Collapsible Content */}
-      <div className={`overflow-hidden transition-all duration-500
-                      ${isMinimized ? 'max-h-0' : 'max-h-[800px]'}`}>
-        {/* Tab Navigation */}
-        <div className="flex border-b border-gray-700/50">
-          {[
-            { id: 'dashboard' as const, label: 'Dashboard', icon: '📊', title: 'Multi-state overview' },
-            { id: 'details' as const, label: 'Details', icon: '🔍', title: 'Detailed state inspection' },
-            { id: 'utilities' as const, label: 'Utils', icon: '🔧', title: 'Developer utilities' },
-            { id: 'state' as const, label: 'State', icon: '🌳', title: 'Full state tree' }
-          ].map(tab => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`px-4 py-2.5 text-xs font-medium transition-all duration-200 relative
-                ${activeTab === tab.id 
-                  ? 'text-white bg-white/10' 
-                  : 'text-gray-400 hover:text-white hover:bg-white/5'
-                }`}
-              title={tab.title}
-            >
-              <span className="flex items-center gap-1.5">
-                <span className="text-base">{tab.icon}</span>
-                {tab.label}
-              </span>
-              {activeTab === tab.id && (
-                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-blue-400 to-purple-400" />
-              )}
-            </button>
-          ))}
-        </div>
-        
-        {/* Tab Content */}
-        <div className={`p-4 overflow-y-auto text-gray-100 
-                        transition-all duration-700
-                        ${isExpanded ? 'max-h-[600px]' : 'max-h-[400px]'}`}>
-          <div className="animate-in fade-in-0 slide-in-from-bottom-2 duration-300">
-            {renderTabContent()}
-          </div>
+      {/* Tab Navigation */}
+      <div className="flex border-b border-gray-700/50">
+        {[
+          { id: 'dashboard' as const, label: 'Dashboard', icon: '📊', title: 'Multi-state overview' },
+          { id: 'details' as const, label: 'Details', icon: '🔍', title: 'Detailed state inspection' },
+          { id: 'utilities' as const, label: 'Utils', icon: '🔧', title: 'Developer utilities' },
+          { id: 'state' as const, label: 'State', icon: '🌳', title: 'Full state tree' }
+        ].map(tab => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={`px-4 py-2.5 text-xs font-medium transition-all duration-200 relative
+              ${activeTab === tab.id 
+                ? 'text-white bg-white/10' 
+                : 'text-gray-400 hover:text-white hover:bg-white/5'
+              }`}
+            title={tab.title}
+          >
+            <span className="flex items-center gap-1.5">
+              <span className="text-base">{tab.icon}</span>
+              {tab.label}
+            </span>
+            {activeTab === tab.id && (
+              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-blue-400 to-purple-400" />
+            )}
+          </button>
+        ))}
+      </div>
+      
+      {/* Tab Content */}
+      <div className={`p-4 overflow-y-auto text-gray-100 
+                      transition-all duration-700
+                      ${isExpanded ? 'max-h-[600px]' : 'max-h-[400px]'}`}>
+        <div className="animate-in fade-in-0 slide-in-from-bottom-2 duration-300">
+          {renderTabContent()}
         </div>
       </div>
     </div>
@@ -216,8 +244,8 @@ export function StateDebugger({
     const templatesSynced = reactLogo?.templateId === zustandLogo?.templateId;
     const logoCountSynced = (selectedLogo ? 1 : 0) === zustandLogos.filter(l => l.id === selectedLogoId).length;
     
-    // Template loading status
-    const templateLoaded = reactLogo?.templateId && reactLogo?.code;
+    // Template loading status - check if template ID exists (we no longer store code directly)
+    const templateLoaded = reactLogo?.templateId;
     
     return (
       <div className="space-y-4">
@@ -287,10 +315,10 @@ export function StateDebugger({
             <div className={`text-sm font-semibold mt-1 ${
               templateLoaded ? 'text-green-400' : 'text-orange-400'
             }`}>
-              {templateLoaded ? '✓ Loaded' : '⏳ Loading...'}
+              {templateLoaded ? '✓ Loaded' : '⏳ No template'}
             </div>
             <div className="text-[10px] mt-1 text-gray-400">
-              {reactLogo?.code ? `${reactLogo.code.length} chars` : 'No code'}
+              {reactLogo?.templateId || 'Using custom code'}
             </div>
           </div>
         </div>
@@ -962,4 +990,6 @@ export function StateDebugger({
       </div>
     );
   }
-}
+});
+
+StateDebugger.displayName = 'StateDebugger';
