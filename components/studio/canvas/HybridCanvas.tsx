@@ -270,8 +270,9 @@ export function HybridCanvas({
           <circle 
             cx="20" 
             cy="20" 
-            r="1.5" 
-            fill={darkMode ? "#4b5563" : "#64748b"}
+            r="1.0" 
+            fill={darkMode ? "#3f4652" : "#8394a8"}
+            opacity="0.7"
           />
         </pattern>
       </defs>
@@ -366,17 +367,6 @@ export function HybridCanvas({
               onMouseLeave={() => setHoveredLogoId(null)}
               onMouseDown={(e) => handleLogoMouseDown(e, logo.id)}
             />
-          
-          {/* Selection handles */}
-          {selectedLogoId === logo.id && (
-            <>
-              {/* Corner handles */}
-              <rect x="-4" y="-4" width="8" height="8" fill="#3b82f6" />
-              <rect x="596" y="-4" width="8" height="8" fill="#3b82f6" />
-              <rect x="-4" y="596" width="8" height="8" fill="#3b82f6" />
-              <rect x="596" y="596" width="8" height="8" fill="#3b82f6" />
-            </>
-          )}
         </g>
       )
       })}

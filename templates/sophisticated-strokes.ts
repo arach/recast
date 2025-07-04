@@ -1,111 +1,82 @@
-import type { ParameterDefinition, PresetMetadata } from './types';
+import type { TemplateUtils } from '@/lib/template-utils';
 
 // Sophisticated Strokes - Advanced line and fill styling
-const PARAMETERS = {
-  // Universal Background Controls
-  backgroundColor: { type: 'color', default: "#ffffff", label: 'Background Color', category: 'Background' },
-  backgroundType: { type: 'select', options: [{"value":"transparent","label":"Transparent"},{"value":"solid","label":"Solid Color"},{"value":"gradient","label":"Gradient"}], default: "solid", label: 'Background Type', category: 'Background' },
-  backgroundGradientStart: { type: 'color', default: "#ffffff", label: 'Gradient Start', category: 'Background', showIf: (params)=>params.backgroundType === 'gradient' },
-  backgroundGradientEnd: { type: 'color', default: "#f0f0f0", label: 'Gradient End', category: 'Background', showIf: (params)=>params.backgroundType === 'gradient' },
-  backgroundGradientDirection: { type: 'slider', min: 0, max: 360, step: 15, default: 45, label: 'Gradient Direction', category: 'Background', showIf: (params)=>params.backgroundType === 'gradient' },
-  
-  // Universal Fill Controls
-  fillType: { type: 'select', options: [{"value":"none","label":"None"},{"value":"solid","label":"Solid Color"},{"value":"gradient","label":"Gradient"}], default: "solid", label: 'Fill Type', category: 'Fill' },
-  fillColor: { type: 'color', default: "#3b82f6", label: 'Fill Color', category: 'Fill', showIf: (params)=>params.fillType === 'solid' },
-  fillGradientStart: { type: 'color', default: "#3b82f6", label: 'Gradient Start', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
-  fillGradientEnd: { type: 'color', default: "#8b5cf6", label: 'Gradient End', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
-  fillGradientDirection: { type: 'slider', min: 0, max: 360, step: 15, default: 90, label: 'Gradient Direction', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
-  fillOpacity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.8, label: 'Fill Opacity', category: 'Fill', showIf: (params)=>params.fillType !== 'none' },
-  
-  // Universal Stroke Controls
-  strokeType: { type: 'select', options: [{"value":"none","label":"None"},{"value":"solid","label":"Solid"},{"value":"dashed","label":"Dashed"},{"value":"dotted","label":"Dotted"}], default: "solid", label: 'Stroke Type', category: 'Stroke' },
-  strokeColor: { type: 'color', default: "#1e293b", label: 'Stroke Color', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
-  strokeWidth: { type: 'slider', min: 0, max: 10, step: 0.5, default: 3, label: 'Stroke Width', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
-  strokeOpacity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 1, label: 'Stroke Opacity', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
-  
+const parameters = {
   // Basic form
-  frequency: { type: 'slider', min: 0.1, max: 2, step: 0.1, default: 0.8, label: 'Form Energy' },
-  amplitude: { type: 'slider', min: 60, max: 180, step: 5, default: 100, label: 'Scale' },
-  complexity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.6, label: 'Form Complexity' },
+  frequency: {
+    default: 0.8,
+    range: [0.1, 2, 0.1]
+  },
+  amplitude: {
+    default: 100,
+    range: [60, 180, 5]
+  },
+  complexity: {
+    default: 0.6,
+    range: [0, 1, 0.05]
+  },
   
   // Advanced stroke sophistication  
-  strokeVariation: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.3, label: 'Weight Variation' },
-  strokeTaper: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.4, label: 'Stroke Taper' },
-  strokeTexture: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.2, label: 'Stroke Texture' },
+  strokeVariation: {
+    default: 0.3,
+    range: [0, 1, 0.05]
+  },
+  strokeTaper: {
+    default: 0.4,
+    range: [0, 1, 0.05]
+  },
+  strokeTexture: {
+    default: 0.2,
+    range: [0, 1, 0.05]
+  },
   
   // Advanced stroke style
   advancedStrokeStyle: {
-    type: 'slider',
-    min: 0,
-    max: 4,
-    step: 1,
     default: 0,
-    label: 'Advanced Style (0=Basic, 1=Brush, 2=Calligraphy, 3=Textured, 4=Variable)'
+    options: ['Basic', 'Brush', 'Calligraphy', 'Textured', 'Variable']
   },
   
   // Advanced fill sophistication
   advancedFillType: {
-    type: 'slider', 
-    min: 0,
-    max: 2,
-    step: 1,
     default: 0,
-    label: 'Advanced Fill (0=Basic, 1=Pattern, 2=Texture)'
+    options: ['Basic', 'Pattern', 'Texture']
   },
-  gradientComplexity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.3, label: 'Gradient Stops', showIf: (params)=>params.fillType === 'gradient' },
+  gradientComplexity: {
+    default: 0.3,
+    range: [0, 1, 0.05]
+  },
   
   // Color sophistication
   colorHarmony: {
-    type: 'slider',
-    min: 0,
-    max: 5,
-    step: 1,
     default: 0,
-    label: 'Color Scheme (0=Mono, 1=Analogous, 2=Complement, 3=Triadic, 4=Split, 5=Tetradic)'
+    options: ['Monochromatic', 'Analogous', 'Complementary', 'Triadic', 'Split Complementary', 'Tetradic']
   },
-  colorSaturation: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.7, label: 'Color Saturation' },
-  colorContrast: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.8, label: 'Color Contrast' }
+  colorSaturation: {
+    default: 0.7,
+    range: [0, 1, 0.05]
+  },
+  colorContrast: {
+    default: 0.8,
+    range: [0, 1, 0.05]
+  }
 };
 
-function applyUniversalBackground(ctx, width, height, params) {
-  if (params.backgroundType === 'transparent') {
-    ctx.clearRect(0, 0, width, height);
-  } else if (params.backgroundType === 'gradient') {
-    const angle = (params.backgroundGradientDirection || 45) * Math.PI / 180;
-    const x1 = width / 2 - Math.cos(angle) * width;
-    const y1 = height / 2 - Math.sin(angle) * height;
-    const x2 = width / 2 + Math.cos(angle) * width;
-    const y2 = height / 2 + Math.sin(angle) * height;
-    
-    const gradient = ctx.createLinearGradient(x1, y1, x2, y2);
-    gradient.addColorStop(0, params.backgroundGradientStart || '#ffffff');
-    gradient.addColorStop(1, params.backgroundGradientEnd || '#f0f0f0');
-    
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, width, height);
-  } else {
-    ctx.fillStyle = params.backgroundColor || '#ffffff';
-    ctx.fillRect(0, 0, width, height);
-  }
-}
-
-function drawVisualization(ctx, width, height, params, _generator, time) {
-  // Parameter compatibility layer
-  if (params.customParameters) {
-    params.fillColor = params.fillColor || params.customParameters.fillColor;
-    params.strokeColor = params.strokeColor || params.customParameters.strokeColor;
-    params.backgroundColor = params.backgroundColor || params.customParameters.backgroundColor;
-    params.textColor = params.textColor || params.customParameters.textColor;
-    
-    Object.keys(params.customParameters).forEach(key => {
-      if (params[key] === undefined) {
-        params[key] = params.customParameters[key];
-      }
-    });
-  }
-
+function drawVisualization(
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  params: any,
+  time: number,
+  utils: TemplateUtils
+) {
   // Apply universal background
-  applyUniversalBackground(ctx, width, height, params);
+  utils.applyUniversalBackground(ctx, width, height, params);
+  
+  // Access universal properties
+  const fillColor = params.fillColor || '#3b82f6';
+  const strokeColor = params.strokeColor || '#1e293b';
+  const fillOpacity = params.fillOpacity ?? 0.8;
+  const strokeOpacity = params.strokeOpacity ?? 1;
 
   // Extract parameters
   const centerX = width / 2;
@@ -117,12 +88,18 @@ function drawVisualization(ctx, width, height, params, _generator, time) {
   const strokeVariation = params.strokeVariation || 0.3;
   const strokeTaper = params.strokeTaper || 0.4;
   const strokeTexture = params.strokeTexture || 0.2;
-  const advancedStrokeStyleNum = Math.round(params.advancedStrokeStyle || 0);
+  const advancedStrokeStyleNum = typeof params.advancedStrokeStyle === 'string' ? 
+    ['Basic', 'Brush', 'Calligraphy', 'Textured', 'Variable'].indexOf(params.advancedStrokeStyle) : 
+    Math.round(params.advancedStrokeStyle || 0);
   
-  const advancedFillTypeNum = Math.round(params.advancedFillType || 0);
+  const advancedFillTypeNum = typeof params.advancedFillType === 'string' ? 
+    ['Basic', 'Pattern', 'Texture'].indexOf(params.advancedFillType) : 
+    Math.round(params.advancedFillType || 0);
   const gradientComplexity = params.gradientComplexity || 0.3;
   
-  const colorHarmonyNum = Math.round(params.colorHarmony || 0);
+  const colorHarmonyNum = typeof params.colorHarmony === 'string' ? 
+    ['Monochromatic', 'Analogous', 'Complementary', 'Triadic', 'Split Complementary', 'Tetradic'].indexOf(params.colorHarmony) : 
+    Math.round(params.colorHarmony || 0);
   const colorSaturation = params.colorSaturation || 0.7;
   const colorContrast = params.colorContrast || 0.8;
 
@@ -587,26 +564,12 @@ function drawVisualization(ctx, width, height, params, _generator, time) {
   }
 }
 
-export const metadata: PresetMetadata = {
+const metadata = {
+  id: 'sophisticated-strokes',
   name: "🎨 Sophisticated Strokes",
   description: "Advanced line and fill styling with sophisticated color harmony and stroke techniques",
+  parameters,
   defaultParams: {
-    seed: "sophisticated-strokes",
-    backgroundColor: "#ffffff",
-    backgroundType: "solid",
-    backgroundGradientStart: "#ffffff",
-    backgroundGradientEnd: "#f0f0f0",
-    backgroundGradientDirection: 45,
-    fillType: "solid",
-    fillColor: "#3b82f6",
-    fillGradientStart: "#3b82f6",
-    fillGradientEnd: "#8b5cf6",
-    fillGradientDirection: 90,
-    fillOpacity: 0.8,
-    strokeType: "solid",
-    strokeColor: "#1e293b",
-    strokeWidth: 3,
-    strokeOpacity: 1,
     frequency: 0.8,
     amplitude: 100,
     complexity: 0.6,
@@ -622,16 +585,4 @@ export const metadata: PresetMetadata = {
   }
 };
 
-export const id = 'sophisticated-strokes';
-export const name = "Sophisticated Strokes";
-export const description = "Advanced line and fill styling with sophisticated color harmony and stroke techniques";
-export const defaultParams = metadata.defaultParams;
-export const parameters = PARAMETERS;
-export { drawVisualization };
-
-export const code = `// Sophisticated Strokes - Advanced line and fill styling
-const PARAMETERS = ${JSON.stringify(PARAMETERS, null, 2)};
-
-${applyUniversalBackground.toString()}
-
-${drawVisualization.toString()}`;
+export { parameters, metadata, drawVisualization };

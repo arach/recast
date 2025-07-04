@@ -1,101 +1,45 @@
+import type { ParameterDefinition, PresetMetadata } from './types';
+import { TemplateUtils } from './utils';
+
 // 💫 Neon Glow
-const PARAMETERS = {
-  // Universal Background Controls
-  backgroundColor: { type: 'color', default: "#0a0a0f", label: 'Background Color', category: 'Background' },
-  backgroundType: { type: 'select', options: [{"value":"transparent","label":"Transparent"},{"value":"solid","label":"Solid Color"},{"value":"gradient","label":"Gradient"}], default: "gradient", label: 'Background Type', category: 'Background' },
-  backgroundGradientStart: { type: 'color', default: "#0a0a0f", label: 'Gradient Start', category: 'Background', showIf: (params)=>params.backgroundType === 'gradient' },
-  backgroundGradientEnd: { type: 'color', default: "#000000", label: 'Gradient End', category: 'Background', showIf: (params)=>params.backgroundType === 'gradient' },
-  backgroundGradientDirection: { type: 'slider', min: 0, max: 360, step: 15, default: 45, label: 'Gradient Direction', category: 'Background', showIf: (params)=>params.backgroundType === 'gradient' },
-  
-  // Universal Fill Controls - Not applicable for neon effects
-  fillType: { type: 'select', options: [{"value":"none","label":"None"},{"value":"solid","label":"Solid Color"},{"value":"gradient","label":"Gradient"}], default: "none", label: 'Fill Type', category: 'Fill' },
-  fillColor: { type: 'color', default: "#00ffff", label: 'Fill Color', category: 'Fill', showIf: (params)=>params.fillType === 'solid' },
-  fillGradientStart: { type: 'color', default: "#00ffff", label: 'Gradient Start', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
-  fillGradientEnd: { type: 'color', default: "#0080ff", label: 'Gradient End', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
-  fillGradientDirection: { type: 'slider', min: 0, max: 360, step: 15, default: 90, label: 'Gradient Direction', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
-  fillOpacity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.8, label: 'Fill Opacity', category: 'Fill', showIf: (params)=>params.fillType !== 'none' },
-  
-  // Universal Stroke Controls - Not applicable for neon effects
-  strokeType: { type: 'select', options: [{"value":"none","label":"None"},{"value":"solid","label":"Solid"},{"value":"dashed","label":"Dashed"},{"value":"dotted","label":"Dotted"}], default: "none", label: 'Stroke Type', category: 'Stroke' },
-  strokeColor: { type: 'color', default: "#00ffff", label: 'Stroke Color', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
-  strokeWidth: { type: 'slider', min: 0, max: 10, step: 0.5, default: 2, label: 'Stroke Width', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
-  strokeOpacity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 1, label: 'Stroke Opacity', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
-  
+const parameters = {
   // Core neon shape
-  frequency: { type: 'slider', min: 0.5, max: 3, step: 0.1, default: 1.8, label: 'Electric Frequency' },
-  amplitude: { type: 'slider', min: 80, max: 200, step: 5, default: 140, label: 'Neon Size' },
-  complexity: { type: 'slider', min: 0.2, max: 1, step: 0.05, default: 0.6, label: 'Circuit Complexity' },
+  frequency: { type: 'slider', range: [0.5, 3, 0.1], default: 1.8, label: 'Electric Frequency' },
+  amplitude: { type: 'slider', range: [80, 200, 5], default: 140, label: 'Neon Size' },
+  complexity: { type: 'slider', range: [0.2, 1, 0.05], default: 0.6, label: 'Circuit Complexity' },
   
   // Neon style control
   neonStyle: {
     type: 'slider',
-    min: 0,
-    max: 4,
-    step: 1,
+    range: [0, 4, 1],
     default: 1,
     label: 'Neon Style (0=Tube, 1=Wire, 2=Plasma, 3=Laser, 4=Hologram)'
   },
   
   // Glow properties
-  glowIntensity: { type: 'slider', min: 0.3, max: 1, step: 0.05, default: 0.8, label: 'Glow Intensity' },
-  glowRadius: { type: 'slider', min: 10, max: 50, step: 2, default: 25, label: 'Glow Radius' },
-  glowLayers: { type: 'slider', min: 2, max: 6, step: 1, default: 4, label: 'Glow Layers' },
+  glowIntensity: { type: 'slider', range: [0.3, 1, 0.05], default: 0.8, label: 'Glow Intensity' },
+  glowRadius: { type: 'slider', range: [10, 50, 2], default: 25, label: 'Glow Radius' },
+  glowLayers: { type: 'slider', range: [2, 6, 1], default: 4, label: 'Glow Layers' },
   
   // Electric effects
-  electricSpark: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.4, label: 'Electric Sparks' },
-  energyFlow: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.6, label: 'Energy Flow' },
-  circuitBreaks: { type: 'slider', min: 0, max: 0.3, step: 0.02, default: 0.1, label: 'Circuit Breaks' },
+  electricSpark: { type: 'slider', range: [0, 1, 0.05], default: 0.4, label: 'Electric Sparks' },
+  energyFlow: { type: 'slider', range: [0, 1, 0.05], default: 0.6, label: 'Energy Flow' },
+  circuitBreaks: { type: 'slider', range: [0, 0.3, 0.02], default: 0.1, label: 'Circuit Breaks' },
   
   // Neon colors
-  neonHue: { type: 'slider', min: 0, max: 360, step: 10, default: 180, label: 'Neon Hue' },
-  colorShift: { type: 'slider', min: 0, max: 60, step: 5, default: 20, label: 'Color Shift Range' },
-  saturation: { type: 'slider', min: 0.8, max: 1, step: 0.02, default: 1, label: 'Color Saturation' },
+  neonHue: { type: 'slider', range: [0, 360, 10], default: 180, label: 'Neon Hue' },
+  colorShift: { type: 'slider', range: [0, 60, 5], default: 20, label: 'Color Shift Range' },
+  saturation: { type: 'slider', range: [0.8, 1, 0.02], default: 1, label: 'Color Saturation' },
   
   // Animation intensity
-  pulseSpeed: { type: 'slider', min: 0.5, max: 3, step: 0.1, default: 1.5, label: 'Pulse Speed' },
-  flicker: { type: 'slider', min: 0, max: 0.5, step: 0.05, default: 0.15, label: 'Neon Flicker' }
+  pulseSpeed: { type: 'slider', range: [0.5, 3, 0.1], default: 1.5, label: 'Pulse Speed' },
+  flicker: { type: 'slider', range: [0, 0.5, 0.05], default: 0.15, label: 'Neon Flicker' }
 };
 
-function applyUniversalBackground(ctx, width, height, params) {
-  if (!params.backgroundType || params.backgroundType === 'transparent') return;
-  
-  if (params.backgroundType === 'solid') {
-    ctx.fillStyle = params.backgroundColor || '#0a0a0f';
-    ctx.fillRect(0, 0, width, height);
-  } else if (params.backgroundType === 'gradient') {
-    // For neon glow, we use radial gradient by default for better effect
-    const bgGradient = ctx.createRadialGradient(
-      width * 0.5, height * 0.5, 0,
-      width * 0.5, height * 0.5, Math.max(width, height) * 0.8
-    );
-    bgGradient.addColorStop(0, params.backgroundGradientStart || '#0a0a0f');
-    bgGradient.addColorStop(0.7, '#050508');
-    bgGradient.addColorStop(1, params.backgroundGradientEnd || '#000000');
-    ctx.fillStyle = bgGradient;
-    ctx.fillRect(0, 0, width, height);
-  }
-}
 
-export { drawVisualization };
-
-
-function drawVisualization(ctx, width, height, params, _generator, time) {
-  // Parameter compatibility layer
-  if (params.customParameters) {
-    params.fillColor = params.fillColor || params.customParameters.fillColor;
-    params.strokeColor = params.strokeColor || params.customParameters.strokeColor;
-    params.backgroundColor = params.backgroundColor || params.customParameters.backgroundColor;
-    params.textColor = params.textColor || params.customParameters.textColor;
-    
-    Object.keys(params.customParameters).forEach(key => {
-      if (params[key] === undefined) {
-        params[key] = params.customParameters[key];
-      }
-    });
-  }
-
+function drawVisualization(ctx, width, height, params, _generator, time, utils) {
   // Apply universal background
-  applyUniversalBackground(ctx, width, height, params);
+  utils.applyUniversalBackground(ctx, width, height, params);
 
   // Extract parameters
   const centerX = width / 2;
@@ -374,42 +318,9 @@ function drawVisualization(ctx, width, height, params, _generator, time) {
   }
 }
 
-export const metadata = {
+const metadata = {
   name: "💫 Neon Glow",
-  description: "Cyberpunk-inspired glowing neon effects with electric energy and circuit aesthetics",
-  defaultParams: {
-    seed: "neon-glow-cyberpunk",
-    backgroundType: "gradient",
-    backgroundGradientStart: "#0a0a0f",
-    backgroundGradientEnd: "#000000",
-    fillType: "none",
-    strokeType: "none",
-    frequency: 1.8,
-    amplitude: 140,
-    complexity: 0.6,
-    neonStyle: 1,
-    glowIntensity: 0.8,
-    glowRadius: 25,
-    glowLayers: 4,
-    electricSpark: 0.4,
-    energyFlow: 0.6,
-    circuitBreaks: 0.1,
-    neonHue: 180,
-    colorShift: 20,
-    saturation: 1,
-    pulseSpeed: 1.5,
-    flicker: 0.15
-  }
+  description: "Cyberpunk-inspired glowing neon effects with electric energy and circuit aesthetics"
 };
 
-export const id = 'neon-glow';
-export const name = "💫 Neon Glow";
-export const description = "Cyberpunk-inspired glowing neon effects with electric energy and circuit aesthetics";
-export const defaultParams = metadata.defaultParams;
-
-export const code = `// 💫 Neon Glow
-const PARAMETERS = ${JSON.stringify(PARAMETERS, null, 2)};
-
-${applyUniversalBackground.toString()}
-
-${drawVisualization.toString()}`;
+export { parameters, metadata, drawVisualization };

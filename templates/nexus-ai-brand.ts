@@ -1,99 +1,78 @@
-import type { ParameterDefinition, PresetMetadata } from './types';
+import type { TemplateUtils } from '@/lib/template-utils';
 
 // NEXUS AI Brand - Neural kinetic energy with network connections
-const PARAMETERS = {
-  // Universal Background Controls
-  backgroundColor: { type: 'color', default: "#0a0f1c", label: 'Background Color', category: 'Background' },
-  backgroundType: { type: 'select', options: [{"value":"transparent","label":"Transparent"},{"value":"solid","label":"Solid Color"},{"value":"gradient","label":"Gradient"}], default: "gradient", label: 'Background Type', category: 'Background' },
-  backgroundGradientStart: { type: 'color', default: "#0a0f1c", label: 'Gradient Start', category: 'Background', showIf: (params)=>params.backgroundType === 'gradient' },
-  backgroundGradientEnd: { type: 'color', default: "#020617", label: 'Gradient End', category: 'Background', showIf: (params)=>params.backgroundType === 'gradient' },
-  backgroundGradientDirection: { type: 'slider', min: 0, max: 360, step: 15, default: 135, label: 'Gradient Direction', category: 'Background', showIf: (params)=>params.backgroundType === 'gradient' },
-  
-  // Universal Fill Controls
-  fillType: { type: 'select', options: [{"value":"none","label":"None"},{"value":"solid","label":"Solid Color"},{"value":"gradient","label":"Gradient"}], default: "gradient", label: 'Fill Type', category: 'Fill' },
-  fillColor: { type: 'color', default: "#3b82f6", label: 'Fill Color', category: 'Fill', showIf: (params)=>params.fillType === 'solid' },
-  fillGradientStart: { type: 'color', default: "#1e40af", label: 'Gradient Start', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
-  fillGradientEnd: { type: 'color', default: "#60a5fa", label: 'Gradient End', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
-  fillGradientDirection: { type: 'slider', min: 0, max: 360, step: 15, default: 45, label: 'Gradient Direction', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
-  fillOpacity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.9, label: 'Fill Opacity', category: 'Fill', showIf: (params)=>params.fillType !== 'none' },
-  
-  // Universal Stroke Controls
-  strokeType: { type: 'select', options: [{"value":"none","label":"None"},{"value":"solid","label":"Solid"},{"value":"dashed","label":"Dashed"},{"value":"dotted","label":"Dotted"}], default: "solid", label: 'Stroke Type', category: 'Stroke' },
-  strokeColor: { type: 'color', default: "#60a5fa", label: 'Stroke Color', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
-  strokeWidth: { type: 'slider', min: 0, max: 10, step: 0.5, default: 2, label: 'Stroke Width', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
-  strokeOpacity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.8, label: 'Stroke Opacity', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
-  
+const parameters = {
   // Core NEXUS identity parameters - locked for brand consistency
-  frequency: { type: 'slider', min: 1.2, max: 1.6, step: 0.1, default: 1.4, label: 'Neural Frequency' },
-  amplitude: { type: 'slider', min: 120, max: 160, step: 5, default: 140, label: 'Presence Scale' },
+  frequency: {
+    default: 1.4,
+    range: [1.2, 1.6, 0.1]
+  },
+  amplitude: {
+    default: 140,
+    range: [120, 160, 5]
+  },
   
   // Neural network architecture
-  nodeCount: { type: 'slider', min: 5, max: 8, step: 1, default: 6, label: 'Neural Nodes' },
-  connectionDensity: { type: 'slider', min: 0.6, max: 1, step: 0.05, default: 0.85, label: 'Network Density' },
-  synapseGlow: { type: 'slider', min: 0.5, max: 1, step: 0.05, default: 0.8, label: 'Synapse Intensity' },
+  nodeCount: {
+    default: 6,
+    range: [5, 8, 1]
+  },
+  connectionDensity: {
+    default: 0.85,
+    range: [0.6, 1, 0.05]
+  },
+  synapseGlow: {
+    default: 0.8,
+    range: [0.5, 1, 0.05]
+  },
   
   // NEXUS kinetic energy
-  kineticFlow: { type: 'slider', min: 0.7, max: 1, step: 0.05, default: 0.9, label: 'Energy Flow' },
-  pulsePower: { type: 'slider', min: 0.6, max: 1, step: 0.05, default: 0.8, label: 'Neural Pulse' },
+  kineticFlow: {
+    default: 0.9,
+    range: [0.7, 1, 0.05]
+  },
+  pulsePower: {
+    default: 0.8,
+    range: [0.6, 1, 0.05]
+  },
   
   // Premium materials (locked to carbon for NEXUS)
-  surfaceRefinement: { type: 'slider', min: 0.7, max: 1, step: 0.05, default: 0.9, label: 'Surface Quality' },
-  specularShine: { type: 'slider', min: 0.4, max: 0.8, step: 0.05, default: 0.6, label: 'Metallic Shine' },
+  surfaceRefinement: {
+    default: 0.9,
+    range: [0.7, 1, 0.05]
+  },
+  specularShine: {
+    default: 0.6,
+    range: [0.4, 0.8, 0.05]
+  },
   
   // NEXUS color system (locked to brand palette)
-  chromaShift: { type: 'slider', min: 0, max: 30, step: 5, default: 10, label: 'Color Variance' },
-  energyBrightness: { type: 'slider', min: 0.6, max: 1, step: 0.05, default: 0.8, label: 'Energy Luminance' }
-};
-
-function applyUniversalBackground(ctx: CanvasRenderingContext2D, width: number, height: number, params: Record<string, any>) {
-  switch (params.backgroundType) {
-    case 'transparent':
-      ctx.clearRect(0, 0, width, height);
-      break;
-    case 'gradient':
-      // Create radial gradient for NEXUS AI brand
-      const bgGradient = ctx.createRadialGradient(
-        width * 0.3, height * 0.2, 0,
-        width * 0.7, height * 0.8, Math.max(width, height)
-      );
-      bgGradient.addColorStop(0, params.backgroundGradientStart || '#0a0f1c');
-      bgGradient.addColorStop(0.6, '#0f172a');
-      bgGradient.addColorStop(1, params.backgroundGradientEnd || '#020617');
-      ctx.fillStyle = bgGradient;
-      ctx.fillRect(0, 0, width, height);
-      break;
-    case 'solid':
-    default:
-      ctx.fillStyle = params.backgroundColor || '#0a0f1c';
-      ctx.fillRect(0, 0, width, height);
-      break;
+  chromaShift: {
+    default: 10,
+    range: [0, 30, 5]
+  },
+  energyBrightness: {
+    default: 0.8,
+    range: [0.6, 1, 0.05]
   }
-}
+};
 
 function drawVisualization(
   ctx: CanvasRenderingContext2D,
   width: number,
   height: number,
-  params: Record<string, any>,
-  _generator: any,
-  time: number
+  params: any,
+  time: number,
+  utils: TemplateUtils
 ) {
-  // Parameter compatibility layer
-  if (params.customParameters) {
-    params.fillColor = params.fillColor || params.customParameters.fillColor;
-    params.strokeColor = params.strokeColor || params.customParameters.strokeColor;
-    params.backgroundColor = params.backgroundColor || params.customParameters.backgroundColor;
-    params.textColor = params.textColor || params.customParameters.textColor;
-    
-    Object.keys(params.customParameters).forEach(key => {
-      if (params[key] === undefined) {
-        params[key] = params.customParameters[key];
-      }
-    });
-  }
-
   // Apply universal background
-  applyUniversalBackground(ctx, width, height, params);
+  utils.applyUniversalBackground(ctx, width, height, params);
+  
+  // Access universal properties
+  const fillColor = params.fillColor || '#3b82f6';
+  const strokeColor = params.strokeColor || '#60a5fa';
+  const fillOpacity = params.fillOpacity ?? 0.9;
+  const strokeOpacity = params.strokeOpacity ?? 0.8;
 
   // Extract NEXUS parameters
   const centerX = width / 2;
@@ -299,26 +278,12 @@ function drawVisualization(
   }
 }
 
-export const metadata: PresetMetadata = {
+const metadata = {
+  id: 'nexus-ai-brand',
   name: "🔮 NEXUS AI",
   description: "Neural kinetic energy brand with synaptic connections and high-tech carbon materials",
+  parameters,
   defaultParams: {
-    seed: "nexus-ai-neural-kinetic-2025",
-    backgroundColor: "#0a0f1c",
-    backgroundType: "gradient",
-    backgroundGradientStart: "#0a0f1c",
-    backgroundGradientEnd: "#020617",
-    backgroundGradientDirection: 135,
-    fillType: "gradient",
-    fillColor: "#3b82f6",
-    fillGradientStart: "#1e40af",
-    fillGradientEnd: "#60a5fa",
-    fillGradientDirection: 45,
-    fillOpacity: 0.9,
-    strokeType: "solid",
-    strokeColor: "#60a5fa",
-    strokeWidth: 2,
-    strokeOpacity: 0.8,
     frequency: 1.4,
     amplitude: 140,
     nodeCount: 6,
@@ -333,13 +298,4 @@ export const metadata: PresetMetadata = {
   }
 };
 
-export const id = 'nexus-ai-brand';
-export const name = "NEXUS AI";
-export const description = "Neural kinetic energy brand with synaptic connections and high-tech carbon materials";
-export const defaultParams = metadata.defaultParams;
-export const parameters = PARAMETERS;
-export { drawVisualization };
-
-export const code = `${applyUniversalBackground.toString()}
-
-${drawVisualization.toString()}`;
+export { parameters, metadata, drawVisualization };

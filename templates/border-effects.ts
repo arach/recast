@@ -1,127 +1,79 @@
-import type { ParameterDefinition, PresetMetadata } from './types';
+import type { TemplateUtils } from '@/lib/template-utils';
 
-// Border Effects - Advanced border styling and treatments
-const PARAMETERS = {
-  // Universal Background Controls
-  backgroundColor: { type: 'color', default: "#ffffff", label: 'Background Color', category: 'Background' },
-  backgroundType: { type: 'select', options: [{"value":"transparent","label":"Transparent"},{"value":"solid","label":"Solid Color"},{"value":"gradient","label":"Gradient"}], default: "solid", label: 'Background Type', category: 'Background' },
-  backgroundGradientStart: { type: 'color', default: "#ffffff", label: 'Gradient Start', category: 'Background', showIf: (params)=>params.backgroundType === 'gradient' },
-  backgroundGradientEnd: { type: 'color', default: "#f0f0f0", label: 'Gradient End', category: 'Background', showIf: (params)=>params.backgroundType === 'gradient' },
-  backgroundGradientDirection: { type: 'slider', min: 0, max: 360, step: 15, default: 45, label: 'Gradient Direction', category: 'Background', showIf: (params)=>params.backgroundType === 'gradient' },
-  
-  // Universal Fill Controls
-  fillType: { type: 'select', options: [{"value":"none","label":"None"},{"value":"solid","label":"Solid Color"},{"value":"gradient","label":"Gradient"}], default: "solid", label: 'Fill Type', category: 'Fill' },
-  fillColor: { type: 'color', default: "#e3f2fd", label: 'Fill Color', category: 'Fill', showIf: (params)=>params.fillType === 'solid' },
-  fillGradientStart: { type: 'color', default: "#e3f2fd", label: 'Gradient Start', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
-  fillGradientEnd: { type: 'color', default: "#bbdefb", label: 'Gradient End', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
-  fillGradientDirection: { type: 'slider', min: 0, max: 360, step: 15, default: 90, label: 'Gradient Direction', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
-  fillOpacity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.8, label: 'Fill Opacity', category: 'Fill', showIf: (params)=>params.fillType !== 'none' },
-  
-  // Universal Stroke Controls
-  strokeType: { type: 'select', options: [{"value":"none","label":"None"},{"value":"solid","label":"Solid"},{"value":"dashed","label":"Dashed"},{"value":"dotted","label":"Dotted"}], default: "solid", label: 'Stroke Type', category: 'Stroke' },
-  strokeColor: { type: 'color', default: "#1976d2", label: 'Stroke Color', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
-  strokeWidth: { type: 'slider', min: 0, max: 10, step: 0.5, default: 2, label: 'Stroke Width', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
-  strokeOpacity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 1, label: 'Stroke Opacity', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
-  
-  // Basic form
-  frequency: { type: 'slider', min: 0.1, max: 2, step: 0.1, default: 0.6, label: 'Form Energy' },
-  amplitude: { type: 'slider', min: 60, max: 180, step: 5, default: 120, label: 'Scale' },
-  complexity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.4, label: 'Form Complexity' },
-  
-  // Border core properties
-  borderWidth: { type: 'slider', min: 1, max: 20, step: 1, default: 4, label: 'Border Width' },
+const parameters = {
+  frequency: {
+    default: 0.6,
+    range: [0.1, 2, 0.1]
+  },
+  amplitude: {
+    default: 120,
+    range: [60, 180, 5]
+  },
+  complexity: {
+    default: 0.4,
+    range: [0, 1, 0.05]
+  },
+  borderWidth: {
+    default: 4,
+    range: [1, 20, 1]
+  },
   borderStyle: {
-    type: 'slider',
-    min: 0,
-    max: 7,
-    step: 1,
     default: 0,
-    label: 'Border Style (0=Solid, 1=Dashed, 2=Dotted, 3=Double, 4=Groove, 5=Ridge, 6=Inset, 7=Outset)'
+    range: [0, 7, 1]
   },
-  
-  // Corner treatments
-  cornerRadius: { type: 'slider', min: 0, max: 50, step: 2, default: 8, label: 'Corner Radius' },
+  cornerRadius: {
+    default: 8,
+    range: [0, 50, 2]
+  },
   cornerStyle: {
-    type: 'slider',
-    min: 0,
-    max: 3,
-    step: 1,
     default: 0,
-    label: 'Corner Style (0=Rounded, 1=Chamfered, 2=Notched, 3=Organic)'
+    range: [0, 3, 1]
   },
-  
-  // Border effects
-  borderGlow: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.3, label: 'Border Glow' },
-  borderShadow: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.4, label: 'Border Shadow' },
-  borderGradient: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.5, label: 'Border Gradient' },
-  
-  // Multi-border system
-  borderLayers: { type: 'slider', min: 1, max: 4, step: 1, default: 1, label: 'Border Layers' },
-  layerSpacing: { type: 'slider', min: 2, max: 15, step: 1, default: 6, label: 'Layer Spacing' },
-  
-  // Animation
-  borderPulse: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.2, label: 'Border Pulse' },
-  borderFlow: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.3, label: 'Border Flow Animation' },
-  
-  // Color sophistication
-  borderHue: { type: 'slider', min: 0, max: 360, step: 10, default: 200, label: 'Border Hue' },
-  borderSaturation: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.7, label: 'Border Saturation' },
-  borderContrast: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.8, label: 'Border Contrast' }
+  borderGlow: {
+    default: 0.3,
+    range: [0, 1, 0.05]
+  },
+  borderShadow: {
+    default: 0.4,
+    range: [0, 1, 0.05]
+  },
+  borderGradient: {
+    default: 0.5,
+    range: [0, 1, 0.05]
+  },
+  borderLayers: {
+    default: 1,
+    range: [1, 4, 1]
+  },
+  layerSpacing: {
+    default: 6,
+    range: [2, 15, 1]
+  },
+  borderPulse: {
+    default: 0.2,
+    range: [0, 1, 0.05]
+  },
+  borderFlow: {
+    default: 0.3,
+    range: [0, 1, 0.05]
+  },
+  borderHue: {
+    default: 200,
+    range: [0, 360, 10]
+  },
+  borderSaturation: {
+    default: 0.7,
+    range: [0, 1, 0.05]
+  },
+  borderContrast: {
+    default: 0.8,
+    range: [0, 1, 0.05]
+  }
 };
 
-function applyUniversalBackground(ctx: CanvasRenderingContext2D, width: number, height: number, params: Record<string, any>) {
-  switch (params.backgroundType) {
-    case 'transparent':
-      ctx.clearRect(0, 0, width, height);
-      break;
-    case 'gradient':
-      const angle = (params.backgroundGradientDirection || 45) * Math.PI / 180;
-      const dx = Math.cos(angle);
-      const dy = Math.sin(angle);
-      const l = Math.sqrt(width * width + height * height);
-      const x0 = width/2 - dx * l/2;
-      const y0 = height/2 - dy * l/2;
-      const x1 = width/2 + dx * l/2;
-      const y1 = height/2 + dy * l/2;
-      
-      const gradient = ctx.createLinearGradient(x0, y0, x1, y1);
-      gradient.addColorStop(0, params.backgroundGradientStart || '#ffffff');
-      gradient.addColorStop(1, params.backgroundGradientEnd || '#f0f0f0');
-      ctx.fillStyle = gradient;
-      ctx.fillRect(0, 0, width, height);
-      break;
-    case 'solid':
-    default:
-      ctx.fillStyle = params.backgroundColor || '#ffffff';
-      ctx.fillRect(0, 0, width, height);
-      break;
-  }
-}
-
-function drawVisualization(
-  ctx: CanvasRenderingContext2D,
-  width: number,
-  height: number,
-  params: Record<string, any>,
-  _generator: any,
-  time: number
-) {
-  // Parameter compatibility layer
-  if (params.customParameters) {
-    params.fillColor = params.fillColor || params.customParameters.fillColor;
-    params.strokeColor = params.strokeColor || params.customParameters.strokeColor;
-    params.backgroundColor = params.backgroundColor || params.customParameters.backgroundColor;
-    params.textColor = params.textColor || params.customParameters.textColor;
-    
-    Object.keys(params.customParameters).forEach(key => {
-      if (params[key] === undefined) {
-        params[key] = params.customParameters[key];
-      }
-    });
-  }
-
+function drawVisualization(ctx: CanvasRenderingContext2D, width: number, height: number, params: any, time: number, utils: TemplateUtils) {
   // Apply universal background
-  applyUniversalBackground(ctx, width, height, params);
+  utils.applyUniversalBackground(ctx, width, height, params);
 
   // Extract parameters
   const centerX = width / 2;
@@ -162,34 +114,12 @@ function drawVisualization(
   const borderColors = generateBorderColors(borderHue, borderSaturation, borderContrast, time);
 
   // Apply fill if needed
-  if (params.fillType !== 'none') {
+  if (params.fillColor && params.fillOpacity > 0) {
     ctx.save();
-    ctx.globalAlpha = params.fillOpacity || 0.8;
+    ctx.globalAlpha = params.fillOpacity;
+    ctx.fillStyle = params.fillColor;
     
     drawBorderPath(ctx, points, 0, cornerRadius, cornerStyleNum);
-    
-    switch (params.fillType) {
-      case 'gradient':
-        const fillAngle = (params.fillGradientDirection || 90) * Math.PI / 180;
-        const fdx = Math.cos(fillAngle);
-        const fdy = Math.sin(fillAngle);
-        const fl = Math.sqrt(width * width + height * height);
-        const fx0 = centerX - fdx * fl/2;
-        const fy0 = centerY - fdy * fl/2;
-        const fx1 = centerX + fdx * fl/2;
-        const fy1 = centerY + fdy * fl/2;
-        
-        const fillGradient = ctx.createLinearGradient(fx0, fy0, fx1, fy1);
-        fillGradient.addColorStop(0, params.fillGradientStart || '#e3f2fd');
-        fillGradient.addColorStop(1, params.fillGradientEnd || '#bbdefb');
-        ctx.fillStyle = fillGradient;
-        break;
-      case 'solid':
-      default:
-        ctx.fillStyle = params.fillColor || '#e3f2fd';
-        break;
-    }
-    
     ctx.fill();
     ctx.restore();
   }
@@ -599,26 +529,12 @@ function drawVisualization(
   }
 }
 
-export const metadata: PresetMetadata = {
+const metadata = {
+  id: 'border-effects',
   name: "🔲 Border Effects",
   description: "Advanced border styling with multiple layers, corner treatments, shadows, glows, and animations",
+  parameters,
   defaultParams: {
-    seed: "border-effects",
-    backgroundColor: "#ffffff",
-    backgroundType: "solid",
-    backgroundGradientStart: "#ffffff",
-    backgroundGradientEnd: "#f0f0f0",
-    backgroundGradientDirection: 45,
-    fillType: "solid",
-    fillColor: "#e3f2fd",
-    fillGradientStart: "#e3f2fd",
-    fillGradientEnd: "#bbdefb",
-    fillGradientDirection: 90,
-    fillOpacity: 0.8,
-    strokeType: "solid",
-    strokeColor: "#1976d2",
-    strokeWidth: 2,
-    strokeOpacity: 1,
     frequency: 0.6,
     amplitude: 120,
     complexity: 0.4,
@@ -639,13 +555,4 @@ export const metadata: PresetMetadata = {
   }
 };
 
-export const id = 'border-effects';
-export const name = "Border Effects";
-export const description = "Advanced border styling with multiple layers, corner treatments, shadows, glows, and animations";
-export const defaultParams = metadata.defaultParams;
-export const parameters = PARAMETERS;
-export { drawVisualization };
-
-export const code = `${applyUniversalBackground.toString()}
-
-${drawVisualization.toString()}`;
+export { parameters, metadata, drawVisualization };

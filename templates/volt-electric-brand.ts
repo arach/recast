@@ -1,103 +1,100 @@
-import type { ParameterDefinition, PresetMetadata } from './types';
+import type { TemplateUtils } from '@/lib/template-utils';
 
 // VOLT Electric Brand - High-energy borders with electric flow
-const PARAMETERS = {
-  // Universal Background Controls
-  backgroundColor: { type: 'color', default: "#0f0f23", label: 'Background Color', category: 'Background' },
-  backgroundType: { type: 'select', options: [{"value":"transparent","label":"Transparent"},{"value":"solid","label":"Solid Color"},{"value":"gradient","label":"Gradient"}], default: "gradient", label: 'Background Type', category: 'Background' },
-  backgroundGradientStart: { type: 'color', default: "#0f0f23", label: 'Gradient Start', category: 'Background', showIf: (params)=>params.backgroundType === 'gradient' },
-  backgroundGradientEnd: { type: 'color', default: "#16213e", label: 'Gradient End', category: 'Background', showIf: (params)=>params.backgroundType === 'gradient' },
-  backgroundGradientDirection: { type: 'slider', min: 0, max: 360, step: 15, default: 90, label: 'Gradient Direction', category: 'Background', showIf: (params)=>params.backgroundType === 'gradient' },
-  
-  // Universal Fill Controls
-  fillType: { type: 'select', options: [{"value":"none","label":"None"},{"value":"solid","label":"Solid Color"},{"value":"gradient","label":"Gradient"}], default: "gradient", label: 'Fill Type', category: 'Fill' },
-  fillColor: { type: 'color', default: "#ffd700", label: 'Fill Color', category: 'Fill', showIf: (params)=>params.fillType === 'solid' },
-  fillGradientStart: { type: 'color', default: "#ffeb3b", label: 'Gradient Start', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
-  fillGradientEnd: { type: 'color', default: "#ff9800", label: 'Gradient End', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
-  fillGradientDirection: { type: 'slider', min: 0, max: 360, step: 15, default: 45, label: 'Gradient Direction', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
-  fillOpacity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.6, label: 'Fill Opacity', category: 'Fill', showIf: (params)=>params.fillType !== 'none' },
-  
-  // Universal Stroke Controls
-  strokeType: { type: 'select', options: [{"value":"none","label":"None"},{"value":"solid","label":"Solid"},{"value":"dashed","label":"Dashed"},{"value":"dotted","label":"Dotted"}], default: "solid", label: 'Stroke Type', category: 'Stroke' },
-  strokeColor: { type: 'color', default: "#ffd700", label: 'Stroke Color', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
-  strokeWidth: { type: 'slider', min: 0, max: 10, step: 0.5, default: 8, label: 'Stroke Width', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
-  strokeOpacity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 1, label: 'Stroke Opacity', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
-  
+const parameters = {
   // Core VOLT energy - high frequency electric pulse
-  frequency: { type: 'slider', min: 1.8, max: 2.4, step: 0.1, default: 2.1, label: 'Electric Frequency' },
-  amplitude: { type: 'slider', min: 140, max: 180, step: 5, default: 160, label: 'Energy Scale' },
+  frequency: {
+    default: 2.1,
+    range: [1.8, 2.4, 0.1]
+  },
+  amplitude: {
+    default: 160,
+    range: [140, 180, 5]
+  },
   
   // Electric form generation
-  energyComplexity: { type: 'slider', min: 0.5, max: 1, step: 0.05, default: 0.7, label: 'Energy Complexity' },
-  voltageSpike: { type: 'slider', min: 0.6, max: 1, step: 0.05, default: 0.8, label: 'Voltage Spikes' },
-  electricPulse: { type: 'slider', min: 0.7, max: 1, step: 0.05, default: 0.9, label: 'Electric Pulse' },
+  energyComplexity: {
+    default: 0.7,
+    range: [0.5, 1, 0.05]
+  },
+  voltageSpike: {
+    default: 0.8,
+    range: [0.6, 1, 0.05]
+  },
+  electricPulse: {
+    default: 0.9,
+    range: [0.7, 1, 0.05]
+  },
   
   // VOLT border system - electric channels
-  borderVoltage: { type: 'slider', min: 4, max: 12, step: 1, default: 8, label: 'Border Voltage' },
-  electricLayers: { type: 'slider', min: 2, max: 4, step: 1, default: 3, label: 'Electric Layers' },
-  channelSpacing: { type: 'slider', min: 4, max: 10, step: 1, default: 6, label: 'Channel Spacing' },
+  borderVoltage: {
+    default: 8,
+    range: [4, 12, 1]
+  },
+  electricLayers: {
+    default: 3,
+    range: [2, 4, 1]
+  },
+  channelSpacing: {
+    default: 6,
+    range: [4, 10, 1]
+  },
   
   // Electric effects
-  electricGlow: { type: 'slider', min: 0.7, max: 1, step: 0.05, default: 0.9, label: 'Electric Glow' },
-  energyFlow: { type: 'slider', min: 0.6, max: 1, step: 0.05, default: 0.8, label: 'Energy Flow Speed' },
-  sparkIntensity: { type: 'slider', min: 0.5, max: 1, step: 0.05, default: 0.7, label: 'Spark Intensity' },
+  electricGlow: {
+    default: 0.9,
+    range: [0.7, 1, 0.05]
+  },
+  energyFlow: {
+    default: 0.8,
+    range: [0.6, 1, 0.05]
+  },
+  sparkIntensity: {
+    default: 0.7,
+    range: [0.5, 1, 0.05]
+  },
   
   // VOLT electric color system
-  electricHue: { type: 'slider', min: 35, max: 65, step: 5, default: 45, label: 'Electric Hue (Yellow-Orange)' },
-  voltageShift: { type: 'slider', min: 0, max: 20, step: 2, default: 8, label: 'Voltage Color Shift' },
-  energyBrightness: { type: 'slider', min: 0.8, max: 1, step: 0.05, default: 0.95, label: 'Energy Brightness' },
+  electricHue: {
+    default: 45,
+    range: [35, 65, 5]
+  },
+  voltageShift: {
+    default: 8,
+    range: [0, 20, 2]
+  },
+  energyBrightness: {
+    default: 0.95,
+    range: [0.8, 1, 0.05]
+  },
   
   // Electric animation
-  currentFlow: { type: 'slider', min: 0.7, max: 1, step: 0.05, default: 0.85, label: 'Current Flow Rate' },
-  arcDischarge: { type: 'slider', min: 0.4, max: 0.8, step: 0.05, default: 0.6, label: 'Arc Discharge' }
-};
-
-function applyUniversalBackground(ctx: CanvasRenderingContext2D, width: number, height: number, params: Record<string, any>) {
-  const backgroundType = params.backgroundType || 'gradient';
-  
-  if (backgroundType === 'transparent') {
-    ctx.clearRect(0, 0, width, height);
-  } else if (backgroundType === 'solid') {
-    ctx.fillStyle = params.backgroundColor || '#0f0f23';
-    ctx.fillRect(0, 0, width, height);
-  } else if (backgroundType === 'gradient') {
-    // For VOLT, default to radial gradient
-    const bgGradient = ctx.createRadialGradient(
-      width * 0.5, height * 0.5, 0,
-      width * 0.5, height * 0.5, Math.max(width, height) * 0.8
-    );
-    bgGradient.addColorStop(0, params.backgroundGradientStart || '#0f0f23');
-    bgGradient.addColorStop(0.6, '#1a1a2e');
-    bgGradient.addColorStop(1, params.backgroundGradientEnd || '#16213e');
-    ctx.fillStyle = bgGradient;
-    ctx.fillRect(0, 0, width, height);
+  currentFlow: {
+    default: 0.85,
+    range: [0.7, 1, 0.05]
+  },
+  arcDischarge: {
+    default: 0.6,
+    range: [0.4, 0.8, 0.05]
   }
-}
+};
 
 function drawVisualization(
   ctx: CanvasRenderingContext2D,
   width: number,
   height: number,
-  params: Record<string, any>,
-  _generator: any,
-  time: number
+  params: any,
+  time: number,
+  utils: TemplateUtils
 ) {
-  // Parameter compatibility layer
-  if (params.customParameters) {
-    params.fillColor = params.fillColor || params.customParameters.fillColor;
-    params.strokeColor = params.strokeColor || params.customParameters.strokeColor;
-    params.backgroundColor = params.backgroundColor || params.customParameters.backgroundColor;
-    params.textColor = params.textColor || params.customParameters.textColor;
-    
-    Object.keys(params.customParameters).forEach(key => {
-      if (params[key] === undefined) {
-        params[key] = params.customParameters[key];
-      }
-    });
-  }
-
   // Apply universal background
-  applyUniversalBackground(ctx, width, height, params);
+  utils.applyUniversalBackground(ctx, width, height, params);
+  
+  // Access universal properties
+  const fillColor = params.fillColor || '#ffd700';
+  const strokeColor = params.strokeColor || '#ffd700';
+  const fillOpacity = params.fillOpacity ?? 0.6;
+  const strokeOpacity = params.strokeOpacity ?? 1;
 
   // Extract VOLT parameters
   const centerX = width / 2;
@@ -434,30 +431,12 @@ function drawVisualization(
   }
 }
 
-export const metadata: PresetMetadata = {
+const metadata = {
+  id: 'volt-electric-brand',
   name: "⚡ VOLT Electric",
   description: "High-energy electric vehicle brand with voltage borders, energy flow, and electric spark effects",
+  parameters,
   defaultParams: {
-    seed: "volt-electric-energy-dynamic-ev",
-    // Background
-    backgroundColor: "#0f0f23",
-    backgroundType: "gradient",
-    backgroundGradientStart: "#0f0f23",
-    backgroundGradientEnd: "#16213e",
-    backgroundGradientDirection: 90,
-    // Fill
-    fillType: "gradient",
-    fillColor: "#ffd700",
-    fillGradientStart: "#ffeb3b",
-    fillGradientEnd: "#ff9800",
-    fillGradientDirection: 45,
-    fillOpacity: 0.6,
-    // Stroke
-    strokeType: "solid",
-    strokeColor: "#ffd700",
-    strokeWidth: 8,
-    strokeOpacity: 1,
-    // VOLT specific
     frequency: 2.1,
     amplitude: 160,
     energyComplexity: 0.7,
@@ -477,17 +456,4 @@ export const metadata: PresetMetadata = {
   }
 };
 
-export const id = 'volt-electric-brand';
-export const name = "⚡ VOLT Electric";
-export const description = "High-energy electric vehicle brand with voltage borders, energy flow, and electric spark effects";
-export const defaultParams = metadata.defaultParams;
-
-export const parameters: Record<string, ParameterDefinition> = PARAMETERS;
-export { drawVisualization };
-
-export const code = `// VOLT Electric Brand - High-energy borders with electric flow
-const PARAMETERS = ${JSON.stringify(PARAMETERS, null, 2)};
-
-${applyUniversalBackground.toString()}
-
-${drawVisualization.toString()}`;
+export { parameters, metadata, drawVisualization };
