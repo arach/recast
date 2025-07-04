@@ -287,6 +287,11 @@ export function HybridCanvas({
       
       {/* Logos */}
       {logos.map(logo => {
+        // Skip hidden logos
+        if (logo.visible === false) {
+          return null
+        }
+        
         // Debug logging for templateId issues
         if (typeof logo.templateId !== 'string') {
           console.error(`🚨 Invalid templateId for logo ${logo.id}:`, {
@@ -296,11 +301,11 @@ export function HybridCanvas({
           })
         }
         
-        // Simple visibility check
-        const isVisible = logo.position.x >= -offset.x - 600 && 
-                         logo.position.x <= -offset.x + viewport.width/zoom + 600 &&
-                         logo.position.y >= -offset.y - 600 && 
-                         logo.position.y <= -offset.y + viewport.height/zoom + 600
+        // Simple viewport check for performance
+        const isInViewport = logo.position.x >= -offset.x - 600 && 
+                            logo.position.x <= -offset.x + viewport.width/zoom + 600 &&
+                            logo.position.y >= -offset.y - 600 && 
+                            logo.position.y <= -offset.y + viewport.height/zoom + 600
         
         return (
           <g 
@@ -330,8 +335,9 @@ export function HybridCanvas({
               strokeWidth={selectedLogoId === logo.id ? "2" : "1"}
             />
             
-            {/* Canvas in foreignObject */}
-            <foreignObject 
+            {/* Canvas in foreignObject - only render if in viewport */}
+            {isInViewport && (
+              <foreignObject 
               width="600" 
               height="600"
               style={{ pointerEvents: 'none' }}
@@ -346,6 +352,7 @@ export function HybridCanvas({
                 currentTime={currentTime}
               />
             </foreignObject>
+            )}
             
             {/* Invisible interaction rectangle */}
             <rect
@@ -371,7 +378,7 @@ export function HybridCanvas({
             </>
           )}
         </g>
-        )
+      )
       })}
     </svg>
   )
