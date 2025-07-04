@@ -25,15 +25,15 @@ export function useTemplateCode(templateId: string | undefined) {
     // Check if already loading
     if (loadingCache.has(templateId)) {
       console.log(`⏳ Already loading template: ${templateId}`)
-      setLoading(true)
+      // Don't set loading state here - it causes infinite loops!
       loadingCache.get(templateId)!
         .then((codeText) => {
           setCode(codeText)
-          setLoading(false)
+          // Don't set loading false here either - let the original promise handle it
         })
         .catch((err) => {
           setError(err instanceof Error ? err.message : 'Failed to fetch template')
-          setLoading(false)
+          // Don't set loading false here either - let the original promise handle it
         })
       return
     }

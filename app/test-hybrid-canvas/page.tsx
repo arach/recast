@@ -86,7 +86,7 @@ export default function TestHybridCanvas() {
         setTestLogosCreated(true)
       }, 100)
     }
-  }, [logos.length, testLogosCreated, addLogo, updateLogo, updateLogoPosition])
+  }, [logos.length, testLogosCreated])
   
   const handleAddLogo = () => {
     const colors = [

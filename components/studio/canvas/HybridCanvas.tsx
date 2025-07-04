@@ -291,6 +291,12 @@ export function HybridCanvas({ animating: animatingProp = false }: HybridCanvasP
           })
         }
         
+        // Simple visibility check
+        const isVisible = logo.position.x >= -offset.x - 600 && 
+                         logo.position.x <= -offset.x + viewport.width/zoom + 600 &&
+                         logo.position.y >= -offset.y - 600 && 
+                         logo.position.y <= -offset.y + viewport.height/zoom + 600
+        
         return (
           <g 
             key={logo.id}
