@@ -30,14 +30,18 @@ export function usePageEffects(options: UsePageEffectsOptions = {}) {
       let initialized = false;
       
       const initializeBrandPresets = async () => {
-        if (initialized) return;
+        if (initialized || typeof window === 'undefined') return;
         
         try {
-          // Use require to avoid webpack dynamic import issues
-          const { BrandPresets: BrandPresetsClass } = await import('@/lib/presets/brandPresets');
+          // Delay import to ensure webpack is ready
+          await new Promise(resolve => setTimeout(resolve, 100));
+          
+          // Use require for more reliable loading
+          const BrandPresetsModule = require('@/lib/presets/brandPresets');
+          const BrandPresetsClass = BrandPresetsModule.BrandPresets;
           
           if (!BrandPresetsClass || typeof BrandPresetsClass.initializeReflowUtilities !== 'function') {
-            console.error('BrandPresets not properly loaded');
+            console.warn('BrandPresets not available yet');
             return;
           }
           
@@ -59,12 +63,14 @@ export function usePageEffects(options: UsePageEffectsOptions = {}) {
             }
           }
         } catch (err) {
-          console.error('Failed to initialize BrandPresets:', err);
-          // Don't retry - if it fails, it's likely a real issue
+          // Silently fail - this is optional functionality
+          console.debug('BrandPresets initialization skipped:', err.message);
         }
       };
       
-      initializeBrandPresets();
+      // Delay initialization to avoid early execution issues
+      const timeoutId = setTimeout(initializeBrandPresets, 500);
+      return () => clearTimeout(timeoutId);
     }
   }, [options.updateCore, options.updateCustom, options.loadThemeById, options.forceRender])
   

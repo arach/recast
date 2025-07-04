@@ -1,66 +1,61 @@
-// 🌐 Network Constellation
-const PARAMETERS = {
-  backgroundColor: { type: 'color', default: "#0a0a0f", label: 'Background Color', category: 'Background' },
-  backgroundType: { type: 'select', options: [{"value":"transparent","label":"Transparent"},{"value":"solid","label":"Solid Color"},{"value":"gradient","label":"Gradient"}], default: "gradient", label: 'Background Type', category: 'Background' },
-  backgroundGradientStart: { type: 'color', default: "#0a0a0f", label: 'Gradient Start', category: 'Background', showIf: (params)=>params.backgroundType === 'gradient' },
-  backgroundGradientEnd: { type: 'color', default: "#16213e", label: 'Gradient End', category: 'Background', showIf: (params)=>params.backgroundType === 'gradient' },
-  backgroundGradientDirection: { type: 'slider', min: 0, max: 360, step: 15, default: 45, label: 'Gradient Direction', category: 'Background', showIf: (params)=>params.backgroundType === 'gradient' },
-  fillType: { type: 'select', options: [{"value":"none","label":"None"},{"value":"solid","label":"Solid Color"},{"value":"gradient","label":"Gradient"}], default: "gradient", label: 'Fill Type', category: 'Fill' },
-  fillColor: { type: 'color', default: "#4080ff", label: 'Fill Color', category: 'Fill', showIf: (params)=>params.fillType === 'solid' },
-  fillGradientStart: { type: 'color', default: "#4080ff", label: 'Gradient Start', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
-  fillGradientEnd: { type: 'color', default: "#ff80c0", label: 'Gradient End', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
-  fillGradientDirection: { type: 'slider', min: 0, max: 360, step: 15, default: 90, label: 'Gradient Direction', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
-  fillOpacity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.7, label: 'Fill Opacity', category: 'Fill', showIf: (params)=>params.fillType !== 'none' },
-  strokeType: { type: 'select', options: [{"value":"none","label":"None"},{"value":"solid","label":"Solid"},{"value":"dashed","label":"Dashed"},{"value":"dotted","label":"Dotted"}], default: "solid", label: 'Stroke Type', category: 'Stroke' },
-  strokeColor: { type: 'color', default: "#80c0ff", label: 'Stroke Color', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
-  strokeWidth: { type: 'slider', min: 0, max: 10, step: 0.5, default: 2, label: 'Stroke Width', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
-  strokeOpacity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.8, label: 'Stroke Opacity', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
-  frequency: { type: 'slider', min: 0.1, max: 4, step: 0.1, default: 1.2, label: 'Formation Speed', category: 'Wave' },
-  amplitude: { type: 'slider', min: 30, max: 150, step: 5, default: 80, label: 'Constellation Size', category: 'Wave' },
-  complexity: { type: 'slider', min: 0, max: 1, step: 0.01, default: 0.7, label: 'Connection Density', category: 'Wave' },
-  chaos: { type: 'slider', min: 0, max: 1, step: 0.01, default: 0.15, label: 'Node Variance', category: 'Wave' },
-  damping: { type: 'slider', min: 0.3, max: 1, step: 0.01, default: 0.8, label: 'Energy Decay', category: 'Wave' },
-  layers: { type: 'slider', min: 1, max: 5, step: 1, default: 2, label: 'Network Layers', category: 'Wave' },
-  shapeType: { type: 'slider', min: 0, max: 5, step: 1, default: 0, label: 'Brand Shape (0=Circle, 1=Star, 2=Shield, 3=Hex, 4=Diamond, 5=Triangle)', category: 'Shape' },
-  nodeCount: { type: 'slider', min: 3, max: 24, step: 1, default: 8, label: 'Network Nodes', category: 'Shape' },
-  connectionStyle: { type: 'slider', min: 0, max: 3, step: 1, default: 0, label: 'Connection Style (0=Flowing, 1=Neural, 2=Magnetic, 3=Minimal)', category: 'Shape' },
-  energyFlow: { type: 'slider', min: 0, max: 1, step: 0.01, default: 0.8, label: 'Energy Flow', category: 'Effects' },
-  glowIntensity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.6, label: 'Glow Effect', category: 'Effects' }
+import type { TemplateUtils } from '@/lib/template-utils';
+
+const parameters = {
+  frequency: {
+    default: 1.2,
+    range: [0.1, 4, 0.1]
+  },
+  amplitude: {
+    default: 80,
+    range: [30, 150, 5]
+  },
+  complexity: {
+    default: 0.7,
+    range: [0, 1, 0.01]
+  },
+  chaos: {
+    default: 0.15,
+    range: [0, 1, 0.01]
+  },
+  damping: {
+    default: 0.8,
+    range: [0.3, 1, 0.01]
+  },
+  layers: {
+    default: 2,
+    range: [1, 5, 1]
+  },
+  shapeType: {
+    default: 0,
+    range: [0, 5, 1]
+  },
+  nodeCount: {
+    default: 8,
+    range: [3, 24, 1]
+  },
+  connectionStyle: {
+    default: 0,
+    range: [0, 3, 1]
+  },
+  energyFlow: {
+    default: 0.8,
+    range: [0, 1, 0.01]
+  },
+  glowIntensity: {
+    default: 0.6,
+    range: [0, 1, 0.05]
+  }
 };
 
-function applyUniversalBackground(ctx, width, height, params) {
-  if (!params.backgroundType || params.backgroundType === 'transparent') return;
-  
-  if (params.backgroundType === 'solid') {
-    ctx.fillStyle = params.backgroundColor || '#0a0a0f';
-    ctx.fillRect(0, 0, width, height);
-  } else if (params.backgroundType === 'gradient') {
-    const gradient = ctx.createRadialGradient(width/2, height/2, 0, width/2, height/2, Math.max(width, height)/2);
-    gradient.addColorStop(0, params.backgroundGradientStart || '#0a0a0f');
-    gradient.addColorStop(0.8, '#1a1a2e');
-    gradient.addColorStop(1, params.backgroundGradientEnd || '#16213e');
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, width, height);
-  }
-}
-
-function drawVisualization(ctx, width, height, params, _generator, time) {
-  // Parameter compatibility layer
-  if (params.customParameters) {
-    params.fillColor = params.fillColor || params.customParameters.fillColor;
-    params.strokeColor = params.strokeColor || params.customParameters.strokeColor;
-    params.backgroundColor = params.backgroundColor || params.customParameters.backgroundColor;
-    params.textColor = params.textColor || params.customParameters.textColor;
-    
-    Object.keys(params.customParameters).forEach(key => {
-      if (params[key] === undefined) {
-        params[key] = params.customParameters[key];
-      }
-    });
-  }
-
+function drawVisualization(ctx: CanvasRenderingContext2D, width: number, height: number, params: any, time: number, utils: TemplateUtils) {
   // Apply universal background
-  applyUniversalBackground(ctx, width, height, params);
+  utils.applyUniversalBackground(ctx, width, height, params);
+  
+  // Access universal properties
+  const fillColor = params.fillColor || '#4080ff';
+  const strokeColor = params.strokeColor || '#80c0ff';
+  const fillOpacity = params.fillOpacity ?? 0.7;
+  const strokeOpacity = params.strokeOpacity ?? 0.8;
 
   // Extract parameters
   const centerX = width / 2;
@@ -284,12 +279,8 @@ function drawVisualization(ctx, width, height, params, _generator, time) {
           
           // Color intensity based on connection strength
           const connectionLightness = lightness + connectionStrength * 30;
-          if (params.strokeType !== 'none') {
-            ctx.strokeStyle = params.strokeColor || `hsla(${hue}, ${saturation}%, ${connectionLightness}%, ${connectionAlpha})`;
-            ctx.globalAlpha = connectionAlpha * (params.strokeOpacity || 1);
-          } else {
-            ctx.strokeStyle = `hsla(${hue}, ${saturation}%, ${connectionLightness}%, ${connectionAlpha})`;
-          }
+          ctx.strokeStyle = strokeColor || `hsla(${hue}, ${saturation}%, ${connectionLightness}%, ${connectionAlpha})`;
+          ctx.globalAlpha = connectionAlpha * strokeOpacity;
           
           ctx.stroke();
         }
@@ -315,19 +306,8 @@ function drawVisualization(ctx, width, height, params, _generator, time) {
       }
       
       // Node core
-      if (params.fillType !== 'none') {
-        ctx.globalAlpha = alpha * (params.fillOpacity || 1);
-        if (params.fillType === 'gradient') {
-          const gradient = ctx.createRadialGradient(node.x, node.y, 0, node.x, node.y, nodeSize);
-          gradient.addColorStop(0, params.fillGradientStart || `hsl(${hue}, ${saturation}%, ${lightness + node.energy * 20}%)`);
-          gradient.addColorStop(1, params.fillGradientEnd || `hsl(${hue + 30}, ${saturation}%, ${lightness}%)`);
-          ctx.fillStyle = gradient;
-        } else {
-          ctx.fillStyle = params.fillColor || `hsl(${hue}, ${saturation}%, ${lightness + node.energy * 20}%)`;
-        }
-      } else {
-        ctx.fillStyle = `hsl(${hue}, ${saturation}%, ${lightness + node.energy * 20}%)`;
-      }
+      ctx.globalAlpha = alpha * fillOpacity;
+      ctx.fillStyle = fillColor || `hsl(${hue}, ${saturation}%, ${lightness + node.energy * 20}%)`;
       ctx.beginPath();
       ctx.arc(node.x, node.y, nodeSize, 0, Math.PI * 2);
       ctx.fill();
@@ -365,13 +345,12 @@ function drawVisualization(ctx, width, height, params, _generator, time) {
   }
 }
 
-export { drawVisualization };
-
-export const metadata = {
+const metadata = {
+  id: 'network-constellation',
   name: "🌐 Network Constellation",
   description: "Brand-smart network formations creating globally recognized logo shapes",
+  parameters,
   defaultParams: {
-    seed: "network-constellation",
     frequency: 1.2,
     amplitude: 80,
     complexity: 0.7,
@@ -386,20 +365,4 @@ export const metadata = {
   }
 };
 
-export const id = 'network-constellation';
-export const name = "🌐 Network Constellation";
-export const description = "Brand-smart network formations creating globally recognized logo shapes";
-export const defaultParams = {
-  seed: "network-constellation",
-  frequency: 1.2,
-  amplitude: 80,
-  complexity: 0.7,
-  chaos: 0.15,
-  damping: 0.8,
-  layers: 2,
-  shapeType: 0,
-  nodeCount: 8,
-  connectionStyle: 0,
-  energyFlow: 0.8,
-  glowIntensity: 0.6
-};
+export { parameters, metadata, drawVisualization };

@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Clipboard, Download, CopyPlus, Trash2, AlertTriangle } from 'lucide-react'
 import { useLogoStore } from '@/lib/stores/logoStore'
 import { useSelectedLogo } from '@/lib/hooks/useSelectedLogo'
+import { useUIStore } from '@/lib/stores/uiStore'
 import { generateLogoCanvas } from '@/lib/canvas/logoGenerator'
 import {
   Dialog,
@@ -17,11 +18,13 @@ import {
 
 interface LogoActionsProps {
   className?: string
+  style?: React.CSSProperties
 }
 
-export function LogoActions({ className }: LogoActionsProps) {
+export function LogoActions({ className, style }: LogoActionsProps) {
   const { selectedLogoId, duplicateLogo, deleteLogo, getLogoCount, logos } = useLogoStore()
   const { logo: selectedLogo } = useSelectedLogo()
+  const { darkMode } = useUIStore()
   const [showCopyFeedback, setShowCopyFeedback] = useState(false)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const logoCount = getLogoCount()
@@ -70,8 +73,12 @@ export function LogoActions({ className }: LogoActionsProps) {
   
   return (
     <>
-      <div className={className}>
-        <div className="bg-white/95 backdrop-blur-sm rounded-lg border shadow-lg p-1 flex items-center gap-1">
+      <div className={className} style={style}>
+        <div className={`backdrop-blur-sm rounded-lg border shadow-lg p-1 flex items-center gap-1 ${
+          darkMode 
+            ? 'bg-gray-900/90 border-gray-700' 
+            : 'bg-white/95 border-gray-200'
+        }`}>
           <Button
             size="sm"
             variant="ghost"

@@ -1,8 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Badge } from '@/components/ui/badge';
-import { Palette, Sparkles, Check } from 'lucide-react';
+import { Check } from 'lucide-react';
 import { colorThemes, applyColorTheme, getThemesForIndustry, type ColorTheme } from '@/lib/color-themes';
 import { useLogoStore } from '@/lib/stores/logoStore';
 import { useSelectedLogo } from '@/lib/hooks/useSelectedLogo';
@@ -10,7 +9,6 @@ import { useUIStore } from '@/lib/stores/uiStore';
 
 export function ColorThemeTool() {
   const [selectedThemeId, setSelectedThemeId] = useState<string | null>(null);
-  const [hoveredTheme, setHoveredTheme] = useState<string | null>(null);
   
   const { selectedLogoId } = useLogoStore();
   const { logo: selectedLogo, customParams, updateCustom, updateStyle } = useSelectedLogo();
@@ -88,20 +86,18 @@ export function ColorThemeTool() {
   const renderThemeGroup = (themes: ColorTheme[], title?: string) => (
     <>
       {title && themes.length > 0 && (
-        <div className="text-xs font-medium text-gray-400 mb-2 flex items-center gap-1">
-          <Sparkles className="w-3 h-3" />
+        <div className="text-xs font-medium text-gray-500 mb-2">
           {title}
         </div>
       )}
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-4 gap-1.5">
         {themes.map((theme) => (
           <button
             key={theme.id}
             onClick={() => handleThemeSelect(theme)}
-            onMouseEnter={() => setHoveredTheme(theme.id)}
-            onMouseLeave={() => setHoveredTheme(null)}
+            title={theme.name}
             className={`
-              group relative p-2 rounded-lg border transition-all
+              group relative p-1.5 rounded-lg border transition-all
               ${selectedThemeId === theme.id
                 ? darkMode ? 'border-blue-500 bg-blue-500/10' : 'border-blue-500 bg-blue-50'
                 : darkMode 
@@ -110,41 +106,30 @@ export function ColorThemeTool() {
               }
             `}
           >
-            {/* Color swatches */}
-            <div className="flex gap-1 mb-2">
+            {/* Color swatches in 2x2 grid */}
+            <div className="grid grid-cols-2 gap-0.5">
               {theme.preview.slice(0, 4).map((color, i) => (
                 <div
                   key={i}
-                  className="w-6 h-6 rounded"
+                  className="w-5 h-5 rounded-sm"
                   style={{ backgroundColor: color }}
                 />
               ))}
             </div>
             
-            {/* Theme name */}
-            <div className="text-xs font-medium text-left">
+            {/* Theme name on hover */}
+            <div className={`
+              absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 
+              bg-gray-900 text-white text-xs rounded whitespace-nowrap
+              opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10
+            `}>
               {theme.name}
             </div>
             
             {/* Selected indicator */}
             {selectedThemeId === theme.id && (
-              <div className="absolute top-1 right-1">
-                <Check className="w-3 h-3 text-blue-500" />
-              </div>
-            )}
-            
-            {/* Industry badges */}
-            {theme.industries && theme.industries.length > 0 && (
-              <div className="mt-1 flex flex-wrap gap-1">
-                {theme.industries.slice(0, 2).map((industry) => (
-                  <Badge 
-                    key={industry}
-                    variant="secondary" 
-                    className="text-[9px] px-1 py-0 h-3"
-                  >
-                    {industry}
-                  </Badge>
-                ))}
+              <div className="absolute -top-1 -right-1 bg-blue-500 rounded-full p-0.5">
+                <Check className="w-2.5 h-2.5 text-white" />
               </div>
             )}
           </button>
@@ -154,15 +139,15 @@ export function ColorThemeTool() {
   );
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {/* Recommended themes for current industry */}
       {currentIndustry && recommendedThemes.length > 0 && (
         <>
           {renderThemeGroup(recommendedThemes, `Recommended for ${currentIndustry}`)}
           
           {otherThemes.length > 0 && (
-            <div className="border-t border-white/10 pt-4">
-              {renderThemeGroup(otherThemes, 'Other Themes')}
+            <div className="border-t border-gray-200 pt-3">
+              {renderThemeGroup(otherThemes, 'All Themes')}
             </div>
           )}
         </>

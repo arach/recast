@@ -1,104 +1,86 @@
-import type { ParameterDefinition, PresetMetadata } from './types';
+import type { TemplateUtils } from '@/lib/template-utils';
 
 // TERRA Eco Brand - Organic luxury with sustainable sophistication
-const PARAMETERS = {
-  // Universal Background Controls
-  backgroundColor: { type: 'color', default: "#fefcf8", label: 'Background Color', category: 'Background' },
-  backgroundType: { type: 'select', options: [{"value":"transparent","label":"Transparent"},{"value":"solid","label":"Solid Color"},{"value":"gradient","label":"Gradient"}], default: "gradient", label: 'Background Type', category: 'Background' },
-  backgroundGradientStart: { type: 'color', default: "#fefcf8", label: 'Gradient Start', category: 'Background', showIf: (params)=>params.backgroundType === 'gradient' },
-  backgroundGradientEnd: { type: 'color', default: "#f5f2eb", label: 'Gradient End', category: 'Background', showIf: (params)=>params.backgroundType === 'gradient' },
-  backgroundGradientDirection: { type: 'slider', min: 0, max: 360, step: 15, default: 135, label: 'Gradient Direction', category: 'Background', showIf: (params)=>params.backgroundType === 'gradient' },
-  
-  // Universal Fill Controls
-  fillType: { type: 'select', options: [{"value":"none","label":"None"},{"value":"solid","label":"Solid Color"},{"value":"gradient","label":"Gradient"}], default: "gradient", label: 'Fill Type', category: 'Fill' },
-  fillColor: { type: 'color', default: "#6eb26e", label: 'Fill Color', category: 'Fill', showIf: (params)=>params.fillType === 'solid' },
-  fillGradientStart: { type: 'color', default: "#a8d8a8", label: 'Gradient Start', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
-  fillGradientEnd: { type: 'color', default: "#4a7c4a", label: 'Gradient End', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
-  fillGradientDirection: { type: 'slider', min: 0, max: 360, step: 15, default: 45, label: 'Gradient Direction', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
-  fillOpacity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.8, label: 'Fill Opacity', category: 'Fill', showIf: (params)=>params.fillType !== 'none' },
-  
-  // Universal Stroke Controls
-  strokeType: { type: 'select', options: [{"value":"none","label":"None"},{"value":"solid","label":"Solid"},{"value":"dashed","label":"Dashed"},{"value":"dotted","label":"Dotted"}], default: "solid", label: 'Stroke Type', category: 'Stroke' },
-  strokeColor: { type: 'color', default: "#2d4a2d", label: 'Stroke Color', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
-  strokeWidth: { type: 'slider', min: 0, max: 10, step: 0.5, default: 2, label: 'Stroke Width', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
-  strokeOpacity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 1, label: 'Stroke Opacity', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
-  
+const parameters = {
   // Core TERRA identity - gentle organic rhythm
-  frequency: { type: 'slider', min: 0.2, max: 0.6, step: 0.1, default: 0.4, label: 'Organic Rhythm' },
-  amplitude: { type: 'slider', min: 80, max: 110, step: 5, default: 95, label: 'Natural Scale' },
+  frequency: {
+    default: 0.4,
+    range: [0.2, 0.6, 0.1]
+  },
+  amplitude: {
+    default: 95,
+    range: [80, 110, 5]
+  },
   
   // Organic form sophistication
-  organicComplexity: { type: 'slider', min: 0.6, max: 1, step: 0.05, default: 0.8, label: 'Organic Curves' },
-  growthPattern: { type: 'slider', min: 0.5, max: 1, step: 0.05, default: 0.7, label: 'Growth Variation' },
-  natureBreathe: { type: 'slider', min: 0.1, max: 0.5, step: 0.05, default: 0.3, label: 'Living Breath' },
+  organicComplexity: {
+    default: 0.8,
+    range: [0.6, 1, 0.05]
+  },
+  growthPattern: {
+    default: 0.7,
+    range: [0.5, 1, 0.05]
+  },
+  natureBreathe: {
+    default: 0.3,
+    range: [0.1, 0.5, 0.05]
+  },
   
   // Sustainable materials
-  earthTexture: { type: 'slider', min: 0.3, max: 0.8, step: 0.05, default: 0.6, label: 'Earth Texture' },
-  handCrafted: { type: 'slider', min: 0.5, max: 1, step: 0.05, default: 0.8, label: 'Hand-crafted Feel' },
-  naturalGrain: { type: 'slider', min: 0.2, max: 0.7, step: 0.05, default: 0.4, label: 'Natural Grain' },
+  earthTexture: {
+    default: 0.6,
+    range: [0.3, 0.8, 0.05]
+  },
+  handCrafted: {
+    default: 0.8,
+    range: [0.5, 1, 0.05]
+  },
+  naturalGrain: {
+    default: 0.4,
+    range: [0.2, 0.7, 0.05]
+  },
   
   // TERRA color harmony (earth tones)
-  forestDepth: { type: 'slider', min: 0.4, max: 0.9, step: 0.05, default: 0.7, label: 'Forest Depth' },
-  earthWarmth: { type: 'slider', min: 0.5, max: 1, step: 0.05, default: 0.8, label: 'Earth Warmth' },
-  seasonalShift: { type: 'slider', min: 0, max: 40, step: 5, default: 15, label: 'Seasonal Variation' },
+  forestDepth: {
+    default: 0.7,
+    range: [0.4, 0.9, 0.05]
+  },
+  earthWarmth: {
+    default: 0.8,
+    range: [0.5, 1, 0.05]
+  },
+  seasonalShift: {
+    default: 15,
+    range: [0, 40, 5]
+  },
   
   // Luxury refinement
-  goldenBalance: { type: 'slider', min: 0.7, max: 1, step: 0.05, default: 0.9, label: 'Golden Ratio Balance' },
-  silkFinish: { type: 'slider', min: 0.6, max: 1, step: 0.05, default: 0.8, label: 'Silk Finish' }
-};
-
-function applyUniversalBackground(ctx: CanvasRenderingContext2D, width: number, height: number, params: Record<string, any>) {
-  const backgroundType = params.backgroundType || 'gradient';
-  
-  if (backgroundType === 'transparent') {
-    ctx.clearRect(0, 0, width, height);
-  } else if (backgroundType === 'solid') {
-    ctx.fillStyle = params.backgroundColor || '#fefcf8';
-    ctx.fillRect(0, 0, width, height);
-  } else if (backgroundType === 'gradient') {
-    const direction = (params.backgroundGradientDirection || 135) * Math.PI / 180;
-    const dx = Math.cos(direction);
-    const dy = Math.sin(direction);
-    const distance = Math.sqrt(width * width + height * height);
-    
-    const startX = width / 2 - dx * distance / 2;
-    const startY = height / 2 - dy * distance / 2;
-    const endX = width / 2 + dx * distance / 2;
-    const endY = height / 2 + dy * distance / 2;
-    
-    const bgGradient = ctx.createLinearGradient(startX, startY, endX, endY);
-    bgGradient.addColorStop(0, params.backgroundGradientStart || '#fefcf8');
-    bgGradient.addColorStop(0.5, '#faf8f3');
-    bgGradient.addColorStop(1, params.backgroundGradientEnd || '#f5f2eb');
-    ctx.fillStyle = bgGradient;
-    ctx.fillRect(0, 0, width, height);
+  goldenBalance: {
+    default: 0.9,
+    range: [0.7, 1, 0.05]
+  },
+  silkFinish: {
+    default: 0.8,
+    range: [0.6, 1, 0.05]
   }
-}
+};
 
 function drawVisualization(
   ctx: CanvasRenderingContext2D,
   width: number,
   height: number,
-  params: Record<string, any>,
-  _generator: any,
-  time: number
+  params: any,
+  time: number,
+  utils: TemplateUtils
 ) {
-  // Parameter compatibility layer
-  if (params.customParameters) {
-    params.fillColor = params.fillColor || params.customParameters.fillColor;
-    params.strokeColor = params.strokeColor || params.customParameters.strokeColor;
-    params.backgroundColor = params.backgroundColor || params.customParameters.backgroundColor;
-    params.textColor = params.textColor || params.customParameters.textColor;
-    
-    Object.keys(params.customParameters).forEach(key => {
-      if (params[key] === undefined) {
-        params[key] = params.customParameters[key];
-      }
-    });
-  }
-
   // Apply universal background
-  applyUniversalBackground(ctx, width, height, params);
+  utils.applyUniversalBackground(ctx, width, height, params);
+  
+  // Access universal properties
+  const fillColor = params.fillColor || '#6eb26e';
+  const strokeColor = params.strokeColor || '#2d4a2d';
+  const fillOpacity = params.fillOpacity ?? 0.8;
+  const strokeOpacity = params.strokeOpacity ?? 1;
 
   // Add subtle paper texture
   addNaturalTexture(ctx, width, height, params.naturalGrain || 0.4);
@@ -384,30 +366,12 @@ function drawVisualization(
   }
 }
 
-export const metadata: PresetMetadata = {
+const metadata = {
+  id: 'terra-eco-brand',
   name: "🌿 TERRA Eco",
   description: "Organic luxury brand with sustainable sophistication, earth tones, and hand-crafted calligraphy feel",
+  parameters,
   defaultParams: {
-    seed: "terra-sustainable-organic-luxury",
-    // Background
-    backgroundColor: "#fefcf8",
-    backgroundType: "gradient",
-    backgroundGradientStart: "#fefcf8",
-    backgroundGradientEnd: "#f5f2eb",
-    backgroundGradientDirection: 135,
-    // Fill
-    fillType: "gradient",
-    fillColor: "#6eb26e",
-    fillGradientStart: "#a8d8a8",
-    fillGradientEnd: "#4a7c4a",
-    fillGradientDirection: 45,
-    fillOpacity: 0.8,
-    // Stroke
-    strokeType: "solid",
-    strokeColor: "#2d4a2d",
-    strokeWidth: 2,
-    strokeOpacity: 1,
-    // TERRA specific
     frequency: 0.4,
     amplitude: 95,
     organicComplexity: 0.8,
@@ -424,17 +388,4 @@ export const metadata: PresetMetadata = {
   }
 };
 
-export const id = 'terra-eco-brand';
-export const name = "🌿 TERRA Eco";
-export const description = "Organic luxury brand with sustainable sophistication, earth tones, and hand-crafted calligraphy feel";
-export const defaultParams = metadata.defaultParams;
-
-export const parameters: Record<string, ParameterDefinition> = PARAMETERS;
-export { drawVisualization };
-
-export const code = `// TERRA Eco Brand - Organic luxury with sustainable sophistication
-const PARAMETERS = ${JSON.stringify(PARAMETERS, null, 2)};
-
-${applyUniversalBackground.toString()}
-
-${drawVisualization.toString()}`;
+export { parameters, metadata, drawVisualization };

@@ -1,87 +1,54 @@
-import type { ParameterDefinition, PresetMetadata } from './types';
+import type { TemplateUtils } from '@/lib/template-utils';
 
 // Brand Network - Logo-optimized network shapes
-const PARAMETERS = {
-  // Universal Background Controls
-  backgroundColor: { type: 'color', default: "#ffffff", label: 'Background Color', category: 'Background' },
-  backgroundType: { type: 'select', options: [{"value":"transparent","label":"Transparent"},{"value":"solid","label":"Solid Color"},{"value":"gradient","label":"Gradient"}], default: "solid", label: 'Background Type', category: 'Background' },
-  backgroundGradientStart: { type: 'color', default: "#ffffff", label: 'Gradient Start', category: 'Background', showIf: (params)=>params.backgroundType === 'gradient' },
-  backgroundGradientEnd: { type: 'color', default: "#f0f0f0", label: 'Gradient End', category: 'Background', showIf: (params)=>params.backgroundType === 'gradient' },
-  backgroundGradientDirection: { type: 'slider', min: 0, max: 360, step: 15, default: 45, label: 'Gradient Direction', category: 'Background', showIf: (params)=>params.backgroundType === 'gradient' },
-  
-  // Universal Fill Controls
-  fillType: { type: 'select', options: [{"value":"none","label":"None"},{"value":"solid","label":"Solid Color"},{"value":"gradient","label":"Gradient"}], default: "solid", label: 'Fill Type', category: 'Fill' },
-  fillColor: { type: 'color', default: "#e6f2ff", label: 'Fill Color', category: 'Fill', showIf: (params)=>params.fillType === 'solid' },
-  fillGradientStart: { type: 'color', default: "#e6f2ff", label: 'Gradient Start', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
-  fillGradientEnd: { type: 'color', default: "#cce7ff", label: 'Gradient End', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
-  fillGradientDirection: { type: 'slider', min: 0, max: 360, step: 15, default: 90, label: 'Gradient Direction', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
-  fillOpacity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.1, label: 'Fill Opacity', category: 'Fill', showIf: (params)=>params.fillType !== 'none' },
-  
-  // Universal Stroke Controls
-  strokeType: { type: 'select', options: [{"value":"none","label":"None"},{"value":"solid","label":"Solid"},{"value":"dashed","label":"Dashed"},{"value":"dotted","label":"Dotted"}], default: "solid", label: 'Stroke Type', category: 'Stroke' },
-  strokeColor: { type: 'color', default: "#0064c8", label: 'Stroke Color', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
-  strokeWidth: { type: 'slider', min: 0, max: 10, step: 0.5, default: 3, label: 'Stroke Width', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
-  strokeOpacity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 1, label: 'Stroke Opacity', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
-  
+const parameters = {
   // Minimal controls for clean logos
-  frequency: { type: 'slider', min: 0.1, max: 2, step: 0.1, default: 0.8, label: 'Pulse Speed' },
-  amplitude: { type: 'slider', min: 40, max: 120, step: 5, default: 70, label: 'Logo Size' },
-  complexity: { type: 'slider', min: 0, max: 1, step: 0.01, default: 0.0, label: 'Connection Density' },
+  frequency: {
+    default: 0.8,
+    range: [0.1, 2, 0.1]
+  },
+  amplitude: {
+    default: 70,
+    range: [40, 120, 5]
+  },
+  complexity: {
+    default: 0.0,
+    range: [0, 1, 0.01]
+  },
   
   // Brand shape - minimal set
-  shapeType: { 
-    type: 'slider', 
-    min: 0, 
-    max: 3, 
-    step: 1, 
-    default: 0, 
-    label: 'Brand Shape (0=Circle, 1=Star, 2=Shield, 3=Hexagon)' 
+  shapeType: {
+    default: 'Circle',
+    options: ['Circle', 'Star', 'Shield', 'Hexagon']
   },
-  nodeCount: { type: 'slider', min: 3, max: 8, step: 1, default: 4, label: 'Connection Points' },
+  nodeCount: {
+    default: 4,
+    range: [3, 8, 1]
+  },
   
   // Logo styling
-  contrast: { type: 'slider', min: 0.5, max: 1, step: 0.05, default: 1, label: 'Contrast' }
+  contrast: {
+    default: 1,
+    range: [0.5, 1, 0.05]
+  }
 };
 
-function applyUniversalBackground(ctx, width, height, params) {
-  if (params.backgroundType === 'transparent') {
-    ctx.clearRect(0, 0, width, height);
-  } else if (params.backgroundType === 'gradient') {
-    const angle = (params.backgroundGradientDirection || 45) * Math.PI / 180;
-    const x1 = width / 2 - Math.cos(angle) * width;
-    const y1 = height / 2 - Math.sin(angle) * height;
-    const x2 = width / 2 + Math.cos(angle) * width;
-    const y2 = height / 2 + Math.sin(angle) * height;
-    
-    const gradient = ctx.createLinearGradient(x1, y1, x2, y2);
-    gradient.addColorStop(0, params.backgroundGradientStart || '#ffffff');
-    gradient.addColorStop(1, params.backgroundGradientEnd || '#f0f0f0');
-    
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, width, height);
-  } else {
-    ctx.fillStyle = params.backgroundColor || '#ffffff';
-    ctx.fillRect(0, 0, width, height);
-  }
-}
-
-function drawVisualization(ctx, width, height, params, _generator, time) {
-  // Parameter compatibility layer
-  if (params.customParameters) {
-    params.fillColor = params.fillColor || params.customParameters.fillColor;
-    params.strokeColor = params.strokeColor || params.customParameters.strokeColor;
-    params.backgroundColor = params.backgroundColor || params.customParameters.backgroundColor;
-    params.textColor = params.textColor || params.customParameters.textColor;
-    
-    Object.keys(params.customParameters).forEach(key => {
-      if (params[key] === undefined) {
-        params[key] = params.customParameters[key];
-      }
-    });
-  }
-
+function drawVisualization(
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  params: any,
+  time: number,
+  utils: TemplateUtils
+) {
   // Apply universal background
-  applyUniversalBackground(ctx, width, height, params);
+  utils.applyUniversalBackground(ctx, width, height, params);
+  
+  // Access universal properties
+  const fillColor = params.fillColor || '#e6f2ff';
+  const strokeColor = params.strokeColor || '#0064c8';
+  const fillOpacity = params.fillOpacity ?? 0.1;
+  const strokeOpacity = params.strokeOpacity ?? 1;
 
   // Extract parameters with logo-friendly defaults
   const centerX = width / 2;
@@ -89,13 +56,9 @@ function drawVisualization(ctx, width, height, params, _generator, time) {
   const frequency = params.frequency || 0.8;
   const amplitude = params.amplitude || 70;
   const complexity = params.complexity || 0.0;
-  const shapeTypeNum = Math.round(params.shapeType || 0);
+  const shapeType = (params.shapeType || 'Circle').toLowerCase();
   const nodeCount = Math.max(3, Math.min(8, params.nodeCount || 4));
   const contrast = params.contrast || 1;
-
-  // Logo-friendly shape types (simplified set)
-  const shapeTypes = ['circle', 'star', 'shield', 'hexagon'];
-  const shapeType = shapeTypes[shapeTypeNum] || 'circle';
 
   // Base scale for logo sizing
   const baseScale = Math.min(width, height) / 300;
@@ -312,45 +275,19 @@ function drawVisualization(ctx, width, height, params, _generator, time) {
   }
 }
 
-export const metadata: PresetMetadata = {
+const metadata = {
+  id: 'brand-network',
   name: "🎯 Brand Network",
   description: "Clean, logo-ready network shapes optimized for brand identity and small sizes",
+  parameters,
   defaultParams: {
-    seed: "brand-network",
-    backgroundColor: "#ffffff",
-    backgroundType: "solid",
-    backgroundGradientStart: "#ffffff",
-    backgroundGradientEnd: "#f0f0f0",
-    backgroundGradientDirection: 45,
-    fillType: "solid",
-    fillColor: "#e6f2ff",
-    fillGradientStart: "#e6f2ff",
-    fillGradientEnd: "#cce7ff",
-    fillGradientDirection: 90,
-    fillOpacity: 0.1,
-    strokeType: "solid",
-    strokeColor: "#0064c8",
-    strokeWidth: 3,
-    strokeOpacity: 1,
     frequency: 0.8,
     amplitude: 70,
     complexity: 0.0,
-    shapeType: 0,
+    shapeType: 'Circle',
     nodeCount: 4,
     contrast: 1
   }
 };
 
-export const id = 'brand-network';
-export const name = "Brand Network";
-export const description = "Clean, logo-ready network shapes optimized for brand identity and small sizes";
-export const defaultParams = metadata.defaultParams;
-export const parameters = PARAMETERS;
-export { drawVisualization };
-
-export const code = `// Brand Network - Logo-optimized network shapes
-const PARAMETERS = ${JSON.stringify(PARAMETERS, null, 2)};
-
-${applyUniversalBackground.toString()}
-
-${drawVisualization.toString()}`;
+export { parameters, metadata, drawVisualization };

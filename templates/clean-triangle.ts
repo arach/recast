@@ -1,109 +1,82 @@
 // ▲ Clean Triangle
-const PARAMETERS = {
-  // Universal Background Controls
-  backgroundColor: { type: 'color', default: "#ffffff", label: 'Background Color', category: 'Background' },
-  backgroundType: { type: 'select', options: [{"value":"transparent","label":"Transparent"},{"value":"solid","label":"Solid Color"},{"value":"gradient","label":"Gradient"}], default: "solid", label: 'Background Type', category: 'Background' },
-  backgroundGradientStart: { type: 'color', default: "#ffffff", label: 'Gradient Start', category: 'Background', showIf: (params)=>params.backgroundType === 'gradient' },
-  backgroundGradientEnd: { type: 'color', default: "#f0f0f0", label: 'Gradient End', category: 'Background', showIf: (params)=>params.backgroundType === 'gradient' },
-  backgroundGradientDirection: { type: 'slider', min: 0, max: 360, step: 15, default: 45, label: 'Gradient Direction', category: 'Background', showIf: (params)=>params.backgroundType === 'gradient' },
-  
-  // Universal Fill Controls
-  fillType: { type: 'select', options: [{"value":"none","label":"None"},{"value":"solid","label":"Solid Color"},{"value":"gradient","label":"Gradient"}], default: "solid", label: 'Fill Type', category: 'Fill' },
-  fillColor: { type: 'color', default: "#3b82f6", label: 'Fill Color', category: 'Fill', showIf: (params)=>params.fillType === 'solid' },
-  fillGradientStart: { type: 'color', default: "#3b82f6", label: 'Gradient Start', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
-  fillGradientEnd: { type: 'color', default: "#1d4ed8", label: 'Gradient End', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
-  fillGradientDirection: { type: 'slider', min: 0, max: 360, step: 15, default: 90, label: 'Gradient Direction', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
-  fillOpacity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.8, label: 'Fill Opacity', category: 'Fill', showIf: (params)=>params.fillType !== 'none' },
-  
-  // Universal Stroke Controls
-  strokeType: { type: 'select', options: [{"value":"none","label":"None"},{"value":"solid","label":"Solid"},{"value":"dashed","label":"Dashed"},{"value":"dotted","label":"Dotted"}], default: "none", label: 'Stroke Type', category: 'Stroke' },
-  strokeColor: { type: 'color', default: "#1e40af", label: 'Stroke Color', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
-  strokeWidth: { type: 'slider', min: 0, max: 10, step: 0.5, default: 2, label: 'Stroke Width', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
-  strokeOpacity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 1, label: 'Stroke Opacity', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
-  
-  // Template-specific parameters - Triangle fundamentals (shape definition)
+import type { TemplateUtils } from '@/lib/template-utils';
+
+const parameters = {
   triangleType: {
-    type: 'slider',
-    min: 0,
-    max: 4,
-    step: 1,
     default: 0,
-    label: 'Triangle Type (0=Equilateral, 1=Isosceles, 2=Scalene, 3=Right, 4=Acute)',
-    category: 'Shape'
+    range: [0, 4, 1]
   },
-  
-  // Proportional controls using mathematical ratios
-  heightRatio: { type: 'slider', min: 0.6, max: 1.8, step: 0.05, default: 1.0, label: 'Height Ratio', category: 'Shape' },
-  baseWidth: { type: 'slider', min: 0.7, max: 1.5, step: 0.05, default: 1.0, label: 'Base Width', category: 'Shape' },
-  apexOffset: { type: 'slider', min: -0.3, max: 0.3, step: 0.05, default: 0, label: 'Apex Offset', category: 'Shape' },
-  
-  // Mathematical elegance
-  goldenRatio: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.2, label: 'Golden Ratio Influence', category: 'Mathematics' },
-  cornerRadius: { type: 'slider', min: 0, max: 20, step: 1, default: 0, label: 'Corner Softness', category: 'Shape' },
-  symmetryPerfection: { type: 'slider', min: 0.8, max: 1, step: 0.01, default: 1.0, label: 'Geometric Precision', category: 'Mathematics' },
-  
-  // Brand enhancement - context-aware (removed duplicate stroke)
+  heightRatio: {
+    default: 1.0,
+    range: [0.6, 1.8, 0.05]
+  },
+  baseWidth: {
+    default: 1.0,
+    range: [0.7, 1.5, 0.05]
+  },
+  apexOffset: {
+    default: 0,
+    range: [-0.3, 0.3, 0.05]
+  },
+  goldenRatio: {
+    default: 0.2,
+    range: [0, 1, 0.05]
+  },
+  cornerRadius: {
+    default: 0,
+    range: [0, 20, 1]
+  },
+  symmetryPerfection: {
+    default: 1.0,
+    range: [0.8, 1, 0.01]
+  },
   fillStyle: {
-    type: 'slider',
-    min: 0,
-    max: 3,
-    step: 1,
-    default: 1,
-    label: 'Fill Style (0=None, 1=Solid, 2=Gradient, 3=Minimal Texture)',
-    category: 'Effects'
+    default: 'solid',
+    options: ['none', 'solid', 'gradient', 'texture']
   },
-  
-  // Color system - professional brand palette
-  colorIntensity: { type: 'slider', min: 0.5, max: 1, step: 0.05, default: 0.8, label: 'Color Intensity', category: 'Effects' },
-  
-  // Subtle enhancements for larger sizes
-  depth: { type: 'slider', min: 0, max: 0.5, step: 0.05, default: 0.1, label: 'Subtle Depth', category: 'Effects' },
-  highlight: { type: 'slider', min: 0, max: 0.4, step: 0.05, default: 0.15, label: 'Brand Highlight', category: 'Effects' }
+  colorIntensity: {
+    default: 0.8,
+    range: [0.5, 1, 0.05]
+  },
+  depth: {
+    default: 0.1,
+    range: [0, 0.5, 0.05]
+  },
+  highlight: {
+    default: 0.15,
+    range: [0, 0.4, 0.05]
+  }
 };
 
-function applyUniversalBackground(ctx, width, height, params) {
-  if (!params.backgroundType || params.backgroundType === 'transparent') return;
-  
-  if (params.backgroundType === 'solid') {
-    ctx.fillStyle = params.backgroundColor || '#ffffff';
-    ctx.fillRect(0, 0, width, height);
-  } else if (params.backgroundType === 'gradient') {
-    const direction = (params.backgroundGradientDirection || 0) * (Math.PI / 180);
-    const x1 = width / 2 - Math.cos(direction) * width / 2;
-    const y1 = height / 2 - Math.sin(direction) * height / 2;
-    const x2 = width / 2 + Math.cos(direction) * width / 2;
-    const y2 = height / 2 + Math.sin(direction) * height / 2;
-    
-    const gradient = ctx.createLinearGradient(x1, y1, x2, y2);
-    gradient.addColorStop(0, params.backgroundGradientStart || '#ffffff');
-    gradient.addColorStop(1, params.backgroundGradientEnd || '#f0f0f0');
-    
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, width, height);
+const metadata = {
+  id: 'clean-triangle',
+  name: "▲ Clean Triangle",
+  description: "Perfect geometric triangles with mathematical precision and brand-aware styling",
+  parameters,
+  defaultParams: {
+    triangleType: 0,
+    heightRatio: 1.0,
+    baseWidth: 1.0,
+    apexOffset: 0,
+    goldenRatio: 0.2,
+    cornerRadius: 0,
+    symmetryPerfection: 1.0,
+    fillStyle: 'solid',
+    colorIntensity: 0.8,
+    depth: 0.1,
+    highlight: 0.15
   }
-}
+};
 
-function drawVisualization(ctx, width, height, params, _generator, _time) {
-  // Parameter compatibility layer
-  if (params.customParameters) {
-    params.fillColor = params.fillColor || params.customParameters.fillColor;
-    params.strokeColor = params.strokeColor || params.customParameters.strokeColor;
-    params.backgroundColor = params.backgroundColor || params.customParameters.backgroundColor;
-    params.textColor = params.textColor || params.customParameters.textColor;
-    
-    Object.keys(params.customParameters).forEach(key => {
-      if (params[key] === undefined) {
-        params[key] = params.customParameters[key];
-      }
-    });
-  }
-
-  // Apply universal background
-  applyUniversalBackground(ctx, width, height, params);
+function drawVisualization(ctx: CanvasRenderingContext2D, width: number, height: number, params: any, time: number, utils: TemplateUtils) {
+  // Universal background handling
+  utils.applyUniversalBackground(ctx, width, height, params);
   
-  // Get theme colors with fallbacks
+  // Access universal properties via utils
   const fillColor = params.fillColor || '#3b82f6';
   const strokeColor = params.strokeColor || '#1e40af';
+  const fillOpacity = params.fillOpacity ?? 1;
+  const strokeOpacity = params.strokeOpacity ?? 1;
 
   // Extract parameters
   const centerX = width / 2;
@@ -115,7 +88,7 @@ function drawVisualization(ctx, width, height, params, _generator, _time) {
   const goldenRatio = params.goldenRatio || 0.2;
   const cornerRadius = params.cornerRadius || 0;
   const symmetryPerfection = params.symmetryPerfection || 1.0;
-  const fillStyleNum = Math.round(params.fillStyle || 1);
+  const fillStyle = params.fillStyle || 'solid';
   const colorIntensity = params.colorIntensity || 0.8;
   const depth = params.depth || 0.1;
   const highlight = params.highlight || 0.15;
@@ -146,19 +119,14 @@ function drawVisualization(ctx, width, height, params, _generator, _time) {
   }
 
   // Render main triangle with clean geometry
-  renderCleanTriangle(ctx, trianglePoints, brandColors, fillStyleNum, cornerRadius, centerX, centerY, logoSize, params);
-
-  // Add universal stroke if specified
-  if (params.strokeType !== 'none') {
-    renderUniversalStroke(ctx, trianglePoints, cornerRadius, params);
-  }
+  renderCleanTriangle(ctx, trianglePoints, brandColors, fillStyle, cornerRadius, centerX, centerY, logoSize, params, utils);
 
   // Add subtle highlight for brand sophistication (larger sizes only)
   if (highlight > 0.05 && Math.min(width, height) > 64) {
     renderBrandHighlight(ctx, trianglePoints, brandColors, highlight, centerX, centerY);
   }
 
-  function generateCleanTriangle(type, centerX, centerY, width, height, apexOffset, precision) {
+  function generateCleanTriangle(type: number, centerX: number, centerY: number, width: number, height: number, apexOffset: number, precision: number) {
     const points = [];
     const halfWidth = width / 2;
     const halfHeight = height / 2;
@@ -214,9 +182,9 @@ function drawVisualization(ctx, width, height, params, _generator, _time) {
     return points;
   }
 
-  function createBrandColors(fillColor, strokeColor, intensity) {
+  function createBrandColors(fillColor: string, strokeColor: string, intensity: number) {
     // Helper to convert hex to HSL
-    const hexToHsl = (hex) => {
+    const hexToHsl = (hex: string) => {
       const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
       if (!result) return [0, 0, 50];
       
@@ -255,7 +223,7 @@ function drawVisualization(ctx, width, height, params, _generator, _time) {
     };
   }
 
-  function renderSubtleDepth(ctx, points, colors, depth, cornerRadius) {
+  function renderSubtleDepth(ctx: CanvasRenderingContext2D, points: any[], colors: any, depth: number, cornerRadius: number) {
     ctx.save();
     ctx.globalAlpha = depth * 0.4;
     ctx.fillStyle = colors.depth;
@@ -273,41 +241,39 @@ function drawVisualization(ctx, width, height, params, _generator, _time) {
     ctx.restore();
   }
 
-  function renderCleanTriangle(ctx, points, colors, fillStyle, cornerRadius, centerX, centerY, size, params) {
+  function renderCleanTriangle(ctx: CanvasRenderingContext2D, points: any[], colors: any, fillStyle: string, cornerRadius: number, centerX: number, centerY: number, size: number, params: any, utils: TemplateUtils) {
     ctx.save();
     
-    // Fill the triangle based on fill type and style
-    if (params.fillType !== 'none' && fillStyle !== 0) {
-      if (cornerRadius > 0) {
-        drawRoundedTriangle(ctx, points, cornerRadius);
-      } else {
-        drawSharpTriangle(ctx, points);
-      }
-      
-      // Apply universal fill
-      if (params.fillType === 'solid') {
-        ctx.fillStyle = params.fillColor || colors.primary;
-        ctx.globalAlpha = params.fillOpacity || 1;
+    // Draw the triangle path
+    if (cornerRadius > 0) {
+      drawRoundedTriangle(ctx, points, cornerRadius);
+    } else {
+      drawSharpTriangle(ctx, points);
+    }
+    
+    // Apply fill based on fillStyle
+    if (fillStyle !== 'none') {
+      if (fillStyle === 'solid') {
+        ctx.fillStyle = fillColor;
+        ctx.globalAlpha = fillOpacity;
         ctx.fill();
-      } else if (params.fillType === 'gradient') {
-        const angle = (params.fillGradientDirection || 45) * Math.PI / 180;
+      } else if (fillStyle === 'gradient') {
         const gradient = ctx.createLinearGradient(
-          centerX - Math.cos(angle) * size/2,
-          centerY - Math.sin(angle) * size/2,
-          centerX + Math.cos(angle) * size/2,
-          centerY + Math.sin(angle) * size/2
+          centerX - size/2, centerY - size/2,
+          centerX + size/2, centerY + size/2
         );
-        gradient.addColorStop(0, params.fillGradientStart || colors.secondary);
-        gradient.addColorStop(1, params.fillGradientEnd || colors.primary);
+        gradient.addColorStop(0, colors.secondary);
+        gradient.addColorStop(1, colors.primary);
         
         ctx.fillStyle = gradient;
-        ctx.globalAlpha = params.fillOpacity || 1;
+        ctx.globalAlpha = fillOpacity;
         ctx.fill();
-      }
-      
-      // Additional fill styles (template-specific)
-      if (fillStyle === 3 && params.fillType !== 'none') {
+      } else if (fillStyle === 'texture') {
         // Minimal texture for sophistication
+        ctx.fillStyle = colors.primary;
+        ctx.globalAlpha = fillOpacity;
+        ctx.fill();
+        
         ctx.globalAlpha = 0.1;
         ctx.fillStyle = colors.accent;
         
@@ -323,42 +289,33 @@ function drawVisualization(ctx, width, height, params, _generator, _time) {
       }
     }
     
-    ctx.restore();
-  }
-
-  function renderUniversalStroke(ctx, points, cornerRadius, params) {
-    if (params.strokeType === 'none') return;
-    
-    ctx.save();
-    ctx.strokeStyle = params.strokeColor;
-    ctx.lineWidth = params.strokeWidth || 2;
-    ctx.globalAlpha = params.strokeOpacity || 1;
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-    
-    // Set stroke pattern
-    switch (params.strokeType) {
-      case 'dashed':
-        ctx.setLineDash([params.strokeWidth * 3, params.strokeWidth * 2]);
-        break;
-      case 'dotted':
-        ctx.setLineDash([params.strokeWidth, params.strokeWidth]);
-        break;
-      default:
-        ctx.setLineDash([]);
+    // Apply universal stroke if specified
+    if (params.strokeType !== 'none') {
+      ctx.strokeStyle = strokeColor;
+      ctx.lineWidth = params.strokeWidth || 2;
+      ctx.globalAlpha = strokeOpacity;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      
+      // Set stroke pattern
+      switch (params.strokeType) {
+        case 'dashed':
+          ctx.setLineDash([params.strokeWidth * 3, params.strokeWidth * 2]);
+          break;
+        case 'dotted':
+          ctx.setLineDash([params.strokeWidth, params.strokeWidth]);
+          break;
+        default:
+          ctx.setLineDash([]);
+      }
+      
+      ctx.stroke();
     }
-    
-    if (cornerRadius > 0) {
-      drawRoundedTriangle(ctx, points, cornerRadius);
-    } else {
-      drawSharpTriangle(ctx, points);
-    }
-    ctx.stroke();
     
     ctx.restore();
   }
 
-  function renderBrandHighlight(ctx, points, colors, highlight, centerX, centerY) {
+  function renderBrandHighlight(ctx: CanvasRenderingContext2D, points: any[], colors: any, highlight: number, centerX: number, centerY: number) {
     ctx.save();
     ctx.globalAlpha = highlight;
     
@@ -386,7 +343,7 @@ function drawVisualization(ctx, width, height, params, _generator, _time) {
     ctx.restore();
   }
 
-  function drawSharpTriangle(ctx, points) {
+  function drawSharpTriangle(ctx: CanvasRenderingContext2D, points: any[]) {
     ctx.beginPath();
     ctx.moveTo(points[0].x, points[0].y);
     ctx.lineTo(points[1].x, points[1].y);
@@ -394,7 +351,7 @@ function drawVisualization(ctx, width, height, params, _generator, _time) {
     ctx.closePath();
   }
 
-  function drawRoundedTriangle(ctx, points, radius) {
+  function drawRoundedTriangle(ctx: CanvasRenderingContext2D, points: any[], radius: number) {
     ctx.beginPath();
     
     for (let i = 0; i < points.length; i++) {
@@ -444,127 +401,4 @@ function drawVisualization(ctx, width, height, params, _generator, _time) {
   }
 }
 
-export { drawVisualization };
-
-export const metadata = {
-  name: "▲ Clean Triangle",
-  description: "Perfect geometric triangles with theme-aware colors and mathematical precision",
-  defaultParams: {
-    seed: "clean-triangle-brand",
-    triangleType: 0,
-    heightRatio: 1.0,
-    baseWidth: 1.0,
-    apexOffset: 0,
-    goldenRatio: 0.2,
-    cornerRadius: 0,
-    symmetryPerfection: 1.0,
-    fillStyle: 1,
-    colorIntensity: 0.8,
-    depth: 0.1,
-    highlight: 0.15
-  }
-};
-
-export const id = 'clean-triangle';
-export const name = "▲ Clean Triangle";
-export const description = "Perfect geometric triangles with theme-aware colors and mathematical precision";
-export const defaultParams = {
-  seed: "clean-triangle-brand",
-  triangleType: 0,
-  heightRatio: 1.0,
-  baseWidth: 1.0,
-  apexOffset: 0,
-  goldenRatio: 0.2,
-  cornerRadius: 0,
-  symmetryPerfection: 1.0,
-  fillStyle: 1,
-  colorIntensity: 0.8,
-  depth: 0.1,
-  highlight: 0.15
-};
-export const code = `// ▲ Clean Triangle
-const PARAMETERS = {
-  // Universal Background Controls
-  backgroundColor: { type: 'color', default: "#ffffff", label: 'Background Color', category: 'Background' },
-  backgroundType: { type: 'select', options: [{"value":"transparent","label":"Transparent"},{"value":"solid","label":"Solid Color"},{"value":"gradient","label":"Gradient"}], default: "solid", label: 'Background Type', category: 'Background' },
-  backgroundGradientStart: { type: 'color', default: "#ffffff", label: 'Gradient Start', category: 'Background', showIf: (params)=>params.backgroundType === 'gradient' },
-  backgroundGradientEnd: { type: 'color', default: "#f0f0f0", label: 'Gradient End', category: 'Background', showIf: (params)=>params.backgroundType === 'gradient' },
-  backgroundGradientDirection: { type: 'slider', min: 0, max: 360, step: 15, default: 45, label: 'Gradient Direction', category: 'Background', showIf: (params)=>params.backgroundType === 'gradient' },
-  
-  // Universal Fill Controls
-  fillType: { type: 'select', options: [{"value":"none","label":"None"},{"value":"solid","label":"Solid Color"},{"value":"gradient","label":"Gradient"}], default: "solid", label: 'Fill Type', category: 'Fill' },
-  fillColor: { type: 'color', default: "#3b82f6", label: 'Fill Color', category: 'Fill', showIf: (params)=>params.fillType === 'solid' },
-  fillGradientStart: { type: 'color', default: "#3b82f6", label: 'Gradient Start', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
-  fillGradientEnd: { type: 'color', default: "#1d4ed8", label: 'Gradient End', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
-  fillGradientDirection: { type: 'slider', min: 0, max: 360, step: 15, default: 90, label: 'Gradient Direction', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
-  fillOpacity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.8, label: 'Fill Opacity', category: 'Fill', showIf: (params)=>params.fillType !== 'none' },
-  
-  // Universal Stroke Controls
-  strokeType: { type: 'select', options: [{"value":"none","label":"None"},{"value":"solid","label":"Solid"},{"value":"dashed","label":"Dashed"},{"value":"dotted","label":"Dotted"}], default: "none", label: 'Stroke Type', category: 'Stroke' },
-  strokeColor: { type: 'color', default: "#1e40af", label: 'Stroke Color', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
-  strokeWidth: { type: 'slider', min: 0, max: 10, step: 0.5, default: 2, label: 'Stroke Width', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
-  strokeOpacity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 1, label: 'Stroke Opacity', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
-  
-  // Template-specific parameters - Triangle fundamentals (shape definition)
-  triangleType: {
-    type: 'slider',
-    min: 0,
-    max: 4,
-    step: 1,
-    default: 0,
-    label: 'Triangle Type (0=Equilateral, 1=Isosceles, 2=Scalene, 3=Right, 4=Acute)',
-    category: 'Shape'
-  },
-  
-  // Proportional controls using mathematical ratios
-  heightRatio: { type: 'slider', min: 0.6, max: 1.8, step: 0.05, default: 1.0, label: 'Height Ratio', category: 'Shape' },
-  baseWidth: { type: 'slider', min: 0.7, max: 1.5, step: 0.05, default: 1.0, label: 'Base Width', category: 'Shape' },
-  apexOffset: { type: 'slider', min: -0.3, max: 0.3, step: 0.05, default: 0, label: 'Apex Offset', category: 'Shape' },
-  
-  // Mathematical elegance
-  goldenRatio: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.2, label: 'Golden Ratio Influence', category: 'Mathematics' },
-  cornerRadius: { type: 'slider', min: 0, max: 20, step: 1, default: 0, label: 'Corner Softness', category: 'Shape' },
-  symmetryPerfection: { type: 'slider', min: 0.8, max: 1, step: 0.01, default: 1.0, label: 'Geometric Precision', category: 'Mathematics' },
-  
-  // Brand enhancement - context-aware (removed duplicate stroke)
-  fillStyle: {
-    type: 'slider',
-    min: 0,
-    max: 3,
-    step: 1,
-    default: 1,
-    label: 'Fill Style (0=None, 1=Solid, 2=Gradient, 3=Minimal Texture)',
-    category: 'Effects'
-  },
-  
-  // Color system - professional brand palette
-  colorIntensity: { type: 'slider', min: 0.5, max: 1, step: 0.05, default: 0.8, label: 'Color Intensity', category: 'Effects' },
-  
-  // Subtle enhancements for larger sizes
-  depth: { type: 'slider', min: 0, max: 0.5, step: 0.05, default: 0.1, label: 'Subtle Depth', category: 'Effects' },
-  highlight: { type: 'slider', min: 0, max: 0.4, step: 0.05, default: 0.15, label: 'Brand Highlight', category: 'Effects' }
-};
-
-function applyUniversalBackground(ctx, width, height, params) {
-  if (!params.backgroundType || params.backgroundType === 'transparent') return;
-  
-  if (params.backgroundType === 'solid') {
-    ctx.fillStyle = params.backgroundColor || '#ffffff';
-    ctx.fillRect(0, 0, width, height);
-  } else if (params.backgroundType === 'gradient') {
-    const direction = (params.backgroundGradientDirection || 0) * (Math.PI / 180);
-    const x1 = width / 2 - Math.cos(direction) * width / 2;
-    const y1 = height / 2 - Math.sin(direction) * height / 2;
-    const x2 = width / 2 + Math.cos(direction) * width / 2;
-    const y2 = height / 2 + Math.sin(direction) * height / 2;
-    
-    const gradient = ctx.createLinearGradient(x1, y1, x2, y2);
-    gradient.addColorStop(0, params.backgroundGradientStart || '#ffffff');
-    gradient.addColorStop(1, params.backgroundGradientEnd || '#f0f0f0');
-    
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, width, height);
-  }
-}
-
-${drawVisualization.toString()}`;
+export { parameters, metadata, drawVisualization };

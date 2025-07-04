@@ -1,145 +1,62 @@
 // ◼ Minimal Shape
-const PARAMETERS = {
-  // Universal Background Controls
-  backgroundColor: { type: 'color', default: "#ffffff", label: 'Background Color', category: 'Background' },
-  backgroundType: { type: 'select', options: [{"value":"transparent","label":"Transparent"},{"value":"solid","label":"Solid Color"},{"value":"gradient","label":"Gradient"}], default: "solid", label: 'Background Type', category: 'Background' },
-  backgroundGradientStart: { type: 'color', default: "#ffffff", label: 'Gradient Start', category: 'Background', showIf: (params)=>params.backgroundType === 'gradient' },
-  backgroundGradientEnd: { type: 'color', default: "#f0f0f0", label: 'Gradient End', category: 'Background', showIf: (params)=>params.backgroundType === 'gradient' },
-  backgroundGradientDirection: { type: 'slider', min: 0, max: 360, step: 15, default: 45, label: 'Gradient Direction', category: 'Background', showIf: (params)=>params.backgroundType === 'gradient' },
-  
-  // Universal Fill Controls
-  fillType: { type: 'select', options: [{"value":"none","label":"None"},{"value":"solid","label":"Solid Color"},{"value":"gradient","label":"Gradient"}], default: "solid", label: 'Fill Type', category: 'Fill' },
-  fillColor: { type: 'color', default: "#0078D4", label: 'Fill Color', category: 'Fill', showIf: (params)=>params.fillType === 'solid' },
-  fillGradientStart: { type: 'color', default: "#0078D4", label: 'Gradient Start', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
-  fillGradientEnd: { type: 'color', default: "#106EBE", label: 'Gradient End', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
-  fillGradientDirection: { type: 'slider', min: 0, max: 360, step: 15, default: 90, label: 'Gradient Direction', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
-  fillOpacity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 1, label: 'Fill Opacity', category: 'Fill', showIf: (params)=>params.fillType !== 'none' },
-  
-  // Universal Stroke Controls
-  strokeType: { type: 'select', options: [{"value":"none","label":"None"},{"value":"solid","label":"Solid"},{"value":"dashed","label":"Dashed"},{"value":"dotted","label":"Dotted"}], default: "none", label: 'Stroke Type', category: 'Stroke' },
-  strokeColor: { type: 'color', default: "#106EBE", label: 'Stroke Color', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
-  strokeWidth: { type: 'slider', min: 0, max: 10, step: 0.5, default: 2, label: 'Stroke Width', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
-  strokeOpacity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 1, label: 'Stroke Opacity', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
-  
-  // Shape selection
+import type { TemplateUtils } from '@/lib/template-utils';
+
+const parameters = {
   shape: {
-    type: 'select',
-    options: [
-      { value: 'square', label: 'Square' },
-      { value: 'circle', label: 'Circle' },
-      { value: 'triangle', label: 'Triangle' },
-      { value: 'hexagon', label: 'Hexagon' },
-      { value: 'diamond', label: 'Diamond' },
-      { value: 'grid', label: 'Grid (2x2)' }
-    ],
     default: 'square',
-    label: 'Shape'
+    options: ['square', 'circle', 'triangle', 'hexagon', 'diamond', 'grid']
   },
-  
-  // Size and proportions
-  size: { 
-    type: 'slider', 
-    min: 0.3, 
-    max: 0.8, 
-    step: 0.05, 
-    default: 0.6, 
-    label: 'Size' 
+  size: {
+    default: 0.6,
+    range: [0.3, 0.8, 0.05]
   },
-  
   cornerRadius: {
-    type: 'slider',
-    min: 0,
-    max: 0.5,
-    step: 0.05,
     default: 0.1,
-    label: 'Corner Roundness'
+    range: [0, 0.5, 0.05]
   },
-  
-  // Grid specific (like Microsoft)
   gridGap: {
-    type: 'slider',
-    min: 0.02,
-    max: 0.15,
-    step: 0.01,
     default: 0.05,
-    label: 'Grid Gap',
-    showIf: (params) => params.shape === 'grid'
+    range: [0.02, 0.15, 0.01]
   },
-  
   gridColors: {
-    type: 'select',
-    options: [
-      { value: 'theme', label: 'Use Theme Color' },
-      { value: 'microsoft', label: 'Microsoft Colors' },
-      { value: 'gradient', label: 'Gradient Variation' }
-    ],
     default: 'theme',
-    label: 'Grid Colors',
-    showIf: (params) => params.shape === 'grid'
+    options: ['theme', 'microsoft', 'gradient']
   },
-  
-  // Style variations
   rotation: {
-    type: 'slider',
-    min: 0,
-    max: 360,
-    step: 15,
     default: 0,
-    label: 'Rotation'
+    range: [0, 360, 15]
   },
-  
   thickness: {
-    type: 'slider',
-    min: 0,
-    max: 1,
-    step: 0.1,
     default: 1,
-    label: 'Fill Amount'
+    range: [0, 1, 0.1]
   }
 };
 
-function applyUniversalBackground(ctx, width, height, params) {
-  if (!params.backgroundType || params.backgroundType === 'transparent') return;
-  
-  if (params.backgroundType === 'solid') {
-    ctx.fillStyle = params.backgroundColor || '#ffffff';
-    ctx.fillRect(0, 0, width, height);
-  } else if (params.backgroundType === 'gradient') {
-    const direction = (params.backgroundGradientDirection || 45) * (Math.PI / 180);
-    const x1 = width / 2 - Math.cos(direction) * width / 2;
-    const y1 = height / 2 - Math.sin(direction) * height / 2;
-    const x2 = width / 2 + Math.cos(direction) * width / 2;
-    const y2 = height / 2 + Math.sin(direction) * height / 2;
-    
-    const gradient = ctx.createLinearGradient(x1, y1, x2, y2);
-    gradient.addColorStop(0, params.backgroundGradientStart || '#ffffff');
-    gradient.addColorStop(1, params.backgroundGradientEnd || '#f0f0f0');
-    
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, width, height);
+const metadata = {
+  id: 'minimal-shape',
+  name: "◼ Minimal Shape",
+  description: "Simple geometric shapes for clean, modern brand identities",
+  parameters,
+  defaultParams: {
+    shape: 'square',
+    size: 0.6,
+    cornerRadius: 0.1,
+    gridGap: 0.05,
+    gridColors: 'theme',
+    rotation: 0,
+    thickness: 1
   }
-}
+};
 
-export { drawVisualization };
-
-
-function drawVisualization(ctx, width, height, params, _generator, time) {
-  // Parameter compatibility layer
-  if (params.customParameters) {
-    params.fillColor = params.fillColor || params.customParameters.fillColor;
-    params.strokeColor = params.strokeColor || params.customParameters.strokeColor;
-    params.backgroundColor = params.backgroundColor || params.customParameters.backgroundColor;
-    params.textColor = params.textColor || params.customParameters.textColor;
-    
-    Object.keys(params.customParameters).forEach(key => {
-      if (params[key] === undefined) {
-        params[key] = params.customParameters[key];
-      }
-    });
-  }
-
+function drawVisualization(ctx: CanvasRenderingContext2D, width: number, height: number, params: any, time: number, utils: TemplateUtils) {
   // Apply universal background
-  applyUniversalBackground(ctx, width, height, params);
+  utils.applyUniversalBackground(ctx, width, height, params);
+  
+  // Get theme colors and opacity
+  const fillColor = params.fillColor || '#0078D4';
+  const strokeColor = params.strokeColor || '#106EBE';
+  const fillOpacity = params.fillOpacity ?? 1;
+  const strokeOpacity = params.strokeOpacity ?? 1;
   
   // Extract parameters
   const shape = params.shape || 'square';
@@ -174,7 +91,7 @@ function drawVisualization(ctx, width, height, params, _generator, time) {
       colors = ['#F25022', '#7FBA00', '#00A4EF', '#FFB900']; // Microsoft colors
     } else if (gridColors === 'gradient') {
       // Create gradient variations of theme color
-      const hexToHsl = (hex) => {
+      const hexToHsl = (hex: string) => {
         const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
         if (!result) return [0, 0, 50];
         
@@ -201,7 +118,7 @@ function drawVisualization(ctx, width, height, params, _generator, time) {
         return [h * 360, s * 100, l * 100];
       };
       
-      const [h, s, l] = hexToHsl(params.fillColor || '#0078D4');
+      const [h, s, l] = hexToHsl(fillColor);
       colors = [
         `hsl(${h}, ${s}%, ${l}%)`,
         `hsl(${h + 30}, ${s}%, ${l}%)`,
@@ -210,7 +127,6 @@ function drawVisualization(ctx, width, height, params, _generator, time) {
       ];
     } else {
       // Use theme color for all squares
-      const fillColor = params.fillColor || '#0078D4';
       colors = [fillColor, fillColor, fillColor, fillColor];
     }
     
@@ -224,7 +140,7 @@ function drawVisualization(ctx, width, height, params, _generator, time) {
     
     positions.forEach((pos, i) => {
       ctx.fillStyle = colors[i];
-      ctx.globalAlpha = params.fillOpacity || 1;
+      ctx.globalAlpha = fillOpacity;
       const radius = squareSize * cornerRadius;
       ctx.beginPath();
       ctx.roundRect(pos.x, pos.y, squareSize, squareSize, radius);
@@ -241,14 +157,14 @@ function drawVisualization(ctx, width, height, params, _generator, time) {
       const y2 = centerY + Math.sin(direction) * shapeSize / 2;
       
       const gradient = ctx.createLinearGradient(x1, y1, x2, y2);
-      gradient.addColorStop(0, params.fillGradientStart || '#0078D4');
-      gradient.addColorStop(1, params.fillGradientEnd || '#106EBE');
+      gradient.addColorStop(0, params.fillGradientStart || fillColor);
+      gradient.addColorStop(1, params.fillGradientEnd || strokeColor);
       ctx.fillStyle = gradient;
     } else if (params.fillType === 'solid') {
-      ctx.fillStyle = params.fillColor || '#0078D4';
+      ctx.fillStyle = fillColor;
     }
     
-    ctx.globalAlpha = params.fillOpacity || 1;
+    ctx.globalAlpha = fillOpacity;
     
     switch (shape) {
       case 'square':
@@ -306,11 +222,12 @@ function drawVisualization(ctx, width, height, params, _generator, time) {
     }
     
     // Apply stroke
-    if (params.strokeType !== 'none') {
-      ctx.globalAlpha = params.strokeOpacity || 1;
-      ctx.strokeStyle = params.strokeColor || '#106EBE';
-      ctx.lineWidth = params.strokeWidth || 2;
+    if (params.strokeWidth && params.strokeWidth > 0) {
+      ctx.globalAlpha = strokeOpacity;
+      ctx.strokeStyle = strokeColor;
+      ctx.lineWidth = params.strokeWidth;
       
+      // Apply stroke patterns based on universal stroke type
       if (params.strokeType === 'dashed') {
         ctx.setLineDash([5, 5]);
       } else if (params.strokeType === 'dotted') {
@@ -325,35 +242,5 @@ function drawVisualization(ctx, width, height, params, _generator, time) {
   ctx.restore();
 }
 
-export const metadata = {
-  name: "◼ Minimal Shape",
-  description: "Simple geometric shapes for clean, modern brand identities",
-  defaultParams: {
-    seed: "minimal-shape",
-    backgroundType: "solid",
-    backgroundColor: "#ffffff",
-    fillType: "solid",
-    fillColor: "#0078D4",
-    fillOpacity: 1,
-    strokeType: "none",
-    shape: 'square',
-    size: 0.6,
-    cornerRadius: 0.1,
-    gridGap: 0.05,
-    gridColors: 'theme',
-    rotation: 0,
-    thickness: 1
-  }
-};
-
-export const id = 'minimal-shape';
-export const name = "◼ Minimal Shape";
-export const description = "Simple geometric shapes for clean, modern brand identities";
-export const defaultParams = metadata.defaultParams;
-
-export const code = `// ◼ Minimal Shape
-const PARAMETERS = ${JSON.stringify(PARAMETERS, null, 2)};
-
-${applyUniversalBackground.toString()}
-
-${drawVisualization.toString()}`;
+export { parameters, metadata, drawVisualization };
+export const PARAMETERS = metadata.parameters; // Alias for UI system

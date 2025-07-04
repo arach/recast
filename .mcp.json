@@ -1,0 +1,70 @@
+{
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "/Users/arach"
+      ],
+      "env": {
+        "NODE_ENV": "development"
+      }
+    },
+    "github": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-github"
+      ],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "{{GITHUB_TOKEN}}"
+      }
+    },
+    "obsidian": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "obsidian-mcp",
+        "/Users/arach/dev/Breathe"
+      ],
+      "env": {
+        "VAULT_PATH": "/Users/arach/dev/Breathe",
+        "OBSIDIAN_API_KEY": "{{OBSIDIAN_API_KEY}}",
+        "OBSIDIAN_HOST": "https://127.0.0.1:27124/"
+      }
+    },
+    "peekaboo": {
+      "command": "npx",
+      "args": ["-y", "@steipete/peekaboo-mcp@beta"],
+      "env": {
+        "PEEKABOO_AI_PROVIDERS": "openai/gpt-4o,ollama/llava:latest",
+        "OPENAI_API_KEY": "{{OPENAI_API_KEY}}"
+      }
+    },
+    "context7": {
+      "command": "npx",
+      "args": ["-y", "@upstash/context7-mcp@latest"]
+    },
+    "agent": {
+      "command": "npx",
+      "args": ["-y", "@steipete/claude-code-mcp@latest"]
+    },
+    "automator": {
+      "command": "npx",
+      "args": ["-y", "@steipete/macos-automator-mcp@latest"],
+      "env": {"LOG_LEVEL": "INFO"}
+    },
+    "playwright": {
+      "command": "npx",
+      "args": ["@playwright/mcp@latest"]
+    },
+    "tempo": {
+      "command": "node",
+      "args": ["/Users/arach/dev/tempo/mcp-server/dist/index.js"],
+      "env": {
+        "TEMPO_API_BASE": "http://localhost:3000api"
+      }
+    }
+  }
+}

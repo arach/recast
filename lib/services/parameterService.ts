@@ -11,11 +11,38 @@ export class ParameterService {
    */
   static parseParametersFromCode(code: string): Record<string, ParameterDefinition> | null {
     try {
-      // Look for PARAMETERS = { ... } definition
-      // First try to find the start
-      const startMatch = code.match(/const\s+PARAMETERS\s*=\s*{/);
+      // Look for PARAMETERS = { ... } or parameters = { ... } definition
+      // First try to find the start (case insensitive)
+      let startMatch = code.match(/const\s+PARAMETERS\s*=\s*{/);
       if (!startMatch) {
-        // console.log('❌ No PARAMETERS start found');
+        // Try lowercase version
+        startMatch = code.match(/const\s+parameters\s*=\s*{/);
+      }
+      if (!startMatch) {
+        // Try to find export const PARAMETERS = metadata.parameters
+        const exportMatch = code.match(/export\s+const\s+PARAMETERS\s*=\s*metadata\.parameters/);
+        if (exportMatch) {
+          // Look for metadata definition
+          const metadataMatch = code.match(/const\s+metadata\s*=\s*{[\s\S]*?parameters\s*:\s*({[\s\S]*?})\s*,/);
+          if (metadataMatch) {
+            // Extract parameters from metadata
+            const paramsCode = `(${metadataMatch[1]})`;
+            try {
+              const paramsObj = eval(paramsCode);
+              const parameters: Record<string, ParameterDefinition> = {};
+              for (const [paramName, paramDef] of Object.entries(paramsObj)) {
+                parameters[paramName] = {
+                  name: paramName,
+                  ...(paramDef as any),
+                };
+              }
+              return parameters;
+            } catch (e) {
+              console.error('Error parsing metadata parameters:', e);
+            }
+          }
+        }
+        // console.log('❌ No PARAMETERS or parameters start found');
         return null;
       }
       
@@ -69,10 +96,10 @@ export class ParameterService {
       }
       
       const fullMatch = code.substring(startMatch.index!, endIndex + 1);
-      const match = fullMatch.match(/const\s+PARAMETERS\s*=\s*({[\s\S]*})/);
+      const match = fullMatch.match(/const\s+(?:PARAMETERS|parameters)\s*=\s*({[\s\S]*})/);
       
       if (!match) {
-        // console.log('❌ No PARAMETERS match found in code');
+        // console.log('❌ No PARAMETERS/parameters match found in code');
         return null;
       }
       

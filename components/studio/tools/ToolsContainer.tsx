@@ -3,19 +3,18 @@
 import { useState, useRef, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { ToolItem } from './ToolItem';
-import { CoreParametersTool } from './CoreParametersTool';
-import { BrandIdentityTool } from './BrandIdentityTool';
+import { UnifiedParametersTool } from './UnifiedParametersTool';
+import { BrandStyleTool } from './BrandStyleTool';
 import { ColorThemeTool } from './ColorThemeTool';
 import { TemplatePresetsTool } from './TemplatePresetsTool';
 import { BrandPresetsTool } from './BrandPresetsTool';
-import { TextInputTool } from './TextInputTool';
-import { CustomParametersTool } from './CustomParametersTool';
 import { BrandPersonality } from '../BrandPersonality';
 import { AIBrandConsultant } from '../AIBrandConsultant';
 import { AISuggestions } from '../AISuggestions';
-import { Palette, Layers, Package, Sparkles, Brain, Lightbulb, Sliders, Paintbrush, Type, Settings2 } from 'lucide-react';
+import { Palette, Layers, Package, Sparkles, Brain, Lightbulb, Sliders, Paintbrush, Type, Settings2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useUIStore } from '@/lib/stores/uiStore';
 import { useSelectedLogo } from '@/lib/hooks/useSelectedLogo';
+import { useCanvasStore } from '@/lib/stores/canvasStore';
 
 interface Tool {
   id: string;
@@ -28,34 +27,18 @@ interface Tool {
 
 const tools: Tool[] = [
   {
-    id: 'text-input',
-    title: 'Text Input',
-    icon: Type,
-    component: TextInputTool,
-    defaultExpanded: true,
-    enabled: true,
-  },
-  {
-    id: 'core-parameters',
-    title: 'Core Parameters',
-    icon: Sliders,
-    component: CoreParametersTool,
-    defaultExpanded: true,
-    enabled: true,
-  },
-  {
-    id: 'custom-parameters',
-    title: 'Template Settings',
-    icon: Settings2,
-    component: CustomParametersTool,
-    defaultExpanded: true,
-    enabled: true,
-  },
-  {
-    id: 'brand-identity',
-    title: 'Brand Identity',
+    id: 'brand-style',
+    title: 'Brand & Style',
     icon: Paintbrush,
-    component: BrandIdentityTool,
+    component: BrandStyleTool,
+    defaultExpanded: true,
+    enabled: true,
+  },
+  {
+    id: 'parameters',
+    title: 'Parameters',
+    icon: Sliders,
+    component: UnifiedParametersTool,
     defaultExpanded: true,
     enabled: true,
   },
@@ -81,7 +64,7 @@ const tools: Tool[] = [
     icon: Package,
     component: BrandPresetsTool,
     defaultExpanded: false,
-    enabled: true,
+    enabled: false, // Can be enabled via settings
   },
   {
     id: 'brand-personality',
@@ -89,7 +72,7 @@ const tools: Tool[] = [
     icon: Sparkles,
     component: BrandPersonality,
     defaultExpanded: false,
-    enabled: true,
+    enabled: false, // Can be enabled via settings
   },
   {
     id: 'ai-consultant',
@@ -111,10 +94,34 @@ const tools: Tool[] = [
 
 const STORAGE_KEY_WIDTH = 'recast-tools-width';
 const STORAGE_KEY_EXPANDED = 'recast-tools-expanded';
+const STORAGE_KEY_COLLAPSED = 'recast-tools-collapsed';
 
 export function ToolsContainer() {
   const { darkMode } = useUIStore();
   const { logo: selectedLogo } = useSelectedLogo();
+  const { setToolsPanelState } = useCanvasStore();
+  
+  // Add CSS animations
+  useEffect(() => {
+    const style = document.createElement('style')
+    style.textContent = `
+      @keyframes slideIn {
+        from {
+          transform: translateX(100%);
+          opacity: 0;
+        }
+        to {
+          transform: translateX(0);
+          opacity: 1;
+        }
+      }
+      .animate-slideIn {
+        animation: slideIn 200ms ease-out;
+      }
+    `
+    document.head.appendChild(style)
+    return () => document.head.removeChild(style)
+  }, [])
   
   const [width, setWidth] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -125,6 +132,14 @@ export function ToolsContainer() {
   });
   
   const [isResizing, setIsResizing] = useState(false);
+  
+  const [isCollapsed, setIsCollapsed] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem(STORAGE_KEY_COLLAPSED);
+      return stored === 'true';
+    }
+    return false;
+  });
   
   const [expandedTools, setExpandedTools] = useState<Set<string>>(() => {
     if (typeof window !== 'undefined') {
@@ -165,10 +180,10 @@ export function ToolsContainer() {
 
   // Persist width changes
   useEffect(() => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined' && !isResizing) {
       localStorage.setItem(STORAGE_KEY_WIDTH, width.toString());
     }
-  }, [width]);
+  }, [width, isResizing]);
 
   // Persist expanded tools changes
   useEffect(() => {
@@ -176,6 +191,18 @@ export function ToolsContainer() {
       localStorage.setItem(STORAGE_KEY_EXPANDED, JSON.stringify(Array.from(expandedTools)));
     }
   }, [expandedTools]);
+
+  // Persist collapsed state
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(STORAGE_KEY_COLLAPSED, String(isCollapsed));
+    }
+  }, [isCollapsed]);
+  
+  // Update store when state changes
+  useEffect(() => {
+    setToolsPanelState(isCollapsed, width);
+  }, [isCollapsed, width, setToolsPanelState]);
 
   const toggleTool = (toolId: string) => {
     setExpandedTools(prev => {
@@ -192,32 +219,101 @@ export function ToolsContainer() {
   return (
     <div 
       ref={containerRef}
-      className="relative flex h-full"
-      style={{ width: `${width}px` }}
+      className="absolute right-0 top-0 h-full flex transition-all duration-200 ease-out z-30"
+      style={{ width: isCollapsed ? '48px' : `${width}px` }}
     >
-      {/* Resize Handle */}
-      <div
-        className={cn(
-          "absolute left-0 top-0 bottom-0 w-3 cursor-ew-resize z-10 group",
-          "-translate-x-1/2"
-        )}
-        onMouseDown={() => setIsResizing(true)}
-      >
-        <div className={cn(
-          "absolute inset-x-0 inset-y-0 bg-blue-500 opacity-0 transition-opacity",
-          "group-hover:opacity-20",
-          isResizing && "opacity-30"
-        )} />
-        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-12 w-1 rounded-full bg-gray-600 opacity-0 group-hover:opacity-50 transition-opacity" />
-      </div>
+      {/* Resize Handle - only show when not collapsed */}
+      {!isCollapsed && (
+        <div
+          className={cn(
+            "absolute left-0 top-0 bottom-0 w-3 cursor-ew-resize z-10 group",
+            "-translate-x-1/2"
+          )}
+          onMouseDown={() => setIsResizing(true)}
+        >
+          <div className={cn(
+            "absolute inset-x-0 inset-y-0 bg-blue-500 opacity-0 transition-opacity",
+            "group-hover:opacity-20",
+            isResizing && "opacity-30"
+          )} />
+          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-12 w-1 rounded-full bg-gray-600 opacity-0 group-hover:opacity-50 transition-opacity" />
+        </div>
+      )}
 
-      {/* Tools Panel */}
+      {/* Collapsed state - narrow sidebar */}
+      {isCollapsed && (
+        <div 
+          className={cn(
+            "flex-1 border-l flex flex-col cursor-pointer transition-all duration-300 shadow-2xl",
+            darkMode 
+              ? "bg-zinc-900/95 border-white/10 hover:bg-zinc-800/95" 
+              : "bg-white/95 border-gray-200 hover:bg-gray-50/95",
+            "backdrop-blur-sm"
+          )}
+          onClick={() => setIsCollapsed(false)}
+          title="Expand tools panel"
+        >
+          {/* Expand chevron tab */}
+          <button
+            className={cn(
+              "absolute -left-5 top-1/2 -translate-y-1/2 w-5 h-12 rounded-l-lg flex items-center justify-center transition-all duration-200 hover:h-20 hover:-translate-x-1 shadow-md",
+              darkMode 
+                ? "bg-zinc-800 hover:bg-zinc-700 text-gray-400 hover:text-white" 
+                : "bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-900"
+            )}
+            title="Expand tools panel"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+          
+          {/* Minimal content */}
+          <div className="flex flex-col items-center pt-6 pb-4 gap-4">
+            <div className={cn(
+              "p-2 rounded-lg transition-transform duration-200 hover:scale-110",
+              darkMode ? "text-gray-400" : "text-gray-600"
+            )}>
+              <Sliders className="w-5 h-5" />
+            </div>
+            
+            {/* Show icons for active tools */}
+            {tools.filter(t => t.enabled && expandedTools.has(t.id)).slice(0, 3).map(tool => (
+              <div
+                key={tool.id}
+                className={cn(
+                  "p-1.5 rounded transition-transform duration-200 hover:scale-110",
+                  darkMode ? "text-gray-500" : "text-gray-400"
+                )}
+              >
+                {tool.icon && <tool.icon className="w-4 h-4" />}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Expanded state - full panel */}
+      {!isCollapsed && (
       <div className={cn(
-        "flex-1 border-l overflow-hidden",
+        "flex-1 border-l overflow-hidden shadow-2xl",
         darkMode 
           ? "bg-zinc-900 border-white/10" 
-          : "bg-white border-gray-200"
+          : "bg-white border-gray-200",
+        "animate-slideIn"
       )}>
+        {/* Collapse chevron tab - protruding from expanded state */}
+        <button
+          onClick={() => setIsCollapsed(true)}
+          className={cn(
+            "absolute -left-5 top-1/2 -translate-y-1/2 w-5 h-12 rounded-l-lg flex items-center justify-center transition-all duration-200 hover:h-20 hover:-translate-x-1 z-50 shadow-md",
+            darkMode 
+              ? "bg-zinc-800 hover:bg-zinc-700 text-gray-400 hover:text-white" 
+              : "bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-900"
+          )}
+          title="Collapse tools panel"
+        >
+            <ChevronRight className="w-4 h-4" />
+        </button>
+
         <div className="h-full flex flex-col">
           {/* Header */}
           <div className={cn(
@@ -264,6 +360,7 @@ export function ToolsContainer() {
           </div>
         </div>
       </div>
+      )}
     </div>
   );
 }

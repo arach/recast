@@ -6,7 +6,11 @@ import { Hand, MousePointer } from 'lucide-react';
 import { useCanvasStore } from '@/lib/stores/canvasStore';
 import { useUIStore } from '@/lib/stores/uiStore';
 
-export function CanvasToolbar() {
+interface CanvasToolbarProps {
+  leftOffset?: number;
+}
+
+export function CanvasToolbar({ leftOffset = 60 }: CanvasToolbarProps) {
   const { toolMode, setToolMode } = useCanvasStore();
   const { darkMode } = useUIStore();
 
@@ -35,11 +39,14 @@ export function CanvasToolbar() {
   }, [setToolMode]);
 
   return (
-    <div className={`absolute top-6 left-14 z-20 flex gap-1 backdrop-blur-sm rounded-lg shadow-lg p-1 ${
-      darkMode
-        ? 'bg-gray-900/90 border border-gray-700'
-        : 'bg-white/90'
-    }`}>
+    <div 
+      className={`absolute top-6 z-20 flex gap-1 backdrop-blur-sm rounded-lg shadow-lg p-1 transition-all duration-200 ${
+        darkMode
+          ? 'bg-gray-900/90 border border-gray-700'
+          : 'bg-white/90'
+      }`}
+      style={{ left: `${leftOffset}px` }}
+    >
       <Button
         variant={toolMode === 'select' ? 'default' : 'ghost'}
         size="sm"

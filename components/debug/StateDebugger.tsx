@@ -110,21 +110,21 @@ export const StateDebugger = forwardRef<any, StateDebuggerProps>(({
       {/* Bug button overlay - always visible */}
       <button
         onClick={() => setIsCollapsed(!isCollapsed)}
-        className="fixed bottom-4 right-4 w-12 h-12 rounded-full
-                   bg-gray-900/95 dark:bg-black/95
+        className="fixed bottom-4 right-4 w-10 h-10 rounded-full
+                   bg-gray-900 dark:bg-black
                    backdrop-blur-sm
-                   border border-gray-700/50 dark:border-gray-800
+                   border border-gray-700 dark:border-gray-800
                    shadow-lg shadow-black/50
                    flex items-center justify-center
-                   text-gray-400 hover:text-white
-                   hover:bg-gray-800/95
-                   transition-all duration-200
+                   text-white hover:text-white
+                   hover:bg-gray-800
+                   transition-all duration-300
                    hover:scale-110 active:scale-95
-                   group z-[51]"
+                   group z-[9999]"
         title={isCollapsed ? "Show debug toolbar" : "Hide debug toolbar"}
       >
-        <Bug className={`w-5 h-5 transition-transform duration-200 ${
-          isCollapsed ? '' : 'rotate-180'
+        <Bug className={`w-5 h-5 transition-transform duration-300 ${
+          isCollapsed ? 'rotate-180' : ''
         }`} />
       </button>
 

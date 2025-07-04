@@ -30,6 +30,12 @@ interface CanvasState {
     width: number
   }
   
+  // Tools panel state (affects canvas layout)
+  toolsPanel: {
+    collapsed: boolean
+    width: number
+  }
+  
   // Actions
   setOffset: (offset: CanvasOffset) => void
   setZoom: (zoom: number) => void
@@ -39,6 +45,7 @@ interface CanvasState {
   setDragOffset: (offset: CanvasOffset) => void
   setDimensions: (width: number, height: number) => void
   setCodeEditorState: (collapsed: boolean, width: number) => void
+  setToolsPanelState: (collapsed: boolean, width: number) => void
   
   // Computed actions
   centerView: (logoPositions: Array<{ x: number; y: number }>) => void
@@ -62,6 +69,7 @@ export const useCanvasStore = create<CanvasState>()(
         dragOffset: { x: 0, y: 0 },
         dimensions: { width: 0, height: 0 },
         codeEditor: { collapsed: true, width: 500 },
+        toolsPanel: { collapsed: false, width: 380 },
         
         // Basic setters
         setOffset: (offset) => set({ offset }),
@@ -72,6 +80,7 @@ export const useCanvasStore = create<CanvasState>()(
         setDragOffset: (offset) => set({ dragOffset: offset }),
         setDimensions: (width, height) => set({ dimensions: { width, height } }),
         setCodeEditorState: (collapsed, width) => set({ codeEditor: { collapsed, width } }),
+        setToolsPanelState: (collapsed, width) => set({ toolsPanel: { collapsed, width } }),
         
         // Center view on logos without changing zoom
         centerView: (logoPositions) => {
