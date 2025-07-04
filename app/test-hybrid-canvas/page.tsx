@@ -7,83 +7,81 @@ import { Button } from '@/components/ui/button'
 import { Plus, Play, Pause } from 'lucide-react'
 
 export default function TestHybridCanvas() {
-  const { logos, addLogo } = useLogoStore()
+  const { logos, addLogo, updateLogo, updateLogoPosition } = useLogoStore()
   const [animating, setAnimating] = useState(false)
   
-  // Add some test logos on mount
+  // Add some test logos on mount - only run once
   useEffect(() => {
-    if (logos.length === 0) {
-      // Add a few test logos
-      addLogo({
-        id: 'test-1',
-        name: 'Test Logo 1',
-        templateId: 'wave-bars',
-        templateName: 'Wave Bars',
-        parameters: {
-          core: {
-            seed: 'test1',
+    // Only create test logos if we don't have any with our test names
+    const hasTestLogos = logos.some(logo => 
+      typeof logo.templateName === 'string' && logo.templateName.includes('Wave Bars -')
+    )
+    
+    if (!hasTestLogos && logos.length >= 1) {
+      // Get reference parameters from the first logo
+      const referenceParams = logos[0]?.parameters || {}
+      
+      const logo1Id = addLogo('wave-bars')
+      const logo2Id = addLogo('wave-bars')  
+      const logo3Id = addLogo('wave-bars')
+      
+      // Use setTimeout to ensure logos are created before updating them
+      setTimeout(() => {
+        // Update first logo
+        updateLogo(logo1Id, {
+          templateName: 'Wave Bars - Spectrum',
+          parameters: {
+            ...referenceParams,
             frequency: 3,
-            amplitude: 0.8,
-            offset: 0,
-            phase: 0
-          },
-          colors: {
-            primary: '#3b82f6',
-            secondary: '#1e40af',
-            background: 'transparent'
+            amplitude: 50,
+            barCount: 40,
+            barSpacing: 2,
+            colorMode: 'spectrum',
+            fillColor: '#3b82f6',
+            strokeColor: '#1e40af',
+            backgroundType: 'transparent'
           }
-        },
-        position: { x: 100, y: 100 }
-      })
-      
-      addLogo({
-        id: 'test-2',
-        name: 'Test Logo 2',
-        templateId: 'audio-bars',
-        templateName: 'Audio Bars',
-        parameters: {
-          core: {
-            seed: 'test2',
+        })
+        updateLogoPosition(logo1Id, { x: 100, y: 100 })
+        
+        // Update second logo
+        updateLogo(logo2Id, {
+          templateName: 'Wave Bars - Theme',
+          parameters: {
+            ...referenceParams,
             frequency: 5,
-            amplitude: 0.6,
-            offset: 0,
-            phase: 0
-          },
-          colors: {
-            primary: '#10b981',
-            secondary: '#059669',
-            background: 'transparent'
+            amplitude: 30,
+            barCount: 50,
+            barSpacing: 1,
+            colorMode: 'theme',
+            fillColor: '#10b981',
+            strokeColor: '#059669',
+            backgroundType: 'transparent'
           }
-        },
-        position: { x: 800, y: 100 }
-      })
-      
-      addLogo({
-        id: 'test-3',
-        name: 'Test Logo 3',
-        templateId: 'spinning-triangles',
-        templateName: 'Spinning Triangles',
-        parameters: {
-          core: {
-            seed: 'test3',
+        })
+        updateLogoPosition(logo2Id, { x: 800, y: 100 })
+        
+        // Update third logo
+        updateLogo(logo3Id, {
+          templateName: 'Wave Bars - Tone Shift',
+          parameters: {
+            ...referenceParams,
             frequency: 2,
-            amplitude: 0.5,
-            offset: 0,
-            phase: 0
-          },
-          colors: {
-            primary: '#f59e0b',
-            secondary: '#d97706',
-            background: 'transparent'
+            amplitude: 60,
+            barCount: 30,
+            barSpacing: 3,
+            colorMode: 'toneShift',
+            fillColor: '#f59e0b',
+            strokeColor: '#d97706',
+            backgroundType: 'transparent'
           }
-        },
-        position: { x: 450, y: 400 }
-      })
+        })
+        updateLogoPosition(logo3Id, { x: 450, y: 400 })
+      }, 100)
     }
-  }, [])
+  }, [logos.length])
   
   const handleAddLogo = () => {
-    const id = `logo-${Date.now()}`
     const colors = [
       { primary: '#8b5cf6', secondary: '#7c3aed' },
       { primary: '#ef4444', secondary: '#dc2626' },
@@ -92,28 +90,28 @@ export default function TestHybridCanvas() {
     ]
     const randomColors = colors[Math.floor(Math.random() * colors.length)]
     
-    addLogo({
-      id,
-      name: `Logo ${logos.length + 1}`,
-      templateId: 'wave-bars',
-      templateName: 'Wave Bars',
+    const newLogoId = addLogo('wave-bars')
+    
+    // Update with custom parameters
+    updateLogo(newLogoId, {
+      templateName: `Wave Bars ${logos.length}`,
       parameters: {
-        core: {
-          seed: id,
-          frequency: Math.random() * 5 + 1,
-          amplitude: Math.random() * 0.5 + 0.5,
-          offset: 0,
-          phase: 0
-        },
-        colors: {
-          ...randomColors,
-          background: 'transparent'
-        }
-      },
-      position: { 
-        x: Math.random() * 1200, 
-        y: Math.random() * 600 
+        ...logos[0]?.parameters || {},
+        frequency: Math.random() * 5 + 1,
+        amplitude: Math.random() * 50 + 20,
+        barCount: Math.floor(Math.random() * 30) + 30,
+        barSpacing: Math.floor(Math.random() * 3) + 1,
+        colorMode: 'spectrum',
+        fillColor: randomColors.primary,
+        strokeColor: randomColors.secondary,
+        backgroundType: 'transparent'
       }
+    })
+    
+    // Update position
+    updateLogoPosition(newLogoId, { 
+      x: Math.random() * 1200, 
+      y: Math.random() * 600 
     })
   }
   
