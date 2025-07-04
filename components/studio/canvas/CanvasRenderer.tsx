@@ -9,6 +9,7 @@ import {
   executeCustomCode,
   VisualizationParams
 } from '@/lib/visualization-generators'
+import { executeTemplate } from '@/lib/template-registry'
 
 interface CanvasRendererProps {
   canvasRef: React.RefObject<HTMLCanvasElement>
@@ -96,9 +97,8 @@ export function CanvasRenderer({ canvasRef, currentTime, onCodeError }: CanvasRe
         const logoCtx = logoCanvas.getContext('2d')
         
         if (logoCtx) {
-          // Clear with white background
-          logoCtx.fillStyle = '#ffffff'
-          logoCtx.fillRect(0, 0, logoCanvas.width, logoCanvas.height)
+          // Clear canvas (transparent by default)
+          logoCtx.clearRect(0, 0, logoCanvas.width, logoCanvas.height)
           
           // Create visualization params
           const logoParams: VisualizationParams = {
@@ -113,17 +113,55 @@ export function CanvasRenderer({ canvasRef, currentTime, onCodeError }: CanvasRe
             barSpacing: logo.parameters.custom.barSpacing || 2,
             radius: logo.parameters.core.radius,
             color: logo.parameters.style.fillColor,
+            // Include all style parameters
             fillColor: logo.parameters.style.fillColor,
+            fillType: logo.parameters.style.fillType,
+            fillOpacity: logo.parameters.style.fillOpacity,
             strokeColor: logo.parameters.style.strokeColor,
+            strokeType: logo.parameters.style.strokeType,
+            strokeWidth: logo.parameters.style.strokeWidth,
+            strokeOpacity: logo.parameters.style.strokeOpacity,
             backgroundColor: logo.parameters.style.backgroundColor,
+            backgroundType: logo.parameters.style.backgroundType,
+            // Include style object for template registry
+            style: logo.parameters.style,
             customParameters: logo.parameters.custom,
             time: currentTime
           }
           
           // Generate content
-          if (logo.code && logo.code.trim()) {
+          // Debug log parameters
+          console.log('CanvasRenderer: Rendering logo with params:', {
+            templateId: logo.templateId,
+            backgroundColor: logoParams.backgroundColor,
+            backgroundType: logoParams.backgroundType,
+            fillColor: logoParams.fillColor,
+            strokeColor: logoParams.strokeColor
+          });
+          
+          // First try to execute by templateId if available
+          if (logo.templateId) {
+            const success = executeTemplate(
+              logo.templateId,
+              logoCtx,
+              logoCanvas.width,
+              logoCanvas.height,
+              logoParams,
+              currentTime
+            )
+            
+            // If template execution failed and there's custom code, try that
+            if (!success && logo.code && logo.code.trim()) {
+              executeCustomCode(logoCtx, logoCanvas.width, logoCanvas.height, logoParams, logo.code, onCodeError || (() => {}))
+            } else if (!success) {
+              // Fall back to wave lines if nothing else works
+              generateWaveLines(logoCtx, logoCanvas.width, logoCanvas.height, logoParams)
+            }
+          } else if (logo.code && logo.code.trim()) {
+            // No templateId, but has custom code
             executeCustomCode(logoCtx, logoCanvas.width, logoCanvas.height, logoParams, logo.code, onCodeError || (() => {}))
           } else {
+            // No templateId and no code, use default
             generateWaveLines(logoCtx, logoCanvas.width, logoCanvas.height, logoParams)
           }
         }

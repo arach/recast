@@ -16,8 +16,6 @@ export const AVAILABLE_TEMPLATES = [
   'infinity-loops',
   'network-constellation',
   'brand-network',
-  'luxury-brand',
-  'premium-kinetic',
   'sophisticated-strokes',
   'border-effects',
   'nexus-ai-brand',
@@ -59,9 +57,29 @@ export async function loadTemplate(templateId: string): Promise<TemplateInfo | n
   try {
     const template = await import(`@/templates/${templateId}`);
     
-    if (!template || !template.code) {
-      console.error('❌ Template not found or missing code:', templateId);
+    if (!template) {
+      console.error('❌ Template not found:', templateId);
       return null;
+    }
+    
+    // If template has code export, use it (for backward compatibility)
+    let code = template.code;
+    
+    // If no code export, fetch the raw file content
+    if (!code) {
+      try {
+        // In development, we can fetch the raw file from the server
+        const response = await fetch(`/api/template-source/${templateId}`);
+        if (response.ok) {
+          code = await response.text();
+        } else {
+          // Fallback: generate a placeholder
+          code = `// ${template.name || templateId} template\n// Source code not available`;
+        }
+      } catch (fetchError) {
+        console.warn('Failed to fetch template source:', fetchError);
+        code = `// ${template.name || templateId} template\n// Source code not available`;
+      }
     }
     
     return {
@@ -69,7 +87,7 @@ export async function loadTemplate(templateId: string): Promise<TemplateInfo | n
       name: template.name || template.metadata?.name || templateId,
       description: template.description || template.metadata?.description || '',
       defaultParams: template.defaultParams || template.metadata?.defaultParams || {},
-      code: template.code
+      code
     };
   } catch (error) {
     console.error('❌ Error loading template:', templateId, error);
@@ -87,7 +105,7 @@ export async function getAllTemplateInfo(): Promise<TemplateInfo[]> {
   const convertedTemplates = [
     'wave-bars', 'audio-bars', 'wordmark', 'letter-mark', 'infinity-loops', 
     'apex-vercel', 'prism-google', 'pulse-spotify', 'spinning-triangles', 
-    'premium-kinetic', 'luxury-brand', 'network-constellation',
+    'network-constellation',
     'sophisticated-strokes', 'brand-network', 'border-effects',
     'nexus-ai-brand', 'terra-eco-brand', 'volt-electric-brand',
     'clean-triangle', 'golden-circle', 'smart-hexagon', 'organic-bark',

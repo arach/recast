@@ -13,12 +13,14 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Palette, ChevronDown } from 'lucide-react'
 import { useLogoStore } from '@/lib/stores/logoStore'
+import { useUIStore } from '@/lib/stores/uiStore'
 import { useSelectedLogo } from '@/lib/hooks/useSelectedLogo'
 import { loadTemplate, getAllTemplateInfo, type TemplateInfo } from '@/lib/template-registry-direct'
 
 export function TemplateSelector() {
   const [availableTemplates, setAvailableTemplates] = useState<TemplateInfo[]>([])
   const { updateLogo, selectedLogoId, getLogoById } = useLogoStore()
+  const { darkMode } = useUIStore()
   const { logo } = useSelectedLogo()
   
   // Load all available templates
@@ -46,14 +48,14 @@ export function TemplateSelector() {
       return
     }
     
-    console.log('Applying template to logo:', currentSelectedLogoId, 'Template:', templateId)
+    // console.log('Applying template to logo:', currentSelectedLogoId, 'Template:', templateId)
     
     try {
       if (templateId === 'custom') {
         // Reset to custom code (empty template)
-        console.log('Switching to custom code for logo:', currentSelectedLogoId)
+        // console.log('Switching to custom code for logo:', currentSelectedLogoId)
         updateLogo(currentSelectedLogoId, {
-          templateId: 'custom',
+          templateId: null, // Clear templateId to indicate custom code
           templateName: 'Custom',
           code: currentLogo.code || '// Custom code\nfunction drawVisualization(ctx, width, height, params, generator, time) {\n  // Your custom code here\n}',
           parameters: {
@@ -69,13 +71,13 @@ export function TemplateSelector() {
           return
         }
         
-        console.log('Loaded template:', template.name, 'Applying to logo:', currentSelectedLogoId)
+        // console.log('Loaded template:', template.name, 'Applying to logo:', currentSelectedLogoId)
         
         // Update the logo with the new template
         const updatedLogo = {
           templateId: template.id,
           templateName: template.name,
-          code: template.code,
+          // Don't store code - let the renderer look it up from the registry
           parameters: {
             ...currentLogo.parameters,
             custom: template.defaultParams || {}
@@ -90,7 +92,7 @@ export function TemplateSelector() {
   
   if (!logo) return null
   
-  console.log('Current logo state:', { templateId: logo.templateId, templateName: logo.templateName })
+  // console.log('Current logo state:', { templateId: logo.templateId, templateName: logo.templateName })
   const currentTemplate = availableTemplates.find(t => t.id === logo.templateId)
   
   return (
@@ -104,7 +106,11 @@ export function TemplateSelector() {
           <ChevronDown className="w-4 h-4 opacity-50" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="w-[200px] bg-white/95 backdrop-blur-sm border-gray-200">
+      <DropdownMenuContent align="start" className={`w-[200px] backdrop-blur-sm ${
+        darkMode
+          ? 'bg-gray-900/95 border-gray-700'
+          : 'bg-white/95 border-gray-200'
+      }`}>
         <DropdownMenuLabel>Templates</DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={() => handleTemplateChange('custom')}>

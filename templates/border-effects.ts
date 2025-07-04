@@ -644,7 +644,7 @@ export const name = "Border Effects";
 export const description = "Advanced border styling with multiple layers, corner treatments, shadows, glows, and animations";
 export const defaultParams = metadata.defaultParams;
 export const parameters = PARAMETERS;
-export const draw = drawVisualization;
+export { drawVisualization };
 
 export const code = `${applyUniversalBackground.toString()}
 

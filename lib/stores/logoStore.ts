@@ -24,6 +24,7 @@ interface LogoStore {
   // Computed getters
   getSelectedLogo: () => Logo | null;
   getLogoById: (id: string) => Logo | null;
+  getLogoCount: () => number;
 }
 
 // Default parameters for new logos
@@ -47,6 +48,7 @@ const defaultParameters: Parameters = {
     strokeOpacity: 1,
     backgroundColor: '#ffffff',
     backgroundType: 'transparent',
+    backgroundOpacity: 1,
   },
   content: {},
   custom: {
@@ -171,6 +173,7 @@ function drawVisualization(ctx, width, height, params, generator, time) {
       },
 
       updateLogoParameters: (id, parameters) => {
+        console.log('LogoStore: Updating parameters for logo', id, parameters);
         set((state) => ({
           logos: state.logos.map((logo) =>
             logo.id === id
@@ -306,6 +309,10 @@ function drawVisualization(ctx, width, height, params, generator, time) {
 
       getLogoById: (id) => {
         return get().logos.find((logo) => logo.id === id) || null;
+      },
+      
+      getLogoCount: () => {
+        return get().logos.length;
       },
     }),
       {

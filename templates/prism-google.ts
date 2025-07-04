@@ -22,12 +22,17 @@ const PARAMETERS = {
   damping: { type: 'slider', min: 0, max: 1, step: 0.01, default: 0.9, label: 'Decay', category: 'Wave' },
   layers: { type: 'slider', min: 1, max: 8, step: 1, default: 2, label: 'Layers', category: 'Wave' },
   radius: { type: 'slider', min: 10, max: 200, step: 1, default: 50, label: 'Base Radius', category: 'Geometry' },
+  scale: { type: 'slider', min: 0.1, max: 3, step: 0.1, default: 1, label: 'Overall Scale', category: 'Geometry' },
   symmetry: { type: 'slider', min: 1, max: 12, step: 1, default: 6, label: 'Symmetry Segments', category: 'Geometry' },
-  colorMode: { type: 'select', options: [{"value":"duotone","label":"Duotone"},{"value":"layered HSL","label":"Layered HSL"},{"value":"monochrome","label":"Monochrome"},{"value":"theme","label":"Theme"}], default: 'theme', label: 'Color Mode', category: 'Colors' }
+  colorMode: { type: 'select', options: [{"value":"duotone","label":"Duotone"},{"value":"layered HSL","label":"Layered HSL"},{"value":"monochrome","label":"Monochrome"},{"value":"theme","label":"Theme"}], default: 'theme', label: 'Color Mode', category: 'Colors' },
+  backgroundOpacity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 1, label: 'Background Opacity', category: 'Background', showIf: (params)=>params.backgroundType !== 'transparent' }
 };
 
 function applyUniversalBackground(ctx, width, height, params) {
   if (!params.backgroundType || params.backgroundType === 'transparent') return;
+  
+  ctx.save();
+  ctx.globalAlpha = params.backgroundOpacity ?? 1;
   
   if (params.backgroundType === 'solid') {
     ctx.fillStyle = params.backgroundColor || '#ffffff';
@@ -46,6 +51,8 @@ function applyUniversalBackground(ctx, width, height, params) {
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, width, height);
   }
+  
+  ctx.restore();
 }
 
 function getColor(params, layer, time) {
@@ -87,30 +94,64 @@ function drawVisualization(ctx, width, height, params, _generator, time) {
   const centerX = width / 2;
   const centerY = height / 2;
   const segments = params.symmetry;
+  
+  // Extract opacity values with defaults
+  const strokeOpacity = params.strokeOpacity ?? 1;
+  const fillOpacity = params.fillOpacity ?? 1;
+  
+  // Apply overall scale
+  const scale = params.scale ?? 1;
 
   for (let layer = 0; layer < params.layers; layer++) {
-    const baseRadius = params.radius * (1 + layer * 0.25);
+    const baseRadius = params.radius * (1 + layer * 0.25) * scale;
     const angleStep = (Math.PI * 2) / segments;
     const color = getColor(params, layer, time);
-
-    ctx.strokeStyle = color;
-    ctx.lineWidth = params.strokeWidth;
-    ctx.globalAlpha = (1 - layer * 0.1) * (params.strokeOpacity || 1);
-
-    ctx.beginPath();
-    for (let i = 0; i <= segments; i++) {
-      const angle = i * angleStep;
-      const jitter = (Math.random() - 0.5) * params.chaos * 10;
-      const radius = baseRadius + jitter + params.amplitude * Math.sin(time + i);
-      const x = centerX + Math.cos(angle) * radius;
-      const y = centerY + Math.sin(angle) * radius;
-      if (i === 0) ctx.moveTo(x, y);
-      else ctx.lineTo(x, y);
+    
+    // Save context before applying opacity
+    ctx.save();
+    
+    // Apply stroke or fill based on parameters
+    if (params.strokeType !== 'none') {
+      ctx.strokeStyle = color;
+      ctx.lineWidth = params.strokeWidth;
+      ctx.globalAlpha = (1 - layer * 0.1) * strokeOpacity;
+      
+      ctx.beginPath();
+      for (let i = 0; i <= segments; i++) {
+        const angle = i * angleStep;
+        const jitter = (Math.random() - 0.5) * params.chaos * 10;
+        const radius = baseRadius + jitter + params.amplitude * Math.sin(time + i);
+        const x = centerX + Math.cos(angle) * radius;
+        const y = centerY + Math.sin(angle) * radius;
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.closePath();
+      ctx.stroke();
     }
-    ctx.closePath();
-    ctx.stroke();
+    
+    // Also support fill if fillType is not 'none'
+    if (params.fillType !== 'none') {
+      ctx.fillStyle = color;
+      ctx.globalAlpha = (1 - layer * 0.1) * fillOpacity;
+      
+      ctx.beginPath();
+      for (let i = 0; i <= segments; i++) {
+        const angle = i * angleStep;
+        const jitter = (Math.random() - 0.5) * params.chaos * 10;
+        const radius = baseRadius + jitter + params.amplitude * Math.sin(time + i);
+        const x = centerX + Math.cos(angle) * radius;
+        const y = centerY + Math.sin(angle) * radius;
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.closePath();
+      ctx.fill();
+    }
+    
+    // Restore context after drawing
+    ctx.restore();
   }
-  ctx.globalAlpha = 1;
 }
 
 export const metadata = {
@@ -125,6 +166,7 @@ export const metadata = {
     damping: 0.9,
     layers: 2,
     radius: 50,
+    scale: 1,
     symmetry: 6,
     colorMode: "theme"
   }
@@ -170,12 +212,17 @@ const PARAMETERS = {
   damping: { type: 'slider', min: 0, max: 1, step: 0.01, default: 0.9, label: 'Decay', category: 'Wave' },
   layers: { type: 'slider', min: 1, max: 8, step: 1, default: 2, label: 'Layers', category: 'Wave' },
   radius: { type: 'slider', min: 10, max: 200, step: 1, default: 50, label: 'Base Radius', category: 'Geometry' },
+  scale: { type: 'slider', min: 0.1, max: 3, step: 0.1, default: 1, label: 'Overall Scale', category: 'Geometry' },
   symmetry: { type: 'slider', min: 1, max: 12, step: 1, default: 6, label: 'Symmetry Segments', category: 'Geometry' },
-  colorMode: { type: 'select', options: [{"value":"duotone","label":"Duotone"},{"value":"layered HSL","label":"Layered HSL"},{"value":"monochrome","label":"Monochrome"},{"value":"theme","label":"Theme"}], default: 'theme', label: 'Color Mode', category: 'Colors' }
+  colorMode: { type: 'select', options: [{"value":"duotone","label":"Duotone"},{"value":"layered HSL","label":"Layered HSL"},{"value":"monochrome","label":"Monochrome"},{"value":"theme","label":"Theme"}], default: 'theme', label: 'Color Mode', category: 'Colors' },
+  backgroundOpacity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 1, label: 'Background Opacity', category: 'Background', showIf: (params)=>params.backgroundType !== 'transparent' }
 };
 
 function applyUniversalBackground(ctx, width, height, params) {
   if (!params.backgroundType || params.backgroundType === 'transparent') return;
+  
+  ctx.save();
+  ctx.globalAlpha = params.backgroundOpacity ?? 1;
   
   if (params.backgroundType === 'solid') {
     ctx.fillStyle = params.backgroundColor || '#ffffff';
@@ -194,6 +241,8 @@ function applyUniversalBackground(ctx, width, height, params) {
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, width, height);
   }
+  
+  ctx.restore();
 }
 
 function getColor(params, layer, time) {
@@ -235,28 +284,62 @@ function drawVisualization(ctx, width, height, params, _generator, time) {
   const centerX = width / 2;
   const centerY = height / 2;
   const segments = params.symmetry;
+  
+  // Extract opacity values with defaults
+  const strokeOpacity = params.strokeOpacity ?? 1;
+  const fillOpacity = params.fillOpacity ?? 1;
+  
+  // Apply overall scale
+  const scale = params.scale ?? 1;
 
   for (let layer = 0; layer < params.layers; layer++) {
-    const baseRadius = params.radius * (1 + layer * 0.25);
+    const baseRadius = params.radius * (1 + layer * 0.25) * scale;
     const angleStep = (Math.PI * 2) / segments;
     const color = getColor(params, layer, time);
-
-    ctx.strokeStyle = color;
-    ctx.lineWidth = params.strokeWidth;
-    ctx.globalAlpha = (1 - layer * 0.1) * (params.strokeOpacity || 1);
-
-    ctx.beginPath();
-    for (let i = 0; i <= segments; i++) {
-      const angle = i * angleStep;
-      const jitter = (Math.random() - 0.5) * params.chaos * 10;
-      const radius = baseRadius + jitter + params.amplitude * Math.sin(time + i);
-      const x = centerX + Math.cos(angle) * radius;
-      const y = centerY + Math.sin(angle) * radius;
-      if (i === 0) ctx.moveTo(x, y);
-      else ctx.lineTo(x, y);
+    
+    // Save context before applying opacity
+    ctx.save();
+    
+    // Apply stroke or fill based on parameters
+    if (params.strokeType !== 'none') {
+      ctx.strokeStyle = color;
+      ctx.lineWidth = params.strokeWidth;
+      ctx.globalAlpha = (1 - layer * 0.1) * strokeOpacity;
+      
+      ctx.beginPath();
+      for (let i = 0; i <= segments; i++) {
+        const angle = i * angleStep;
+        const jitter = (Math.random() - 0.5) * params.chaos * 10;
+        const radius = baseRadius + jitter + params.amplitude * Math.sin(time + i);
+        const x = centerX + Math.cos(angle) * radius;
+        const y = centerY + Math.sin(angle) * radius;
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.closePath();
+      ctx.stroke();
     }
-    ctx.closePath();
-    ctx.stroke();
+    
+    // Also support fill if fillType is not 'none'
+    if (params.fillType !== 'none') {
+      ctx.fillStyle = color;
+      ctx.globalAlpha = (1 - layer * 0.1) * fillOpacity;
+      
+      ctx.beginPath();
+      for (let i = 0; i <= segments; i++) {
+        const angle = i * angleStep;
+        const jitter = (Math.random() - 0.5) * params.chaos * 10;
+        const radius = baseRadius + jitter + params.amplitude * Math.sin(time + i);
+        const x = centerX + Math.cos(angle) * radius;
+        const y = centerY + Math.sin(angle) * radius;
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.closePath();
+      ctx.fill();
+    }
+    
+    // Restore context after drawing
+    ctx.restore();
   }
-  ctx.globalAlpha = 1;
 }`;

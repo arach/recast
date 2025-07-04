@@ -76,6 +76,9 @@ function applyUniversalBackground(ctx, width, height, params) {
   }
 }
 
+export { drawVisualization };
+
+
 function drawVisualization(ctx, width, height, params, _generator, time) {
   // Parameter compatibility layer
   if (params.customParameters) {

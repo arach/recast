@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Inter, Silkscreen, Orbitron } from 'next/font/google'
 import './globals.css'
+import { DarkModeProvider } from '@/components/providers/DarkModeProvider'
 
 const inter = Inter({ subsets: ['latin'] })
 const silkscreen = Silkscreen({ 
@@ -39,7 +40,11 @@ export default function RootLayout({
       <head>
         <link href="https://fonts.googleapis.com/css2?family=DotGothic16&display=swap" rel="stylesheet" />
       </head>
-      <body className={inter.className}>{children}</body>
+      <body className={inter.className}>
+        <DarkModeProvider>
+          {children}
+        </DarkModeProvider>
+      </body>
     </html>
   )
 }

@@ -13,6 +13,11 @@ interface CanvasState {
   zoom: number
   isDragging: boolean
   
+  // Tool mode
+  toolMode: 'select' | 'pan'
+  draggedLogoId: string | null
+  dragOffset: CanvasOffset
+  
   // Canvas dimensions
   dimensions: {
     width: number
@@ -29,6 +34,9 @@ interface CanvasState {
   setOffset: (offset: CanvasOffset) => void
   setZoom: (zoom: number) => void
   setIsDragging: (isDragging: boolean) => void
+  setToolMode: (mode: 'select' | 'pan') => void
+  setDraggedLogoId: (id: string | null) => void
+  setDragOffset: (offset: CanvasOffset) => void
   setDimensions: (width: number, height: number) => void
   setCodeEditorState: (collapsed: boolean, width: number) => void
   
@@ -49,6 +57,9 @@ export const useCanvasStore = create<CanvasState>()(
         offset: { x: 0, y: 0 },
         zoom: 1,
         isDragging: false,
+        toolMode: 'pan' as const,
+        draggedLogoId: null,
+        dragOffset: { x: 0, y: 0 },
         dimensions: { width: 0, height: 0 },
         codeEditor: { collapsed: true, width: 500 },
         
@@ -56,6 +67,9 @@ export const useCanvasStore = create<CanvasState>()(
         setOffset: (offset) => set({ offset }),
         setZoom: (zoom) => set({ zoom: Math.max(0.1, Math.min(5, zoom)) }),
         setIsDragging: (isDragging) => set({ isDragging }),
+        setToolMode: (mode) => set({ toolMode: mode }),
+        setDraggedLogoId: (id) => set({ draggedLogoId: id }),
+        setDragOffset: (offset) => set({ dragOffset: offset }),
         setDimensions: (width, height) => set({ dimensions: { width, height } }),
         setCodeEditorState: (collapsed, width) => set({ codeEditor: { collapsed, width } }),
         

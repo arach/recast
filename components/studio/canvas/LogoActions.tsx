@@ -2,19 +2,29 @@
 
 import React, { useState, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
-import { Clipboard, Download, CopyPlus, Trash2 } from 'lucide-react'
+import { Clipboard, Download, CopyPlus, Trash2, AlertTriangle } from 'lucide-react'
 import { useLogoStore } from '@/lib/stores/logoStore'
 import { useSelectedLogo } from '@/lib/hooks/useSelectedLogo'
 import { generateLogoCanvas } from '@/lib/canvas/logoGenerator'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 
 interface LogoActionsProps {
   className?: string
 }
 
 export function LogoActions({ className }: LogoActionsProps) {
-  const { logos, selectedLogoId, duplicateLogo, deleteLogo } = useLogoStore()
+  const { selectedLogoId, duplicateLogo, deleteLogo, getLogoCount, logos } = useLogoStore()
   const { logo: selectedLogo } = useSelectedLogo()
   const [showCopyFeedback, setShowCopyFeedback] = useState(false)
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const logoCount = getLogoCount()
   
   if (!selectedLogoId || !selectedLogo) return null
   
@@ -90,15 +100,11 @@ export function LogoActions({ className }: LogoActionsProps) {
           >
             <CopyPlus className="w-4 h-4" />
           </Button>
-          {logos.length > 1 && (
+          {logoCount > 1 && (
             <Button
               size="sm"
               variant="ghost"
-              onClick={() => {
-                if (confirm('Delete this logo?')) {
-                  deleteLogo(selectedLogoId)
-                }
-              }}
+              onClick={() => setShowDeleteDialog(true)}
               className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
               title="Delete this logo"
             >
@@ -116,6 +122,51 @@ export function LogoActions({ className }: LogoActionsProps) {
           </div>
         </div>
       )}
+      
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-orange-500" />
+              Delete Logo
+            </DialogTitle>
+            <DialogDescription asChild>
+              <div className="pt-3 space-y-2">
+                <p>Are you sure you want to delete this logo?</p>
+                <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 mt-3">
+                  <div className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    {selectedLogo.templateName || 'Untitled Logo'}
+                  </div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    {logos.length - 1} logo{logos.length - 1 !== 1 ? 's' : ''} will remain
+                  </div>
+                </div>
+                <p className="text-sm text-gray-600 dark:text-gray-400 pt-2">
+                  This action cannot be undone.
+                </p>
+              </div>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              variant="outline"
+              onClick={() => setShowDeleteDialog(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                deleteLogo(selectedLogoId)
+                setShowDeleteDialog(false)
+              }}
+            >
+              Delete Logo
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   )
 }

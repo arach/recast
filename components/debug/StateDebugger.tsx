@@ -1,15 +1,15 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { useLogoStore } from '@/lib/stores/logoStore';
 import { useUIStore } from '@/lib/stores/uiStore';
-import { Maximize2, Minimize2, ChevronDown, ChevronUp, X, Copy, Check } from 'lucide-react';
+import { Maximize2, Minimize2, Bug, X, Copy, Check } from 'lucide-react';
 import { useDebugActions } from '@/lib/debug/debugRegistry';
 import { StateTreeView } from './StateTreeView';
 import { copyExpandedState, formatForClipboard, copyToClipboard } from '@/lib/debug/copyExpandedState';
 
 interface StateDebuggerProps {
-  reactLogos: any[];
+  selectedLogo: any;
   selectedLogoId: string;
   onClearCanvasPosition?: () => void;
   canvasOffset?: { x: number, y: number };
@@ -18,16 +18,22 @@ interface StateDebuggerProps {
 
 type DebugTab = 'dashboard' | 'details' | 'utilities' | 'state';
 
-export function StateDebugger({ 
-  reactLogos, 
+export const StateDebugger = forwardRef<any, StateDebuggerProps>(({ 
+  selectedLogo, 
   selectedLogoId,
   onClearCanvasPosition,
   canvasOffset,
   onClose
-}: StateDebuggerProps) {
+}, ref) => {
   const [activeTab, setActiveTab] = useState<DebugTab>('dashboard');
   const [isExpanded, setIsExpanded] = useState(false);
-  const [isMinimized, setIsMinimized] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false); // Just bug button visible
+  
+  // Expose methods to parent
+  useImperativeHandle(ref, () => ({
+    setIsCollapsed: (collapsed: boolean) => setIsCollapsed(collapsed),
+    toggleCollapsed: () => setIsCollapsed(prev => !prev)
+  }), [])
   
   // State for tracking expanded paths per section
   const [expandedPaths, setExpandedPaths] = useState<{
@@ -36,7 +42,7 @@ export function StateDebugger({
     ui: Set<string>;
     localStorage: Set<string>;
   }>({
-    react: new Set(['reactState', 'reactState.logos']),
+    react: new Set(['reactState', 'reactState.selectedLogo']),
     logo: new Set(['logoStore', 'logoStore.logos']),
     ui: new Set(['uiStore']),
     localStorage: new Set(['localStorage'])
@@ -56,7 +62,7 @@ export function StateDebugger({
   // Get registered debug actions
   const { actions, categories } = useDebugActions();
   
-  const reactLogo = reactLogos.find(l => l.id === selectedLogoId);
+  const reactLogo = selectedLogo; // React now only knows about selected logo
   const zustandLogo = zustandLogos.find(l => l.id === zustandSelectedId);
 
   // Get saved offset from localStorage
@@ -82,52 +88,67 @@ export function StateDebugger({
     y: effectiveCenterY / zoom
   };
 
-  // Calculate logo bounding box
+  // Calculate logo bounding box for selected logo
   const logoSize = 600;
   let logoBounds = null;
-  if (reactLogos.length > 0) {
-    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
-    reactLogos.forEach(logo => {
-      const position = logo.position || { x: 0, y: 0 };
-      minX = Math.min(minX, position.x);
-      maxX = Math.max(maxX, position.x + logoSize);
-      minY = Math.min(minY, position.y);
-      maxY = Math.max(maxY, position.y + logoSize);
-    });
+  if (selectedLogo) {
+    const position = selectedLogo.position || { x: 0, y: 0 };
     logoBounds = {
-      minX, maxX, minY, maxY,
-      centerX: (minX + maxX) / 2,
-      centerY: (minY + maxY) / 2,
-      width: maxX - minX,
-      height: maxY - minY
+      minX: position.x,
+      maxX: position.x + logoSize,
+      minY: position.y,
+      maxY: position.y + logoSize,
+      centerX: position.x + logoSize / 2,
+      centerY: position.y + logoSize / 2,
+      width: logoSize,
+      height: logoSize
     };
   }
   
   return (
+    <>
+      {/* Bug button overlay - always visible */}
+      <button
+        onClick={() => setIsCollapsed(!isCollapsed)}
+        className="fixed bottom-4 right-4 w-12 h-12 rounded-full
+                   bg-gray-900/95 dark:bg-black/95
+                   backdrop-blur-sm
+                   border border-gray-700/50 dark:border-gray-800
+                   shadow-lg shadow-black/50
+                   flex items-center justify-center
+                   text-gray-400 hover:text-white
+                   hover:bg-gray-800/95
+                   transition-all duration-200
+                   hover:scale-110 active:scale-95
+                   group z-[51]"
+        title={isCollapsed ? "Show debug toolbar" : "Hide debug toolbar"}
+      >
+        <Bug className={`w-5 h-5 transition-transform duration-200 ${
+          isCollapsed ? '' : 'rotate-180'
+        }`} />
+      </button>
+
+      {/* Debug toolbar - only visible when not collapsed */}
+      {!isCollapsed && (
     <div className={`fixed bottom-4 right-4 rounded-xl text-xs font-sans z-50 
                 bg-gray-900/95 dark:bg-black/95 
                 backdrop-blur-sm
                 border border-gray-700/50 dark:border-gray-800
                 transition-all duration-700
-                ${isExpanded ? 'w-[640px] shadow-[0_20px_50px_rgba(0,0,0,0.7)]' : 'w-[480px] shadow-2xl shadow-black/50'}
-                ${isMinimized ? 'shadow-xl' : ''}`}>
+                ${isExpanded ? 'w-[640px] shadow-[0_20px_50px_rgba(0,0,0,0.7)]' : 'w-[480px] shadow-2xl shadow-black/50'}`}>
       {/* Header with tabs */}
       <div className="flex items-center justify-between p-3 border-b border-gray-700/50">
-        <h3 className="font-semibold text-white">Debug Toolbar</h3>
+        <div className="flex items-center gap-2">
+          <Bug className="w-4 h-4 text-gray-400" />
+          <h3 className="font-semibold text-white">Debug Toolbar</h3>
+        </div>
         <div className="flex items-center gap-2">
           <button
-            onClick={() => setIsMinimized(!isMinimized)}
-            className="p-1.5 rounded-md text-gray-400 hover:text-white
-                       hover:bg-white/10 transition-all duration-200
-                       hover:scale-110 active:scale-95"
-            title={isMinimized ? "Show content" : "Hide content"}
-          >
-            {isMinimized ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-          </button>
-          <button
             onClick={() => setIsExpanded(!isExpanded)}
-            className="p-1.5 rounded-md text-gray-400 hover:text-white
-                       hover:bg-white/10 transition-all duration-200
+            className="w-7 h-7 rounded-full flex items-center justify-center
+                       bg-gray-700/50 hover:bg-gray-600/50
+                       text-gray-400 hover:text-white
+                       transition-all duration-200
                        hover:scale-110 active:scale-95"
             title={isExpanded ? "Collapse width" : "Expand width"}
           >
@@ -136,8 +157,10 @@ export function StateDebugger({
           {onClose && (
             <button
               onClick={onClose}
-              className="p-1.5 rounded-md text-gray-400 hover:text-white
-                         hover:bg-white/10 transition-all duration-200
+              className="w-7 h-7 rounded-full flex items-center justify-center
+                         bg-gray-700/50 hover:bg-gray-600/50
+                         text-gray-400 hover:text-white
+                         transition-all duration-200
                          hover:scale-110 active:scale-95"
               title="Close debug toolbar"
             >
@@ -147,48 +170,46 @@ export function StateDebugger({
         </div>
       </div>
       
-      {/* Collapsible Content */}
-      <div className={`overflow-hidden transition-all duration-500
-                      ${isMinimized ? 'max-h-0' : 'max-h-[800px]'}`}>
-        {/* Tab Navigation */}
-        <div className="flex border-b border-gray-700/50">
-          {[
-            { id: 'dashboard' as const, label: 'Dashboard', icon: '📊', title: 'Multi-state overview' },
-            { id: 'details' as const, label: 'Details', icon: '🔍', title: 'Detailed state inspection' },
-            { id: 'utilities' as const, label: 'Utils', icon: '🔧', title: 'Developer utilities' },
-            { id: 'state' as const, label: 'State', icon: '🌳', title: 'Full state tree' }
-          ].map(tab => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`px-4 py-2.5 text-xs font-medium transition-all duration-200 relative
-                ${activeTab === tab.id 
-                  ? 'text-white bg-white/10' 
-                  : 'text-gray-400 hover:text-white hover:bg-white/5'
-                }`}
-              title={tab.title}
-            >
-              <span className="flex items-center gap-1.5">
-                <span className="text-base">{tab.icon}</span>
-                {tab.label}
-              </span>
-              {activeTab === tab.id && (
-                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-blue-400 to-purple-400" />
-              )}
-            </button>
-          ))}
-        </div>
-        
-        {/* Tab Content */}
-        <div className={`p-4 overflow-y-auto text-gray-100 
-                        transition-all duration-700
-                        ${isExpanded ? 'max-h-[600px]' : 'max-h-[400px]'}`}>
-          <div className="animate-in fade-in-0 slide-in-from-bottom-2 duration-300">
-            {renderTabContent()}
-          </div>
+      {/* Tab Navigation */}
+      <div className="flex border-b border-gray-700/50">
+        {[
+          { id: 'dashboard' as const, label: 'Dashboard', icon: '📊', title: 'Multi-state overview' },
+          { id: 'details' as const, label: 'Details', icon: '🔍', title: 'Detailed state inspection' },
+          { id: 'utilities' as const, label: 'Utils', icon: '🔧', title: 'Developer utilities' },
+          { id: 'state' as const, label: 'State', icon: '🌳', title: 'Full state tree' }
+        ].map(tab => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={`px-4 py-2.5 text-xs font-medium transition-all duration-200 relative
+              ${activeTab === tab.id 
+                ? 'text-white bg-white/10' 
+                : 'text-gray-400 hover:text-white hover:bg-white/5'
+              }`}
+            title={tab.title}
+          >
+            <span className="flex items-center gap-1.5">
+              <span className="text-base">{tab.icon}</span>
+              {tab.label}
+            </span>
+            {activeTab === tab.id && (
+              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-blue-400 to-purple-400" />
+            )}
+          </button>
+        ))}
+      </div>
+      
+      {/* Tab Content */}
+      <div className={`p-4 overflow-y-auto text-gray-100 
+                      transition-all duration-700
+                      ${isExpanded ? 'max-h-[600px]' : 'max-h-[400px]'}`}>
+        <div className="animate-in fade-in-0 slide-in-from-bottom-2 duration-300">
+          {renderTabContent()}
         </div>
       </div>
-    </div>
+        </div>
+      )}
+    </>
   );
   
   function renderTabContent() {
@@ -212,10 +233,10 @@ export function StateDebugger({
     
     const idsSynced = selectedLogoId === zustandSelectedId;
     const templatesSynced = reactLogo?.templateId === zustandLogo?.templateId;
-    const logoCountSynced = reactLogos.length === zustandLogos.length;
+    const logoCountSynced = (selectedLogo ? 1 : 0) === zustandLogos.filter(l => l.id === selectedLogoId).length;
     
-    // Template loading status
-    const templateLoaded = reactLogo?.templateId && reactLogo?.code;
+    // Template loading status - check if template ID exists (we no longer store code directly)
+    const templateLoaded = reactLogo?.templateId;
     
     return (
       <div className="space-y-4">
@@ -285,10 +306,10 @@ export function StateDebugger({
             <div className={`text-sm font-semibold mt-1 ${
               templateLoaded ? 'text-green-400' : 'text-orange-400'
             }`}>
-              {templateLoaded ? '✓ Loaded' : '⏳ Loading...'}
+              {templateLoaded ? '✓ Loaded' : '⏳ No template'}
             </div>
             <div className="text-[10px] mt-1 text-gray-400">
-              {reactLogo?.code ? `${reactLogo.code.length} chars` : 'No code'}
+              {reactLogo?.templateId || 'Using custom code'}
             </div>
           </div>
         </div>
@@ -307,8 +328,8 @@ export function StateDebugger({
                 <span className="ml-1 text-white font-medium">{selectedLogoId}</span>
               </div>
               <div>
-                <span className="text-gray-500">Logos:</span>
-                <span className="ml-1 text-white font-medium">{reactLogos.length}</span>
+                <span className="text-gray-500">Has Logo:</span>
+                <span className="ml-1 text-white font-medium">{selectedLogo ? 'Yes' : 'No'}</span>
               </div>
               <div>
                 <span className="text-gray-500">Template:</span>
@@ -539,7 +560,7 @@ export function StateDebugger({
           <div className="space-y-1 text-[10px] text-gray-500 font-mono">
             <div>ENV: {process.env.NODE_ENV}</div>
             <div>localStorage keys: {Object.keys(localStorage).length}</div>
-            <div>React: {reactLogos.length} logos</div>
+            <div>React: {selectedLogo ? '1 selected' : 'none'}</div>
             <div>Zustand: {zustandLogos.length} logos</div>
           </div>
         </div>
@@ -620,7 +641,7 @@ export function StateDebugger({
         <div className="pl-2">
           {logoBounds ? (
             <>
-              <div>Count: {reactLogos.length}</div>
+              <div>Has Logo: {selectedLogo ? 'Yes' : 'No'}</div>
               <div>Min: ({logoBounds.minX}, {logoBounds.minY})</div>
               <div>Max: ({logoBounds.maxX}, {logoBounds.maxY})</div>
               <div>Center: ({logoBounds.centerX.toFixed(1)}, {logoBounds.centerY.toFixed(1)})</div>
@@ -685,7 +706,7 @@ export function StateDebugger({
           <div className="p-3 bg-white/5 rounded-lg border border-gray-700/50">
             <pre className="text-[10px] text-gray-300 font-mono whitespace-pre-wrap overflow-x-auto">
               {JSON.stringify({
-                reactLogos,
+                selectedLogo,
                 selectedLogoId,
                 canvasOffset,
               }, null, 2)}
@@ -715,9 +736,9 @@ export function StateDebugger({
     const logoStoreState = fullLogoStore;
     const uiStoreState = fullUIStore;
     
-    // React state from props
+    // React state from props - Now only has selected logo
     const reactState = {
-      logos: reactLogos,
+      selectedLogo: selectedLogo,
       selectedLogoId,
       canvasOffset,
     };
@@ -960,4 +981,6 @@ export function StateDebugger({
       </div>
     );
   }
-}
+});
+
+StateDebugger.displayName = 'StateDebugger';

@@ -522,6 +522,8 @@ function drawVisualization(ctx, width, height, params, _generator, time) {
   }
 }
 
+export { drawVisualization };
+
 export const metadata = {
   name: "⬢ Smart Hexagon",
   description: "Modern structured brands with variable corner radius and professional sophistication",

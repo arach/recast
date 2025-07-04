@@ -676,6 +676,8 @@ export const defaultParams = {
   industrialFinish: 0.6
 };
 
+export { drawVisualization };
+
 export const code = `// 🏢 Architectural Grid
 const PARAMETERS = {
   // Universal Background Controls

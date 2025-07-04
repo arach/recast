@@ -756,6 +756,8 @@ function drawVisualization(ctx, width, height, params, _generator, time) {
   }
 }
 
+export { drawVisualization };
+
 export const metadata = {
   name: "⚛️ Quantum Field",
   description: "Abstract quantum physics visualization with superposition, entanglement, and wave-particle duality",

@@ -430,7 +430,7 @@ export const description = "Organic luxury brand with sustainable sophistication
 export const defaultParams = metadata.defaultParams;
 
 export const parameters: Record<string, ParameterDefinition> = PARAMETERS;
-export const draw = drawVisualization;
+export { drawVisualization };
 
 export const code = `// TERRA Eco Brand - Organic luxury with sustainable sophistication
 const PARAMETERS = ${JSON.stringify(PARAMETERS, null, 2)};

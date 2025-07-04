@@ -30,6 +30,7 @@ export interface StyleParameters {
   strokeOpacity: number;
   backgroundColor: string;
   backgroundType: 'transparent' | 'solid' | 'gradient';
+  backgroundOpacity?: number;
 }
 
 // Content parameters (text, letters, etc)

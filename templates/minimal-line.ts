@@ -538,7 +538,7 @@ export const name = "─ Minimal Line";
 export const description = "Ultra-clean single-line aesthetic with sophisticated simplicity and intentional whitespace";
 export const defaultParams = metadata.defaultParams;
 export const parameters: Record<string, ParameterDefinition> = PARAMETERS;
-export const draw = drawVisualization;
+export { drawVisualization };
 export const code = `// Minimal Line - Ultra-clean single-line aesthetic for sophisticated minimalist brands
 
 // This template creates refined geometric forms with intentional simplicity,

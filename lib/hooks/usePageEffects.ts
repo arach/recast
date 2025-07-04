@@ -1,7 +1,6 @@
 import { useEffect, useCallback } from 'react'
 import { useUIStore } from '@/lib/stores/uiStore'
 import { DevelopmentUtilities } from '@/lib/debug/developmentUtilities'
-import { BrandPresets } from '@/lib/presets/brandPresets'
 
 interface UsePageEffectsOptions {
   onRunCode?: () => void
@@ -24,20 +23,50 @@ export function usePageEffects(options: UsePageEffectsOptions = {}) {
     }
   }, [options.loadThemeById])
   
-  // Initialize brand presets
+  // Initialize brand presets with lazy loading to avoid circular dependencies
   useEffect(() => {
     if (options.updateCore && options.updateCustom && options.loadThemeById && options.forceRender) {
-      BrandPresets.initializeReflowUtilities({
-        updateCore: options.updateCore,
-        updateCustom: options.updateCustom,
-        loadTheme: options.loadThemeById,
-        forceRender: options.forceRender
-      })
+      // Store the initialization in a flag to prevent re-initialization
+      let initialized = false;
       
-      // Load 4 logos utility
-      (window as any).load4Logos = () => BrandPresets.create4LogoGrid(options.forceRender)
+      const initializeBrandPresets = async () => {
+        if (initialized) return;
+        
+        try {
+          // Use require to avoid webpack dynamic import issues
+          const { BrandPresets: BrandPresetsClass } = await import('@/lib/presets/brandPresets');
+          
+          if (!BrandPresetsClass || typeof BrandPresetsClass.initializeReflowUtilities !== 'function') {
+            console.error('BrandPresets not properly loaded');
+            return;
+          }
+          
+          initialized = true;
+          
+          BrandPresetsClass.initializeReflowUtilities({
+            updateCore: options.updateCore,
+            updateCustom: options.updateCustom,
+            loadTheme: options.loadThemeById,
+            forceRender: options.forceRender
+          });
+          
+          // Load 4 logos utility
+          (window as any).load4Logos = async () => {
+            try {
+              await BrandPresetsClass.create4LogoGrid(options.forceRender)
+            } catch (err) {
+              console.error('Failed to create 4 logo grid:', err)
+            }
+          }
+        } catch (err) {
+          console.error('Failed to initialize BrandPresets:', err);
+          // Don't retry - if it fails, it's likely a real issue
+        }
+      };
+      
+      initializeBrandPresets();
     }
-  }, [options])
+  }, [options.updateCore, options.updateCustom, options.loadThemeById, options.forceRender])
   
   // Theme detection
   useEffect(() => {

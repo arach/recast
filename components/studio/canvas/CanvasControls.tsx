@@ -4,6 +4,7 @@ import React from 'react'
 import { Button } from '@/components/ui/button'
 import { ZoomIn, ZoomOut, RotateCcw, Maximize2 } from 'lucide-react'
 import { useCanvasControls } from '@/lib/hooks/useCanvas'
+import { useUIStore } from '@/lib/stores/uiStore'
 
 interface CanvasControlsProps {
   className?: string
@@ -18,11 +19,17 @@ export function CanvasControls({ className }: CanvasControlsProps) {
     handleFitToView
   } = useCanvasControls()
   
+  const { darkMode } = useUIStore()
+  
   return (
     <div className={className}>
       <div className="flex flex-col gap-2">
         {/* Zoom Controls */}
-        <div className="flex items-center space-x-1 bg-white/90 backdrop-blur-sm rounded-lg border shadow-lg p-1">
+        <div className={`flex items-center space-x-1 backdrop-blur-sm rounded-lg border shadow-lg p-1 ${
+          darkMode
+            ? 'bg-gray-900/90 border-gray-700'
+            : 'bg-white/90 border-gray-200'
+        }`}>
           <Button
             size="sm"
             variant="ghost"
@@ -32,7 +39,9 @@ export function CanvasControls({ className }: CanvasControlsProps) {
           >
             <ZoomOut className="w-3 h-3" />
           </Button>
-          <span className="text-xs text-gray-500 w-12 text-center font-mono">
+          <span className={`text-xs w-12 text-center font-mono ${
+            darkMode ? 'text-gray-400' : 'text-gray-500'
+          }`}>
             {Math.round(zoom * 100)}%
           </span>
           <Button
@@ -51,7 +60,11 @@ export function CanvasControls({ className }: CanvasControlsProps) {
           size="sm"
           variant="outline"
           onClick={handleCenterView}
-          className="bg-white/90 backdrop-blur-sm shadow-lg border"
+          className={`backdrop-blur-sm shadow-lg border ${
+            darkMode
+              ? 'bg-gray-900/90 border-gray-700 hover:bg-gray-800/90 text-white'
+              : 'bg-white/90 border-gray-200 hover:bg-gray-50/90'
+          }`}
           title="Center view on logos"
         >
           <RotateCcw className="w-4 h-4 mr-2" />
@@ -62,7 +75,11 @@ export function CanvasControls({ className }: CanvasControlsProps) {
           size="sm"
           variant="outline"
           onClick={handleFitToView}
-          className="bg-white/90 backdrop-blur-sm shadow-lg border"
+          className={`backdrop-blur-sm shadow-lg border ${
+            darkMode
+              ? 'bg-gray-900/90 border-gray-700 hover:bg-gray-800/90 text-white'
+              : 'bg-white/90 border-gray-200 hover:bg-gray-50/90'
+          }`}
           title="Fit all logos in view"
         >
           <Maximize2 className="w-4 h-4 mr-2" />

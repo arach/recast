@@ -19,6 +19,8 @@ import {
   FolderOpen,
   Sparkles,
   Package,
+  Moon,
+  Sun,
 } from 'lucide-react'
 import RecastLogo from '@/components/ReCast'
 import { useUIStore } from '@/lib/stores/uiStore'
@@ -30,7 +32,7 @@ import { generateWaveBars, executeCustomCode, VisualizationParams } from '@/lib/
 import { TemplateSelector } from '@/components/studio/TemplateSelector'
 
 export function StudioHeader() {
-  const { toggleSavedItems, toggleSaveDialog, toggleIndustryModal } = useUIStore()
+  const { toggleSavedItems, toggleSaveDialog, toggleIndustryModal, darkMode, setDarkMode } = useUIStore()
   const { logos, selectedLogoId, updateLogo, randomizeLogo } = useLogoStore()
   const logo = useSelectedLogo()
   
@@ -54,9 +56,8 @@ export function StudioHeader() {
         throw new Error('Failed to get canvas context')
       }
       
-      // Clear canvas with white background
-      ctx.fillStyle = '#ffffff'
-      ctx.fillRect(0, 0, targetSize, targetSize)
+      // Clear canvas with transparent background for better compatibility
+      ctx.clearRect(0, 0, targetSize, targetSize)
       
       // Execute the visualization code
       try {
@@ -183,15 +184,23 @@ export function StudioHeader() {
   }
   
   return (
-    <header className="border-b border-gray-200 bg-white/80 backdrop-blur-xl flex-shrink-0">
+    <header className={`border-b backdrop-blur-xl flex-shrink-0 ${
+      darkMode
+        ? 'border-gray-800 bg-gray-900/80'
+        : 'border-gray-200 bg-white/80'
+    }`}>
       
       <div className="flex items-center justify-between px-8 py-4">
         <div className="flex items-center space-x-6">
           <div className="flex items-center space-x-3">
             <RecastLogo width={48} height={48} animated={false} />
             <div>
-              <h1 className="text-xl font-semibold text-gray-900 tracking-tight">ReCast</h1>
-              <p className="text-xs text-gray-500 -mt-0.5">
+              <h1 className={`text-xl font-semibold tracking-tight ${
+                darkMode ? 'text-gray-100' : 'text-gray-900'
+              }`}>ReCast</h1>
+              <p className={`text-xs -mt-0.5 ${
+                darkMode ? 'text-gray-400' : 'text-gray-500'
+              }`}>
                 Programmatic logo generation through mathematical waves
               </p>
             </div>
@@ -201,7 +210,19 @@ export function StudioHeader() {
         <div className="flex items-center space-x-3">
           <TemplateSelector />
           
-          <div className="h-6 w-px bg-gray-200" />
+          <div className={`h-6 w-px ${
+            darkMode ? 'bg-gray-700' : 'bg-gray-200'
+          }`} />
+          
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setDarkMode(!darkMode)}
+            className="h-9 w-9 p-0"
+            title={darkMode ? "Switch to light mode" : "Switch to dark mode"}
+          >
+            {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+          </Button>
           
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

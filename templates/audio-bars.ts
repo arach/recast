@@ -23,11 +23,15 @@ const PARAMETERS = {
   layers: { type: 'slider', min: 1, max: 3, step: 1, default: 1, label: 'Layers' },
   barCount: { type: 'slider', min: 10, max: 80, step: 5, default: 30, label: 'Number of Bars' },
   barSpacing: { type: 'slider', min: 1, max: 8, step: 1, default: 3, label: 'Bar Spacing' },
-  colorMode: { type: 'select', options: [{"value":"spectrum","label":"Rainbow Spectrum"},{"value":"theme","label":"Use Theme Colors"},{"value":"toneShift","label":"Theme Tone Shift"}], default: "spectrum", label: 'Color Mode' }
+  colorMode: { type: 'select', options: [{"value":"spectrum","label":"Rainbow Spectrum"},{"value":"theme","label":"Use Theme Colors"},{"value":"toneShift","label":"Theme Tone Shift"}], default: "spectrum", label: 'Color Mode' },
+  backgroundOpacity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 1, label: 'Background Opacity', category: 'Background', showIf: (params)=>params.backgroundType !== 'transparent' }
 };
 
 function applyUniversalBackground(ctx, width, height, params) {
   if (!params.backgroundType || params.backgroundType === 'transparent') return;
+  
+  ctx.save();
+  ctx.globalAlpha = params.backgroundOpacity ?? 1;
   
   if (params.backgroundType === 'solid') {
     ctx.fillStyle = params.backgroundColor || '#ffffff';
@@ -46,6 +50,8 @@ function applyUniversalBackground(ctx, width, height, params) {
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, width, height);
   }
+  
+  ctx.restore();
 }
 
 function drawVisualization(ctx, width, height, params, generator, time) {
@@ -71,6 +77,10 @@ function drawVisualization(ctx, width, height, params, generator, time) {
   const fillColor = params.fillColor || '#3b82f6';
   const strokeColor = params.strokeColor || '#1e40af';
   const colorMode = params.colorMode || 'spectrum';
+  
+  // Extract opacity values with defaults
+  const fillOpacity = params.fillOpacity !== undefined ? params.fillOpacity : 1;
+  const strokeOpacity = params.strokeOpacity !== undefined ? params.strokeOpacity : 1;
   
   // Helper to convert hex to HSL
   const hexToHsl = (hex) => {
@@ -157,6 +167,12 @@ function drawVisualization(ctx, width, height, params, generator, time) {
       gradient.addColorStop(1, `hsla(${hue}, ${baseSat}%, ${baseLum + 10}%, 0.9)`);
     }
     
+    // Apply fill opacity if there's a fill
+    if (params.fillType !== 'none' && fillOpacity < 1) {
+      ctx.save();
+      ctx.globalAlpha = fillOpacity;
+    }
+    
     ctx.fillStyle = gradient;
     
     // Draw rounded rectangles
@@ -171,6 +187,41 @@ function drawVisualization(ctx, width, height, params, generator, time) {
       ctx.arc(x + barWidth/2, centerY - barHeight/2 - 5, barWidth/2.5, 0, Math.PI * 2);
       ctx.arc(x + barWidth/2, centerY + barHeight/2 + 5, barWidth/2.5, 0, Math.PI * 2);
       ctx.fill();
+    }
+    
+    // Restore opacity if it was changed
+    if (params.fillType !== 'none' && fillOpacity < 1) {
+      ctx.restore();
+    }
+    
+    // Apply stroke if enabled
+    if (params.strokeType !== 'none') {
+      ctx.save();
+      ctx.globalAlpha = strokeOpacity;
+      ctx.strokeStyle = strokeColor;
+      ctx.lineWidth = params.strokeWidth || 2;
+      
+      // Set stroke dash pattern
+      if (params.strokeType === 'dashed') {
+        ctx.setLineDash([5, 5]);
+      } else if (params.strokeType === 'dotted') {
+        ctx.setLineDash([2, 3]);
+      }
+      
+      // Stroke the rounded rectangle
+      ctx.beginPath();
+      ctx.roundRect(x, centerY - barHeight/2, barWidth, barHeight, radius);
+      ctx.stroke();
+      
+      // Stroke the dots if present
+      if (barHeight > 20) {
+        ctx.beginPath();
+        ctx.arc(x + barWidth/2, centerY - barHeight/2 - 5, barWidth/2.5, 0, Math.PI * 2);
+        ctx.arc(x + barWidth/2, centerY + barHeight/2 + 5, barWidth/2.5, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+      
+      ctx.restore();
     }
   });
 }
@@ -233,11 +284,15 @@ const PARAMETERS = {
   layers: { type: 'slider', min: 1, max: 3, step: 1, default: 1, label: 'Layers' },
   barCount: { type: 'slider', min: 10, max: 80, step: 5, default: 30, label: 'Number of Bars' },
   barSpacing: { type: 'slider', min: 1, max: 8, step: 1, default: 3, label: 'Bar Spacing' },
-  colorMode: { type: 'select', options: [{"value":"spectrum","label":"Rainbow Spectrum"},{"value":"theme","label":"Use Theme Colors"},{"value":"toneShift","label":"Theme Tone Shift"}], default: "spectrum", label: 'Color Mode' }
+  colorMode: { type: 'select', options: [{"value":"spectrum","label":"Rainbow Spectrum"},{"value":"theme","label":"Use Theme Colors"},{"value":"toneShift","label":"Theme Tone Shift"}], default: "spectrum", label: 'Color Mode' },
+  backgroundOpacity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 1, label: 'Background Opacity', category: 'Background', showIf: (params)=>params.backgroundType !== 'transparent' }
 };
 
 function applyUniversalBackground(ctx, width, height, params) {
   if (!params.backgroundType || params.backgroundType === 'transparent') return;
+  
+  ctx.save();
+  ctx.globalAlpha = params.backgroundOpacity ?? 1;
   
   if (params.backgroundType === 'solid') {
     ctx.fillStyle = params.backgroundColor || '#ffffff';
@@ -256,6 +311,8 @@ function applyUniversalBackground(ctx, width, height, params) {
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, width, height);
   }
+  
+  ctx.restore();
 }
 
 function drawVisualization(ctx, width, height, params, generator, time) {
@@ -282,9 +339,13 @@ function drawVisualization(ctx, width, height, params, generator, time) {
   const strokeColor = params.strokeColor || '#1e40af';
   const colorMode = params.colorMode || 'spectrum';
   
+  // Extract opacity values with defaults
+  const fillOpacity = params.fillOpacity !== undefined ? params.fillOpacity : 1;
+  const strokeOpacity = params.strokeOpacity !== undefined ? params.strokeOpacity : 1;
+  
   // Helper to convert hex to HSL
   const hexToHsl = (hex) => {
-    const result = /^#?([a-f\\d]{2})([a-f\\d]{2})([a-f\\d]{2})$/i.exec(hex);
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})\$/i.exec(hex);
     if (!result) return [0, 0, 50];
     
     let r = parseInt(result[1], 16) / 255;
@@ -367,6 +428,12 @@ function drawVisualization(ctx, width, height, params, generator, time) {
       gradient.addColorStop(1, \`hsla(\${hue}, \${baseSat}%, \${baseLum + 10}%, 0.9)\`);
     }
     
+    // Apply fill opacity if there's a fill
+    if (params.fillType !== 'none' && fillOpacity < 1) {
+      ctx.save();
+      ctx.globalAlpha = fillOpacity;
+    }
+    
     ctx.fillStyle = gradient;
     
     // Draw rounded rectangles
@@ -381,6 +448,41 @@ function drawVisualization(ctx, width, height, params, generator, time) {
       ctx.arc(x + barWidth/2, centerY - barHeight/2 - 5, barWidth/2.5, 0, Math.PI * 2);
       ctx.arc(x + barWidth/2, centerY + barHeight/2 + 5, barWidth/2.5, 0, Math.PI * 2);
       ctx.fill();
+    }
+    
+    // Restore opacity if it was changed
+    if (params.fillType !== 'none' && fillOpacity < 1) {
+      ctx.restore();
+    }
+    
+    // Apply stroke if enabled
+    if (params.strokeType !== 'none') {
+      ctx.save();
+      ctx.globalAlpha = strokeOpacity;
+      ctx.strokeStyle = strokeColor;
+      ctx.lineWidth = params.strokeWidth || 2;
+      
+      // Set stroke dash pattern
+      if (params.strokeType === 'dashed') {
+        ctx.setLineDash([5, 5]);
+      } else if (params.strokeType === 'dotted') {
+        ctx.setLineDash([2, 3]);
+      }
+      
+      // Stroke the rounded rectangle
+      ctx.beginPath();
+      ctx.roundRect(x, centerY - barHeight/2, barWidth, barHeight, radius);
+      ctx.stroke();
+      
+      // Stroke the dots if present
+      if (barHeight > 20) {
+        ctx.beginPath();
+        ctx.arc(x + barWidth/2, centerY - barHeight/2 - 5, barWidth/2.5, 0, Math.PI * 2);
+        ctx.arc(x + barWidth/2, centerY + barHeight/2 + 5, barWidth/2.5, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+      
+      ctx.restore();
     }
   });
 }`;
