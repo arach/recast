@@ -101,7 +101,8 @@
       "Bash([ \"$file\" != \"types.ts\" ])",
       "Bash(then echo \"=== $file ===\")",
       "Bash(head:*)",
-      "Bash(tail:*)"
+      "Bash(tail:*)",
+      "Bash(mkdir:*)"
     ],
     "deny": []
   },

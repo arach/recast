@@ -184,9 +184,8 @@ The debug toolbar accelerates development by providing immediate visibility into
 ReFlow uses a consistent template system for generating dynamic brand identities. All templates follow the NEW format pattern.
 
 ### Template Documentation
-- **[TEMPLATE_DEVELOPMENT_GUIDE.md](./TEMPLATE_DEVELOPMENT_GUIDE.md)** - Complete guide for creating templates
-- **[TEMPLATE_QUICK_REFERENCE.md](./TEMPLATE_QUICK_REFERENCE.md)** - Quick reference and boilerplate
-- **[TEMPLATE_CONVERSION_PATTERN.md](./TEMPLATE_CONVERSION_PATTERN.md)** - Migration history (archived)
+- **[Template Development Guide](./docs/TEMPLATE_DEVELOPMENT_GUIDE.md)** - Complete guide for creating templates
+- **[Template Quick Reference](./docs/TEMPLATE_QUICK_REFERENCE.md)** - Quick reference and boilerplate
 
 ### Template Structure
 ```typescript
