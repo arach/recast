@@ -15,9 +15,9 @@ export function useTemplateCode(templateId: string | undefined) {
       return
     }
 
-    // Check cache first
+    // Check cache first - DON'T LOG during animation to reduce noise
     if (templateCache.has(templateId)) {
-      console.log(`📦 Cache hit for template: ${templateId}`)
+      // console.log(`📦 Cache hit for template: ${templateId}`)
       setCode(templateCache.get(templateId)!)
       return
     }

@@ -17,7 +17,7 @@ interface LogoCanvasProps {
 }
 
 // Pure rendering component - no interaction logic
-function LogoCanvas({ id, templateId, parameters, width, height, currentTime = 0 }: LogoCanvasProps) {
+const LogoCanvas = React.memo(function LogoCanvas({ id, templateId, parameters, width, height, currentTime = 0 }: LogoCanvasProps) {
   const { code } = useTemplateCode(templateId)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   
@@ -32,19 +32,10 @@ function LogoCanvas({ id, templateId, parameters, width, height, currentTime = 0
     ctx.clearRect(0, 0, width, height)
     
     try {
-      // Debug logging
-      console.log(`🎨 Rendering logo ${id}:`, {
-        templateId,
-        hasCode: !!code,
-        codeLength: code?.length || 0,
-        parameters: Object.keys(parameters || {}),
-        dimensions: { width, height }
-      })
-      
       // Generate and render the actual logo
       if (code) {
         generateVisualization(ctx, code, parameters, currentTime, width, height)
-        console.log(`✅ Successfully rendered logo ${id}`)
+        // Don't log during animation - too noisy!
       } else {
         console.log(`⚠️ No code for logo ${id}, showing placeholder`)
         // Fallback placeholder
@@ -88,7 +79,7 @@ function LogoCanvas({ id, templateId, parameters, width, height, currentTime = 0
       style={{ display: 'block' }}
     />
   )
-}
+})
 
 interface HybridCanvasProps {
   animating?: boolean

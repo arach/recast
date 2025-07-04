@@ -20,15 +20,8 @@ export function generateVisualization(
       ...(parameters.content || {})
     }
     
-    console.log('🎛️ Flattened parameters:', {
-      fillColor: flatParams.fillColor,
-      barCount: flatParams.barCount,
-      amplitude: flatParams.amplitude,
-      frequency: flatParams.frequency
-    })
-    
     // WORKING HARDCODED APPROACH: Perfect wave bars rendering
-    console.log('🎯 Using proven hardcoded wave bars (100% working)')
+    // (Logging removed for performance during animation)
     
     // Set defaults from the manual implementation that works
     const params = {
@@ -75,8 +68,6 @@ export function generateVisualization(
       
       ctx.restore()
     }
-    
-    console.log('✅ Perfect wave bars rendered successfully!')
     
   } catch (error) {
     console.error('Error executing visualization:', error)
