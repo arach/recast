@@ -5,14 +5,14 @@ import { utils } from '@reflow/template-utils'
 function flattenParameters(params: any) {
   const flatParams = {
     ...params,
-    // Flatten core parameters
-    ...(params.core || {}),
-    // Flatten style parameters  
-    ...(params.style || {}),
-    // Flatten custom parameters
+    // Flatten custom parameters first (lowest priority)
     ...(params.custom || {}),
     // Flatten content parameters
-    ...(params.content || {})
+    ...(params.content || {}),
+    // Flatten style parameters  
+    ...(params.style || {}),
+    // Flatten core parameters last (highest priority)
+    ...(params.core || {})
   };
   
   // Legacy support: also check customParameters
