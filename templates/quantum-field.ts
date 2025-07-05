@@ -1,768 +1,99 @@
 // ⚛️ Quantum Field
-const PARAMETERS = {
-  // Universal Background Controls
-  backgroundColor: { type: 'color', default: "#000000", label: 'Background Color', category: 'Background' },
-  backgroundType: { type: 'select', options: [{"value":"transparent","label":"Transparent"},{"value":"solid","label":"Solid Color"},{"value":"gradient","label":"Gradient"}], default: "solid", label: 'Background Type', category: 'Background' },
-  backgroundGradientStart: { type: 'color', default: "#0a0a12", label: 'Gradient Start', category: 'Background', showIf: (params)=>params.backgroundType === 'gradient' },
-  backgroundGradientEnd: { type: 'color', default: "#000000", label: 'Gradient End', category: 'Background', showIf: (params)=>params.backgroundType === 'gradient' },
-  backgroundGradientDirection: { type: 'slider', min: 0, max: 360, step: 15, default: 45, label: 'Gradient Direction', category: 'Background', showIf: (params)=>params.backgroundType === 'gradient' },
-  
-  // Universal Fill Controls
-  fillType: { type: 'select', options: [{"value":"none","label":"None"},{"value":"solid","label":"Solid Color"},{"value":"gradient","label":"Gradient"}], default: "solid", label: 'Fill Type', category: 'Fill' },
-  fillColor: { type: 'color', default: "#60a5fa", label: 'Fill Color', category: 'Fill', showIf: (params)=>params.fillType === 'solid' },
-  fillGradientStart: { type: 'color', default: "#60a5fa", label: 'Gradient Start', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
-  fillGradientEnd: { type: 'color', default: "#1e40af", label: 'Gradient End', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
-  fillGradientDirection: { type: 'slider', min: 0, max: 360, step: 15, default: 90, label: 'Gradient Direction', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
-  fillOpacity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.8, label: 'Fill Opacity', category: 'Fill', showIf: (params)=>params.fillType !== 'none' },
-  
-  // Universal Stroke Controls
-  strokeType: { type: 'select', options: [{"value":"none","label":"None"},{"value":"solid","label":"Solid"},{"value":"dashed","label":"Dashed"},{"value":"dotted","label":"Dotted"}], default: "solid", label: 'Stroke Type', category: 'Stroke' },
-  strokeColor: { type: 'color', default: "#3b82f6", label: 'Stroke Color', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
-  strokeWidth: { type: 'slider', min: 0, max: 10, step: 0.5, default: 1, label: 'Stroke Width', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
-  strokeOpacity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.8, label: 'Stroke Opacity', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
-  
-  // Quantum Field Specific Parameters
-  // Core quantum properties
-  frequency: { type: 'slider', min: 0.8, max: 3, step: 0.1, default: 1.8, label: 'Quantum Frequency' },
-  amplitude: { type: 'slider', min: 90, max: 220, step: 5, default: 160, label: 'Field Amplitude' },
-  
-  // Quantum mechanics
-  quantumState: {
-    type: 'slider',
-    min: 0,
-    max: 4,
-    step: 1,
-    default: 2,
-    label: 'Quantum State (0=Ground, 1=Excited, 2=Superposition, 3=Entangled, 4=Collapsed)'
+import type { TemplateUtils } from '@/lib/template-utils';
+
+const parameters = {
+  frequency: {
+    default: 1.8,
+    range: [0.8, 3, 0.1]
   },
-  
-  // Field properties
-  fieldDensity: { type: 'slider', min: 0.4, max: 1, step: 0.05, default: 0.7, label: 'Field Density' },
-  waveFunction: { type: 'slider', min: 0.3, max: 1, step: 0.05, default: 0.8, label: 'Wave Function Complexity' },
-  uncertainty: { type: 'slider', min: 0.2, max: 0.8, step: 0.05, default: 0.4, label: 'Heisenberg Uncertainty' },
-  
-  // Quantum effects
-  superposition: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.6, label: 'Superposition State' },
-  entanglement: { type: 'slider', min: 0, max: 0.8, step: 0.05, default: 0.3, label: 'Quantum Entanglement' },
-  tunneling: { type: 'slider', min: 0, max: 0.6, step: 0.05, default: 0.2, label: 'Quantum Tunneling' },
-  
-  // Energy levels
-  energyLevels: { type: 'slider', min: 3, max: 12, step: 1, default: 7, label: 'Energy Level Count' },
-  energySpacing: { type: 'slider', min: 0.5, max: 2, step: 0.1, default: 1.2, label: 'Level Spacing' },
-  quantumJumps: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.4, label: 'Quantum Jump Rate' },
-  
-  // Probability distributions
-  probabilityCloud: { type: 'slider', min: 0.2, max: 1, step: 0.05, default: 0.6, label: 'Probability Cloud' },
-  waveCollapse: { type: 'slider', min: 0, max: 0.7, step: 0.05, default: 0.3, label: 'Wave Function Collapse' },
-  measurement: { type: 'slider', min: 0, max: 0.5, step: 0.05, default: 0.2, label: 'Measurement Effect' },
-  
-  // Field visualization
-  fieldLines: { type: 'slider', min: 0.3, max: 1, step: 0.05, default: 0.7, label: 'Field Line Visibility' },
-  particleTrails: { type: 'slider', min: 0, max: 0.8, step: 0.05, default: 0.4, label: 'Particle Trails' },
-  virtualParticles: { type: 'slider', min: 0, max: 0.6, step: 0.05, default: 0.3, label: 'Virtual Particles' },
-  
-  // Color and energy
-  energySpectrum: { type: 'slider', min: 0, max: 360, step: 20, default: 240, label: 'Energy Spectrum Hue' },
-  spectralWidth: { type: 'slider', min: 30, max: 120, step: 10, default: 60, label: 'Spectral Range' },
-  quantumGlow: { type: 'slider', min: 0.4, max: 1, step: 0.05, default: 0.8, label: 'Quantum Luminescence' }
+  amplitude: {
+    default: 160,
+    range: [90, 220, 5]
+  },
+  quantumState: {
+    default: 2,
+    range: [0, 4, 1]  // 0=Ground, 1=Excited, 2=Superposition, 3=Entangled, 4=Collapsed
+  },
+  fieldDensity: {
+    default: 0.7,
+    range: [0.4, 1, 0.05]
+  },
+  waveFunction: {
+    default: 0.8,
+    range: [0.3, 1, 0.05]
+  },
+  uncertainty: {
+    default: 0.4,
+    range: [0.2, 0.8, 0.05]
+  },
+  superposition: {
+    default: 0.6,
+    range: [0, 1, 0.05]
+  },
+  entanglement: {
+    default: 0.3,
+    range: [0, 0.8, 0.05]
+  },
+  tunneling: {
+    default: 0.2,
+    range: [0, 0.6, 0.05]
+  },
+  energyLevels: {
+    default: 7,
+    range: [3, 12, 1]
+  },
+  energySpacing: {
+    default: 1.2,
+    range: [0.5, 2, 0.1]
+  },
+  quantumJumps: {
+    default: 0.4,
+    range: [0, 1, 0.05]
+  },
+  probabilityCloud: {
+    default: 0.6,
+    range: [0.2, 1, 0.05]
+  },
+  waveCollapse: {
+    default: 0.3,
+    range: [0, 0.7, 0.05]
+  },
+  measurement: {
+    default: 0.2,
+    range: [0, 0.5, 0.05]
+  },
+  fieldLines: {
+    default: 0.7,
+    range: [0.3, 1, 0.05]
+  },
+  particleTrails: {
+    default: 0.4,
+    range: [0, 0.8, 0.05]
+  },
+  virtualParticles: {
+    default: 0.3,
+    range: [0, 0.6, 0.05]
+  },
+  energySpectrum: {
+    default: 240,
+    range: [0, 360, 20]
+  },
+  spectralWidth: {
+    default: 60,
+    range: [30, 120, 10]
+  },
+  quantumGlow: {
+    default: 0.8,
+    range: [0.4, 1, 0.05]
+  }
 };
 
-function applyUniversalBackground(ctx, width, height, params) {
-  if (!params.backgroundType || params.backgroundType === 'transparent') return;
-  
-  if (params.backgroundType === 'solid') {
-    ctx.fillStyle = params.backgroundColor || '#000000';
-    ctx.fillRect(0, 0, width, height);
-  } else if (params.backgroundType === 'gradient') {
-    const direction = (params.backgroundGradientDirection || 45) * (Math.PI / 180);
-    const x1 = width / 2 - Math.cos(direction) * width / 2;
-    const y1 = height / 2 - Math.sin(direction) * height / 2;
-    const x2 = width / 2 + Math.cos(direction) * width / 2;
-    const y2 = height / 2 + Math.sin(direction) * height / 2;
-    
-    const gradient = ctx.createLinearGradient(x1, y1, x2, y2);
-    gradient.addColorStop(0, params.backgroundGradientStart || '#0a0a12');
-    gradient.addColorStop(1, params.backgroundGradientEnd || '#000000');
-    
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, width, height);
-  }
-}
-
-function drawVisualization(ctx, width, height, params, _generator, time) {
-  // Parameter compatibility layer
-  if (params.customParameters) {
-    params.fillColor = params.fillColor || params.customParameters.fillColor;
-    params.strokeColor = params.strokeColor || params.customParameters.strokeColor;
-    params.backgroundColor = params.backgroundColor || params.customParameters.backgroundColor;
-    params.textColor = params.textColor || params.customParameters.textColor;
-    
-    Object.keys(params.customParameters).forEach(key => {
-      if (params[key] === undefined) {
-        params[key] = params.customParameters[key];
-      }
-    });
-  }
-
-  // Apply universal background
-  applyUniversalBackground(ctx, width, height, params);
-
-  // Extract parameters
-  const centerX = width / 2;
-  const centerY = height / 2;
-  const frequency = params.frequency || 1.8;
-  const amplitude = params.amplitude || 160;
-  const quantumStateNum = Math.round(params.quantumState || 2);
-  const fieldDensity = params.fieldDensity || 0.7;
-  const waveFunction = params.waveFunction || 0.8;
-  const uncertainty = params.uncertainty || 0.4;
-  const superposition = params.superposition || 0.6;
-  const entanglement = params.entanglement || 0.3;
-  const tunneling = params.tunneling || 0.2;
-  const energyLevels = Math.round(params.energyLevels || 7);
-  const energySpacing = params.energySpacing || 1.2;
-  const quantumJumps = params.quantumJumps || 0.4;
-  const probabilityCloud = params.probabilityCloud || 0.6;
-  const waveCollapse = params.waveCollapse || 0.3;
-  const measurement = params.measurement || 0.2;
-  const fieldLines = params.fieldLines || 0.7;
-  const particleTrails = params.particleTrails || 0.4;
-  const virtualParticles = params.virtualParticles || 0.3;
-  const energySpectrum = params.energySpectrum || 240;
-  const spectralWidth = params.spectralWidth || 60;
-  const quantumGlow = params.quantumGlow || 0.8;
-
-  // Quantum scaling with field dynamics
-  const baseScale = Math.min(width, height) / 380;
-  const scaledAmplitude = amplitude * baseScale;
-  
-  // Quantum field oscillation
-  const quantumPhase = time * frequency * 2;
-  const fieldOscillation = 1 + Math.sin(quantumPhase) * uncertainty * 0.1;
-
-  // Generate quantum field structure
-  const quantumField = generateQuantumField(
-    quantumStateNum, centerX, centerY, scaledAmplitude * fieldOscillation,
-    fieldDensity, waveFunction, uncertainty, energyLevels, quantumPhase
-  );
-
-  // Quantum color system
-  const quantumColors = generateQuantumColors(energySpectrum, spectralWidth, quantumGlow, time);
-
-  // Render probability cloud (background effect)
-  if (probabilityCloud > 0.2) {
-    renderProbabilityCloud(ctx, quantumField, quantumColors, probabilityCloud, time, scaledAmplitude);
-  }
-
-  // Render field lines
-  if (fieldLines > 0.3) {
-    renderQuantumFieldLines(ctx, quantumField, quantumColors, fieldLines, waveFunction, scaledAmplitude);
-  }
-
-  // Render main quantum field
-  renderQuantumFieldBody(ctx, quantumField, quantumColors, superposition, waveFunction);
-
-  // Render energy levels
-  renderEnergyLevels(ctx, quantumField, quantumColors, energyLevels, energySpacing, quantumJumps, time, scaledAmplitude);
-
-  // Render quantum effects
-  if (superposition > 0.1) {
-    renderSuperposition(ctx, quantumField, quantumColors, superposition, time, scaledAmplitude);
-  }
-
-  if (entanglement > 0.1) {
-    renderQuantumEntanglement(ctx, quantumField, quantumColors, entanglement, time, scaledAmplitude);
-  }
-
-  if (tunneling > 0.1) {
-    renderQuantumTunneling(ctx, quantumField, quantumColors, tunneling, time, scaledAmplitude);
-  }
-
-  // Render particle trails
-  if (particleTrails > 0.1) {
-    renderParticleTrails(ctx, quantumField, quantumColors, particleTrails, time, scaledAmplitude);
-  }
-
-  // Render virtual particles
-  if (virtualParticles > 0.1) {
-    renderVirtualParticles(ctx, quantumField, quantumColors, virtualParticles, time, scaledAmplitude);
-  }
-
-  // Render wave function collapse
-  if (waveCollapse > 0.1) {
-    renderWaveCollapse(ctx, quantumField, quantumColors, waveCollapse, measurement, time);
-  }
-
-  function generateQuantumField(quantumState: number, centerX: number, centerY: number, radius: number, density: number, waveFunc: number, uncertainty: number, levels: number, phase: number) {
-    const points = [];
-    const basePoints = Math.floor(8 + density * 20); // 8-28 points for field complexity
-    
-    for (let i = 0; i < basePoints; i++) {
-      const t = i / basePoints;
-      const angle = t * Math.PI * 2;
-      
-      let fieldRadius = radius;
-      
-      // Generate quantum state-specific geometry
-      switch (quantumState) {
-        case 0: // Ground state - minimal energy, stable
-          const ground1 = Math.sin(angle * 2 + phase) * (1 - waveFunc) * 0.08;
-          const ground2 = Math.sin(angle * 4 + phase * 0.5) * uncertainty * 0.05;
-          fieldRadius = radius * (0.92 + ground1 + ground2);
-          break;
-          
-        case 1: // Excited state - higher energy, more dynamic
-          const excited1 = Math.sin(angle * 5 + phase) * waveFunc * 0.15;
-          const excited2 = Math.sin(angle * 9 + phase * 1.3) * uncertainty * 0.1;
-          const excited3 = Math.sin(angle * 13 + phase * 0.8) * density * 0.08;
-          fieldRadius = radius * (0.85 + excited1 + excited2 + excited3);
-          break;
-          
-        case 2: // Superposition - multiple states simultaneously
-          const super1 = Math.sin(angle * 7 + phase) * waveFunc * 0.2;
-          const super2 = Math.sin(angle * 11 + phase * 1.7) * uncertainty * 0.15;
-          const super3 = Math.sin(angle * 17 + phase * 2.3) * density * 0.12;
-          const superposition = Math.sin(angle * 3 + phase * 0.4) * 0.1;
-          fieldRadius = radius * (0.8 + super1 + super2 + super3 + superposition);
-          break;
-          
-        case 3: // Entangled - correlated with distant particles
-          const entangled1 = Math.sin(angle * 6 + phase) * waveFunc * 0.18;
-          const entangled2 = Math.sin(angle * 14 + phase * 1.9) * uncertainty * 0.13;
-          const correlation = Math.sin(angle * 19 + phase * 2.7) * density * 0.15;
-          fieldRadius = radius * (0.82 + entangled1 + entangled2 + correlation);
-          break;
-          
-        case 4: // Collapsed - wave function has collapsed to definite state
-          const collapsed1 = Math.sin(angle * 4 + phase) * (1 - waveFunc) * 0.1;
-          const collapsed2 = Math.floor(Math.sin(angle * 8 + phase) * 3) / 3 * uncertainty * 0.08;
-          const definite = (1 - uncertainty) * 0.05;
-          fieldRadius = radius * (0.9 + collapsed1 + collapsed2 + definite);
-          break;
-      }
-      
-      // Add quantum uncertainty
-      const uncertaintyEffect = (Math.random() - 0.5) * uncertainty * 0.1;
-      const waveEffect = Math.sin(angle * levels + phase * waveFunc) * waveFunc * 0.08;
-      const quantumFluctuation = Math.sin(angle * 23 + phase * 3.1) * density * 0.06;
-      
-      const finalRadius = fieldRadius * (1 + uncertaintyEffect + waveEffect + quantumFluctuation);
-      
-      points.push({
-        x: centerX + Math.cos(angle) * finalRadius,
-        y: centerY + Math.sin(angle) * finalRadius,
-        angle: angle,
-        radius: finalRadius,
-        energyLevel: Math.floor((Math.sin(angle * levels + phase) + 1) * levels / 2),
-        waveAmplitude: 0.3 + Math.sin(angle * 5 + phase) * 0.7,
-        quantumPhase: (angle + phase * waveFunc) % (Math.PI * 2),
-        probability: Math.pow(Math.sin(angle * 3 + phase) * 0.5 + 0.5, 2), // |ψ|²
-        fieldStrength: density + Math.sin(angle * 7 + phase * 1.4) * 0.3
-      });
-    }
-    
-    return points;
-  }
-
-  function generateQuantumColors(spectrum: number, width: number, glow: number, time: number) {
-    const animatedSpectrum = spectrum + Math.sin(time * 0.8) * width * 0.3;
-    const baseGlow = glow * 80;
-    
-    return {
-      field: `hsl(${animatedSpectrum}, 70%, ${60 + baseGlow * 0.3}%)`,
-      high: `hsl(${animatedSpectrum + width * 0.3}, 80%, ${70 + baseGlow * 0.4}%)`,
-      low: `hsl(${animatedSpectrum - width * 0.3}, 60%, ${50 + baseGlow * 0.2}%)`,
-      quantum: `hsl(${animatedSpectrum + width * 0.6}, 90%, ${80 + baseGlow * 0.2}%)`,
-      virtual: `hsl(${animatedSpectrum + width * 0.8}, 85%, 85%)`,
-      probability: `hsl(${animatedSpectrum - width * 0.5}, 60%, 65%)`,
-      entangled: `hsl(${animatedSpectrum + width}, 95%, 75%)`
-    };
-  }
-
-  function renderProbabilityCloud(ctx: CanvasRenderingContext2D, field: any[], colors: any, probability: number, time: number, scale: number) {
-    ctx.save();
-    
-    const cloudCount = Math.floor(probability * 25);
-    
-    for (let c = 0; c < cloudCount; c++) {
-      const cloudPhase = time * 1.2 + c * 0.6;
-      const cloudLife = (Math.sin(cloudPhase) + 1) / 2;
-      
-      if (cloudLife > 0.2) {
-        const angle = (c / cloudCount) * Math.PI * 2 + time * 0.4;
-        const distance = scale * (0.5 + Math.sin(cloudPhase * 0.8) * 0.4);
-        const cloudX = field[0].x + Math.cos(angle) * distance;
-        const cloudY = field[0].y + Math.sin(angle) * distance;
-        const cloudSize = scale * 0.12 * cloudLife * probability;
-        
-        ctx.globalAlpha = probability * cloudLife * 0.3;
-        
-        // Probability density visualization
-        const probabilityGradient = ctx.createRadialGradient(
-          cloudX, cloudY, 0,
-          cloudX, cloudY, cloudSize
-        );
-        probabilityGradient.addColorStop(0, colors.probability);
-        probabilityGradient.addColorStop(0.7, colors.field);
-        probabilityGradient.addColorStop(1, 'transparent');
-        
-        ctx.fillStyle = probabilityGradient;
-        ctx.beginPath();
-        ctx.arc(cloudX, cloudY, cloudSize, 0, Math.PI * 2);
-        ctx.fill();
-      }
-    }
-    
-    ctx.restore();
-  }
-
-  function renderQuantumFieldLines(ctx: CanvasRenderingContext2D, field: any[], colors: any, lines: number, waveFunc: number, scale: number) {
-    ctx.save();
-    ctx.globalAlpha = lines * 0.4;
-    
-    const bounds = getBounds(field);
-    const lineCount = Math.floor(lines * waveFunc * 12);
-    
-    for (let l = 0; l < lineCount; l++) {
-      const lineAngle = (l / lineCount) * Math.PI * 2;
-      const fieldStrength = 0.5 + Math.sin(lineAngle * 7) * 0.5;
-      
-      ctx.strokeStyle = colors.field;
-      ctx.lineWidth = 0.5 + fieldStrength * 1.5;
-      ctx.globalAlpha = lines * fieldStrength * 0.6;
-      
-      // Field line from center outward
-      const startX = bounds.centerX;
-      const startY = bounds.centerY;
-      const endX = bounds.centerX + Math.cos(lineAngle) * scale * fieldStrength;
-      const endY = bounds.centerY + Math.sin(lineAngle) * scale * fieldStrength;
-      
-      ctx.beginPath();
-      ctx.moveTo(startX, startY);
-      
-      // Curved field line
-      const segments = 8;
-      for (let s = 1; s <= segments; s++) {
-        const t = s / segments;
-        const curveX = startX + (endX - startX) * t;
-        const curveY = startY + (endY - startY) * t;
-        const waveOffset = Math.sin(t * Math.PI * 4 + lineAngle * 3) * waveFunc * 5;
-        
-        ctx.lineTo(
-          curveX + Math.cos(lineAngle + Math.PI/2) * waveOffset,
-          curveY + Math.sin(lineAngle + Math.PI/2) * waveOffset
-        );
-      }
-      
-      ctx.stroke();
-    }
-    
-    ctx.restore();
-  }
-
-  function renderQuantumFieldBody(ctx: CanvasRenderingContext2D, field: any[], colors: any, superposition: number, waveFunc: number) {
-    ctx.save();
-    
-    // Main quantum field with wave-like gradient
-    const bounds = getBounds(field);
-    const fieldGradient = ctx.createRadialGradient(
-      bounds.centerX - bounds.width * 0.2, bounds.centerY - bounds.height * 0.2, 0,
-      bounds.centerX, bounds.centerY, Math.max(bounds.width, bounds.height) * 0.7
-    );
-    
-    fieldGradient.addColorStop(0, colors.quantum);
-    fieldGradient.addColorStop(0.3, colors.high);
-    fieldGradient.addColorStop(0.7, colors.field);
-    fieldGradient.addColorStop(1, colors.low);
-    
-    ctx.fillStyle = fieldGradient;
-    ctx.globalAlpha = 0.6 + superposition * 0.4;
-    drawQuantumPath(ctx, field, waveFunc);
-    ctx.fill();
-    
-    // Field boundary
-    ctx.strokeStyle = colors.field;
-    ctx.lineWidth = 1 + waveFunc * 2;
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-    ctx.globalAlpha = 0.8;
-    drawQuantumPath(ctx, field, waveFunc);
-    ctx.stroke();
-    
-    ctx.restore();
-  }
-
-  function renderEnergyLevels(ctx: CanvasRenderingContext2D, field: any[], colors: any, levels: number, spacing: number, jumps: number, time: number, scale: number) {
-    ctx.save();
-    
-    const bounds = getBounds(field);
-    
-    for (let level = 0; level < levels; level++) {
-      const levelRadius = scale * (0.3 + level * 0.08 * spacing);
-      const levelEnergy = level / levels;
-      const jumpPhase = time * 3 + level * 0.7;
-      const jumpActive = Math.sin(jumpPhase) > (1 - jumps * 2);
-      
-      ctx.globalAlpha = jumpActive ? 0.8 : 0.3;
-      
-      // Energy level color based on quantum energy
-      const levelHue = parseInt(colors.field.match(/\d+/)[0]) + level * 15;
-      ctx.strokeStyle = `hsl(${levelHue}, 70%, ${60 + levelEnergy * 30}%)`;
-      ctx.lineWidth = jumpActive ? 2 : 1;
-      
-      // Energy level orbit
-      ctx.beginPath();
-      
-      for (let angle = 0; angle < Math.PI * 2; angle += 0.1) {
-        const quantumVariation = Math.sin(angle * 7 + time * 2) * 0.05;
-        const radius = levelRadius * (1 + quantumVariation);
-        const x = bounds.centerX + Math.cos(angle) * radius;
-        const y = bounds.centerY + Math.sin(angle) * radius;
-        
-        if (angle === 0) {
-          ctx.moveTo(x, y);
-        } else {
-          ctx.lineTo(x, y);
-        }
-      }
-      
-      ctx.closePath();
-      ctx.stroke();
-      
-      // Quantum jump visualization
-      if (jumpActive && jumps > 0.2) {
-        ctx.save();
-        ctx.globalAlpha = jumps * 0.8;
-        ctx.fillStyle = colors.quantum;
-        
-        const jumpAngle = time * 4 + level;
-        const jumpX = bounds.centerX + Math.cos(jumpAngle) * levelRadius;
-        const jumpY = bounds.centerY + Math.sin(jumpAngle) * levelRadius;
-        
-        ctx.beginPath();
-        ctx.arc(jumpX, jumpY, 2, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
-      }
-    }
-    
-    ctx.restore();
-  }
-
-  function renderSuperposition(ctx: CanvasRenderingContext2D, field: any[], colors: any, superposition: number, time: number, scale: number) {
-    ctx.save();
-    ctx.globalAlpha = superposition * 0.5;
-    
-    // Superposition creates multiple overlapping states
-    const stateCount = 3;
-    for (let state = 0; state < stateCount; state++) {
-      const statePhase = time * 1.5 + state * (Math.PI * 2 / stateCount);
-      const stateOffset = scale * 0.1 * Math.sin(statePhase);
-      
-      ctx.strokeStyle = colors.quantum;
-      ctx.lineWidth = 1;
-      ctx.setLineDash([3, 3]);
-      
-      // Offset quantum field copy
-      ctx.save();
-      ctx.translate(
-        Math.cos(state * Math.PI * 2 / stateCount) * stateOffset,
-        Math.sin(state * Math.PI * 2 / stateCount) * stateOffset
-      );
-      drawQuantumPath(ctx, field, 0.8);
-      ctx.stroke();
-      ctx.restore();
-    }
-    
-    ctx.setLineDash([]);
-    ctx.restore();
-  }
-
-  function renderQuantumEntanglement(ctx: CanvasRenderingContext2D, field: any[], colors: any, entanglement: number, time: number, scale: number) {
-    ctx.save();
-    
-    const entanglementCount = Math.floor(entanglement * 6);
-    
-    for (let e = 0; e < entanglementCount; e++) {
-      const entanglePhase = time * 2.5 + e * 1.3;
-      const entangleLife = (Math.sin(entanglePhase) + 1) / 2;
-      
-      if (entangleLife > 0.3) {
-        const angle1 = (e / entanglementCount) * Math.PI * 2;
-        const angle2 = angle1 + Math.PI + Math.sin(entanglePhase) * 0.5;
-        
-        const point1 = field[Math.floor((e / entanglementCount) * field.length)];
-        const point2X = point1.x + Math.cos(angle2) * scale * 0.3;
-        const point2Y = point1.y + Math.sin(angle2) * scale * 0.3;
-        
-        ctx.globalAlpha = entanglement * entangleLife * 0.7;
-        
-        // Entanglement connection
-        const entangleGradient = ctx.createLinearGradient(
-          point1.x, point1.y, point2X, point2Y
-        );
-        entangleGradient.addColorStop(0, colors.entangled);
-        entangleGradient.addColorStop(0.5, colors.quantum);
-        entangleGradient.addColorStop(1, colors.entangled);
-        
-        ctx.strokeStyle = entangleGradient;
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(point1.x, point1.y);
-        
-        // Curved entanglement line
-        const midX = (point1.x + point2X) / 2;
-        const midY = (point1.y + point2Y) / 2;
-        const curveOffset = Math.sin(entanglePhase * 2) * 20;
-        ctx.quadraticCurveTo(
-          midX + curveOffset * Math.cos(angle1 + Math.PI/2),
-          midY + curveOffset * Math.sin(angle1 + Math.PI/2),
-          point2X, point2Y
-        );
-        ctx.stroke();
-        
-        // Entangled particles
-        ctx.fillStyle = colors.entangled;
-        ctx.beginPath();
-        ctx.arc(point1.x, point1.y, 1.5, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.beginPath();
-        ctx.arc(point2X, point2Y, 1.5, 0, Math.PI * 2);
-        ctx.fill();
-      }
-    }
-    
-    ctx.restore();
-  }
-
-  function renderQuantumTunneling(ctx: CanvasRenderingContext2D, field: any[], colors: any, tunneling: number, time: number, scale: number) {
-    ctx.save();
-    
-    const tunnelCount = Math.floor(tunneling * 8);
-    
-    for (let t = 0; t < tunnelCount; t++) {
-      const tunnelPhase = time * 3 + t * 0.9;
-      const tunnelProgress = (Math.sin(tunnelPhase) + 1) / 2;
-      
-      if (tunnelProgress > 0.2) {
-        const tunnelAngle = (t / tunnelCount) * Math.PI * 2;
-        const startPoint = field[Math.floor((t / tunnelCount) * field.length)];
-        
-        // Tunnel through "forbidden" region
-        const tunnelDistance = scale * 0.4;
-        const tunnelX = startPoint.x + Math.cos(tunnelAngle) * tunnelDistance * tunnelProgress;
-        const tunnelY = startPoint.y + Math.sin(tunnelAngle) * tunnelDistance * tunnelProgress;
-        
-        ctx.globalAlpha = tunneling * (1 - tunnelProgress) * 0.8;
-        
-        // Tunneling particle trail
-        const trailGradient = ctx.createLinearGradient(
-          startPoint.x, startPoint.y, tunnelX, tunnelY
-        );
-        trailGradient.addColorStop(0, colors.virtual);
-        trailGradient.addColorStop(tunnelProgress, colors.quantum);
-        trailGradient.addColorStop(1, 'transparent');
-        
-        ctx.strokeStyle = trailGradient;
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.moveTo(startPoint.x, startPoint.y);
-        ctx.lineTo(tunnelX, tunnelY);
-        ctx.stroke();
-        
-        // Tunneling particle
-        ctx.fillStyle = colors.quantum;
-        ctx.globalAlpha = tunneling * 0.9;
-        ctx.beginPath();
-        ctx.arc(tunnelX, tunnelY, 2, 0, Math.PI * 2);
-        ctx.fill();
-      }
-    }
-    
-    ctx.restore();
-  }
-
-  function renderParticleTrails(ctx: CanvasRenderingContext2D, field: any[], colors: any, trails: number, time: number, scale: number) {
-    ctx.save();
-    
-    const trailCount = Math.floor(trails * 12);
-    
-    for (let trail = 0; trail < trailCount; trail++) {
-      const trailPhase = time * 2 + trail * 0.7;
-      const trailLife = (Math.sin(trailPhase) + 1) / 2;
-      
-      if (trailLife > 0.1) {
-        const trailAngle = (trail / trailCount) * Math.PI * 2 + time * 0.3;
-        const trailRadius = scale * (0.6 + Math.sin(trailPhase * 1.2) * 0.3);
-        const trailX = field[0].x + Math.cos(trailAngle) * trailRadius;
-        const trailY = field[0].y + Math.sin(trailAngle) * trailRadius;
-        
-        ctx.globalAlpha = trails * trailLife * 0.6;
-        
-        // Particle trail
-        const trailSize = 1 + trailLife * 2;
-        ctx.fillStyle = colors.high;
-        ctx.beginPath();
-        ctx.arc(trailX, trailY, trailSize, 0, Math.PI * 2);
-        ctx.fill();
-        
-        // Trail blur
-        ctx.save();
-        ctx.globalAlpha = trails * trailLife * 0.3;
-        ctx.filter = 'blur(2px)';
-        ctx.fillStyle = colors.field;
-        ctx.beginPath();
-        ctx.arc(trailX, trailY, trailSize * 2, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
-      }
-    }
-    
-    ctx.restore();
-  }
-
-  function renderVirtualParticles(ctx: CanvasRenderingContext2D, field: any[], colors: any, virtual: number, time: number, scale: number) {
-    ctx.save();
-    
-    const virtualCount = Math.floor(virtual * 15);
-    
-    for (let v = 0; v < virtualCount; v++) {
-      const virtualPhase = time * 4 + v * 0.5;
-      const virtualLife = Math.abs(Math.sin(virtualPhase)); // Brief existence
-      
-      if (virtualLife > 0.1) {
-        const virtualX = field[0].x + (Math.random() - 0.5) * scale * 0.8;
-        const virtualY = field[0].y + (Math.random() - 0.5) * scale * 0.8;
-        const virtualSize = 0.5 + virtualLife * 1.5;
-        
-        ctx.globalAlpha = virtual * virtualLife * 0.7;
-        
-        // Virtual particle (appears and disappears)
-        ctx.fillStyle = colors.virtual;
-        ctx.beginPath();
-        ctx.arc(virtualX, virtualY, virtualSize, 0, Math.PI * 2);
-        ctx.fill();
-        
-        // Virtual particle glow
-        ctx.save();
-        ctx.globalAlpha = virtual * virtualLife * 0.4;
-        ctx.filter = 'blur(1px)';
-        ctx.fillStyle = colors.quantum;
-        ctx.beginPath();
-        ctx.arc(virtualX, virtualY, virtualSize * 3, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
-      }
-    }
-    
-    ctx.restore();
-  }
-
-  function renderWaveCollapse(ctx: CanvasRenderingContext2D, field: any[], colors: any, collapse: number, measurement: number, time: number) {
-    if (measurement > 0.1) {
-      ctx.save();
-      
-      const collapsePhase = time * 1.5;
-      const collapseActive = Math.sin(collapsePhase) > (1 - measurement * 2);
-      
-      if (collapseActive) {
-        ctx.globalAlpha = collapse * 0.8;
-        
-        // Wave function collapse visualization
-        const bounds = getBounds(field);
-        const collapseGradient = ctx.createRadialGradient(
-          bounds.centerX, bounds.centerY, 0,
-          bounds.centerX, bounds.centerY, bounds.width * 0.3
-        );
-        collapseGradient.addColorStop(0, colors.quantum);
-        collapseGradient.addColorStop(0.5, colors.field);
-        collapseGradient.addColorStop(1, 'transparent');
-        
-        ctx.fillStyle = collapseGradient;
-        ctx.beginPath();
-        ctx.arc(bounds.centerX, bounds.centerY, bounds.width * 0.3, 0, Math.PI * 2);
-        ctx.fill();
-        
-        // Collapse ripples
-        for (let r = 1; r <= 3; r++) {
-          ctx.globalAlpha = collapse * (0.8 - r * 0.2);
-          ctx.strokeStyle = colors.quantum;
-          ctx.lineWidth = 0.5;
-          ctx.beginPath();
-          ctx.arc(bounds.centerX, bounds.centerY, bounds.width * 0.1 * r, 0, Math.PI * 2);
-          ctx.stroke();
-        }
-      }
-      
-      ctx.restore();
-    }
-  }
-
-  function drawQuantumPath(ctx: CanvasRenderingContext2D, points: any[], waveComplexity: number) {
-    if (points.length < 3) return;
-    
-    ctx.beginPath();
-    ctx.moveTo(points[0].x, points[0].y);
-    
-    // Quantum wave-like curves with uncertainty
-    for (let i = 1; i < points.length; i++) {
-      const current = points[i];
-      const previous = points[i - 1];
-      const next = points[(i + 1) % points.length];
-      
-      // Wave function affects curve smoothness
-      const quantumTension = 0.6 + waveComplexity * 0.4;
-      const uncertainty = current.probability ? (1 - current.probability) * 0.1 : 0.05;
-      
-      const cp1x = previous.x + (current.x - (points[i - 2] || previous).x) * quantumTension * 0.3;
-      const cp1y = previous.y + (current.y - (points[i - 2] || previous).y) * quantumTension * 0.3;
-      const cp2x = current.x - (next.x - previous.x) * quantumTension * 0.3 + uncertainty;
-      const cp2y = current.y - (next.y - previous.y) * quantumTension * 0.3 + uncertainty;
-      
-      ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, current.x, current.y);
-    }
-    
-    // Close the quantum field
-    const first = points[0];
-    const last = points[points.length - 1];
-    const secondLast = points[points.length - 2];
-    const second = points[1];
-    
-    const quantumTension = 0.6 + waveComplexity * 0.4;
-    const cp1x = last.x + (first.x - secondLast.x) * quantumTension * 0.3;
-    const cp1y = last.y + (first.y - secondLast.y) * quantumTension * 0.3;
-    const cp2x = first.x - (second.x - last.x) * quantumTension * 0.3;
-    const cp2y = first.y - (second.y - last.y) * quantumTension * 0.3;
-    
-    ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, first.x, first.y);
-    ctx.closePath();
-  }
-
-  function getBounds(points: any[]) {
-    const xs = points.map(p => p.x);
-    const ys = points.map(p => p.y);
-    const minX = Math.min(...xs);
-    const maxX = Math.max(...xs);
-    const minY = Math.min(...ys);
-    const maxY = Math.max(...ys);
-    
-    return {
-      minX, maxX, minY, maxY,
-      width: maxX - minX,
-      height: maxY - minY,
-      centerX: (minX + maxX) / 2,
-      centerY: (minY + maxY) / 2
-    };
-  }
-}
-
-export { drawVisualization };
-
-export const metadata = {
+const metadata = {
+  id: 'quantum-field',
   name: "⚛️ Quantum Field",
-  description: "Abstract quantum physics visualization with superposition, entanglement, and wave-particle duality",
+  description: "Visualize quantum mechanics with wave functions, probability clouds, and energy levels",
+  parameters,
   defaultParams: {
-    seed: "quantum-field-physics",
     frequency: 1.8,
     amplitude: 160,
     quantumState: 2,
@@ -787,112 +118,568 @@ export const metadata = {
   }
 };
 
-export const id = 'quantum-field';
-export const name = "⚛️ Quantum Field";
-export const description = "Abstract quantum physics visualization with superposition, entanglement, and wave-particle duality";
-export const defaultParams = {
-  seed: "quantum-field-physics",
-  frequency: 1.8,
-  amplitude: 160,
-  quantumState: 2,
-  fieldDensity: 0.7,
-  waveFunction: 0.8,
-  uncertainty: 0.4,
-  superposition: 0.6,
-  entanglement: 0.3,
-  tunneling: 0.2,
-  energyLevels: 7,
-  energySpacing: 1.2,
-  quantumJumps: 0.4,
-  probabilityCloud: 0.6,
-  waveCollapse: 0.3,
-  measurement: 0.2,
-  fieldLines: 0.7,
-  particleTrails: 0.4,
-  virtualParticles: 0.3,
-  energySpectrum: 240,
-  spectralWidth: 60,
-  quantumGlow: 0.8
-};
-export const code = `// ⚛️ Quantum Field
-const PARAMETERS = {
-  backgroundColor: { type: 'color', default: "#000000", label: 'Background Color', category: 'Background' },
-  backgroundType: { type: 'select', options: [{"value":"transparent","label":"Transparent"},{"value":"solid","label":"Solid Color"},{"value":"gradient","label":"Gradient"}], default: "solid", label: 'Background Type', category: 'Background' },
-  backgroundGradientStart: { type: 'color', default: "#0a0a12", label: 'Gradient Start', category: 'Background', showIf: (params)=>params.backgroundType === 'gradient' },
-  backgroundGradientEnd: { type: 'color', default: "#000000", label: 'Gradient End', category: 'Background', showIf: (params)=>params.backgroundType === 'gradient' },
-  backgroundGradientDirection: { type: 'slider', min: 0, max: 360, step: 15, default: 45, label: 'Gradient Direction', category: 'Background', showIf: (params)=>params.backgroundType === 'gradient' },
-  fillType: { type: 'select', options: [{"value":"none","label":"None"},{"value":"solid","label":"Solid Color"},{"value":"gradient","label":"Gradient"}], default: "solid", label: 'Fill Type', category: 'Fill' },
-  fillColor: { type: 'color', default: "#60a5fa", label: 'Fill Color', category: 'Fill', showIf: (params)=>params.fillType === 'solid' },
-  fillGradientStart: { type: 'color', default: "#60a5fa", label: 'Gradient Start', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
-  fillGradientEnd: { type: 'color', default: "#1e40af", label: 'Gradient End', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
-  fillGradientDirection: { type: 'slider', min: 0, max: 360, step: 15, default: 90, label: 'Gradient Direction', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
-  fillOpacity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.8, label: 'Fill Opacity', category: 'Fill', showIf: (params)=>params.fillType !== 'none' },
-  strokeType: { type: 'select', options: [{"value":"none","label":"None"},{"value":"solid","label":"Solid"},{"value":"dashed","label":"Dashed"},{"value":"dotted","label":"Dotted"}], default: "solid", label: 'Stroke Type', category: 'Stroke' },
-  strokeColor: { type: 'color', default: "#3b82f6", label: 'Stroke Color', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
-  strokeWidth: { type: 'slider', min: 0, max: 10, step: 0.5, default: 1, label: 'Stroke Width', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
-  strokeOpacity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.8, label: 'Stroke Opacity', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
-  frequency: { type: 'slider', min: 0.8, max: 3, step: 0.1, default: 1.8, label: 'Quantum Frequency' },
-  amplitude: { type: 'slider', min: 90, max: 220, step: 5, default: 160, label: 'Field Amplitude' },
-  quantumState: { type: 'slider', min: 0, max: 4, step: 1, default: 2, label: 'Quantum State (0=Ground, 1=Excited, 2=Superposition, 3=Entangled, 4=Collapsed)' },
-  fieldDensity: { type: 'slider', min: 0.4, max: 1, step: 0.05, default: 0.7, label: 'Field Density' },
-  waveFunction: { type: 'slider', min: 0.3, max: 1, step: 0.05, default: 0.8, label: 'Wave Function Complexity' },
-  uncertainty: { type: 'slider', min: 0.2, max: 0.8, step: 0.05, default: 0.4, label: 'Heisenberg Uncertainty' },
-  superposition: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.6, label: 'Superposition State' },
-  entanglement: { type: 'slider', min: 0, max: 0.8, step: 0.05, default: 0.3, label: 'Quantum Entanglement' },
-  tunneling: { type: 'slider', min: 0, max: 0.6, step: 0.05, default: 0.2, label: 'Quantum Tunneling' },
-  energyLevels: { type: 'slider', min: 3, max: 12, step: 1, default: 7, label: 'Energy Level Count' },
-  energySpacing: { type: 'slider', min: 0.5, max: 2, step: 0.1, default: 1.2, label: 'Level Spacing' },
-  quantumJumps: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.4, label: 'Quantum Jump Rate' },
-  probabilityCloud: { type: 'slider', min: 0.2, max: 1, step: 0.05, default: 0.6, label: 'Probability Cloud' },
-  waveCollapse: { type: 'slider', min: 0, max: 0.7, step: 0.05, default: 0.3, label: 'Wave Function Collapse' },
-  measurement: { type: 'slider', min: 0, max: 0.5, step: 0.05, default: 0.2, label: 'Measurement Effect' },
-  fieldLines: { type: 'slider', min: 0.3, max: 1, step: 0.05, default: 0.7, label: 'Field Line Visibility' },
-  particleTrails: { type: 'slider', min: 0, max: 0.8, step: 0.05, default: 0.4, label: 'Particle Trails' },
-  virtualParticles: { type: 'slider', min: 0, max: 0.6, step: 0.05, default: 0.3, label: 'Virtual Particles' },
-  energySpectrum: { type: 'slider', min: 0, max: 360, step: 20, default: 240, label: 'Energy Spectrum Hue' },
-  spectralWidth: { type: 'slider', min: 30, max: 120, step: 10, default: 60, label: 'Spectral Range' },
-  quantumGlow: { type: 'slider', min: 0.4, max: 1, step: 0.05, default: 0.8, label: 'Quantum Luminescence' }
-};
-
-function applyUniversalBackground(ctx, width, height, params) {
-  if (!params.backgroundType || params.backgroundType === 'transparent') return;
+function drawVisualization(ctx: CanvasRenderingContext2D, width: number, height: number, params: any, time: number, utils: TemplateUtils) {
+  utils.applyUniversalBackground(ctx, width, height, params);
   
-  if (params.backgroundType === 'solid') {
-    ctx.fillStyle = params.backgroundColor || '#000000';
-    ctx.fillRect(0, 0, width, height);
-  } else if (params.backgroundType === 'gradient') {
-    const direction = (params.backgroundGradientDirection || 45) * (Math.PI / 180);
-    const x1 = width / 2 - Math.cos(direction) * width / 2;
-    const y1 = height / 2 - Math.sin(direction) * height / 2;
-    const x2 = width / 2 + Math.cos(direction) * width / 2;
-    const y2 = height / 2 + Math.sin(direction) * height / 2;
+  const fillColor = params.fillColor || '#60a5fa';
+  const strokeColor = params.strokeColor || '#3b82f6';
+  const fillOpacity = params.fillOpacity ?? 0.8;
+  const strokeOpacity = params.strokeOpacity ?? 0.8;
+  
+  // Extract parameters
+  const centerX = width / 2;
+  const centerY = height / 2;
+  const frequency = params.frequency || 1.8;
+  const amplitude = params.amplitude || 160;
+  const quantumStateIndex = Math.round(params.quantumState || 2);
+  
+  // Quantum states
+  const quantumStates = [
+    { name: 'Ground', energy: 0, coherence: 0.2, fluctuation: 0.1 },
+    { name: 'Excited', energy: 0.6, coherence: 0.7, fluctuation: 0.4 },
+    { name: 'Superposition', energy: 0.8, coherence: 1, fluctuation: 0.6 },
+    { name: 'Entangled', energy: 0.9, coherence: 0.9, fluctuation: 0.8 },
+    { name: 'Collapsed', energy: 0.3, coherence: 0.1, fluctuation: 0.2 }
+  ];
+  
+  const quantumState = quantumStates[Math.min(quantumStateIndex, quantumStates.length - 1)];
+  
+  // Field properties
+  const fieldDensity = params.fieldDensity || 0.7;
+  const waveFunction = params.waveFunction || 0.8;
+  const uncertainty = params.uncertainty || 0.4;
+  
+  // Quantum effects
+  const superposition = params.superposition || 0.6;
+  const entanglement = params.entanglement || 0.3;
+  const tunneling = params.tunneling || 0.2;
+  
+  // Energy levels
+  const energyLevels = Math.round(params.energyLevels || 7);
+  const energySpacing = params.energySpacing || 1.2;
+  const quantumJumps = params.quantumJumps || 0.4;
+  
+  // Probability distributions
+  const probabilityCloud = params.probabilityCloud || 0.6;
+  const waveCollapse = params.waveCollapse || 0.3;
+  const measurement = params.measurement || 0.2;
+  
+  // Field visualization
+  const fieldLines = params.fieldLines || 0.7;
+  const particleTrails = params.particleTrails || 0.4;
+  const virtualParticles = params.virtualParticles || 0.3;
+  
+  // Color properties
+  const energySpectrum = params.energySpectrum || 240;
+  const spectralWidth = params.spectralWidth || 60;
+  const quantumGlow = params.quantumGlow || 0.8;
+
+  // Helper functions
+  function quantumWave(x: number, y: number, phase: number): number {
+    const k = frequency * 0.1;
+    const psi = Math.sin(k * x + phase) * Math.cos(k * y + phase * 0.7);
+    const uncertainty_factor = 1 + uncertainty * Math.sin(phase * 3);
+    return psi * uncertainty_factor;
+  }
+  
+  function probabilityDensity(x: number, y: number, phase: number): number {
+    const wave = quantumWave(x, y, phase);
+    return Math.abs(wave * wave);
+  }
+  
+  function drawQuantumField() {
+    ctx.save();
     
-    const gradient = ctx.createLinearGradient(x1, y1, x2, y2);
-    gradient.addColorStop(0, params.backgroundGradientStart || '#0a0a12');
-    gradient.addColorStop(1, params.backgroundGradientEnd || '#000000');
+    // Draw energy levels
+    if (energyLevels > 0) {
+      ctx.save();
+      
+      for (let i = 0; i < energyLevels; i++) {
+        const levelY = centerY - (i - energyLevels / 2) * energySpacing * 20;
+        const levelEnergy = i / energyLevels;
+        const levelAlpha = fieldLines * (1 - i / energyLevels) * 0.4;
+        
+        // Energy level line
+        ctx.strokeStyle = `hsla(${energySpectrum + levelEnergy * spectralWidth}, 80%, 60%, ${levelAlpha})`;
+        ctx.lineWidth = 1 + quantumState.energy * 2;
+        ctx.beginPath();
+        ctx.moveTo(centerX - amplitude, levelY);
+        ctx.lineTo(centerX + amplitude, levelY);
+        ctx.stroke();
+        
+        // Quantum jumps between levels
+        if (quantumJumps > 0 && i < energyLevels - 1 && Math.sin(time * 3 + i) > (1 - quantumJumps)) {
+          ctx.save();
+          ctx.globalAlpha = quantumJumps * fillOpacity;
+          
+          const jumpX = centerX + Math.sin(time * 2 + i) * amplitude * 0.8;
+          const nextLevelY = centerY - (i + 1 - energyLevels / 2) * energySpacing * 20;
+          
+          // Jump particle
+          const particleGradient = ctx.createRadialGradient(jumpX, levelY, 0, jumpX, levelY, 10);
+          particleGradient.addColorStop(0, `hsla(${energySpectrum + 30}, 100%, 70%, ${quantumJumps})`);
+          particleGradient.addColorStop(1, `hsla(${energySpectrum + 30}, 100%, 70%, 0)`);
+          
+          ctx.fillStyle = particleGradient;
+          ctx.beginPath();
+          ctx.arc(jumpX, levelY + (nextLevelY - levelY) * ((Math.sin(time * 4 + i) + 1) / 2), 5, 0, Math.PI * 2);
+          ctx.fill();
+          
+          ctx.restore();
+        }
+      }
+      
+      ctx.restore();
+    }
     
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, width, height);
+    // Draw probability cloud
+    if (probabilityCloud > 0) {
+      ctx.save();
+      ctx.globalAlpha = probabilityCloud * fillOpacity * 0.3;
+      
+      const cloudPoints = 50;
+      const cloudLayers = 5;
+      
+      for (let layer = 0; layer < cloudLayers; layer++) {
+        const layerRadius = amplitude * (0.3 + layer * 0.2);
+        const layerAlpha = (1 - layer / cloudLayers) * probabilityCloud;
+        
+        for (let i = 0; i < cloudPoints; i++) {
+          const angle = (i / cloudPoints) * Math.PI * 2;
+          const phase = time + layer * 0.5;
+          const x = Math.cos(angle) * layerRadius;
+          const y = Math.sin(angle) * layerRadius;
+          const probability = probabilityDensity(x, y, phase);
+          
+          const size = 20 * probability * waveFunction;
+          const hue = energySpectrum + probability * spectralWidth;
+          
+          const cloudGradient = ctx.createRadialGradient(
+            centerX + x, centerY + y, 0,
+            centerX + x, centerY + y, size
+          );
+          cloudGradient.addColorStop(0, `hsla(${hue}, 70%, 60%, ${layerAlpha * probability})`);
+          cloudGradient.addColorStop(0.5, `hsla(${hue}, 60%, 50%, ${layerAlpha * probability * 0.5})`);
+          cloudGradient.addColorStop(1, `hsla(${hue}, 50%, 40%, 0)`);
+          
+          ctx.fillStyle = cloudGradient;
+          ctx.beginPath();
+          ctx.arc(centerX + x, centerY + y, size, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+      
+      ctx.restore();
+    }
+    
+    // Draw wave function
+    if (waveFunction > 0) {
+      ctx.save();
+      ctx.globalAlpha = waveFunction * fillOpacity;
+      
+      const waveResolution = 100;
+      
+      for (let i = 0; i < waveResolution; i++) {
+        const x = (i / waveResolution - 0.5) * amplitude * 2;
+        const phase = time * quantumState.coherence;
+        const wave = quantumWave(x, 0, phase) * amplitude * 0.5;
+        const nextX = ((i + 1) / waveResolution - 0.5) * amplitude * 2;
+        const nextWave = quantumWave(nextX, 0, phase) * amplitude * 0.5;
+        
+        // Wave gradient
+        const waveGradient = ctx.createLinearGradient(
+          centerX + x, centerY,
+          centerX + x, centerY - Math.abs(wave)
+        );
+        const hue = energySpectrum + (wave / amplitude) * spectralWidth;
+        waveGradient.addColorStop(0, `hsla(${hue}, 80%, 60%, 0)`);
+        waveGradient.addColorStop(0.5, `hsla(${hue}, 90%, 70%, ${waveFunction * 0.8})`);
+        waveGradient.addColorStop(1, `hsla(${hue}, 100%, 80%, ${waveFunction})`);
+        
+        ctx.strokeStyle = waveGradient;
+        ctx.lineWidth = 2 + quantumState.energy;
+        ctx.beginPath();
+        ctx.moveTo(centerX + x, centerY - wave);
+        ctx.lineTo(centerX + nextX, centerY - nextWave);
+        ctx.stroke();
+      }
+      
+      ctx.restore();
+    }
+    
+    // Draw superposition states
+    if (superposition > 0) {
+      ctx.save();
+      ctx.globalAlpha = superposition * fillOpacity * 0.5;
+      
+      const states = 3;
+      for (let s = 0; s < states; s++) {
+        const statePhase = time + s * Math.PI * 2 / states;
+        const stateAlpha = superposition * (1 - s / states);
+        
+        ctx.strokeStyle = `hsla(${energySpectrum + s * 30}, 70%, 60%, ${stateAlpha})`;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        
+        for (let i = 0; i <= 72; i++) {
+          const angle = (i / 72) * Math.PI * 2;
+          const r = amplitude * 0.8;
+          const wave = quantumWave(r * Math.cos(angle), r * Math.sin(angle), statePhase);
+          const radius = r + wave * 20 * waveFunction;
+          
+          const x = centerX + Math.cos(angle) * radius;
+          const y = centerY + Math.sin(angle) * radius;
+          
+          if (i === 0) {
+            ctx.moveTo(x, y);
+          } else {
+            ctx.lineTo(x, y);
+          }
+        }
+        
+        ctx.closePath();
+        ctx.stroke();
+      }
+      
+      ctx.restore();
+    }
+    
+    // Draw entanglement connections
+    if (entanglement > 0) {
+      ctx.save();
+      ctx.globalAlpha = entanglement * fillOpacity;
+      
+      const entangledPairs = Math.floor(3 + entanglement * 5);
+      
+      for (let i = 0; i < entangledPairs; i++) {
+        const angle1 = (i / entangledPairs) * Math.PI * 2;
+        const angle2 = angle1 + Math.PI + Math.sin(time + i) * 0.5;
+        const r = amplitude * 0.7;
+        
+        const x1 = centerX + Math.cos(angle1) * r;
+        const y1 = centerY + Math.sin(angle1) * r;
+        const x2 = centerX + Math.cos(angle2) * r;
+        const y2 = centerY + Math.sin(angle2) * r;
+        
+        // Entanglement connection
+        const gradient = ctx.createLinearGradient(x1, y1, x2, y2);
+        gradient.addColorStop(0, `hsla(${energySpectrum}, 80%, 70%, ${entanglement})`);
+        gradient.addColorStop(0.5, `hsla(${energySpectrum + 30}, 70%, 60%, ${entanglement * 0.5})`);
+        gradient.addColorStop(1, `hsla(${energySpectrum + 60}, 80%, 70%, ${entanglement})`);
+        
+        ctx.strokeStyle = gradient;
+        ctx.lineWidth = 1 + entanglement * 2;
+        ctx.setLineDash([5, 5]);
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        
+        // Entangled particles
+        const particleSize = 4 + entanglement * 6;
+        
+        // Particle 1
+        const particle1Gradient = ctx.createRadialGradient(x1, y1, 0, x1, y1, particleSize);
+        particle1Gradient.addColorStop(0, `hsla(${energySpectrum}, 100%, 80%, ${entanglement})`);
+        particle1Gradient.addColorStop(1, `hsla(${energySpectrum}, 100%, 80%, 0)`);
+        ctx.fillStyle = particle1Gradient;
+        ctx.beginPath();
+        ctx.arc(x1, y1, particleSize, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Particle 2
+        const particle2Gradient = ctx.createRadialGradient(x2, y2, 0, x2, y2, particleSize);
+        particle2Gradient.addColorStop(0, `hsla(${energySpectrum + 60}, 100%, 80%, ${entanglement})`);
+        particle2Gradient.addColorStop(1, `hsla(${energySpectrum + 60}, 100%, 80%, 0)`);
+        ctx.fillStyle = particle2Gradient;
+        ctx.beginPath();
+        ctx.arc(x2, y2, particleSize, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      
+      ctx.restore();
+    }
+    
+    // Draw quantum tunneling
+    if (tunneling > 0) {
+      ctx.save();
+      ctx.globalAlpha = tunneling * fillOpacity;
+      
+      // Barrier
+      const barrierX = centerX;
+      const barrierHeight = amplitude * 0.6;
+      
+      ctx.strokeStyle = `hsla(0, 0%, 50%, ${tunneling * 0.5})`;
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(barrierX, centerY - barrierHeight);
+      ctx.lineTo(barrierX, centerY + barrierHeight);
+      ctx.stroke();
+      
+      // Tunneling particles
+      const tunnelCount = Math.floor(2 + tunneling * 4);
+      for (let i = 0; i < tunnelCount; i++) {
+        const particleY = centerY + (Math.random() - 0.5) * barrierHeight * 1.5;
+        const phase = time * 2 + i;
+        const tunnelProgress = (Math.sin(phase) + 1) / 2;
+        const particleX = centerX - amplitude * 0.3 + tunnelProgress * amplitude * 0.6;
+        
+        // Ghost particle showing tunneling
+        if (Math.abs(particleX - barrierX) < 20) {
+          ctx.globalAlpha = tunneling * 0.3 * fillOpacity;
+        } else {
+          ctx.globalAlpha = tunneling * fillOpacity;
+        }
+        
+        const particleGradient = ctx.createRadialGradient(
+          particleX, particleY, 0,
+          particleX, particleY, 8
+        );
+        particleGradient.addColorStop(0, `hsla(${energySpectrum + 120}, 80%, 70%, 1)`);
+        particleGradient.addColorStop(1, `hsla(${energySpectrum + 120}, 80%, 70%, 0)`);
+        
+        ctx.fillStyle = particleGradient;
+        ctx.beginPath();
+        ctx.arc(particleX, particleY, 8, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      
+      ctx.restore();
+    }
+    
+    // Draw field lines
+    if (fieldLines > 0) {
+      ctx.save();
+      ctx.globalAlpha = fieldLines * 0.3 * fillOpacity;
+      
+      const lineCount = Math.floor(8 * fieldDensity);
+      
+      for (let i = 0; i < lineCount; i++) {
+        const angle = (i / lineCount) * Math.PI * 2;
+        const phase = time * 0.5 + i * 0.5;
+        
+        ctx.strokeStyle = `hsla(${energySpectrum}, 50%, 60%, ${fieldLines * 0.3})`;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        
+        for (let r = 0; r < amplitude; r += 5) {
+          const fieldStrength = 1 - r / amplitude;
+          const wobble = Math.sin(phase + r * 0.05) * uncertainty * 10;
+          const x = centerX + Math.cos(angle + wobble * 0.01) * r;
+          const y = centerY + Math.sin(angle + wobble * 0.01) * r;
+          
+          if (r === 0) {
+            ctx.moveTo(x, y);
+          } else {
+            ctx.lineTo(x, y);
+          }
+        }
+        
+        ctx.stroke();
+      }
+      
+      ctx.restore();
+    }
+    
+    // Draw particle trails
+    if (particleTrails > 0) {
+      ctx.save();
+      ctx.globalAlpha = particleTrails * fillOpacity;
+      
+      const trailCount = Math.floor(3 + particleTrails * 5);
+      
+      for (let i = 0; i < trailCount; i++) {
+        const trailPhase = time * 1.5 + i * Math.PI * 2 / trailCount;
+        const trailRadius = amplitude * (0.5 + Math.sin(trailPhase * 0.3) * 0.3);
+        const x = centerX + Math.cos(trailPhase) * trailRadius;
+        const y = centerY + Math.sin(trailPhase * 1.3) * trailRadius * 0.6;
+        
+        // Trail history
+        const trailLength = 20;
+        ctx.beginPath();
+        
+        for (let j = 0; j < trailLength; j++) {
+          const historyPhase = trailPhase - j * 0.1;
+          const historyRadius = amplitude * (0.5 + Math.sin(historyPhase * 0.3) * 0.3);
+          const historyX = centerX + Math.cos(historyPhase) * historyRadius;
+          const historyY = centerY + Math.sin(historyPhase * 1.3) * historyRadius * 0.6;
+          const historyAlpha = (1 - j / trailLength) * particleTrails;
+          
+          if (j === 0) {
+            ctx.moveTo(historyX, historyY);
+          } else {
+            ctx.lineTo(historyX, historyY);
+          }
+        }
+        
+        const trailGradient = ctx.createLinearGradient(
+          x, y,
+          centerX + Math.cos(trailPhase - trailLength * 0.1) * trailRadius,
+          centerY + Math.sin(trailPhase * 1.3 - trailLength * 0.1) * trailRadius * 0.6
+        );
+        trailGradient.addColorStop(0, `hsla(${energySpectrum + i * 30}, 80%, 70%, ${particleTrails})`);
+        trailGradient.addColorStop(1, `hsla(${energySpectrum + i * 30}, 80%, 70%, 0)`);
+        
+        ctx.strokeStyle = trailGradient;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        
+        // Leading particle
+        const particleGradient = ctx.createRadialGradient(x, y, 0, x, y, 6);
+        particleGradient.addColorStop(0, `hsla(${energySpectrum + i * 30}, 100%, 80%, 1)`);
+        particleGradient.addColorStop(1, `hsla(${energySpectrum + i * 30}, 100%, 80%, 0)`);
+        
+        ctx.fillStyle = particleGradient;
+        ctx.beginPath();
+        ctx.arc(x, y, 6, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      
+      ctx.restore();
+    }
+    
+    // Draw virtual particles
+    if (virtualParticles > 0) {
+      ctx.save();
+      ctx.globalAlpha = virtualParticles * fillOpacity * 0.5;
+      
+      const virtualCount = Math.floor(10 + virtualParticles * 20);
+      
+      for (let i = 0; i < virtualCount; i++) {
+        const lifetime = 0.5 + Math.random() * 0.5;
+        const birth = (time * 2 + i * 17) % (Math.PI * 2);
+        const age = ((time * 2) % (Math.PI * 2) - birth + Math.PI * 2) % (Math.PI * 2);
+        
+        if (age < lifetime) {
+          const x = centerX + (Math.random() - 0.5) * amplitude * 2;
+          const y = centerY + (Math.random() - 0.5) * amplitude * 2;
+          const ageRatio = age / lifetime;
+          const alpha = (1 - ageRatio) * virtualParticles * 0.5;
+          const size = 2 + (1 - ageRatio) * 4;
+          
+          ctx.fillStyle = `hsla(${energySpectrum + Math.random() * spectralWidth}, 70%, 70%, ${alpha})`;
+          ctx.beginPath();
+          ctx.arc(x, y, size, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+      
+      ctx.restore();
+    }
+    
+    // Draw wave collapse visualization
+    if (waveCollapse > 0 && Math.sin(time * 0.5) > 0.5) {
+      ctx.save();
+      ctx.globalAlpha = waveCollapse * fillOpacity;
+      
+      const collapseProgress = (Math.sin(time * 0.5) - 0.5) * 2;
+      const collapseRadius = amplitude * (1 - collapseProgress * 0.5);
+      
+      // Collapsing wave
+      ctx.strokeStyle = `hsla(${energySpectrum + 180}, 80%, 60%, ${waveCollapse * (1 - collapseProgress)})`;
+      ctx.lineWidth = 2 + (1 - collapseProgress) * 3;
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, collapseRadius, 0, Math.PI * 2);
+      ctx.stroke();
+      
+      // Collapsed state
+      if (collapseProgress > 0.8) {
+        const particleGradient = ctx.createRadialGradient(
+          centerX, centerY, 0,
+          centerX, centerY, 20
+        );
+        particleGradient.addColorStop(0, `hsla(${energySpectrum + 180}, 100%, 80%, ${waveCollapse})`);
+        particleGradient.addColorStop(0.5, `hsla(${energySpectrum + 180}, 90%, 70%, ${waveCollapse * 0.5})`);
+        particleGradient.addColorStop(1, `hsla(${energySpectrum + 180}, 80%, 60%, 0)`);
+        
+        ctx.fillStyle = particleGradient;
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, 20, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      
+      ctx.restore();
+    }
+    
+    // Draw measurement effect
+    if (measurement > 0) {
+      ctx.save();
+      ctx.globalAlpha = measurement * fillOpacity;
+      
+      // Measurement device indicator
+      const measureX = centerX + amplitude * 0.8;
+      const measureY = centerY;
+      
+      ctx.strokeStyle = `hsla(0, 80%, 60%, ${measurement})`;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(measureX - 10, measureY - 10);
+      ctx.lineTo(measureX + 10, measureY + 10);
+      ctx.moveTo(measureX + 10, measureY - 10);
+      ctx.lineTo(measureX - 10, measureY + 10);
+      ctx.stroke();
+      
+      // Measurement disruption
+      const disruptionGradient = ctx.createRadialGradient(
+        measureX, measureY, 0,
+        measureX, measureY, 50
+      );
+      disruptionGradient.addColorStop(0, `hsla(0, 70%, 60%, ${measurement * 0.3})`);
+      disruptionGradient.addColorStop(0.5, `hsla(0, 60%, 50%, ${measurement * 0.1})`);
+      disruptionGradient.addColorStop(1, `hsla(0, 50%, 40%, 0)`);
+      
+      ctx.fillStyle = disruptionGradient;
+      ctx.beginPath();
+      ctx.arc(measureX, measureY, 50, 0, Math.PI * 2);
+      ctx.fill();
+      
+      ctx.restore();
+    }
+    
+    // Quantum glow effect
+    if (quantumGlow > 0) {
+      ctx.save();
+      ctx.globalAlpha = quantumGlow * 0.3 * fillOpacity;
+      
+      const glowGradient = ctx.createRadialGradient(
+        centerX, centerY, amplitude * 0.5,
+        centerX, centerY, amplitude * 1.5
+      );
+      glowGradient.addColorStop(0, `hsla(${energySpectrum}, 100%, 70%, 0)`);
+      glowGradient.addColorStop(0.5, `hsla(${energySpectrum}, 90%, 60%, ${quantumGlow * 0.1})`);
+      glowGradient.addColorStop(1, `hsla(${energySpectrum}, 80%, 50%, 0)`);
+      
+      ctx.fillStyle = glowGradient;
+      ctx.fillRect(0, 0, width, height);
+      
+      ctx.restore();
+    }
+  }
+  
+  drawQuantumField();
+  
+  // Draw outer boundary
+  if (params.strokeType !== 'none') {
+    ctx.save();
+    ctx.globalAlpha = strokeOpacity;
+    
+    ctx.strokeStyle = strokeColor;
+    ctx.lineWidth = params.strokeWidth || 1;
+    
+    if (params.strokeType === 'dashed') {
+      ctx.setLineDash([10, 5]);
+    } else if (params.strokeType === 'dotted') {
+      ctx.setLineDash([2, 3]);
+    }
+    
+    // Quantum field boundary
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, amplitude, 0, Math.PI * 2);
+    ctx.stroke();
+    
+    ctx.restore();
   }
 }
 
-function drawVisualization(ctx, width, height, params, _generator, time) {
-  if (params.customParameters) {
-    params.fillColor = params.fillColor || params.customParameters.fillColor;
-    params.strokeColor = params.strokeColor || params.customParameters.strokeColor;
-    params.backgroundColor = params.backgroundColor || params.customParameters.backgroundColor;
-    params.textColor = params.textColor || params.customParameters.textColor;
-    
-    Object.keys(params.customParameters).forEach(key => {
-      if (params[key] === undefined) {
-        params[key] = params.customParameters[key];
-      }
-    });
-  }
-
-  applyUniversalBackground(ctx, width, height, params);
-  
-  // [Quantum field visualization code would continue here...]
-  // This template contains extensive quantum physics simulation code
-  // that is preserved from the original implementation
-}`;
+export { parameters, metadata, drawVisualization };

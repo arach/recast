@@ -1,534 +1,95 @@
 // ⬢ Smart Hexagon
-const PARAMETERS = {
-  // Universal Background Controls
-  backgroundColor: { type: 'color', default: "#f8f9fa", label: 'Background Color', category: 'Background' },
-  backgroundType: { type: 'select', options: [{"value":"transparent","label":"Transparent"},{"value":"solid","label":"Solid Color"},{"value":"gradient","label":"Gradient"}], default: "gradient", label: 'Background Type', category: 'Background' },
-  backgroundGradientStart: { type: 'color', default: "#f8f9fa", label: 'Gradient Start', category: 'Background', showIf: (params)=>params.backgroundType === 'gradient' },
-  backgroundGradientEnd: { type: 'color', default: "#ffffff", label: 'Gradient End', category: 'Background', showIf: (params)=>params.backgroundType === 'gradient' },
-  backgroundGradientDirection: { type: 'slider', min: 0, max: 360, step: 15, default: 45, label: 'Gradient Direction', category: 'Background', showIf: (params)=>params.backgroundType === 'gradient' },
-  
-  // Universal Fill Controls
-  fillType: { type: 'select', options: [{"value":"none","label":"None"},{"value":"solid","label":"Solid Color"},{"value":"gradient","label":"Gradient"}], default: "gradient", label: 'Fill Type', category: 'Fill' },
-  fillColor: { type: 'color', default: "#2563eb", label: 'Fill Color', category: 'Fill', showIf: (params)=>params.fillType === 'solid' },
-  fillGradientStart: { type: 'color', default: "#60a5fa", label: 'Gradient Start', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
-  fillGradientEnd: { type: 'color', default: "#1e3a8a", label: 'Gradient End', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
-  fillGradientDirection: { type: 'slider', min: 0, max: 360, step: 15, default: 90, label: 'Gradient Direction', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
-  fillOpacity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.8, label: 'Fill Opacity', category: 'Fill', showIf: (params)=>params.fillType !== 'none' },
-  
-  // Universal Stroke Controls
-  strokeType: { type: 'select', options: [{"value":"none","label":"None"},{"value":"solid","label":"Solid"},{"value":"dashed","label":"Dashed"},{"value":"dotted","label":"Dotted"}], default: "solid", label: 'Stroke Type', category: 'Stroke' },
-  strokeColor: { type: 'color', default: "#1e3a8a", label: 'Stroke Color', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
-  strokeWidth: { type: 'slider', min: 0, max: 10, step: 0.5, default: 3, label: 'Stroke Width', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
-  strokeOpacity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 1, label: 'Stroke Opacity', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
-  
-  // Hexagon fundamentals - shape definition (70% of controls)
+import type { TemplateUtils } from '@/lib/template-utils';
+
+const parameters = {
   hexagonStyle: {
-    type: 'slider',
-    min: 0,
-    max: 4,
-    step: 1,
     default: 0,
-    label: 'Hexagon Style (0=Regular, 1=Stretched, 2=Rotated, 3=Beveled, 4=Nested)'
+    range: [0, 4, 1]  // 0=Regular, 1=Stretched, 2=Rotated, 3=Beveled, 4=Nested
   },
-  
-  // Geometric precision with mathematical control
-  cornerRadius: { type: 'slider', min: 0, max: 30, step: 1, default: 8, label: 'Corner Radius' },
-  aspectRatio: { type: 'slider', min: 0.7, max: 1.5, step: 0.05, default: 1.0, label: 'Width/Height Ratio' },
-  rotationAngle: { type: 'slider', min: 0, max: 60, step: 5, default: 0, label: 'Rotation (degrees)' },
-  
-  // Professional proportions
-  edgeVariation: { type: 'slider', min: 0, max: 0.2, step: 0.01, default: 0.05, label: 'Edge Variation' },
-  centerOffset: { type: 'slider', min: 0, max: 0.3, step: 0.02, default: 0, label: 'Center Offset' },
-  symmetryBreak: { type: 'slider', min: 0, max: 0.15, step: 0.01, default: 0, label: 'Asymmetry Factor' },
-  
-  // Modern brand sophistication
-  layerCount: { type: 'slider', min: 1, max: 3, step: 1, default: 1, label: 'Nested Layers' },
-  layerSpacing: { type: 'slider', min: 5, max: 20, step: 1, default: 12, label: 'Layer Spacing' },
-  
-  // Brand enhancement (30% of controls)
-  strokeStyle: {
-    type: 'slider',
-    min: 0,
-    max: 4,
-    step: 1,
+  cornerRadius: {
+    default: 8,
+    range: [0, 30, 1]
+  },
+  aspectRatio: {
+    default: 1.0,
+    range: [0.7, 1.5, 0.05]
+  },
+  rotationAngle: {
+    default: 0,
+    range: [0, 60, 5]
+  },
+  edgeVariation: {
+    default: 0.05,
+    range: [0, 0.2, 0.01]
+  },
+  centerOffset: {
+    default: 0,
+    range: [0, 0.3, 0.02]
+  },
+  symmetryBreak: {
+    default: 0,
+    range: [0, 0.15, 0.01]
+  },
+  layerCount: {
     default: 1,
-    label: 'Stroke Style (0=None, 1=Clean, 2=Double, 3=Gradient, 4=Animated)'
+    range: [1, 3, 1]
   },
-  strokeWeight: { type: 'slider', min: 1, max: 10, step: 0.5, default: 3, label: 'Stroke Weight' },
-  
-  // Fill sophistication
+  layerSpacing: {
+    default: 12,
+    range: [5, 20, 1]
+  },
+  strokeStyle: {
+    default: 1,
+    range: [0, 4, 1]  // 0=None, 1=Clean, 2=Double, 3=Gradient, 4=Animated
+  },
+  strokeWeight: {
+    default: 3,
+    range: [1, 10, 0.5]
+  },
   fillStyle: {
-    type: 'slider',
-    min: 0,
-    max: 4,
-    step: 1,
     default: 2,
-    label: 'Fill Style (0=None, 1=Solid, 2=Linear, 3=Radial, 4=Geometric)'
+    range: [0, 4, 1]  // 0=None, 1=Solid, 2=Linear, 3=Radial, 4=Geometric
   },
-  
-  // Corporate color system
-  brandHue: { type: 'slider', min: 0, max: 360, step: 10, default: 220, label: 'Brand Hue' },
-  corporate: { type: 'slider', min: 0.4, max: 1, step: 0.05, default: 0.7, label: 'Corporate Feel' },
-  modernity: { type: 'slider', min: 0.3, max: 1, step: 0.05, default: 0.8, label: 'Modern Edge' },
-  
-  // Professional effects
-  innerShadow: { type: 'slider', min: 0, max: 0.3, step: 0.02, default: 0.1, label: 'Inner Shadow' },
-  surfaceSheen: { type: 'slider', min: 0, max: 0.4, step: 0.05, default: 0.2, label: 'Surface Highlight' }
+  brandHue: {
+    default: 220,
+    range: [0, 360, 10]
+  },
+  brandSaturation: {
+    default: 80,
+    range: [20, 100, 5]
+  },
+  brandLightness: {
+    default: 50,
+    range: [20, 80, 5]
+  },
+  shadowDepth: {
+    default: 0,
+    range: [0, 20, 1]
+  },
+  shadowAngle: {
+    default: 45,
+    range: [0, 360, 15]
+  },
+  glowStrength: {
+    default: 0,
+    range: [0, 0.3, 0.02]
+  },
+  patternDensity: {
+    default: 0,
+    range: [0, 1, 0.05]
+  },
+  noiseTexture: {
+    default: 0,
+    range: [0, 0.1, 0.01]
+  }
 };
 
-function applyUniversalBackground(ctx, width, height, params) {
-  if (!params.backgroundType || params.backgroundType === 'transparent') return;
-  
-  if (params.backgroundType === 'solid') {
-    ctx.fillStyle = params.backgroundColor || '#f8f9fa';
-    ctx.fillRect(0, 0, width, height);
-  } else if (params.backgroundType === 'gradient') {
-    const direction = (params.backgroundGradientDirection || 45) * (Math.PI / 180);
-    const x1 = width / 2 - Math.cos(direction) * width / 2;
-    const y1 = height / 2 - Math.sin(direction) * height / 2;
-    const x2 = width / 2 + Math.cos(direction) * width / 2;
-    const y2 = height / 2 + Math.sin(direction) * height / 2;
-    
-    const gradient = ctx.createLinearGradient(x1, y1, x2, y2);
-    gradient.addColorStop(0, params.backgroundGradientStart || '#f8f9fa');
-    gradient.addColorStop(1, params.backgroundGradientEnd || '#ffffff');
-    
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, width, height);
-  }
-}
-
-function drawVisualization(ctx, width, height, params, _generator, time) {
-  // Parameter compatibility layer
-  if (params.customParameters) {
-    params.fillColor = params.fillColor || params.customParameters.fillColor;
-    params.strokeColor = params.strokeColor || params.customParameters.strokeColor;
-    params.backgroundColor = params.backgroundColor || params.customParameters.backgroundColor;
-    params.textColor = params.textColor || params.customParameters.textColor;
-    
-    Object.keys(params.customParameters).forEach(key => {
-      if (params[key] === undefined) {
-        params[key] = params.customParameters[key];
-      }
-    });
-  }
-
-  // Apply universal background
-  applyUniversalBackground(ctx, width, height, params);
-
-  // Extract parameters
-  const centerX = width / 2;
-  const centerY = height / 2;
-  const hexagonStyleNum = Math.round(params.hexagonStyle || 0);
-  const cornerRadius = params.cornerRadius || 8;
-  const aspectRatio = params.aspectRatio || 1.0;
-  const rotationAngle = (params.rotationAngle || 0) * Math.PI / 180;
-  const edgeVariation = params.edgeVariation || 0.05;
-  const centerOffset = params.centerOffset || 0;
-  const symmetryBreak = params.symmetryBreak || 0;
-  const layerCount = Math.round(params.layerCount || 1);
-  const layerSpacing = params.layerSpacing || 12;
-  const strokeStyleNum = Math.round(params.strokeStyle || 1);
-  const strokeWeight = params.strokeWeight || 3;
-  const fillStyleNum = Math.round(params.fillStyle || 2);
-  const brandHue = params.brandHue || 220;
-  const corporate = params.corporate || 0.7;
-  const modernity = params.modernity || 0.8;
-  const innerShadow = params.innerShadow || 0.1;
-  const surfaceSheen = params.surfaceSheen || 0.2;
-
-  // Professional sizing for brand applications
-  const logoSize = Math.min(width, height) * 0.6;
-  const baseRadius = logoSize / 2;
-
-  // Corporate color palette
-  const brandColors = createCorporatePalette(brandHue, corporate, modernity);
-
-  // Center offset for dynamic positioning
-  const offsetX = centerX + centerOffset * logoSize * 0.3;
-  const offsetY = centerY + centerOffset * logoSize * 0.2;
-
-  // Render multiple layers for sophistication
-  for (let layer = layerCount - 1; layer >= 0; layer--) {
-    const layerRadius = baseRadius - (layer * layerSpacing);
-    const layerAlpha = 1 - (layer * 0.15);
-    
-    if (layerRadius > 10) { // Ensure minimum viable size
-      const hexagonPoints = generateSmartHexagon(
-        hexagonStyleNum, offsetX, offsetY, layerRadius,
-        aspectRatio, rotationAngle, edgeVariation, symmetryBreak, time, layer
-      );
-
-      // Inner shadow for depth (main layer only)
-      if (layer === 0 && innerShadow > 0.05) {
-        renderInnerShadow(ctx, hexagonPoints, brandColors, innerShadow, cornerRadius);
-      }
-
-      // Fill the hexagon
-      renderHexagonFill(ctx, hexagonPoints, brandColors, fillStyleNum, layerAlpha, offsetX, offsetY, layerRadius);
-
-      // Professional stroke
-      if (strokeStyleNum > 0) {
-        renderProfessionalStroke(ctx, hexagonPoints, brandColors, strokeStyleNum, strokeWeight, cornerRadius, time, layer);
-      }
-
-      // Surface highlight for premium feel (main layer only)
-      if (layer === 0 && surfaceSheen > 0.05 && Math.min(width, height) > 100) {
-        renderSurfaceHighlight(ctx, hexagonPoints, brandColors, surfaceSheen, offsetX, offsetY);
-      }
-    }
-  }
-
-  function generateSmartHexagon(style, centerX, centerY, radius, aspectRatio, rotation, edgeVar, symmetryBreak, time, layer) {
-    const points = [];
-    const baseAngles = 6;
-    
-    for (let i = 0; i < baseAngles; i++) {
-      const baseAngle = (i / baseAngles) * Math.PI * 2 + rotation;
-      let hexRadius = radius;
-      let angle = baseAngle;
-      
-      // Apply style modifications
-      switch (style) {
-        case 0: // Regular hexagon
-          break;
-          
-        case 1: // Stretched hexagon
-          const stretchFactor = i % 2 === 0 ? aspectRatio : 1 / aspectRatio;
-          hexRadius *= stretchFactor;
-          break;
-          
-        case 2: // Rotated dynamic
-          angle += Math.sin(time * 0.5 + i) * 0.1;
-          hexRadius *= 1 + Math.sin(time * 0.3 + i * 2) * edgeVar;
-          break;
-          
-        case 3: // Beveled corners
-          const bevelFactor = i % 2 === 0 ? 0.9 : 1.1;
-          hexRadius *= bevelFactor;
-          break;
-          
-        case 4: // Nested with offset
-          const nestOffset = layer * 0.1;
-          angle += nestOffset;
-          hexRadius *= 1 + Math.sin(angle * 3) * edgeVar * 2;
-          break;
-      }
-      
-      // Apply edge variation for organic feel
-      const edgeVariationFactor = 1 + Math.sin(angle * 7 + time * 0.2) * edgeVar;
-      hexRadius *= edgeVariationFactor;
-      
-      // Apply symmetry breaking for dynamic brands
-      if (symmetryBreak > 0) {
-        const asymmetryFactor = 1 + Math.sin(angle * 3) * symmetryBreak;
-        hexRadius *= asymmetryFactor;
-      }
-      
-      // Apply aspect ratio
-      const x = centerX + Math.cos(angle) * hexRadius * (i % 2 === 0 ? 1 : aspectRatio);
-      const y = centerY + Math.sin(angle) * hexRadius;
-      
-      points.push({
-        x: x,
-        y: y,
-        angle: angle,
-        radius: hexRadius,
-        edgeVar: edgeVariationFactor
-      });
-    }
-    
-    return points;
-  }
-
-  function createCorporatePalette(hue, corporate, modernity) {
-    const saturation = 60 + corporate * 30;
-    const lightness = 40 + modernity * 20;
-    
-    return {
-      primary: "hsl(" + hue + ", " + saturation + "%, " + lightness + "%)",
-      secondary: "hsl(" + (hue + 20) + ", " + (saturation * 0.8) + "%, " + (lightness + 20) + "%)",
-      accent: "hsl(" + (hue - 30) + ", " + (saturation * 1.2) + "%, " + (lightness - 15) + "%)",
-      modern: "hsl(" + (hue + 10) + ", " + (saturation * 0.6) + "%, " + (lightness + 30) + "%)",
-      corporate: "hsl(" + (hue - 10) + ", " + (saturation * 0.9) + "%, " + (lightness + 10) + "%)",
-      professional: "hsl(" + hue + ", " + (saturation * 0.4) + "%, " + (lightness + 40) + "%)"
-    };
-  }
-
-  function renderInnerShadow(ctx, points, colors, shadow, cornerRadius) {
-    ctx.save();
-    ctx.globalAlpha = shadow * 0.6;
-    
-    // Create inner shadow effect
-    ctx.fillStyle = colors.accent;
-    drawRoundedHexagon(ctx, points, cornerRadius * 0.7);
-    ctx.fill();
-    
-    // Lighter overlay to create inset effect
-    ctx.globalAlpha = shadow * 0.4;
-    ctx.fillStyle = colors.professional;
-    const innerPoints = points.map(p => ({
-      x: centerX + (p.x - centerX) * 0.95,
-      y: centerY + (p.y - centerY) * 0.95,
-      angle: p.angle
-    }));
-    drawRoundedHexagon(ctx, innerPoints, cornerRadius * 0.5);
-    ctx.fill();
-    
-    ctx.restore();
-  }
-
-  function renderHexagonFill(ctx, points, colors, fillStyle, alpha, centerX, centerY, radius) {
-    ctx.save();
-    ctx.globalAlpha = alpha;
-    
-    switch (fillStyle) {
-      case 0: // No fill
-        break;
-        
-      case 1: // Solid corporate fill
-        ctx.fillStyle = colors.primary;
-        drawRoundedHexagon(ctx, points, cornerRadius);
-        ctx.fill();
-        break;
-        
-      case 2: // Linear gradient - professional
-        const linearGradient = ctx.createLinearGradient(
-          centerX, centerY - radius,
-          centerX, centerY + radius
-        );
-        linearGradient.addColorStop(0, colors.secondary);
-        linearGradient.addColorStop(0.5, colors.primary);
-        linearGradient.addColorStop(1, colors.accent);
-        
-        ctx.fillStyle = linearGradient;
-        drawRoundedHexagon(ctx, points, cornerRadius);
-        ctx.fill();
-        break;
-        
-      case 3: // Radial gradient - modern depth
-        const radialGradient = ctx.createRadialGradient(
-          centerX - radius * 0.3, centerY - radius * 0.3, 0,
-          centerX, centerY, radius * 1.2
-        );
-        radialGradient.addColorStop(0, colors.modern);
-        radialGradient.addColorStop(0.4, colors.secondary);
-        radialGradient.addColorStop(1, colors.primary);
-        
-        ctx.fillStyle = radialGradient;
-        drawRoundedHexagon(ctx, points, cornerRadius);
-        ctx.fill();
-        break;
-        
-      case 4: // Geometric pattern fill
-        ctx.fillStyle = colors.primary;
-        drawRoundedHexagon(ctx, points, cornerRadius);
-        ctx.fill();
-        
-        // Add geometric pattern overlay
-        ctx.globalAlpha = alpha * 0.3;
-        ctx.strokeStyle = colors.accent;
-        ctx.lineWidth = 1;
-        
-        // Create hexagonal grid pattern
-        const patternSize = radius * 0.15;
-        for (let i = -2; i <= 2; i++) {
-          for (let j = -2; j <= 2; j++) {
-            const patternX = centerX + i * patternSize * 1.5;
-            const patternY = centerY + j * patternSize * Math.sqrt(3);
-            
-            if (ctx.isPointInPath(patternX, patternY)) {
-              ctx.beginPath();
-              for (let k = 0; k < 6; k++) {
-                const angle = (k / 6) * Math.PI * 2;
-                const x = patternX + Math.cos(angle) * patternSize * 0.3;
-                const y = patternY + Math.sin(angle) * patternSize * 0.3;
-                if (k === 0) ctx.moveTo(x, y);
-                else ctx.lineTo(x, y);
-              }
-              ctx.closePath();
-              ctx.stroke();
-            }
-          }
-        }
-        break;
-    }
-    
-    ctx.restore();
-  }
-
-  function renderProfessionalStroke(ctx, points, colors, strokeStyle, weight, cornerRadius, time, layer) {
-    ctx.save();
-    
-    switch (strokeStyle) {
-      case 1: // Clean professional stroke
-        ctx.strokeStyle = colors.accent;
-        ctx.lineWidth = weight;
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
-        drawRoundedHexagon(ctx, points, cornerRadius);
-        ctx.stroke();
-        break;
-        
-      case 2: // Double stroke for premium feel
-        // Outer stroke
-        ctx.strokeStyle = colors.accent;
-        ctx.lineWidth = weight;
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
-        drawRoundedHexagon(ctx, points, cornerRadius);
-        ctx.stroke();
-        
-        // Inner stroke
-        ctx.strokeStyle = colors.modern;
-        ctx.lineWidth = weight * 0.4;
-        const innerPoints = points.map(p => ({
-          x: centerX + (p.x - centerX) * 0.8,
-          y: centerY + (p.y - centerY) * 0.8,
-          angle: p.angle
-        }));
-        drawRoundedHexagon(ctx, innerPoints, cornerRadius * 0.6);
-        ctx.stroke();
-        break;
-        
-      case 3: // Gradient stroke
-        const strokeGradient = ctx.createLinearGradient(
-          points[0].x, points[0].y,
-          points[3].x, points[3].y
-        );
-        strokeGradient.addColorStop(0, colors.secondary);
-        strokeGradient.addColorStop(0.5, colors.primary);
-        strokeGradient.addColorStop(1, colors.accent);
-        
-        ctx.strokeStyle = strokeGradient;
-        ctx.lineWidth = weight;
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
-        drawRoundedHexagon(ctx, points, cornerRadius);
-        ctx.stroke();
-        break;
-        
-      case 4: // Animated stroke for dynamic brands
-        const animationPhase = time * 2 + layer;
-        const animatedWeight = weight * (1 + Math.sin(animationPhase) * 0.2);
-        
-        ctx.strokeStyle = colors.accent;
-        ctx.lineWidth = animatedWeight;
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
-        
-        // Animated dash pattern
-        const dashOffset = (time * 20) % 40;
-        ctx.setLineDash([10, 10]);
-        ctx.lineDashOffset = dashOffset;
-        
-        drawRoundedHexagon(ctx, points, cornerRadius);
-        ctx.stroke();
-        
-        ctx.setLineDash([]);
-        break;
-    }
-    
-    ctx.restore();
-  }
-
-  function renderSurfaceHighlight(ctx, points, colors, sheen, centerX, centerY) {
-    ctx.save();
-    ctx.globalAlpha = sheen;
-    
-    // Create surface highlight gradient
-    const highlightGradient = ctx.createLinearGradient(
-      centerX - logoSize * 0.4, centerY - logoSize * 0.4,
-      centerX + logoSize * 0.2, centerY + logoSize * 0.2
-    );
-    highlightGradient.addColorStop(0, colors.professional);
-    highlightGradient.addColorStop(0.3, colors.modern);
-    highlightGradient.addColorStop(1, 'transparent');
-    
-    ctx.fillStyle = highlightGradient;
-    
-    // Apply highlight to top portion of hexagon
-    const topPoints = points.slice(0, 3); // Top half of hexagon
-    ctx.beginPath();
-    ctx.moveTo(topPoints[0].x, topPoints[0].y);
-    for (let i = 1; i < topPoints.length; i++) {
-      ctx.lineTo(topPoints[i].x, topPoints[i].y);
-    }
-    ctx.lineTo(centerX, centerY);
-    ctx.closePath();
-    ctx.fill();
-    
-    ctx.restore();
-  }
-
-  function drawRoundedHexagon(ctx, points, radius) {
-    if (points.length < 3) return;
-    
-    ctx.beginPath();
-    
-    if (radius <= 1) {
-      // Sharp hexagon
-      ctx.moveTo(points[0].x, points[0].y);
-      for (let i = 1; i < points.length; i++) {
-        ctx.lineTo(points[i].x, points[i].y);
-      }
-      ctx.closePath();
-    } else {
-      // Rounded hexagon
-      for (let i = 0; i < points.length; i++) {
-        const current = points[i];
-        const next = points[(i + 1) % points.length];
-        const prev = points[(i - 1 + points.length) % points.length];
-        
-        // Calculate vectors for corner rounding
-        const v1x = prev.x - current.x;
-        const v1y = prev.y - current.y;
-        const v2x = next.x - current.x;
-        const v2y = next.y - current.y;
-        
-        const len1 = Math.sqrt(v1x * v1x + v1y * v1y);
-        const len2 = Math.sqrt(v2x * v2x + v2y * v2y);
-        
-        const cornerRadius = Math.min(radius, len1 / 3, len2 / 3);
-        
-        if (cornerRadius > 1) {
-          const u1x = v1x / len1;
-          const u1y = v1y / len1;
-          const u2x = v2x / len2;
-          const u2y = v2y / len2;
-          
-          const cp1x = current.x + u1x * cornerRadius;
-          const cp1y = current.y + u1y * cornerRadius;
-          const cp2x = current.x + u2x * cornerRadius;
-          const cp2y = current.y + u2y * cornerRadius;
-          
-          if (i === 0) {
-            ctx.moveTo(cp1x, cp1y);
-          } else {
-            ctx.lineTo(cp1x, cp1y);
-          }
-          
-          ctx.quadraticCurveTo(current.x, current.y, cp2x, cp2y);
-        } else {
-          if (i === 0) {
-            ctx.moveTo(current.x, current.y);
-          } else {
-            ctx.lineTo(current.x, current.y);
-          }
-        }
-      }
-      ctx.closePath();
-    }
-  }
-}
-
-export { drawVisualization };
-
-export const metadata = {
+const metadata = {
+  id: 'smart-hexagon',
   name: "⬢ Smart Hexagon",
-  description: "Modern structured brands with variable corner radius and professional sophistication",
+  description: "Modern hexagonal design with precise geometric control and professional styling",
+  parameters,
   defaultParams: {
-    seed: "smart-hexagon-brand",
     hexagonStyle: 0,
     cornerRadius: 8,
     aspectRatio: 1.0,
@@ -542,557 +103,449 @@ export const metadata = {
     strokeWeight: 3,
     fillStyle: 2,
     brandHue: 220,
-    corporate: 0.7,
-    modernity: 0.8,
-    innerShadow: 0.1,
-    surfaceSheen: 0.2
+    brandSaturation: 80,
+    brandLightness: 50,
+    shadowDepth: 0,
+    shadowAngle: 45,
+    glowStrength: 0,
+    patternDensity: 0,
+    noiseTexture: 0
   }
 };
 
-export const id = 'smart-hexagon';
-export const name = "⬢ Smart Hexagon";
-export const description = "Modern structured brands with variable corner radius and professional sophistication";
-export const defaultParams = {
-  seed: "smart-hexagon-brand",
-  hexagonStyle: 0,
-  cornerRadius: 8,
-  aspectRatio: 1.0,
-  rotationAngle: 0,
-  edgeVariation: 0.05,
-  centerOffset: 0,
-  symmetryBreak: 0,
-  layerCount: 1,
-  layerSpacing: 12,
-  strokeStyle: 1,
-  strokeWeight: 3,
-  fillStyle: 2,
-  brandHue: 220,
-  corporate: 0.7,
-  modernity: 0.8,
-  innerShadow: 0.1,
-  surfaceSheen: 0.2
-};
-
-export const code = `// ⬢ Smart Hexagon
-const PARAMETERS = {
-  // Universal Background Controls
-  backgroundColor: { type: 'color', default: "#f8f9fa", label: 'Background Color', category: 'Background' },
-  backgroundType: { type: 'select', options: [{"value":"transparent","label":"Transparent"},{"value":"solid","label":"Solid Color"},{"value":"gradient","label":"Gradient"}], default: "gradient", label: 'Background Type', category: 'Background' },
-  backgroundGradientStart: { type: 'color', default: "#f8f9fa", label: 'Gradient Start', category: 'Background', showIf: (params)=>params.backgroundType === 'gradient' },
-  backgroundGradientEnd: { type: 'color', default: "#ffffff", label: 'Gradient End', category: 'Background', showIf: (params)=>params.backgroundType === 'gradient' },
-  backgroundGradientDirection: { type: 'slider', min: 0, max: 360, step: 15, default: 45, label: 'Gradient Direction', category: 'Background', showIf: (params)=>params.backgroundType === 'gradient' },
+function drawVisualization(ctx: CanvasRenderingContext2D, width: number, height: number, params: any, time: number, utils: TemplateUtils) {
+  utils.applyUniversalBackground(ctx, width, height, params);
   
-  // Universal Fill Controls
-  fillType: { type: 'select', options: [{"value":"none","label":"None"},{"value":"solid","label":"Solid Color"},{"value":"gradient","label":"Gradient"}], default: "gradient", label: 'Fill Type', category: 'Fill' },
-  fillColor: { type: 'color', default: "#2563eb", label: 'Fill Color', category: 'Fill', showIf: (params)=>params.fillType === 'solid' },
-  fillGradientStart: { type: 'color', default: "#60a5fa", label: 'Gradient Start', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
-  fillGradientEnd: { type: 'color', default: "#1e3a8a", label: 'Gradient End', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
-  fillGradientDirection: { type: 'slider', min: 0, max: 360, step: 15, default: 90, label: 'Gradient Direction', category: 'Fill', showIf: (params)=>params.fillType === 'gradient' },
-  fillOpacity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 0.8, label: 'Fill Opacity', category: 'Fill', showIf: (params)=>params.fillType !== 'none' },
+  const fillColor = params.fillColor || '#2563eb';
+  const strokeColor = params.strokeColor || '#1e3a8a';
+  const fillOpacity = params.fillOpacity ?? 0.8;
+  const strokeOpacity = params.strokeOpacity ?? 1;
   
-  // Universal Stroke Controls
-  strokeType: { type: 'select', options: [{"value":"none","label":"None"},{"value":"solid","label":"Solid"},{"value":"dashed","label":"Dashed"},{"value":"dotted","label":"Dotted"}], default: "solid", label: 'Stroke Type', category: 'Stroke' },
-  strokeColor: { type: 'color', default: "#1e3a8a", label: 'Stroke Color', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
-  strokeWidth: { type: 'slider', min: 0, max: 10, step: 0.5, default: 3, label: 'Stroke Width', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
-  strokeOpacity: { type: 'slider', min: 0, max: 1, step: 0.05, default: 1, label: 'Stroke Opacity', category: 'Stroke', showIf: (params)=>params.strokeType !== 'none' },
-  
-  // Hexagon fundamentals - shape definition (70% of controls)
-  hexagonStyle: {
-    type: 'slider',
-    min: 0,
-    max: 4,
-    step: 1,
-    default: 0,
-    label: 'Hexagon Style (0=Regular, 1=Stretched, 2=Rotated, 3=Beveled, 4=Nested)'
-  },
-  
-  // Geometric precision with mathematical control
-  cornerRadius: { type: 'slider', min: 0, max: 30, step: 1, default: 8, label: 'Corner Radius' },
-  aspectRatio: { type: 'slider', min: 0.7, max: 1.5, step: 0.05, default: 1.0, label: 'Width/Height Ratio' },
-  rotationAngle: { type: 'slider', min: 0, max: 60, step: 5, default: 0, label: 'Rotation (degrees)' },
-  
-  // Professional proportions
-  edgeVariation: { type: 'slider', min: 0, max: 0.2, step: 0.01, default: 0.05, label: 'Edge Variation' },
-  centerOffset: { type: 'slider', min: 0, max: 0.3, step: 0.02, default: 0, label: 'Center Offset' },
-  symmetryBreak: { type: 'slider', min: 0, max: 0.15, step: 0.01, default: 0, label: 'Asymmetry Factor' },
-  
-  // Modern brand sophistication
-  layerCount: { type: 'slider', min: 1, max: 3, step: 1, default: 1, label: 'Nested Layers' },
-  layerSpacing: { type: 'slider', min: 5, max: 20, step: 1, default: 12, label: 'Layer Spacing' },
-  
-  // Brand enhancement (30% of controls)
-  strokeStyle: {
-    type: 'slider',
-    min: 0,
-    max: 4,
-    step: 1,
-    default: 1,
-    label: 'Stroke Style (0=None, 1=Clean, 2=Double, 3=Gradient, 4=Animated)'
-  },
-  strokeWeight: { type: 'slider', min: 1, max: 10, step: 0.5, default: 3, label: 'Stroke Weight' },
-  
-  // Fill sophistication
-  fillStyle: {
-    type: 'slider',
-    min: 0,
-    max: 4,
-    step: 1,
-    default: 2,
-    label: 'Fill Style (0=None, 1=Solid, 2=Linear, 3=Radial, 4=Geometric)'
-  },
-  
-  // Corporate color system
-  brandHue: { type: 'slider', min: 0, max: 360, step: 10, default: 220, label: 'Brand Hue' },
-  corporate: { type: 'slider', min: 0.4, max: 1, step: 0.05, default: 0.7, label: 'Corporate Feel' },
-  modernity: { type: 'slider', min: 0.3, max: 1, step: 0.05, default: 0.8, label: 'Modern Edge' },
-  
-  // Professional effects
-  innerShadow: { type: 'slider', min: 0, max: 0.3, step: 0.02, default: 0.1, label: 'Inner Shadow' },
-  surfaceSheen: { type: 'slider', min: 0, max: 0.4, step: 0.05, default: 0.2, label: 'Surface Highlight' }
-};
-
-function applyUniversalBackground(ctx, width, height, params) {
-  if (!params.backgroundType || params.backgroundType === 'transparent') return;
-  
-  if (params.backgroundType === 'solid') {
-    ctx.fillStyle = params.backgroundColor || '#f8f9fa';
-    ctx.fillRect(0, 0, width, height);
-  } else if (params.backgroundType === 'gradient') {
-    const direction = (params.backgroundGradientDirection || 45) * (Math.PI / 180);
-    const x1 = width / 2 - Math.cos(direction) * width / 2;
-    const y1 = height / 2 - Math.sin(direction) * height / 2;
-    const x2 = width / 2 + Math.cos(direction) * width / 2;
-    const y2 = height / 2 + Math.sin(direction) * height / 2;
-    
-    const gradient = ctx.createLinearGradient(x1, y1, x2, y2);
-    gradient.addColorStop(0, params.backgroundGradientStart || '#f8f9fa');
-    gradient.addColorStop(1, params.backgroundGradientEnd || '#ffffff');
-    
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, width, height);
-  }
-}
-
-function drawVisualization(ctx, width, height, params, _generator, time) {
-  // Parameter compatibility layer
-  if (params.customParameters) {
-    params.fillColor = params.fillColor || params.customParameters.fillColor;
-    params.strokeColor = params.strokeColor || params.customParameters.strokeColor;
-    params.backgroundColor = params.backgroundColor || params.customParameters.backgroundColor;
-    params.textColor = params.textColor || params.customParameters.textColor;
-    
-    Object.keys(params.customParameters).forEach(key => {
-      if (params[key] === undefined) {
-        params[key] = params.customParameters[key];
-      }
-    });
-  }
-
-  // Apply universal background
-  applyUniversalBackground(ctx, width, height, params);
-
-  // Extract parameters
+  // Extract all parameters
   const centerX = width / 2;
   const centerY = height / 2;
-  const hexagonStyleNum = Math.round(params.hexagonStyle || 0);
+  const size = Math.min(width, height) * 0.35;
+  
+  // Hexagon fundamentals
+  const hexagonStyleIndex = Math.round(params.hexagonStyle || 0);
   const cornerRadius = params.cornerRadius || 8;
   const aspectRatio = params.aspectRatio || 1.0;
   const rotationAngle = (params.rotationAngle || 0) * Math.PI / 180;
+  
+  // Professional proportions
   const edgeVariation = params.edgeVariation || 0.05;
   const centerOffset = params.centerOffset || 0;
   const symmetryBreak = params.symmetryBreak || 0;
+  
+  // Layers
   const layerCount = Math.round(params.layerCount || 1);
   const layerSpacing = params.layerSpacing || 12;
-  const strokeStyleNum = Math.round(params.strokeStyle || 1);
+  
+  // Brand enhancement
+  const strokeStyleIndex = Math.round(params.strokeStyle || 1);
   const strokeWeight = params.strokeWeight || 3;
-  const fillStyleNum = Math.round(params.fillStyle || 2);
+  const fillStyleIndex = Math.round(params.fillStyle || 2);
+  
+  // Color system
   const brandHue = params.brandHue || 220;
-  const corporate = params.corporate || 0.7;
-  const modernity = params.modernity || 0.8;
-  const innerShadow = params.innerShadow || 0.1;
-  const surfaceSheen = params.surfaceSheen || 0.2;
+  const brandSaturation = params.brandSaturation || 80;
+  const brandLightness = params.brandLightness || 50;
+  
+  // Effects
+  const shadowDepth = params.shadowDepth || 0;
+  const shadowAngle = (params.shadowAngle || 45) * Math.PI / 180;
+  const glowStrength = params.glowStrength || 0;
+  const patternDensity = params.patternDensity || 0;
+  const noiseTexture = params.noiseTexture || 0;
+  
+  // Hexagon styles definition
+  const hexagonStyles = [
+    { name: 'Regular', stretch: 1, rotation: 0, bevel: 0, nested: false },
+    { name: 'Stretched', stretch: 1.3, rotation: 0, bevel: 0, nested: false },
+    { name: 'Rotated', stretch: 1, rotation: 30, bevel: 0, nested: false },
+    { name: 'Beveled', stretch: 1, rotation: 0, bevel: 0.3, nested: false },
+    { name: 'Nested', stretch: 1, rotation: 0, bevel: 0, nested: true }
+  ];
+  
+  const hexagonStyle = hexagonStyles[Math.min(hexagonStyleIndex, hexagonStyles.length - 1)];
 
-  // Professional sizing for brand applications
-  const logoSize = Math.min(width, height) * 0.6;
-  const baseRadius = logoSize / 2;
-
-  // Corporate color palette
-  const brandColors = createCorporatePalette(brandHue, corporate, modernity);
-
-  // Center offset for dynamic positioning
-  const offsetX = centerX + centerOffset * logoSize * 0.3;
-  const offsetY = centerY + centerOffset * logoSize * 0.2;
-
-  // Render multiple layers for sophistication
-  for (let layer = layerCount - 1; layer >= 0; layer--) {
-    const layerRadius = baseRadius - (layer * layerSpacing);
-    const layerAlpha = 1 - (layer * 0.15);
+  // Helper function to create hexagon path
+  function createHexagonPath(cx: number, cy: number, radius: number, options: any = {}) {
+    const points = 6;
+    const rotation = (options.rotation || 0) + rotationAngle + (hexagonStyle.rotation * Math.PI / 180);
+    const stretch = (options.stretch || 1) * hexagonStyle.stretch * aspectRatio;
+    const offset = options.offset || 0;
+    const variation = options.variation || 0;
+    const asymmetry = options.asymmetry || 0;
     
-    if (layerRadius > 10) { // Ensure minimum viable size
-      const hexagonPoints = generateSmartHexagon(
-        hexagonStyleNum, offsetX, offsetY, layerRadius,
-        aspectRatio, rotationAngle, edgeVariation, symmetryBreak, time, layer
-      );
-
-      // Inner shadow for depth (main layer only)
-      if (layer === 0 && innerShadow > 0.05) {
-        renderInnerShadow(ctx, hexagonPoints, brandColors, innerShadow, cornerRadius);
-      }
-
-      // Fill the hexagon
-      renderHexagonFill(ctx, hexagonPoints, brandColors, fillStyleNum, layerAlpha, offsetX, offsetY, layerRadius);
-
-      // Professional stroke
-      if (strokeStyleNum > 0) {
-        renderProfessionalStroke(ctx, hexagonPoints, brandColors, strokeStyleNum, strokeWeight, cornerRadius, time, layer);
-      }
-
-      // Surface highlight for premium feel (main layer only)
-      if (layer === 0 && surfaceSheen > 0.05 && Math.min(width, height) > 100) {
-        renderSurfaceHighlight(ctx, hexagonPoints, brandColors, surfaceSheen, offsetX, offsetY);
-      }
-    }
-  }
-
-  function generateSmartHexagon(style, centerX, centerY, radius, aspectRatio, rotation, edgeVar, symmetryBreak, time, layer) {
-    const points = [];
-    const baseAngles = 6;
+    const vertices = [];
     
-    for (let i = 0; i < baseAngles; i++) {
-      const baseAngle = (i / baseAngles) * Math.PI * 2 + rotation;
-      let hexRadius = radius;
-      let angle = baseAngle;
+    for (let i = 0; i < points; i++) {
+      const angle = (i / points) * Math.PI * 2 + rotation;
+      const radiusVariation = 1 + (Math.sin(i * 1.5 + time * 0.5) * variation);
+      const asymmetricOffset = i % 2 === 0 ? asymmetry : -asymmetry;
       
-      // Apply style modifications
-      switch (style) {
-        case 0: // Regular hexagon
-          break;
-          
-        case 1: // Stretched hexagon
-          const stretchFactor = i % 2 === 0 ? aspectRatio : 1 / aspectRatio;
-          hexRadius *= stretchFactor;
-          break;
-          
-        case 2: // Rotated dynamic
-          angle += Math.sin(time * 0.5 + i) * 0.1;
-          hexRadius *= 1 + Math.sin(time * 0.3 + i * 2) * edgeVar;
-          break;
-          
-        case 3: // Beveled corners
-          const bevelFactor = i % 2 === 0 ? 0.9 : 1.1;
-          hexRadius *= bevelFactor;
-          break;
-          
-        case 4: // Nested with offset
-          const nestOffset = layer * 0.1;
-          angle += nestOffset;
-          hexRadius *= 1 + Math.sin(angle * 3) * edgeVar * 2;
-          break;
-      }
+      const r = radius * radiusVariation * (1 + asymmetricOffset);
+      const x = cx + Math.cos(angle) * r * stretch + offset * Math.cos(angle + Math.PI / 2);
+      const y = cy + Math.sin(angle) * r + offset * Math.sin(angle + Math.PI / 2);
       
-      // Apply edge variation for organic feel
-      const edgeVariationFactor = 1 + Math.sin(angle * 7 + time * 0.2) * edgeVar;
-      hexRadius *= edgeVariationFactor;
-      
-      // Apply symmetry breaking for dynamic brands
-      if (symmetryBreak > 0) {
-        const asymmetryFactor = 1 + Math.sin(angle * 3) * symmetryBreak;
-        hexRadius *= asymmetryFactor;
-      }
-      
-      // Apply aspect ratio
-      const x = centerX + Math.cos(angle) * hexRadius * (i % 2 === 0 ? 1 : aspectRatio);
-      const y = centerY + Math.sin(angle) * hexRadius;
-      
-      points.push({
-        x: x,
-        y: y,
-        angle: angle,
-        radius: hexRadius,
-        edgeVar: edgeVariationFactor
-      });
+      vertices.push({ x, y });
     }
     
-    return points;
-  }
-
-  function createCorporatePalette(hue, corporate, modernity) {
-    const saturation = 60 + corporate * 30;
-    const lightness = 40 + modernity * 20;
+    // Create path with optional corner radius
+    ctx.beginPath();
     
-    return {
-      primary: "hsl(" + hue + ", " + saturation + "%, " + lightness + "%)",
-      secondary: "hsl(" + (hue + 20) + ", " + (saturation * 0.8) + "%, " + (lightness + 20) + "%)",
-      accent: "hsl(" + (hue - 30) + ", " + (saturation * 1.2) + "%, " + (lightness - 15) + "%)",
-      modern: "hsl(" + (hue + 10) + ", " + (saturation * 0.6) + "%, " + (lightness + 30) + "%)",
-      corporate: "hsl(" + (hue - 10) + ", " + (saturation * 0.9) + "%, " + (lightness + 10) + "%)",
-      professional: "hsl(" + hue + ", " + (saturation * 0.4) + "%, " + (lightness + 40) + "%)"
-    };
-  }
-
-  function renderInnerShadow(ctx, points, colors, shadow, cornerRadius) {
-    ctx.save();
-    ctx.globalAlpha = shadow * 0.6;
-    
-    // Create inner shadow effect
-    ctx.fillStyle = colors.accent;
-    drawRoundedHexagon(ctx, points, cornerRadius * 0.7);
-    ctx.fill();
-    
-    // Lighter overlay to create inset effect
-    ctx.globalAlpha = shadow * 0.4;
-    ctx.fillStyle = colors.professional;
-    const innerPoints = points.map(p => ({
-      x: centerX + (p.x - centerX) * 0.95,
-      y: centerY + (p.y - centerY) * 0.95,
-      angle: p.angle
-    }));
-    drawRoundedHexagon(ctx, innerPoints, cornerRadius * 0.5);
-    ctx.fill();
-    
-    ctx.restore();
-  }
-
-  function renderHexagonFill(ctx, points, colors, fillStyle, alpha, centerX, centerY, radius) {
-    ctx.save();
-    ctx.globalAlpha = alpha;
-    
-    switch (fillStyle) {
-      case 0: // No fill
-        break;
+    if (cornerRadius > 0 && !hexagonStyle.bevel) {
+      // Rounded corners
+      for (let i = 0; i < points; i++) {
+        const p1 = vertices[i];
+        const p2 = vertices[(i + 1) % points];
+        const p0 = vertices[(i - 1 + points) % points];
         
-      case 1: // Solid corporate fill
-        ctx.fillStyle = colors.primary;
-        drawRoundedHexagon(ctx, points, cornerRadius);
-        ctx.fill();
-        break;
+        // Calculate control points for rounded corners
+        const cp1x = p1.x + (p0.x - p1.x) * 0.2;
+        const cp1y = p1.y + (p0.y - p1.y) * 0.2;
+        const cp2x = p1.x + (p2.x - p1.x) * 0.2;
+        const cp2y = p1.y + (p2.y - p1.y) * 0.2;
         
-      case 2: // Linear gradient - professional
-        const linearGradient = ctx.createLinearGradient(
-          centerX, centerY - radius,
-          centerX, centerY + radius
-        );
-        linearGradient.addColorStop(0, colors.secondary);
-        linearGradient.addColorStop(0.5, colors.primary);
-        linearGradient.addColorStop(1, colors.accent);
-        
-        ctx.fillStyle = linearGradient;
-        drawRoundedHexagon(ctx, points, cornerRadius);
-        ctx.fill();
-        break;
-        
-      case 3: // Radial gradient - modern depth
-        const radialGradient = ctx.createRadialGradient(
-          centerX - radius * 0.3, centerY - radius * 0.3, 0,
-          centerX, centerY, radius * 1.2
-        );
-        radialGradient.addColorStop(0, colors.modern);
-        radialGradient.addColorStop(0.4, colors.secondary);
-        radialGradient.addColorStop(1, colors.primary);
-        
-        ctx.fillStyle = radialGradient;
-        drawRoundedHexagon(ctx, points, cornerRadius);
-        ctx.fill();
-        break;
-        
-      case 4: // Geometric pattern fill
-        ctx.fillStyle = colors.primary;
-        drawRoundedHexagon(ctx, points, cornerRadius);
-        ctx.fill();
-        
-        // Add geometric pattern overlay
-        ctx.globalAlpha = alpha * 0.3;
-        ctx.strokeStyle = colors.accent;
-        ctx.lineWidth = 1;
-        
-        // Create hexagonal grid pattern
-        const patternSize = radius * 0.15;
-        for (let i = -2; i <= 2; i++) {
-          for (let j = -2; j <= 2; j++) {
-            const patternX = centerX + i * patternSize * 1.5;
-            const patternY = centerY + j * patternSize * Math.sqrt(3);
-            
-            if (ctx.isPointInPath(patternX, patternY)) {
-              ctx.beginPath();
-              for (let k = 0; k < 6; k++) {
-                const angle = (k / 6) * Math.PI * 2;
-                const x = patternX + Math.cos(angle) * patternSize * 0.3;
-                const y = patternY + Math.sin(angle) * patternSize * 0.3;
-                if (k === 0) ctx.moveTo(x, y);
-                else ctx.lineTo(x, y);
-              }
-              ctx.closePath();
-              ctx.stroke();
-            }
-          }
+        if (i === 0) {
+          ctx.moveTo(cp2x, cp2y);
         }
-        break;
-    }
-    
-    ctx.restore();
-  }
-
-  function renderProfessionalStroke(ctx, points, colors, strokeStyle, weight, cornerRadius, time, layer) {
-    ctx.save();
-    
-    switch (strokeStyle) {
-      case 1: // Clean professional stroke
-        ctx.strokeStyle = colors.accent;
-        ctx.lineWidth = weight;
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
-        drawRoundedHexagon(ctx, points, cornerRadius);
-        ctx.stroke();
-        break;
         
-      case 2: // Double stroke for premium feel
-        // Outer stroke
-        ctx.strokeStyle = colors.accent;
-        ctx.lineWidth = weight;
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
-        drawRoundedHexagon(ctx, points, cornerRadius);
-        ctx.stroke();
-        
-        // Inner stroke
-        ctx.strokeStyle = colors.modern;
-        ctx.lineWidth = weight * 0.4;
-        const innerPoints = points.map(p => ({
-          x: centerX + (p.x - centerX) * 0.8,
-          y: centerY + (p.y - centerY) * 0.8,
-          angle: p.angle
-        }));
-        drawRoundedHexagon(ctx, innerPoints, cornerRadius * 0.6);
-        ctx.stroke();
-        break;
-        
-      case 3: // Gradient stroke
-        const strokeGradient = ctx.createLinearGradient(
-          points[0].x, points[0].y,
-          points[3].x, points[3].y
+        ctx.lineTo(p2.x + (p1.x - p2.x) * 0.2, p2.y + (p1.y - p2.y) * 0.2);
+        ctx.quadraticCurveTo(p2.x, p2.y, 
+          p2.x + (vertices[(i + 2) % points].x - p2.x) * 0.2,
+          p2.y + (vertices[(i + 2) % points].y - p2.y) * 0.2
         );
-        strokeGradient.addColorStop(0, colors.secondary);
-        strokeGradient.addColorStop(0.5, colors.primary);
-        strokeGradient.addColorStop(1, colors.accent);
-        
-        ctx.strokeStyle = strokeGradient;
-        ctx.lineWidth = weight;
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
-        drawRoundedHexagon(ctx, points, cornerRadius);
-        ctx.stroke();
-        break;
-        
-      case 4: // Animated stroke for dynamic brands
-        const animationPhase = time * 2 + layer;
-        const animatedWeight = weight * (1 + Math.sin(animationPhase) * 0.2);
-        
-        ctx.strokeStyle = colors.accent;
-        ctx.lineWidth = animatedWeight;
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
-        
-        // Animated dash pattern
-        const dashOffset = (time * 20) % 40;
-        ctx.setLineDash([10, 10]);
-        ctx.lineDashOffset = dashOffset;
-        
-        drawRoundedHexagon(ctx, points, cornerRadius);
-        ctx.stroke();
-        
-        ctx.setLineDash([]);
-        break;
-    }
-    
-    ctx.restore();
-  }
-
-  function renderSurfaceHighlight(ctx, points, colors, sheen, centerX, centerY) {
-    ctx.save();
-    ctx.globalAlpha = sheen;
-    
-    // Create surface highlight gradient
-    const highlightGradient = ctx.createLinearGradient(
-      centerX - logoSize * 0.4, centerY - logoSize * 0.4,
-      centerX + logoSize * 0.2, centerY + logoSize * 0.2
-    );
-    highlightGradient.addColorStop(0, colors.professional);
-    highlightGradient.addColorStop(0.3, colors.modern);
-    highlightGradient.addColorStop(1, 'transparent');
-    
-    ctx.fillStyle = highlightGradient;
-    
-    // Apply highlight to top portion of hexagon
-    const topPoints = points.slice(0, 3); // Top half of hexagon
-    ctx.beginPath();
-    ctx.moveTo(topPoints[0].x, topPoints[0].y);
-    for (let i = 1; i < topPoints.length; i++) {
-      ctx.lineTo(topPoints[i].x, topPoints[i].y);
-    }
-    ctx.lineTo(centerX, centerY);
-    ctx.closePath();
-    ctx.fill();
-    
-    ctx.restore();
-  }
-
-  function drawRoundedHexagon(ctx, points, radius) {
-    if (points.length < 3) return;
-    
-    ctx.beginPath();
-    
-    if (radius <= 1) {
-      // Sharp hexagon
-      ctx.moveTo(points[0].x, points[0].y);
-      for (let i = 1; i < points.length; i++) {
-        ctx.lineTo(points[i].x, points[i].y);
       }
-      ctx.closePath();
+    } else if (hexagonStyle.bevel > 0) {
+      // Beveled edges
+      for (let i = 0; i < points; i++) {
+        const p1 = vertices[i];
+        const p2 = vertices[(i + 1) % points];
+        const bevelSize = hexagonStyle.bevel * 0.2;
+        
+        const dx = p2.x - p1.x;
+        const dy = p2.y - p1.y;
+        
+        if (i === 0) {
+          ctx.moveTo(p1.x + dx * bevelSize, p1.y + dy * bevelSize);
+        }
+        
+        ctx.lineTo(p2.x - dx * bevelSize, p2.y - dy * bevelSize);
+        ctx.lineTo(p2.x + (vertices[(i + 2) % points].x - p2.x) * bevelSize,
+                   p2.y + (vertices[(i + 2) % points].y - p2.y) * bevelSize);
+      }
     } else {
-      // Rounded hexagon
-      for (let i = 0; i < points.length; i++) {
-        const current = points[i];
-        const next = points[(i + 1) % points.length];
-        const prev = points[(i - 1 + points.length) % points.length];
-        
-        // Calculate vectors for corner rounding
-        const v1x = prev.x - current.x;
-        const v1y = prev.y - current.y;
-        const v2x = next.x - current.x;
-        const v2y = next.y - current.y;
-        
-        const len1 = Math.sqrt(v1x * v1x + v1y * v1y);
-        const len2 = Math.sqrt(v2x * v2x + v2y * v2y);
-        
-        const cornerRadius = Math.min(radius, len1 / 3, len2 / 3);
-        
-        if (cornerRadius > 1) {
-          const u1x = v1x / len1;
-          const u1y = v1y / len1;
-          const u2x = v2x / len2;
-          const u2y = v2y / len2;
+      // Sharp corners
+      ctx.moveTo(vertices[0].x, vertices[0].y);
+      for (let i = 1; i < points; i++) {
+        ctx.lineTo(vertices[i].x, vertices[i].y);
+      }
+    }
+    
+    ctx.closePath();
+    
+    return vertices;
+  }
+  
+  // Draw shadow if enabled
+  if (shadowDepth > 0) {
+    ctx.save();
+    ctx.globalAlpha = 0.2 * fillOpacity;
+    
+    const shadowX = Math.cos(shadowAngle) * shadowDepth;
+    const shadowY = Math.sin(shadowAngle) * shadowDepth;
+    
+    for (let layer = layerCount - 1; layer >= 0; layer--) {
+      const layerScale = 1 - (layer * layerSpacing / size) * 0.3;
+      
+      createHexagonPath(
+        centerX + shadowX + centerOffset * size * Math.cos(time * 0.3),
+        centerY + shadowY + centerOffset * size * Math.sin(time * 0.3),
+        size * layerScale,
+        {
+          variation: edgeVariation,
+          asymmetry: symmetryBreak,
+          offset: centerOffset * size
+        }
+      );
+      
+      ctx.fillStyle = '#000000';
+      ctx.fill();
+    }
+    
+    ctx.restore();
+  }
+  
+  // Draw glow effect if enabled
+  if (glowStrength > 0) {
+    ctx.save();
+    ctx.globalAlpha = glowStrength * fillOpacity;
+    
+    const glowGradient = ctx.createRadialGradient(
+      centerX, centerY, size * 0.8,
+      centerX, centerY, size * 1.5
+    );
+    glowGradient.addColorStop(0, `hsla(${brandHue}, ${brandSaturation}%, ${brandLightness + 20}%, ${glowStrength})`);
+    glowGradient.addColorStop(0.5, `hsla(${brandHue}, ${brandSaturation}%, ${brandLightness + 10}%, ${glowStrength * 0.5})`);
+    glowGradient.addColorStop(1, `hsla(${brandHue}, ${brandSaturation}%, ${brandLightness}%, 0)`);
+    
+    ctx.fillStyle = glowGradient;
+    ctx.fillRect(0, 0, width, height);
+    
+    ctx.restore();
+  }
+  
+  // Draw main hexagon layers
+  for (let layer = layerCount - 1; layer >= 0; layer--) {
+    ctx.save();
+    
+    const layerScale = 1 - (layer * layerSpacing / size) * 0.3;
+    const layerAlpha = 1 - layer * 0.2;
+    
+    // Create hexagon path
+    const vertices = createHexagonPath(
+      centerX + centerOffset * size * Math.cos(time * 0.3),
+      centerY + centerOffset * size * Math.sin(time * 0.3),
+      size * layerScale,
+      {
+        variation: edgeVariation,
+        asymmetry: symmetryBreak,
+        offset: centerOffset * size
+      }
+    );
+    
+    // Apply fill based on fillStyle
+    if (fillStyleIndex > 0 && params.fillType !== 'none') {
+      ctx.save();
+      ctx.globalAlpha = fillOpacity * layerAlpha;
+      
+      switch (fillStyleIndex) {
+        case 1: // Solid
+          ctx.fillStyle = fillColor;
+          break;
           
-          const cp1x = current.x + u1x * cornerRadius;
-          const cp1y = current.y + u1y * cornerRadius;
-          const cp2x = current.x + u2x * cornerRadius;
-          const cp2y = current.y + u2y * cornerRadius;
+        case 2: // Linear gradient
+          const linearGradient = ctx.createLinearGradient(
+            centerX - size, centerY - size,
+            centerX + size, centerY + size
+          );
+          linearGradient.addColorStop(0, `hsl(${brandHue}, ${brandSaturation}%, ${brandLightness + 10}%)`);
+          linearGradient.addColorStop(0.5, `hsl(${brandHue}, ${brandSaturation}%, ${brandLightness}%)`);
+          linearGradient.addColorStop(1, `hsl(${brandHue}, ${brandSaturation}%, ${brandLightness - 10}%)`);
+          ctx.fillStyle = linearGradient;
+          break;
           
-          if (i === 0) {
-            ctx.moveTo(cp1x, cp1y);
-          } else {
-            ctx.lineTo(cp1x, cp1y);
+        case 3: // Radial gradient
+          const radialGradient = ctx.createRadialGradient(
+            centerX, centerY, 0,
+            centerX, centerY, size * layerScale
+          );
+          radialGradient.addColorStop(0, `hsl(${brandHue}, ${brandSaturation}%, ${brandLightness + 20}%)`);
+          radialGradient.addColorStop(0.7, `hsl(${brandHue}, ${brandSaturation}%, ${brandLightness}%)`);
+          radialGradient.addColorStop(1, `hsl(${brandHue}, ${brandSaturation}%, ${brandLightness - 15}%)`);
+          ctx.fillStyle = radialGradient;
+          break;
+          
+        case 4: // Geometric pattern
+          const patternCanvas = document.createElement('canvas');
+          patternCanvas.width = 20;
+          patternCanvas.height = 20;
+          const patternCtx = patternCanvas.getContext('2d')!;
+          
+          patternCtx.fillStyle = `hsl(${brandHue}, ${brandSaturation}%, ${brandLightness}%)`;
+          patternCtx.fillRect(0, 0, 20, 20);
+          
+          if (patternDensity > 0) {
+            patternCtx.strokeStyle = `hsl(${brandHue}, ${brandSaturation}%, ${brandLightness - 10}%)`;
+            patternCtx.lineWidth = 1;
+            patternCtx.beginPath();
+            patternCtx.moveTo(0, 0);
+            patternCtx.lineTo(20, 20);
+            patternCtx.moveTo(20, 0);
+            patternCtx.lineTo(0, 20);
+            patternCtx.stroke();
           }
           
-          ctx.quadraticCurveTo(current.x, current.y, cp2x, cp2y);
-        } else {
-          if (i === 0) {
-            ctx.moveTo(current.x, current.y);
-          } else {
-            ctx.lineTo(current.x, current.y);
+          const pattern = ctx.createPattern(patternCanvas, 'repeat')!;
+          ctx.fillStyle = pattern;
+          break;
+      }
+      
+      ctx.fill();
+      
+      // Add noise texture if enabled
+      if (noiseTexture > 0) {
+        ctx.globalAlpha = noiseTexture * fillOpacity * layerAlpha;
+        
+        // Create noise by drawing many small dots
+        for (let i = 0; i < 500 * noiseTexture; i++) {
+          const angle = Math.random() * Math.PI * 2;
+          const distance = Math.random() * size * layerScale;
+          const x = centerX + Math.cos(angle) * distance;
+          const y = centerY + Math.sin(angle) * distance;
+          
+          // Check if point is inside hexagon (simplified)
+          if (ctx.isPointInPath(x, y)) {
+            ctx.fillStyle = Math.random() > 0.5 
+              ? `hsla(${brandHue}, ${brandSaturation}%, ${brandLightness + 10}%, ${noiseTexture * 0.5})`
+              : `hsla(${brandHue}, ${brandSaturation}%, ${brandLightness - 10}%, ${noiseTexture * 0.5})`;
+            ctx.fillRect(x, y, 1, 1);
           }
         }
       }
-      ctx.closePath();
+      
+      ctx.restore();
     }
+    
+    // Apply stroke based on strokeStyle
+    if (strokeStyleIndex > 0 && params.strokeType !== 'none') {
+      ctx.save();
+      ctx.globalAlpha = strokeOpacity * layerAlpha;
+      
+      ctx.lineWidth = strokeWeight || params.strokeWidth || 3;
+      
+      if (params.strokeType === 'dashed') {
+        ctx.setLineDash([10, 5]);
+      } else if (params.strokeType === 'dotted') {
+        ctx.setLineDash([2, 3]);
+      }
+      
+      switch (strokeStyleIndex) {
+        case 1: // Clean
+          ctx.strokeStyle = strokeColor;
+          ctx.stroke();
+          break;
+          
+        case 2: // Double
+          ctx.strokeStyle = strokeColor;
+          ctx.stroke();
+          
+          // Inner stroke
+          ctx.save();
+          ctx.scale(0.9, 0.9);
+          ctx.translate(centerX * 0.1, centerY * 0.1);
+          createHexagonPath(
+            centerX * 0.9 + centerOffset * size * Math.cos(time * 0.3) * 0.9,
+            centerY * 0.9 + centerOffset * size * Math.sin(time * 0.3) * 0.9,
+            size * layerScale * 0.9,
+            {
+              variation: edgeVariation,
+              asymmetry: symmetryBreak,
+              offset: centerOffset * size * 0.9
+            }
+          );
+          ctx.strokeStyle = `hsla(${brandHue}, ${brandSaturation}%, ${brandLightness - 20}%, 0.5)`;
+          ctx.lineWidth = strokeWeight * 0.5;
+          ctx.stroke();
+          ctx.restore();
+          break;
+          
+        case 3: // Gradient
+          const strokeGradient = ctx.createLinearGradient(
+            centerX - size, centerY - size,
+            centerX + size, centerY + size
+          );
+          strokeGradient.addColorStop(0, `hsl(${brandHue}, ${brandSaturation}%, ${brandLightness - 10}%)`);
+          strokeGradient.addColorStop(0.5, strokeColor);
+          strokeGradient.addColorStop(1, `hsl(${brandHue}, ${brandSaturation}%, ${brandLightness - 30}%)`);
+          ctx.strokeStyle = strokeGradient;
+          ctx.stroke();
+          break;
+          
+        case 4: // Animated
+          const animPhase = time * 2;
+          const dashOffset = animPhase * 10 % 20;
+          ctx.setLineDash([10, 10]);
+          ctx.lineDashOffset = dashOffset;
+          
+          const animGradient = ctx.createLinearGradient(
+            centerX + Math.cos(animPhase) * size,
+            centerY + Math.sin(animPhase) * size,
+            centerX - Math.cos(animPhase) * size,
+            centerY - Math.sin(animPhase) * size
+          );
+          animGradient.addColorStop(0, `hsla(${brandHue}, ${brandSaturation}%, ${brandLightness}%, 0.2)`);
+          animGradient.addColorStop(0.5, strokeColor);
+          animGradient.addColorStop(1, `hsla(${brandHue}, ${brandSaturation}%, ${brandLightness}%, 0.2)`);
+          
+          ctx.strokeStyle = animGradient;
+          ctx.stroke();
+          ctx.setLineDash([]);
+          break;
+      }
+      
+      ctx.restore();
+    }
+    
+    // Add pattern overlay if enabled
+    if (patternDensity > 0 && layer === 0) {
+      ctx.save();
+      ctx.globalAlpha = patternDensity * 0.2 * fillOpacity;
+      
+      // Create internal pattern
+      const internalLines = 6;
+      for (let i = 0; i < internalLines; i++) {
+        const angle = (i / internalLines) * Math.PI;
+        const x1 = centerX + Math.cos(angle) * size * layerScale;
+        const y1 = centerY + Math.sin(angle) * size * layerScale;
+        const x2 = centerX - Math.cos(angle) * size * layerScale;
+        const y2 = centerY - Math.sin(angle) * size * layerScale;
+        
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.strokeStyle = `hsla(${brandHue}, ${brandSaturation}%, ${brandLightness - 20}%, ${patternDensity * 0.3})`;
+        ctx.lineWidth = 1;
+        ctx.stroke();
+      }
+      
+      ctx.restore();
+    }
+    
+    // Add nested details for nested style
+    if (hexagonStyle.nested && layer === 0) {
+      ctx.save();
+      ctx.globalAlpha = fillOpacity * 0.5;
+      
+      // Inner hexagon
+      createHexagonPath(
+        centerX + centerOffset * size * Math.cos(time * 0.3) * 0.5,
+        centerY + centerOffset * size * Math.sin(time * 0.3) * 0.5,
+        size * 0.4,
+        {
+          variation: edgeVariation * 0.5,
+          asymmetry: symmetryBreak * 0.5,
+          offset: 0
+        }
+      );
+      
+      if (fillStyleIndex === 2) {
+        const innerGradient = ctx.createLinearGradient(
+          centerX - size * 0.4, centerY - size * 0.4,
+          centerX + size * 0.4, centerY + size * 0.4
+        );
+        innerGradient.addColorStop(0, `hsl(${brandHue + 20}, ${brandSaturation}%, ${brandLightness + 15}%)`);
+        innerGradient.addColorStop(1, `hsl(${brandHue + 20}, ${brandSaturation}%, ${brandLightness - 5}%)`);
+        ctx.fillStyle = innerGradient;
+      } else {
+        ctx.fillStyle = `hsl(${brandHue + 20}, ${brandSaturation}%, ${brandLightness}%)`;
+      }
+      
+      ctx.fill();
+      
+      if (strokeStyleIndex > 0) {
+        ctx.strokeStyle = `hsl(${brandHue}, ${brandSaturation}%, ${brandLightness - 20}%)`;
+        ctx.lineWidth = strokeWeight * 0.7;
+        ctx.stroke();
+      }
+      
+      ctx.restore();
+    }
+    
+    ctx.restore();
   }
-}`;
+}
+
+export { parameters, metadata, drawVisualization };
