@@ -1,4 +1,4 @@
-import { applyUniversalBackground, adjustColor, hexToHsl, flattenParameters } from './template-utils'
+import { applyUniversalBackground, adjustColor, hexToHsl, flattenParameters } from '@reflow/template-utils'
 import { compileTypeScript } from './swc-compiler'
 
 export async function generateVisualization(

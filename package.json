@@ -9,8 +9,10 @@
     "dev": "next dev --port ${PORT:-3002}",
     "dev:alt": "next dev --port 3012",
     "dev:clean": "pnpm clean && next dev --port ${PORT:-3002}",
-    "build": "tsup && next build",
+    "build": "pnpm build:packages && tsup && next build",
     "build:lib": "tsup",
+    "build:packages": "pnpm --filter './packages/**' build",
+    "build:utils": "pnpm --filter '@reflow/template-utils' build",
     "start": "next start",
     "clean": "rm -rf .next dist node_modules/.cache .turbopack",
     "dev:fresh": "pnpm clean && pnpm dev",
@@ -18,8 +20,7 @@
     "lint": "eslint . --ext .ts,.tsx",
     "test": "vitest",
     "generate:logo": "pnpm build:lib && node scripts/generate-logo.js",
-    "build:utils": "node lib/template-utils/build.js",
-    "dev:utils": "node lib/template-utils/build.js && pnpm dev"
+    "dev:utils": "pnpm --filter '@reflow/template-utils' dev"
   },
   "keywords": [
     "generative",
@@ -72,7 +73,8 @@
     "sharp": "^0.33.4",
     "tailwind-merge": "^3.3.1",
     "tailwindcss-animate": "^1.0.7",
-    "zustand": "^4.5.4"
+    "zustand": "^4.5.4",
+    "@reflow/template-utils": "workspace:*"
   },
   "devDependencies": {
     "@types/file-saver": "^2.0.7",
@@ -95,5 +97,8 @@
   },
   "engines": {
     "node": ">=18"
-  }
+  },
+  "workspaces": [
+    "packages/*"
+  ]
 }

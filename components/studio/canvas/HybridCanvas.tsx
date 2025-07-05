@@ -75,8 +75,19 @@ export function HybridCanvas({
   const [currentTime, setCurrentTime] = useState(0)
   const svgRef = useRef<SVGSVGElement>(null)
   
+  // Local offset state during panning to avoid constant store updates
+  const [localOffset, setLocalOffset] = useState(offset)
+  const [panStartOffset, setPanStartOffset] = useState(offset)
+  
   // Calculate viewport for SVG
   const [viewport, setViewport] = useState({ width: 1920, height: 1080 })
+  
+  // Sync local offset with store offset when it changes externally
+  useEffect(() => {
+    if (!isPanning) {
+      setLocalOffset(offset)
+    }
+  }, [offset, isPanning])
   
   useEffect(() => {
     const updateViewport = () => {
@@ -91,7 +102,8 @@ export function HybridCanvas({
     return () => window.removeEventListener('resize', updateViewport)
   }, [])
   
-  const viewBox = `${-offset.x} ${-offset.y} ${viewport.width / zoom} ${viewport.height / zoom}`
+  // Use localOffset for immediate visual feedback during panning
+  const viewBox = `${-localOffset.x} ${-localOffset.y} ${viewport.width / zoom} ${viewport.height / zoom}`
   
   // Add non-passive wheel event listener to prevent default scrolling
   useEffect(() => {
@@ -158,6 +170,7 @@ export function HybridCanvas({
     if (e.button === 0 && !e.ctrlKey && !e.metaKey && !isDraggingLogo) { // Left click only
       setIsPanning(true)
       setPanStart({ x: e.clientX, y: e.clientY })
+      setPanStartOffset(localOffset) // Capture the offset at start of pan
     }
   }
   
@@ -165,8 +178,8 @@ export function HybridCanvas({
     if (isDraggingLogo && draggedLogoId) {
       const rect = svgRef.current?.getBoundingClientRect()
       if (rect) {
-        const mouseX = (e.clientX - rect.left) / zoom - offset.x
-        const mouseY = (e.clientY - rect.top) / zoom - offset.y
+        const mouseX = (e.clientX - rect.left) / zoom - localOffset.x
+        const mouseY = (e.clientY - rect.top) / zoom - localOffset.y
         
         updateLogo(draggedLogoId, {
           position: {
@@ -178,15 +191,19 @@ export function HybridCanvas({
     } else if (isPanning) {
       const dx = e.clientX - panStart.x
       const dy = e.clientY - panStart.y
-      setOffset({
-        x: offset.x + dx / zoom,
-        y: offset.y + dy / zoom
+      // Update local offset instead of store offset
+      setLocalOffset({
+        x: panStartOffset.x + dx / zoom,
+        y: panStartOffset.y + dy / zoom
       })
-      setPanStart({ x: e.clientX, y: e.clientY })
     }
   }
   
   const handleMouseUp = () => {
+    if (isPanning) {
+      // Commit the final offset to the store only on mouse up
+      setOffset(localOffset)
+    }
     setIsPanning(false)
     setIsDraggingLogo(false)
     setDraggedLogoId(null)
@@ -206,8 +223,8 @@ export function HybridCanvas({
       const mouseY = e.clientY - rect.top
       
       // Convert mouse position to SVG coordinates
-      const svgX = -offset.x + mouseX / zoom
-      const svgY = -offset.y + mouseY / zoom
+      const svgX = -localOffset.x + mouseX / zoom
+      const svgY = -localOffset.y + mouseY / zoom
       
       // Calculate new offset to keep mouse position fixed
       const newOffset = {
@@ -216,7 +233,8 @@ export function HybridCanvas({
       }
       
       setZoom(newZoom)
-      setOffset(newOffset)
+      setLocalOffset(newOffset)
+      setOffset(newOffset) // Commit zoom changes immediately
     }
   }
   

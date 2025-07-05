@@ -1,4 +1,4 @@
-import type { TemplateUtils } from '@/lib/template-utils';
+import type { TemplateUtils } from '@reflow/template-utils';
 
 // Sophisticated Strokes - Advanced line and fill styling
 const parameters = {

@@ -6,10 +6,18 @@ import { LogoIdManager } from '@/lib/utils/logoIdManager'
  * These are only available in development mode
  */
 export class DevelopmentUtilities {
+  private static initialized = false;
+  
   static initialize() {
     if (typeof window === 'undefined' || process.env.NODE_ENV !== 'development') {
       return
     }
+    
+    // Only initialize once
+    if (this.initialized) {
+      return;
+    }
+    this.initialized = true;
     
     // State tracer utilities
     this.registerStateTracer()
@@ -94,22 +102,46 @@ export class DevelopmentUtilities {
   private static showStartupMessage() {
     setTimeout(() => {
       console.log('')
-      console.log('🚀 REFLOW DEVELOPMENT MODE')
-      console.log('═══════════════════════════')
+      console.log('     ╔═══════════════════════════════════════════╗')
+      console.log('     ║                                           ║')
+      console.log('     ║        🚀 REFLOW DEVELOPMENT MODE 🚀      ║')
+      console.log('     ║                                           ║')
+      console.log('     ╚═══════════════════════════════════════════╝')
+      console.log('')
+      console.log('          ∿∿∿∿∿∿∿∿∿∿∿∿∿∿∿∿∿∿∿∿∿∿∿∿∿∿∿∿∿')
+      console.log('         ∿                                   ∿')
+      console.log('        ∿  Welcome, Code Wizard! 🧙‍♂️         ∿')
+      console.log('       ∿   Your magical toolkit awaits...    ∿')
+      console.log('      ∿∿∿∿∿∿∿∿∿∿∿∿∿∿∿∿∿∿∿∿∿∿∿∿∿∿∿∿∿∿∿')
       console.log('')
       console.log('🐛 Debug Toolbar: Look for the bug icon button in the bottom-right corner!')
+      console.log('   (It\'s not a bug, it\'s a feature inspector! 🔍✨)')
       console.log('')
-      console.log('Canvas Refactoring:')
-      console.log('• /test-canvas - Test new canvas architecture')
-      console.log('• /compare-canvas - Compare old vs new canvas')
+      console.log('┌─────────────────────────────────────────────┐')
+      console.log('│ 🎨 Canvas Refactoring:                      │')
+      console.log('├─────────────────────────────────────────────┤')
+      console.log('│ • /test-canvas    - Test new architecture  │')
+      console.log('│ • /compare-canvas - Compare old vs new     │')
+      console.log('└─────────────────────────────────────────────┘')
       console.log('')
-      console.log('Console Commands:')
-      console.log('• window.initReflow() - Create wordmark')
-      console.log('• window.reflowColor("black"|"blue"|"gradient") - Apply color')
-      console.log('• window.load4Logos() - Load 4 logos with ID tracking')
-      console.log('• window.listLogoIds() - List tracked logo IDs')
-      console.log('• window.clearLogoIds() - Clear ID tracking')
-      console.log('• window.debugLogos() - Debug current logo state')
+      console.log('┌─────────────────────────────────────────────┐')
+      console.log('│ 🎮 Console Commands:                        │')
+      console.log('├─────────────────────────────────────────────┤')
+      console.log('│ • window.initReflow()      - Create logo   │')
+      console.log('│ • window.reflowColor(...)  - Apply color   │')
+      console.log('│ • window.load4Logos()      - 4-logo grid   │')
+      console.log('│ • window.listLogoIds()     - List IDs      │')
+      console.log('│ • window.clearLogoIds()    - Clear IDs     │')
+      console.log('│ • window.debugLogos()      - Debug state   │')
+      console.log('└─────────────────────────────────────────────┘')
+      console.log('')
+      console.log('     💡 Pro tip: Try window.load4Logos()')
+      console.log('        and watch the magic happen!')
+      console.log('')
+      console.log('  Happy coding! May your waves be smooth')
+      console.log('     and your parameters be valid 🌊')
+      console.log('')
+      console.log('     ～～～～～～～～～～～～～～～～～')
     }, 1000)
   }
 }

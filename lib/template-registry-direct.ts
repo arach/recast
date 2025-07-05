@@ -124,7 +124,6 @@ export async function getAllTemplateInfo(): Promise<TemplateInfo[]> {
         templateInfos.push(info);
       }
     } catch (error) {
-      console.error('❌ Failed to load template info for:', templateId, error);
     }
   }
   

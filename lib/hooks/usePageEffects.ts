@@ -1,6 +1,5 @@
 import { useEffect, useCallback } from 'react'
 import { useUIStore } from '@/lib/stores/uiStore'
-import { DevelopmentUtilities } from '@/lib/debug/developmentUtilities'
 
 interface UsePageEffectsOptions {
   onRunCode?: () => void
@@ -13,11 +12,8 @@ interface UsePageEffectsOptions {
 export function usePageEffects(options: UsePageEffectsOptions = {}) {
   const { darkMode, setDarkMode } = useUIStore()
   
-  // Initialize development utilities
+  // Initialize debug functions
   useEffect(() => {
-    DevelopmentUtilities.initialize()
-    
-    // Initialize debug functions
     if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
       (window as any).testThemeLoad = (themeId: string) => options.loadThemeById?.(themeId)
     }

@@ -1,4 +1,4 @@
-import type { TemplateUtils } from '@/lib/template-utils';
+import type { TemplateUtils } from '@reflow/template-utils';
 
 // VOLT Electric Brand - High-energy borders with electric flow
 const parameters = {

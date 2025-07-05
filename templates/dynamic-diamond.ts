@@ -1,5 +1,5 @@
 // ◆ Dynamic Diamond
-import type { TemplateUtils } from '@/lib/template-utils';
+import type { TemplateUtils } from '@reflow/template-utils';
 
 const parameters = {
   diamondStyle: {

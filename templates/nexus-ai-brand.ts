@@ -1,4 +1,4 @@
-import type { TemplateUtils } from '@/lib/template-utils';
+import type { TemplateUtils } from '@reflow/template-utils';
 
 // NEXUS AI Brand - Neural kinetic energy with network connections
 const parameters = {

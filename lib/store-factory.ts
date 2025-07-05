@@ -3,14 +3,37 @@ import { devtools, persist, createJSONStorage } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
 import type { StateCreator } from 'zustand';
 
+// Debounce function for storage writes
+function debounce<T extends (...args: any[]) => any>(fn: T, delay: number): T {
+  let timeoutId: NodeJS.Timeout;
+  return ((...args: Parameters<T>) => {
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => fn(...args), delay);
+  }) as T;
+}
+
 interface StoreOptions {
   name: string;
   persist?: boolean;
   persistOptions?: {
     storage?: 'localStorage' | 'sessionStorage';
     partialize?: (state: any) => any;
+    debounceDelay?: number; // Debounce delay in milliseconds
   };
   debug?: boolean;
+}
+
+// Create a debounced storage wrapper
+function createDebouncedStorage(storage: Storage, delay: number = 1000) {
+  const debouncedSetItem = debounce((key: string, value: string) => {
+    storage.setItem(key, value);
+  }, delay);
+  
+  return {
+    getItem: (name: string) => storage.getItem(name),
+    setItem: debouncedSetItem,
+    removeItem: (name: string) => storage.removeItem(name),
+  };
 }
 
 /**
@@ -38,14 +61,19 @@ export function createStore<T extends object>(
   let store = immer(stateCreator);
 
   // Add persistence if enabled
-  if (options.persist) {
+  if (options.persist && typeof window !== 'undefined') {
+    const baseStorage = options.persistOptions?.storage === 'sessionStorage' 
+      ? sessionStorage 
+      : localStorage;
+    
+    // Use debounced storage if delay is specified
+    const storage = options.persistOptions?.debounceDelay
+      ? createDebouncedStorage(baseStorage, options.persistOptions.debounceDelay)
+      : baseStorage;
+    
     store = persist(store, {
       name: options.name,
-      storage: createJSONStorage(() => 
-        options.persistOptions?.storage === 'sessionStorage' 
-          ? sessionStorage 
-          : localStorage
-      ),
+      storage: createJSONStorage(() => storage),
       partialize: options.persistOptions?.partialize
     }) as any;
   }

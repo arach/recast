@@ -1,0 +1,76 @@
+{
+  "metadata": {
+    "id": "circles",
+    "name": "⭕ Circles",
+    "description": "Pulsing circles, orbital patterns, and nested ring systems",
+    "category": "geometric",
+    "tags": ["circles", "orbital", "rings", "pulse", "geometric"],
+    "author": "ReFlow",
+    "version": "1.0.0"
+  },
+  "parameters": {
+    "frequency": {
+      "type": "slider",
+      "default": 2,
+      "min": 0.1,
+      "max": 10,
+      "step": 0.1,
+      "label": "Frequency",
+      "category": "Wave"
+    },
+    "amplitude": {
+      "type": "slider",
+      "default": 30,
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "label": "Amplitude",
+      "category": "Wave"
+    },
+    "complexity": {
+      "type": "slider",
+      "default": 0.5,
+      "min": 0,
+      "max": 1,
+      "step": 0.01,
+      "label": "Complexity",
+      "category": "Pattern"
+    },
+    "chaos": {
+      "type": "slider",
+      "default": 0.1,
+      "min": 0,
+      "max": 1,
+      "step": 0.01,
+      "label": "Chaos",
+      "category": "Pattern"
+    },
+    "damping": {
+      "type": "slider",
+      "default": 0.8,
+      "min": 0,
+      "max": 1,
+      "step": 0.01,
+      "label": "Damping",
+      "category": "Pattern"
+    },
+    "layers": {
+      "type": "slider",
+      "default": 3,
+      "min": 1,
+      "max": 8,
+      "step": 1,
+      "label": "Layers",
+      "category": "Pattern"
+    },
+    "radius": {
+      "type": "slider",
+      "default": 50,
+      "min": 10,
+      "max": 200,
+      "step": 1,
+      "label": "Radius",
+      "category": "Size"
+    }
+  }
+}

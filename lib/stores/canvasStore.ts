@@ -272,6 +272,7 @@ export const useCanvasStore = createStore<CanvasState>(
         zoom: state.zoom,
         codeEditor: state.codeEditor
       }),
+      debounceDelay: 60000, // 60 seconds - save position once per minute max
     },
     debug: process.env.NODE_ENV === 'development',
   }

@@ -1,4 +1,5 @@
 import { loadTemplate, templateRegistry } from './template-registry'
+import { utils } from '@reflow/template-utils'
 
 // Flatten nested parameter structures into a single level object
 function flattenParameters(params: any) {
@@ -26,31 +27,15 @@ function flattenParameters(params: any) {
   return flatParams;
 }
 
-// Initialize utils if not already done
+// Initialize utils on first use
 let utilsInitialized = false
 
-async function initializeUtils() {
+function initializeUtils() {
   if (utilsInitialized) return
   
-  try {
-    // Load the utils from the public directory
-    const response = await fetch('/template-utils.js')
-    if (!response.ok) {
-      throw new Error('Failed to load template utils')
-    }
-    
-    const utilsCode = await response.text()
-    
-    // Create a function that returns the utils
-    const getUtils = new Function(utilsCode + '; return templateUtils;')
-    const utils = getUtils()
-    
-    templateRegistry.setUtils(utils)
-    utilsInitialized = true
-  } catch (error) {
-    console.error('Failed to initialize template utils:', error)
-    throw error
-  }
+  // Set the imported utils directly
+  templateRegistry.setUtils(utils)
+  utilsInitialized = true
 }
 
 /**
@@ -66,7 +51,7 @@ export async function generateJSVisualization(
 ) {
   try {
     // Ensure utils are initialized
-    await initializeUtils()
+    initializeUtils()
     
     const template = await loadTemplate(templateId)
     

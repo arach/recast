@@ -1,4 +1,4 @@
-import type { TemplateUtils } from '@/lib/template-utils';
+import type { TemplateUtils } from '@reflow/template-utils';
 
 // TERRA Eco Brand - Organic luxury with sustainable sophistication
 const parameters = {

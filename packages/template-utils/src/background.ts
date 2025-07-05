@@ -4,7 +4,7 @@
  * Functions for applying universal background styles
  */
 
-import { parseColor } from './color';
+// parseColor import removed - not currently used
 
 export interface BackgroundParams {
   backgroundType?: 'transparent' | 'solid' | 'gradient';

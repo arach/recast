@@ -31,10 +31,7 @@ export async function GET(
       },
     });
   } catch (error) {
-    console.error('Error reading template file:', error);
-    
     if ((error as any).code === 'ENOENT') {
-      console.log(`Template not found: ${templateId}`);
       return NextResponse.json(
         { error: `Template '${templateId}' not found` },
         { status: 404 }

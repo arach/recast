@@ -24,7 +24,6 @@ export function useTemplateCode(templateId: string | undefined) {
 
     // Check if already loading
     if (loadingCache.has(templateId)) {
-      console.log(`⏳ Already loading template: ${templateId}`)
       // Don't set loading state here - it causes infinite loops!
       loadingCache.get(templateId)!
         .then((codeText) => {
@@ -39,7 +38,6 @@ export function useTemplateCode(templateId: string | undefined) {
     }
 
     const fetchCode = async (): Promise<string> => {
-      console.log(`🌐 Fetching template: ${templateId}`)
       const response = await fetch(`/api/template-source/${templateId}`)
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
@@ -66,7 +64,6 @@ export function useTemplateCode(templateId: string | undefined) {
         loadingCache.delete(templateId)
         
         setCode(codeText)
-        console.log(`✅ Cached template: ${templateId} (${codeText.length} chars)`)
       } catch (err) {
         console.error('Error fetching template code:', err)
         loadingCache.delete(templateId)

@@ -1,5 +1,5 @@
 // 🔤 Letter Mark
-import type { TemplateUtils } from '@/lib/template-utils';
+import type { TemplateUtils } from '@reflow/template-utils';
 
 const parameters = {
   letter: {

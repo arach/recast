@@ -6,7 +6,7 @@
 
 function draw(ctx, width, height, params, time, utils) {
   // Apply background
-  utils.background.apply(ctx, width, height, params);
+  utils.applyUniversalBackground(ctx, width, height, params);
   
   // Extract parameters with defaults
   const text = params.text || 'BRAND';
@@ -38,6 +38,23 @@ function draw(ctx, width, height, params, time, utils) {
   const strokeColor = params.strokeColor || '#000000';
   const fillOpacity = params.fillOpacity ?? 1;
   const strokeOpacity = params.strokeOpacity ?? 1;
+  
+  // Helper function to draw rounded rectangle
+  function drawRoundedRect(ctx, x, y, width, height, radius) {
+    if (radius === 0) {
+      ctx.rect(x, y, width, height);
+    } else {
+      ctx.moveTo(x + radius, y);
+      ctx.lineTo(x + width - radius, y);
+      ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+      ctx.lineTo(x + width, y + height - radius);
+      ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+      ctx.lineTo(x + radius, y + height);
+      ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+      ctx.lineTo(x, y + radius);
+      ctx.quadraticCurveTo(x, y, x + radius, y);
+    }
+  }
   
   // Apply text transform
   function applyTextTransform(text, transform) {
@@ -157,7 +174,9 @@ function draw(ctx, width, height, params, time, utils) {
     if (frameStyle === 'filled' || frameStyle === 'filled-inverse') {
       ctx.globalAlpha = fillOpacity;
       ctx.fillStyle = frameStyle === 'filled' ? strokeColor : fillColor;
-      utils.canvas.fillRect(ctx, frameX, frameY, frameWidth, frameHeight, frameRadius);
+      ctx.beginPath();
+      drawRoundedRect(ctx, frameX, frameY, frameWidth, frameHeight, frameRadius);
+      ctx.fill();
     } else {
       ctx.globalAlpha = strokeOpacity;
       ctx.strokeStyle = strokeColor;
@@ -172,11 +191,17 @@ function draw(ctx, width, height, params, time, utils) {
           break;
         case 'double':
           const gap = frameStrokeWidth * 1.5;
-          utils.canvas.strokeRect(ctx, frameX - gap, frameY - gap, frameWidth + gap * 2, frameHeight + gap * 2, frameRadius);
-          utils.canvas.strokeRect(ctx, frameX, frameY, frameWidth, frameHeight, frameRadius);
+          ctx.beginPath();
+          drawRoundedRect(ctx, frameX - gap, frameY - gap, frameWidth + gap * 2, frameHeight + gap * 2, frameRadius);
+          ctx.stroke();
+          ctx.beginPath();
+          drawRoundedRect(ctx, frameX, frameY, frameWidth, frameHeight, frameRadius);
+          ctx.stroke();
           break;
         default:
-          utils.canvas.strokeRect(ctx, frameX, frameY, frameWidth, frameHeight, frameRadius);
+          ctx.beginPath();
+          drawRoundedRect(ctx, frameX, frameY, frameWidth, frameHeight, frameRadius);
+          ctx.stroke();
       }
       
       ctx.setLineDash([]);
@@ -272,13 +297,13 @@ function draw(ctx, width, height, params, time, utils) {
   ctx.restore();
   
   // Debug info
-  if (utils.debug) {
-    utils.debug.log('Wordmark rendered', {
-      text: displayText,
-      fontStyle,
-      fontSize: fontSize.toFixed(1),
-      showFrame,
-      animation: textAnimation
-    });
-  }
+  // if (utils.debug) {
+  //   utils.debug.log('Wordmark rendered', {
+  //     text: displayText,
+  //     fontStyle,
+  //     fontSize: fontSize.toFixed(1),
+  //     showFrame,
+  //     animation: textAnimation
+  //   });
+  // }
 }

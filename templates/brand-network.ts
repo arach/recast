@@ -1,4 +1,4 @@
-import type { TemplateUtils } from '@/lib/template-utils';
+import type { TemplateUtils } from '@reflow/template-utils';
 
 // Brand Network - Logo-optimized network shapes
 const parameters = {

@@ -11,13 +11,15 @@ export interface JSTemplateInfo {
   category?: string
 }
 
-// Our 5 core JS templates
+// Our JS templates
 const JS_TEMPLATES: JSTemplateInfo[] = [
   { id: 'wave-bars', name: '🌊 Wave Bars', description: 'Dynamic wave patterns with customizable bar styles', category: 'generative' },
   { id: 'audio-bars', name: '🎵 Audio Bars', description: 'Animated equalizer-style bars', category: 'generative' },
   { id: 'wordmark', name: '✏️ Wordmark', description: 'Text-based logo with animations', category: 'typography' },
   { id: 'letter-mark', name: '🔤 Letter Mark', description: 'Single or multi-letter logos with containers', category: 'typography' },
-  { id: 'prism', name: '💎 Prism', description: '3D isometric geometric shapes', category: 'geometric' }
+  { id: 'prism', name: '💎 Prism', description: '3D isometric geometric shapes', category: 'geometric' },
+  { id: 'circles', name: '⭕ Circles', description: 'Pulsing circles, orbital patterns, and nested rings', category: 'geometric' },
+  { id: 'triangles', name: '🔺 Triangles', description: 'Spinning triangles, constellation patterns, and geometric formations', category: 'geometric' }
 ]
 
 export async function getAllJSTemplates(): Promise<JSTemplateInfo[]> {
