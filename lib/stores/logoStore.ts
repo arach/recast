@@ -71,8 +71,8 @@ const initialState = {
       position: { x: 0, y: 0 },
       code: `// Default ReFlow Logo
 const PARAMETERS = {
-  barCount: { type: 'slider', min: 20, max: 100, step: 5, default: 40, label: 'Number of Bars' },
-  barSpacing: { type: 'slider', min: 0, max: 10, step: 1, default: 2, label: 'Bar Spacing' }
+  barCount: { type: 'slider', min: 20, max: 100, step: 5, "default": 40, label: 'Number of Bars' },
+  barSpacing: { type: 'slider', min: 0, max: 10, step: 1, "default": 2, label: 'Bar Spacing' }
 };
 
 function drawVisualization(ctx, width, height, params, generator, time) {

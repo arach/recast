@@ -28,7 +28,9 @@ export function generateVisualization(
       // This handles: (ctx: CanvasRenderingContext2D, width: number, ...) => (ctx, width, ...)
       .replace(/(\w+)\s*:\s*[A-Za-z_]\w*(?:<[^>]+>)?(?:\[\])?/g, '$1')
       // Remove interface/type declarations
-      .replace(/^(interface|type)\s+\w+\s*=?\s*{[^}]*}\s*;?\s*$/gm, '');
+      .replace(/^(interface|type)\s+\w+\s*=?\s*{[^}]*}\s*;?\s*$/gm, '')
+      // Quote unquoted reserved keywords used as object keys
+      .replace(/(\{|,)\s*(default|class|function|return|const|let|var|if|else|for|while|do|switch|case|break|continue|new|this|super|import|export|try|catch|finally|throw|typeof|instanceof|in|of|void|delete|yield|async|await)\s*:/g, '$1 "$2":')
     
     // Create utilities object for dependency injection
     const utils = {
