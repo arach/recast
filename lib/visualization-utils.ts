@@ -12,8 +12,12 @@ export function generateVisualization(
     // Use the shared parameter flattening utility
     const flatParams = flattenParameters(parameters)
     
+    // First, fix any existing code with unquoted reserved keywords
+    // This handles legacy code that might be stored in localStorage
+    const fixedCode = code.replace(/\b(default|class|function|return|const|let|var|if|else|for|while|do|switch|case|break|continue|new|this|super|import|export|try|catch|finally|throw|typeof|instanceof|in|of|void|delete|yield|async|await)(\s*):/g, '"$1"$2:');
+    
     // Remove export and import statements - they can't be used in Function constructor
-    let cleanCode = code
+    let cleanCode = fixedCode
       // Remove ALL import statements (including type imports)
       .replace(/import\s+.*?from\s+['"].*?['"];?\s*/g, '')
       // Remove simple export { ... } statements
@@ -28,9 +32,7 @@ export function generateVisualization(
       // This handles: (ctx: CanvasRenderingContext2D, width: number, ...) => (ctx, width, ...)
       .replace(/(\w+)\s*:\s*[A-Za-z_]\w*(?:<[^>]+>)?(?:\[\])?/g, '$1')
       // Remove interface/type declarations
-      .replace(/^(interface|type)\s+\w+\s*=?\s*{[^}]*}\s*;?\s*$/gm, '')
-      // Quote unquoted reserved keywords used as object keys
-      .replace(/(\{|,)\s*(default|class|function|return|const|let|var|if|else|for|while|do|switch|case|break|continue|new|this|super|import|export|try|catch|finally|throw|typeof|instanceof|in|of|void|delete|yield|async|await)\s*:/g, '$1 "$2":')
+      .replace(/^(interface|type)\s+\w+\s*=?\s*{[^}]*}\s*;?\s*$/gm, '');
     
     // Create utilities object for dependency injection
     const utils = {
@@ -50,6 +52,13 @@ export function generateVisualization(
         throw new Error('drawVisualization function not found in template');
       }
     `;
+    
+    // Debug: Check if the cleaning worked
+    const unquotedKeywords = cleanCode.match(/\b(default|class|function|export|import)\s*:/g);
+    if (unquotedKeywords) {
+      console.error('WARNING: Unquoted reserved keywords still present in code!', unquotedKeywords);
+      console.error('Original code had:', code.match(/\b(default|class|function|export|import)\s*:/g));
+    }
     
     // Create the function and execute it with utils
     const executeTemplate = new Function('ctx', 'width', 'height', 'params', 'currentTime', 'utils', wrapperCode);
