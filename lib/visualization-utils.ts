@@ -14,7 +14,11 @@ export function generateVisualization(
     
     // First, fix any existing code with unquoted reserved keywords
     // This handles legacy code that might be stored in localStorage
-    const fixedCode = code.replace(/\b(default|class|function|return|const|let|var|if|else|for|while|do|switch|case|break|continue|new|this|super|import|export|try|catch|finally|throw|typeof|instanceof|in|of|void|delete|yield|async|await)(\s*):/g, '"$1"$2:');
+    // Also handle "default" as a property value in parameters objects
+    const fixedCode = code
+      .replace(/\b(default|class|function|return|const|let|var|if|else|for|while|do|switch|case|break|continue|new|this|super|import|export|try|catch|finally|throw|typeof|instanceof|in|of|void|delete|yield|async|await)(\s*):/g, '"$1"$2:')
+      // Also fix cases where default appears in template parameter definitions
+      .replace(/default:\s*([^,}]+)/g, '"default": $1');
     
     // Remove export and import statements - they can't be used in Function constructor
     let cleanCode = fixedCode
@@ -28,11 +32,18 @@ export function generateVisualization(
       .replace(/export\s+const\s+/g, 'const ')
       .replace(/export\s+function\s+/g, 'function ')
       .replace(/export\s+default\s+/g, '')
-      // Remove TypeScript type annotations from function parameters
-      // This handles: (ctx: CanvasRenderingContext2D, width: number, ...) => (ctx, width, ...)
-      .replace(/(\w+)\s*:\s*[A-Za-z_]\w*(?:<[^>]+>)?(?:\[\])?/g, '$1')
+      // Remove TypeScript type annotations more carefully
+      // Function parameters: (ctx: CanvasRenderingContext2D, width: number) => (ctx, width)
+      .replace(/\(([^)]+)\)/g, (match, params) => {
+        const cleanParams = params.replace(/(\w+)\s*:\s*[^,)]+/g, '$1');
+        return `(${cleanParams})`;
+      })
       // Remove interface/type declarations
-      .replace(/^(interface|type)\s+\w+\s*=?\s*{[^}]*}\s*;?\s*$/gm, '');
+      .replace(/^(interface|type)\s+\w+.*?(?:\{[^}]*\}|=.*?);?\s*$/gms, '')
+      // Remove standalone type annotations (like const x: string = ...)
+      .replace(/:\s*\{[^}]*\}/g, '')
+      .replace(/:\s*\[[^\]]*\]/g, '')
+      .replace(/:\s*[A-Za-z_]\w*(?:<[^>]+>)?(?:\[\])?(?=\s*[=,;)}])/g, '');
     
     // Create utilities object for dependency injection
     const utils = {
@@ -68,8 +79,6 @@ export function generateVisualization(
     console.error('Error executing visualization:', error)
     console.error('Full error:', error.message)
     console.error('Code that failed:', code.substring(0, 500) + '...');
-    console.error('Clean code preview:', cleanCode.substring(0, 500) + '...');
-    console.error('Wrapper code:', wrapperCode.substring(0, 1000) + '...');
     // Draw error indicator
     ctx.fillStyle = '#fee2e2'
     ctx.fillRect(0, 0, width, height)
