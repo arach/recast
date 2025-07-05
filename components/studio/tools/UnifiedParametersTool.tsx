@@ -6,16 +6,19 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { useSelectedLogo } from '@/lib/hooks/useSelectedLogo';
 import { ParameterService } from '@/lib/services/parameterService';
+import { loadJSTemplateParameters, type JSParameterDefinition } from '@/lib/js-parameter-loader';
 import { Info, Settings2 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 
 export function UnifiedParametersTool() {
   const [showTooltip, setShowTooltip] = useState<string | null>(null);
+  const [jsParameters, setJsParameters] = useState<Record<string, JSParameterDefinition> | null>(null);
   
   const {
     logo,
     coreParams,
+    customParams,
     setFrequency,
     setAmplitude,
     setComplexity,
@@ -33,6 +36,15 @@ export function UnifiedParametersTool() {
       </div>
     );
   }
+
+  // Load JS template parameters if using a JS template
+  useEffect(() => {
+    if (logo.templateId) {
+      loadJSTemplateParameters(logo.templateId).then(params => {
+        setJsParameters(params);
+      });
+    }
+  }, [logo.templateId]);
 
   // Core parameters that are always available
   const coreParameters = [
@@ -115,8 +127,8 @@ export function UnifiedParametersTool() {
     },
   ];
 
-  // Parse template-specific parameters
-  const parsedParams = ParameterService.parseParametersFromCode(logo.code);
+  // Use loaded JS parameters if available, otherwise parse from code
+  const templateSpecificParams = jsParameters || {};
   
   // Style parameter names to exclude (handled by BrandIdentityTool)
   const styleParameterNames = [
@@ -126,16 +138,10 @@ export function UnifiedParametersTool() {
     'backgroundGradientStart', 'backgroundGradientEnd', 'backgroundGradientDirection'
   ];
   
-  // Extract template-specific params, filtering out core and style params
-  const coreParamNames = coreParameters.map(p => p.key);
-  const templateParams = parsedParams
-    ? Object.entries(parsedParams).filter(([key]) => 
-        !coreParamNames.includes(key) && 
-        !styleParameterNames.includes(key)
-      )
-    : [];
-
-  const customParams = logo.parameters.custom || {};
+  // Extract template-specific params, filtering out style params
+  const templateParams = Object.entries(templateSpecificParams).filter(([key]) => 
+    !styleParameterNames.includes(key)
+  );
 
   // Check which core parameters are actually used by this template
   const usedCoreParams = coreParameters.filter(param => {
@@ -146,63 +152,13 @@ export function UnifiedParametersTool() {
 
   return (
     <div className="space-y-4">
-      {/* Core Parameters Section - only show if template uses them */}
-      {usedCoreParams.length > 0 && (
+      {/* Template Parameters Section */}
+      {templateParams.length > 0 && (
         <div className="space-y-3">
           <div className="flex items-center gap-2 pb-1 border-b border-gray-200">
             <Settings2 className="w-3 h-3 text-gray-500" />
-            <h3 className="text-xs font-medium text-gray-700">Core Parameters</h3>
+            <h3 className="text-xs font-medium text-gray-700">Template Parameters</h3>
           </div>
-          
-          <div className="grid grid-cols-2 gap-x-3 gap-y-3">
-            {usedCoreParams.map((param) => (
-              <div key={param.key} className="space-y-1">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1">
-                    <label className="text-xs font-medium text-gray-700">
-                      {param.name}
-                    </label>
-                    <button
-                      onMouseEnter={() => setShowTooltip(param.key)}
-                      onMouseLeave={() => setShowTooltip(null)}
-                      className="text-gray-400 hover:text-gray-600 relative"
-                    >
-                      <Info className="h-3 w-3" />
-                      {showTooltip === param.key && (
-                        <div className="absolute left-6 top-0 z-10 w-48 p-2 text-xs bg-gray-900 text-gray-100 rounded shadow-lg">
-                          {param.tooltip}
-                        </div>
-                      )}
-                    </button>
-                  </div>
-                  <span className="text-xs font-mono text-gray-500">
-                    {param.value.toFixed(param.step < 1 ? 2 : 0)}
-                  </span>
-                </div>
-                
-                <Slider
-                  value={[param.value]}
-                  onValueChange={([value]) => param.setter(value)}
-                  min={param.min}
-                  max={param.max}
-                  step={param.step}
-                  className="w-full"
-                />
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Template-Specific Parameters Section */}
-      {templateParams.length > 0 && (
-        <div className="space-y-3">
-          {usedCoreParams.length > 0 && (
-            <div className="flex items-center gap-2 pb-1 border-b border-gray-200">
-              <Settings2 className="w-3 h-3 text-gray-500" />
-              <h3 className="text-xs font-medium text-gray-700">Template Parameters</h3>
-            </div>
-          )}
           
           <div className="grid grid-cols-2 gap-x-3 gap-y-3">
             {templateParams.map(([key, param]) => {
@@ -301,56 +257,9 @@ export function UnifiedParametersTool() {
       )}
 
       {/* No parameters message */}
-      {usedCoreParams.length === 0 && templateParams.length === 0 && (
+      {templateParams.length === 0 && (
         <div className="text-sm text-gray-500 text-center py-4">
-          This template has no adjustable parameters
-        </div>
-      )}
-
-      {/* Quick presets for templates that use core params */}
-      {usedCoreParams.length > 0 && (
-        <div className="pt-3 border-t border-gray-200">
-          <div className="grid grid-cols-3 gap-1.5">
-            <button
-              onClick={() => {
-                if (usedCoreParams.find(p => p.key === 'frequency')) setFrequency(2);
-                if (usedCoreParams.find(p => p.key === 'amplitude')) setAmplitude(80);
-                if (usedCoreParams.find(p => p.key === 'complexity')) setComplexity(0.2);
-                if (usedCoreParams.find(p => p.key === 'chaos')) setChaos(0.1);
-                if (usedCoreParams.find(p => p.key === 'damping')) setDamping(0.9);
-                if (usedCoreParams.find(p => p.key === 'layers')) setLayers(2);
-              }}
-              className="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded transition-colors"
-            >
-              Minimal
-            </button>
-            <button
-              onClick={() => {
-                if (usedCoreParams.find(p => p.key === 'frequency')) setFrequency(5);
-                if (usedCoreParams.find(p => p.key === 'amplitude')) setAmplitude(100);
-                if (usedCoreParams.find(p => p.key === 'complexity')) setComplexity(0.5);
-                if (usedCoreParams.find(p => p.key === 'chaos')) setChaos(0.2);
-                if (usedCoreParams.find(p => p.key === 'damping')) setDamping(0.7);
-                if (usedCoreParams.find(p => p.key === 'layers')) setLayers(3);
-              }}
-              className="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded transition-colors"
-            >
-              Balanced
-            </button>
-            <button
-              onClick={() => {
-                if (usedCoreParams.find(p => p.key === 'frequency')) setFrequency(10);
-                if (usedCoreParams.find(p => p.key === 'amplitude')) setAmplitude(150);
-                if (usedCoreParams.find(p => p.key === 'complexity')) setComplexity(0.8);
-                if (usedCoreParams.find(p => p.key === 'chaos')) setChaos(0.3);
-                if (usedCoreParams.find(p => p.key === 'damping')) setDamping(0.5);
-                if (usedCoreParams.find(p => p.key === 'layers')) setLayers(5);
-              }}
-              className="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded transition-colors"
-            >
-              Complex
-            </button>
-          </div>
+          Loading template parameters...
         </div>
       )}
     </div>

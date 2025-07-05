@@ -8,9 +8,11 @@ import { Slider } from '@/components/ui/slider';
 import { useSelectedLogo } from '@/lib/hooks/useSelectedLogo';
 import { ParameterService } from '@/lib/services/parameterService';
 import { loadJSTemplateParameters, type JSParameterDefinition } from '@/lib/js-parameter-loader';
-import { Wand2, Sliders, Palette } from 'lucide-react';
+import { Wand2, Sliders, Palette, Code2 } from 'lucide-react';
 
-// Import AI components
+// Import tools and AI components
+import { CodeEditorTool } from './tools/CodeEditorTool';
+import { BrandStyleTool } from './tools/BrandStyleTool';
 import { ColorThemeSelector } from './ColorThemeSelector';
 import { AIBrandConsultant } from './AIBrandConsultant';
 import { AISuggestions } from './AISuggestions';
@@ -96,88 +98,28 @@ export function RightSidebar({
           </TabsTrigger>
           <TabsTrigger value="ai" className="flex-1 rounded-none h-full data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-blue-500">
             <Wand2 className="w-4 h-4 mr-2" />
-            AI Tools
+            AI
+          </TabsTrigger>
+          <TabsTrigger value="code" className="flex-1 rounded-none h-full data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-blue-500">
+            <Code2 className="w-4 h-4 mr-2" />
+            Code
           </TabsTrigger>
         </TabsList>
         
         <TabsContent value="controls" className="flex-1 m-0 overflow-y-auto">
           <ScrollArea className="h-full">
             <div className="p-6 space-y-6">
-              {/* Core Wave Parameters */}
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-medium">Core Wave Parameters</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <label className="text-xs font-medium">Frequency</label>
-                      <span className="text-xs text-gray-500 tabular-nums">{coreParams.frequency}</span>
-                    </div>
-                    <Slider
-                      value={[coreParams.frequency]}
-                      onValueChange={([value]) => setFrequency(value)}
-                      min={1}
-                      max={10}
-                      step={0.1}
-                      className="w-full"
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <label className="text-xs font-medium">Amplitude</label>
-                      <span className="text-xs text-gray-500 tabular-nums">{coreParams.amplitude}</span>
-                    </div>
-                    <Slider
-                      value={[coreParams.amplitude]}
-                      onValueChange={([value]) => setAmplitude(value)}
-                      min={0}
-                      max={100}
-                      step={1}
-                      className="w-full"
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <label className="text-xs font-medium">Complexity</label>
-                      <span className="text-xs text-gray-500 tabular-nums">{coreParams.complexity.toFixed(2)}</span>
-                    </div>
-                    <Slider
-                      value={[coreParams.complexity]}
-                      onValueChange={([value]) => setComplexity(value)}
-                      min={0}
-                      max={1}
-                      step={0.01}
-                      className="w-full"
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <label className="text-xs font-medium">Chaos</label>
-                      <span className="text-xs text-gray-500 tabular-nums">{coreParams.chaos.toFixed(2)}</span>
-                    </div>
-                    <Slider
-                      value={[coreParams.chaos]}
-                      onValueChange={([value]) => setChaos(value)}
-                      min={0}
-                      max={1}
-                      step={0.01}
-                      className="w-full"
-                    />
-                  </div>
-                </CardContent>
-              </Card>
               
-              {/* Template-specific parameters */}
+              {/* Template Parameters - Show template-specific parameters first */}
               {Object.keys(parsedParams).length > 0 && (
                 <Card>
                   <CardHeader className="pb-3">
                     <CardTitle className="text-sm font-medium">
-                      {logo.templateName || 'Template'} Parameters
+                      Template Parameters
                     </CardTitle>
+                    <p className="text-[10px] text-gray-500 mt-1">
+                      Customize {logo.templateName || 'template'}-specific settings
+                    </p>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     {Object.entries(parsedParams).map(([paramName, param]) => {
@@ -264,6 +206,18 @@ export function RightSidebar({
                   </CardContent>
                 </Card>
               )}
+              
+              {/* Brand & Style - Universal parameters */}
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-medium">
+                    Brand & Style
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <BrandStyleTool />
+                </CardContent>
+              </Card>
             </div>
           </ScrollArea>
         </TabsContent>
@@ -309,6 +263,10 @@ export function RightSidebar({
               />
             </div>
           </ScrollArea>
+        </TabsContent>
+        
+        <TabsContent value="code" className="flex-1 m-0 overflow-hidden">
+          <CodeEditorTool />
         </TabsContent>
       </Tabs>
     </div>
