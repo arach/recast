@@ -42,7 +42,8 @@ export function useTemplateCode(templateId: string | undefined) {
       console.log(`🌐 Fetching template: ${templateId}`)
       const response = await fetch(`/api/template-source/${templateId}`)
       if (!response.ok) {
-        throw new Error(`Failed to fetch template: ${response.statusText}`)
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Failed to fetch template '${templateId}': ${response.statusText}`)
       }
       
       const codeText = await response.text()
