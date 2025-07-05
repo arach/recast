@@ -1,6 +1,7 @@
 import { applyUniversalBackground, adjustColor, hexToHsl, flattenParameters } from './template-utils'
+import { compileTypeScript } from './swc-compiler'
 
-export function generateVisualization(
+export async function generateVisualization(
   ctx: CanvasRenderingContext2D,
   code: string,
   parameters: any,
@@ -8,42 +9,91 @@ export function generateVisualization(
   width: number,
   height: number
 ) {
+  let cleanCode: string = '';
+  
   try {
     // Use the shared parameter flattening utility
     const flatParams = flattenParameters(parameters)
     
-    // First, fix any existing code with unquoted reserved keywords
-    // This handles legacy code that might be stored in localStorage
-    // Also handle "default" as a property value in parameters objects
-    const fixedCode = code
-      .replace(/\b(default|class|function|return|const|let|var|if|else|for|while|do|switch|case|break|continue|new|this|super|import|export|try|catch|finally|throw|typeof|instanceof|in|of|void|delete|yield|async|await)(\s*):/g, '"$1"$2:')
-      // Also fix cases where default appears in template parameter definitions
-      .replace(/default:\s*([^,}]+)/g, '"default": $1');
+    // Create a safe execution environment
+    // First, check if this is old-style code with PARAMETERS object
+    const isOldStyle = code.includes('const PARAMETERS = {') || code.includes('function drawVisualization(ctx, width, height, params, generator, time)');
     
-    // Remove export and import statements - they can't be used in Function constructor
-    let cleanCode = fixedCode
-      // Remove ALL import statements (including type imports)
-      .replace(/import\s+.*?from\s+['"].*?['"];?\s*/g, '')
-      // Remove simple export { ... } statements
-      .replace(/export\s*{\s*[^}]+\s*};?/g, '')
-      // Remove export const { ... } = metadata (destructuring)
-      .replace(/export\s+const\s*{\s*[^}]+\s*}\s*=\s*metadata\s*;?/g, '')
-      // Convert export const/function to just const/function
-      .replace(/export\s+const\s+/g, 'const ')
-      .replace(/export\s+function\s+/g, 'function ')
-      .replace(/export\s+default\s+/g, '')
-      // Remove TypeScript type annotations more carefully
-      // Function parameters: (ctx: CanvasRenderingContext2D, width: number) => (ctx, width)
-      .replace(/\(([^)]+)\)/g, (match, params) => {
-        const cleanParams = params.replace(/(\w+)\s*:\s*[^,)]+/g, '$1');
-        return `(${cleanParams})`;
-      })
-      // Remove interface/type declarations
-      .replace(/^(interface|type)\s+\w+.*?(?:\{[^}]*\}|=.*?);?\s*$/gms, '')
-      // Remove standalone type annotations (like const x: string = ...)
-      .replace(/:\s*\{[^}]*\}/g, '')
-      .replace(/:\s*\[[^\]]*\]/g, '')
-      .replace(/:\s*[A-Za-z_]\w*(?:<[^>]+>)?(?:\[\])?(?=\s*[=,;)}])/g, '');
+    
+    if (isOldStyle) {
+      // Handle old-style code (from localStorage)
+      cleanCode = code
+        // Quote reserved keywords in object keys
+        .replace(/\b(default|class|function|return|const|let|var|if|else|for|while|do|switch|case|break|continue|new|this|super|import|export|try|catch|finally|throw|typeof|instanceof|in|of|void|delete|yield|async|await)(\s*):/g, '"$1"$2:');
+    } else {
+      // Handle new-style TypeScript template code
+      cleanCode = code
+        // Remove all imports - handle both 'import type' and regular imports
+        .replace(/^import\s+(?:type\s+)?.*?(?:from\s+['"].*?['"])?;?\s*$/gm, '')
+        // Remove any remaining import lines
+        .replace(/^.*import.*$/gm, '')
+        // Remove export statements but keep the content
+        .replace(/^export\s+(?:const|let|var)\s+/gm, 'const ')
+        .replace(/^export\s+function\s+/gm, 'function ')
+        .replace(/^export\s+\{[^}]*\};?\s*$/gm, '')
+        // Remove TypeScript type annotations more carefully
+        // 1. Remove interface declarations (multiline)
+        .replace(/^interface\s+\w+\s*\{[\s\S]*?\n\}/gm, '')
+        // 2. Remove type declarations (multiline) - TEMPORARILY DISABLED
+        // .replace(/^type\s+\w+\s*=[\s\S]*?(?=\n(?:const|let|var|function|export|$))/gm, '')
+        // 3. Clean function signatures - handle both multi-line and single-line
+        .replace(/function\s+(\w+)\s*\(([^)]*)\)(\s*:\s*[^{]+)?/g, (match, funcName, params, returnType) => {
+          // Handle parameters that may contain type annotations
+          const cleanParams = params
+            .split(',')
+            .map(param => {
+              // Extract just the parameter name (before colon)
+              const trimmed = param.trim();
+              const colonIndex = trimmed.indexOf(':');
+              if (colonIndex > -1) {
+                return trimmed.substring(0, colonIndex).trim();
+              }
+              return trimmed;
+            })
+            .filter(p => p)
+            .join(', ');
+          return `function ${funcName}(${cleanParams})`;
+        })
+        // 3b. Also handle arrow functions with type annotations
+        .replace(/const\s+(\w+)\s*=\s*\(([^)]*)\)(\s*:\s*[^=]+)?\s*=>/g, (match, funcName, params, returnType) => {
+          const cleanParams = params
+            .split(',')
+            .map(param => {
+              const trimmed = param.trim();
+              const colonIndex = trimmed.indexOf(':');
+              if (colonIndex > -1) {
+                return trimmed.substring(0, colonIndex).trim();
+              }
+              return trimmed;
+            })
+            .filter(p => p)
+            .join(', ');
+          return `const ${funcName} = (${cleanParams}) =>`;
+        })
+        // 4. Remove type annotations from variable declarations
+        // Match: const/let/var <spaces> <name> <spaces> : <spaces> <type> <spaces> =
+        // Keep: const/let/var <spaces> <name> <spaces> =
+        .replace(/(const|let|var)(\s+)(\w+)(\s*):\s*([^=;,\n]+?)(\s*=)/g, '$1$2$3$4$6')
+        // 5. Remove type annotations from object destructuring
+        .replace(/(const|let|var)\s*\{([^}]+)\}\s*:\s*[^=]+\s*=/g, (match, varType, destructure) => {
+          // Clean type annotations from destructured properties
+          const cleanDestructure = destructure
+            .split(',')
+            .map(prop => prop.split(':')[0].trim())
+            .join(', ');
+          return `${varType} {${cleanDestructure}} =`;
+        })
+        // 6. Remove as type assertions
+        .replace(/\s+as\s+\w+[\w<>,\s\[\]]*(?=[,;)\s])/g, '')
+        // 7. Only quote reserved keywords when they're object keys (after { or ,)
+        .replace(/([{,]\s*)(default|class|function|return|const|let|var|if|else|for|while|do|switch|case|break|continue|new|this|super|import|export|try|catch|finally|throw|typeof|instanceof|in|of|void|delete|yield|async|await)(\s*):/g, '$1"$2"$3:');
+    }
+    
     
     // Create utilities object for dependency injection
     const utils = {
@@ -64,21 +114,16 @@ export function generateVisualization(
       }
     `;
     
-    // Debug: Check if the cleaning worked
-    const unquotedKeywords = cleanCode.match(/\b(default|class|function|export|import)\s*:/g);
-    if (unquotedKeywords) {
-      console.error('WARNING: Unquoted reserved keywords still present in code!', unquotedKeywords);
-      console.error('Original code had:', code.match(/\b(default|class|function|export|import)\s*:/g));
+    try {
+      // Create the function and execute it with utils
+      const executeTemplate = new Function('ctx', 'width', 'height', 'params', 'currentTime', 'utils', wrapperCode);
+      executeTemplate(ctx, width, height, flatParams, currentTime, utils);
+    } catch (syntaxError) {
+      throw syntaxError;
     }
-    
-    // Create the function and execute it with utils
-    const executeTemplate = new Function('ctx', 'width', 'height', 'params', 'currentTime', 'utils', wrapperCode);
-    executeTemplate(ctx, width, height, flatParams, currentTime, utils);
     
   } catch (error) {
     console.error('Error executing visualization:', error)
-    console.error('Full error:', error.message)
-    console.error('Code that failed:', code.substring(0, 500) + '...');
     // Draw error indicator
     ctx.fillStyle = '#fee2e2'
     ctx.fillRect(0, 0, width, height)

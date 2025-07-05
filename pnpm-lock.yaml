@@ -53,6 +53,9 @@ importers:
       '@radix-ui/react-tooltip':
         specifier: ^1.2.7
         version: 1.2.7(@types/react-dom@18.3.7(@types/react@18.3.23))(@types/react@18.3.23)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@swc/wasm-web':
+        specifier: ^1.12.9
+        version: 1.12.9
       '@types/better-sqlite3':
         specifier: ^7.6.13
         version: 7.6.13
@@ -1491,6 +1494,9 @@ packages:
 
   '@swc/helpers@0.5.15':
     resolution: {integrity: sha512-JQ5TuMi45Owi4/BIMAJBoSQoOJu12oOk/gADqlcUL9JEdHB8vyjUSsxqeNXnmXHjYKMi2WcYtezGEEhqUI/E2g==}
+
+  '@swc/wasm-web@1.12.9':
+    resolution: {integrity: sha512-mMFWoCm9xwTKj3F5lTypIE8hioBL/rcljLeGKZeAo0wFuJ5j/AZhu6LAV9gJLxBTEeMV8ADF2YrbagNxboCQxg==}
 
   '@tootallnate/quickjs-emscripten@0.23.0':
     resolution: {integrity: sha512-C5Mc6rdnsaJDjO3UpGW/CQTHtCKaYlScZTly4JIu97Jxo/odCiH0ITnDXSJPTOrEKk/ycSZ0AOgTmkDtkOsvIA==}
@@ -4679,6 +4685,8 @@ snapshots:
   '@swc/helpers@0.5.15':
     dependencies:
       tslib: 2.8.1
+
+  '@swc/wasm-web@1.12.9': {}
 
   '@tootallnate/quickjs-emscripten@0.23.0': {}
 

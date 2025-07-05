@@ -46,6 +46,7 @@
     "@radix-ui/react-slot": "^1.2.3",
     "@radix-ui/react-switch": "^1.2.5",
     "@radix-ui/react-tooltip": "^1.2.7",
+    "@swc/wasm-web": "^1.12.9",
     "@types/better-sqlite3": "^7.6.13",
     "@uiw/react-codemirror": "^4.23.13",
     "ai": "^4.3.16",
