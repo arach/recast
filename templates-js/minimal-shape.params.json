@@ -1,0 +1,82 @@
+{
+  "metadata": {
+    "id": "minimal-shape",
+    "name": "◼ Minimal Shape",
+    "description": "Simple geometric shapes for clean, modern brand identities",
+    "author": "ReFlow",
+    "version": "1.0.0",
+    "tags": ["minimal", "geometric", "simple", "clean", "modern", "shape"]
+  },
+  "parameters": {
+    "shape": {
+      "type": "select",
+      "default": "square",
+      "options": [
+        { "value": "square", "label": "◼ Square" },
+        { "value": "circle", "label": "● Circle" },
+        { "value": "triangle", "label": "▲ Triangle" },
+        { "value": "hexagon", "label": "⬡ Hexagon" },
+        { "value": "diamond", "label": "◆ Diamond" },
+        { "value": "grid", "label": "⊞ Grid" }
+      ],
+      "label": "Shape Type",
+      "category": "Shape"
+    },
+    "size": {
+      "type": "slider",
+      "default": 0.6,
+      "min": 0.3,
+      "max": 0.8,
+      "step": 0.05,
+      "label": "Shape Size",
+      "category": "Geometry"
+    },
+    "cornerRadius": {
+      "type": "slider",
+      "default": 0.1,
+      "min": 0,
+      "max": 0.5,
+      "step": 0.05,
+      "label": "Corner Radius",
+      "category": "Shape"
+    },
+    "rotation": {
+      "type": "slider",
+      "default": 0,
+      "min": 0,
+      "max": 360,
+      "step": 15,
+      "label": "Rotation Angle",
+      "category": "Transform"
+    },
+    "thickness": {
+      "type": "slider",
+      "default": 1,
+      "min": 0,
+      "max": 1,
+      "step": 0.1,
+      "label": "Shape Thickness",
+      "category": "Shape"
+    },
+    "gridGap": {
+      "type": "slider",
+      "default": 0.05,
+      "min": 0.02,
+      "max": 0.15,
+      "step": 0.01,
+      "label": "Grid Gap",
+      "category": "Grid"
+    },
+    "gridColors": {
+      "type": "select",
+      "default": "theme",
+      "options": [
+        { "value": "theme", "label": "🎨 Theme Color" },
+        { "value": "microsoft", "label": "🪟 Microsoft" },
+        { "value": "gradient", "label": "🌈 Gradient" }
+      ],
+      "label": "Grid Colors",
+      "category": "Grid"
+    }
+  }
+}

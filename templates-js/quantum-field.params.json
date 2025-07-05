@@ -1,0 +1,205 @@
+{
+  "metadata": {
+    "id": "quantum-field",
+    "name": "⚛️ Quantum Field",
+    "description": "Visualize quantum mechanics with wave functions, probability clouds, and energy levels",
+    "author": "ReFlow",
+    "version": "1.0.0",
+    "tags": ["quantum", "physics", "wave", "energy", "particle", "scientific"]
+  },
+  "parameters": {
+    "quantumState": {
+      "type": "select",
+      "default": 2,
+      "options": [
+        { "value": 0, "label": "⬇️ Ground" },
+        { "value": 1, "label": "⬆️ Excited" },
+        { "value": 2, "label": "🌀 Superposition" },
+        { "value": 3, "label": "🔗 Entangled" },
+        { "value": 4, "label": "💥 Collapsed" }
+      ],
+      "label": "Quantum State",
+      "category": "Quantum"
+    },
+    "frequency": {
+      "type": "slider",
+      "default": 1.8,
+      "min": 0.8,
+      "max": 3,
+      "step": 0.1,
+      "label": "Wave Frequency",
+      "category": "Wave"
+    },
+    "amplitude": {
+      "type": "slider",
+      "default": 160,
+      "min": 90,
+      "max": 220,
+      "step": 5,
+      "label": "Field Amplitude",
+      "category": "Wave"
+    },
+    "fieldDensity": {
+      "type": "slider",
+      "default": 0.7,
+      "min": 0.4,
+      "max": 1,
+      "step": 0.05,
+      "label": "Field Density",
+      "category": "Field"
+    },
+    "waveFunction": {
+      "type": "slider",
+      "default": 0.8,
+      "min": 0.3,
+      "max": 1,
+      "step": 0.05,
+      "label": "Wave Function",
+      "category": "Wave"
+    },
+    "uncertainty": {
+      "type": "slider",
+      "default": 0.4,
+      "min": 0.2,
+      "max": 0.8,
+      "step": 0.05,
+      "label": "Heisenberg Uncertainty",
+      "category": "Quantum"
+    },
+    "superposition": {
+      "type": "slider",
+      "default": 0.6,
+      "min": 0,
+      "max": 1,
+      "step": 0.05,
+      "label": "Superposition",
+      "category": "Quantum"
+    },
+    "entanglement": {
+      "type": "slider",
+      "default": 0.3,
+      "min": 0,
+      "max": 0.8,
+      "step": 0.05,
+      "label": "Entanglement",
+      "category": "Quantum"
+    },
+    "tunneling": {
+      "type": "slider",
+      "default": 0.2,
+      "min": 0,
+      "max": 0.6,
+      "step": 0.05,
+      "label": "Quantum Tunneling",
+      "category": "Quantum"
+    },
+    "energyLevels": {
+      "type": "slider",
+      "default": 7,
+      "min": 3,
+      "max": 12,
+      "step": 1,
+      "label": "Energy Levels",
+      "category": "Energy"
+    },
+    "energySpacing": {
+      "type": "slider",
+      "default": 1.2,
+      "min": 0.5,
+      "max": 2,
+      "step": 0.1,
+      "label": "Energy Spacing",
+      "category": "Energy"
+    },
+    "quantumJumps": {
+      "type": "slider",
+      "default": 0.4,
+      "min": 0,
+      "max": 1,
+      "step": 0.05,
+      "label": "Quantum Jumps",
+      "category": "Energy"
+    },
+    "probabilityCloud": {
+      "type": "slider",
+      "default": 0.6,
+      "min": 0.2,
+      "max": 1,
+      "step": 0.05,
+      "label": "Probability Cloud",
+      "category": "Visualization"
+    },
+    "waveCollapse": {
+      "type": "slider",
+      "default": 0.3,
+      "min": 0,
+      "max": 0.7,
+      "step": 0.05,
+      "label": "Wave Collapse",
+      "category": "Quantum"
+    },
+    "measurement": {
+      "type": "slider",
+      "default": 0.2,
+      "min": 0,
+      "max": 0.5,
+      "step": 0.05,
+      "label": "Measurement Effect",
+      "category": "Quantum"
+    },
+    "fieldLines": {
+      "type": "slider",
+      "default": 0.7,
+      "min": 0.3,
+      "max": 1,
+      "step": 0.05,
+      "label": "Field Lines",
+      "category": "Field"
+    },
+    "particleTrails": {
+      "type": "slider",
+      "default": 0.4,
+      "min": 0,
+      "max": 0.8,
+      "step": 0.05,
+      "label": "Particle Trails",
+      "category": "Visualization"
+    },
+    "virtualParticles": {
+      "type": "slider",
+      "default": 0.3,
+      "min": 0,
+      "max": 0.6,
+      "step": 0.05,
+      "label": "Virtual Particles",
+      "category": "Visualization"
+    },
+    "energySpectrum": {
+      "type": "slider",
+      "default": 240,
+      "min": 0,
+      "max": 360,
+      "step": 20,
+      "label": "Energy Spectrum Hue",
+      "category": "Color"
+    },
+    "spectralWidth": {
+      "type": "slider",
+      "default": 60,
+      "min": 30,
+      "max": 120,
+      "step": 10,
+      "label": "Spectral Width",
+      "category": "Color"
+    },
+    "quantumGlow": {
+      "type": "slider",
+      "default": 0.8,
+      "min": 0.4,
+      "max": 1,
+      "step": 0.05,
+      "label": "Quantum Glow",
+      "category": "Effects"
+    }
+  }
+}
