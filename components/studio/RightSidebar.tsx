@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Slider } from '@/components/ui/slider';
 import { useSelectedLogo } from '@/lib/hooks/useSelectedLogo';
 import { ParameterService } from '@/lib/services/parameterService';
+import { loadJSTemplateParameters, type JSParameterDefinition } from '@/lib/js-parameter-loader';
 import { Wand2, Sliders, Palette } from 'lucide-react';
 
 // Import AI components
@@ -33,6 +34,7 @@ export function RightSidebar({
   onApplyBrandPreset,
 }: RightSidebarProps) {
   const [activeTab, setActiveTab] = useState('controls');
+  const [jsParameters, setJsParameters] = useState<Record<string, JSParameterDefinition> | null>(null);
   
   const {
     logo,
@@ -65,8 +67,20 @@ export function RightSidebar({
     );
   }
   
-  // Parse parameter definitions from code
-  const parsedParams = ParameterService.parseParametersFromCode(logo.code);
+  // Load JS template parameters if using a JS template
+  React.useEffect(() => {
+    if (logo.templateId) {
+      loadJSTemplateParameters(logo.templateId).then(params => {
+        setJsParameters(params);
+      });
+    } else {
+      // Parse parameter definitions from code for custom templates
+      const parsedParams = ParameterService.parseParametersFromCode(logo.code);
+      setJsParameters(parsedParams);
+    }
+  }, [logo.templateId, logo.code]);
+  
+  const parsedParams = jsParameters || {};
   
   return (
     <div className="w-96 border-l border-gray-200 bg-white/50 backdrop-blur-sm overflow-hidden flex flex-col">

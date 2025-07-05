@@ -1,6 +1,6 @@
 import { WaveGenerator, WaveParameters } from '@/core/wave-generator'
 import { GenerativeEngine, GenerativeParameters, GenerationOptions } from '@/core/generative-engine'
-import { executeTemplate } from '@/lib/template-registry'
+import { loadTemplate } from '@/lib/template-registry.js'
 
 export interface VisualizationParams {
   seed: string
@@ -417,7 +417,7 @@ export const generateInfinity = (
   })
 }
 
-export const executeCustomCode = (
+export const executeCustomCode = async (
   ctx: CanvasRenderingContext2D, 
   width: number, 
   height: number, 
@@ -430,9 +430,15 @@ export const executeCustomCode = (
     const templateIdMatch = customCode.match(/\/\/ TEMPLATE_ID: ([\w-]+)|PRESET_ID: ([\w-]+)/)
     if (templateIdMatch) {
       const templateId = templateIdMatch[1] || templateIdMatch[2]
-      const success = executeTemplate(templateId, ctx, width, height, params, params.time)
-      if (success) {
-        return { success: true } // Template executed successfully
+      try {
+        const template = await loadTemplate(templateId)
+        if (template) {
+          template.execute(ctx, width, height, params, params.time)
+          return { success: true } // Template executed successfully
+        }
+      } catch (error) {
+        console.error('Template execution error:', error)
+        // Fall through to wave generation
       }
     }
     const waveParams: WaveParameters = {

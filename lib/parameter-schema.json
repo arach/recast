@@ -1,0 +1,187 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ReFlow Template Parameter Schema",
+  "description": "Schema for defining template parameters",
+  
+  "definitions": {
+    "baseParameter": {
+      "type": "object",
+      "properties": {
+        "label": { "type": "string" },
+        "description": { "type": "string" },
+        "category": { "type": "string" },
+        "hidden": { "type": "boolean" },
+        "when": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
+    },
+    
+    "sliderParameter": {
+      "allOf": [
+        { "$ref": "#/definitions/baseParameter" },
+        {
+          "type": "object",
+          "required": ["type", "default", "min", "max"],
+          "properties": {
+            "type": { "const": "slider" },
+            "default": { "type": "number" },
+            "min": { "type": "number" },
+            "max": { "type": "number" },
+            "step": { "type": "number" },
+            "unit": { "type": "string" }
+          }
+        }
+      ]
+    },
+    
+    "colorParameter": {
+      "allOf": [
+        { "$ref": "#/definitions/baseParameter" },
+        {
+          "type": "object",
+          "required": ["type", "default"],
+          "properties": {
+            "type": { "const": "color" },
+            "default": { 
+              "type": "string",
+              "pattern": "^#[0-9A-Fa-f]{6}([0-9A-Fa-f]{2})?$"
+            },
+            "format": { "enum": ["hex", "rgb", "hsl"] },
+            "showAlpha": { "type": "boolean" }
+          }
+        }
+      ]
+    },
+    
+    "selectParameter": {
+      "allOf": [
+        { "$ref": "#/definitions/baseParameter" },
+        {
+          "type": "object",
+          "required": ["type", "default", "options"],
+          "properties": {
+            "type": { "const": "select" },
+            "default": { "type": "string" },
+            "options": {
+              "oneOf": [
+                {
+                  "type": "array",
+                  "items": { "type": "string" }
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": ["value", "label"],
+                    "properties": {
+                      "value": { "type": "string" },
+                      "label": { "type": "string" },
+                      "icon": { "type": "string" }
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    
+    "textParameter": {
+      "allOf": [
+        { "$ref": "#/definitions/baseParameter" },
+        {
+          "type": "object",
+          "required": ["type", "default"],
+          "properties": {
+            "type": { "const": "text" },
+            "default": { "type": "string" },
+            "placeholder": { "type": "string" },
+            "maxLength": { "type": "integer" },
+            "multiline": { "type": "boolean" },
+            "validation": {
+              "type": "object",
+              "properties": {
+                "pattern": { "type": "string" },
+                "message": { "type": "string" }
+              }
+            }
+          }
+        }
+      ]
+    },
+    
+    "toggleParameter": {
+      "allOf": [
+        { "$ref": "#/definitions/baseParameter" },
+        {
+          "type": "object",
+          "required": ["type", "default"],
+          "properties": {
+            "type": { "const": "toggle" },
+            "default": { "type": "boolean" },
+            "onLabel": { "type": "string" },
+            "offLabel": { "type": "string" }
+          }
+        }
+      ]
+    },
+    
+    "numberParameter": {
+      "allOf": [
+        { "$ref": "#/definitions/baseParameter" },
+        {
+          "type": "object",
+          "required": ["type", "default"],
+          "properties": {
+            "type": { "const": "number" },
+            "default": { "type": "number" },
+            "min": { "type": "number" },
+            "max": { "type": "number" },
+            "step": { "type": "number" },
+            "unit": { "type": "string" }
+          }
+        }
+      ]
+    }
+  },
+  
+  "type": "object",
+  "required": ["metadata", "parameters"],
+  "properties": {
+    "metadata": {
+      "type": "object",
+      "required": ["id", "name", "description"],
+      "properties": {
+        "id": { 
+          "type": "string",
+          "pattern": "^[a-z0-9-]+$"
+        },
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "category": { "type": "string" },
+        "tags": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "author": { "type": "string" },
+        "version": { "type": "string" }
+      }
+    },
+    "parameters": {
+      "type": "object",
+      "additionalProperties": {
+        "oneOf": [
+          { "$ref": "#/definitions/sliderParameter" },
+          { "$ref": "#/definitions/colorParameter" },
+          { "$ref": "#/definitions/selectParameter" },
+          { "$ref": "#/definitions/textParameter" },
+          { "$ref": "#/definitions/toggleParameter" },
+          { "$ref": "#/definitions/numberParameter" }
+        ]
+      }
+    }
+  }
+}

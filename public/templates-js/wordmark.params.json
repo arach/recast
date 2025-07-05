@@ -1,0 +1,67 @@
+{
+  "metadata": {
+    "id": "wordmark",
+    "name": "✏️ Wordmark",
+    "description": "Text-based logo with customizable fonts and animations",
+    "category": "typography"
+  },
+  "parameters": {
+    "text": {
+      "type": "text",
+      "label": "Brand Text",
+      "default": "BRAND",
+      "placeholder": "Enter your brand name"
+    },
+    "fontSize": {
+      "type": "slider",
+      "label": "Font Size",
+      "default": 48,
+      "min": 16,
+      "max": 100,
+      "step": 2
+    },
+    "fontFamily": {
+      "type": "select",
+      "label": "Font Family",
+      "default": "Arial Black",
+      "options": [
+        { "value": "Arial Black", "label": "Arial Black" },
+        { "value": "Helvetica", "label": "Helvetica" },
+        { "value": "Times New Roman", "label": "Times" },
+        { "value": "Georgia", "label": "Georgia" },
+        { "value": "Courier New", "label": "Courier" },
+        { "value": "Impact", "label": "Impact" },
+        { "value": "Comic Sans MS", "label": "Comic Sans" }
+      ]
+    },
+    "letterSpacing": {
+      "type": "slider",
+      "label": "Letter Spacing",
+      "default": 0,
+      "min": -5,
+      "max": 20,
+      "step": 1
+    },
+    "animationType": {
+      "type": "select",
+      "label": "Animation Type",
+      "default": "none",
+      "options": [
+        { "value": "none", "label": "None" },
+        { "value": "wave", "label": "Wave" },
+        { "value": "scale", "label": "Scale Pulse" }
+      ]
+    },
+    "animationSpeed": {
+      "type": "slider",
+      "label": "Animation Speed",
+      "default": 1.0,
+      "min": 0.1,
+      "max": 3.0,
+      "step": 0.1,
+      "when": {
+        "animationType": ["wave", "scale"]
+      }
+    }
+  }
+}

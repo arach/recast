@@ -27,7 +27,7 @@ export const StateDebugger = forwardRef<any, StateDebuggerProps>(({
 }, ref) => {
   const [activeTab, setActiveTab] = useState<DebugTab>('dashboard');
   const [isExpanded, setIsExpanded] = useState(false);
-  const [isCollapsed, setIsCollapsed] = useState(false); // Just bug button visible
+  const [isCollapsed, setIsCollapsed] = useState(true); // Just bug button visible
   
   // Expose methods to parent
   useImperativeHandle(ref, () => ({

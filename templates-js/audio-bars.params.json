@@ -1,0 +1,102 @@
+{
+  "metadata": {
+    "id": "audio-bars",
+    "name": "🎵 Audio Bars",
+    "description": "Dynamic audio visualizer bars with customizable color modes",
+    "category": "animated",
+    "tags": ["audio", "bars", "visualizer", "animated", "music"],
+    "author": "ReFlow",
+    "version": "1.0.0"
+  },
+  "parameters": {
+    "frequency": {
+      "type": "slider",
+      "default": 4,
+      "min": 0.1,
+      "max": 20,
+      "step": 0.1,
+      "label": "Wave Frequency",
+      "category": "Animation"
+    },
+    "amplitude": {
+      "type": "slider",
+      "default": 60,
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "label": "Wave Amplitude",
+      "category": "Animation",
+      "unit": "%"
+    },
+    "complexity": {
+      "type": "slider",
+      "default": 0.2,
+      "min": 0,
+      "max": 1,
+      "step": 0.01,
+      "label": "Complexity",
+      "description": "Adds harmonic variations to the wave",
+      "category": "Animation"
+    },
+    "chaos": {
+      "type": "slider",
+      "default": 0.15,
+      "min": 0,
+      "max": 1,
+      "step": 0.01,
+      "label": "Chaos",
+      "description": "Random variations in bar heights",
+      "category": "Animation"
+    },
+    "damping": {
+      "type": "slider",
+      "default": 0.85,
+      "min": 0,
+      "max": 1,
+      "step": 0.01,
+      "label": "Damping",
+      "description": "Smoothness of animation (higher = smoother)",
+      "category": "Animation"
+    },
+    "layers": {
+      "type": "slider",
+      "default": 1,
+      "min": 1,
+      "max": 3,
+      "step": 1,
+      "label": "Layers",
+      "description": "Number of overlapping bar layers",
+      "category": "Geometry"
+    },
+    "barCount": {
+      "type": "slider",
+      "default": 30,
+      "min": 10,
+      "max": 80,
+      "step": 5,
+      "label": "Number of Bars",
+      "category": "Geometry"
+    },
+    "barSpacing": {
+      "type": "slider",
+      "default": 3,
+      "min": 1,
+      "max": 8,
+      "step": 1,
+      "label": "Bar Spacing",
+      "category": "Geometry",
+      "unit": "px"
+    },
+    "colorMode": {
+      "type": "select",
+      "default": "spectrum",
+      "options": [
+        { "value": "spectrum", "label": "🌈 Rainbow Spectrum" },
+        { "value": "theme", "label": "🎨 Theme Colors" },
+        { "value": "toneShift", "label": "🎭 Tone Shift" }
+      ],
+      "label": "Color Mode",
+      "category": "Effects"
+    }
+  }
+}

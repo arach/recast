@@ -4,8 +4,7 @@ import React, { useRef, useEffect, useState } from 'react'
 import { useCanvasStore } from '@/lib/stores/canvasStore'
 import { useLogoStore } from '@/lib/stores/logoStore'
 import { useUIStore } from '@/lib/stores/uiStore'
-import { generateVisualization } from '@/lib/visualization-utils'
-import { useTemplateCode } from '@/lib/hooks/useTemplateCode'
+import { generateJSVisualization } from '@/lib/js-visualization-utils'
 
 interface LogoCanvasProps {
   id: string
@@ -19,7 +18,6 @@ interface LogoCanvasProps {
 // Pure rendering component - no interaction logic
 // Note: React.memo might prevent re-renders when templateId changes
 const LogoCanvas = React.memo(function LogoCanvas({ id, templateId, parameters, width, height, currentTime = 0 }: LogoCanvasProps) {
-  const { code } = useTemplateCode(templateId)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   
   useEffect(() => {
@@ -32,41 +30,21 @@ const LogoCanvas = React.memo(function LogoCanvas({ id, templateId, parameters, 
     // Clear canvas
     ctx.clearRect(0, 0, width, height)
     
-    try {
-      // Generate and render the actual logo
-      if (code) {
-        generateVisualization(ctx, code, parameters, currentTime, width, height)
-        // Don't log during animation - too noisy!
-      } else {
-        console.log(`⚠️ No code for logo ${id}, showing placeholder`)
-        // Fallback placeholder
-        ctx.fillStyle = '#e5e7eb'
-        ctx.fillRect(0, 0, width, height)
-        ctx.fillStyle = '#9ca3af'
-        ctx.font = '16px sans-serif'
-        ctx.textAlign = 'center'
-        ctx.textBaseline = 'middle'
-        ctx.fillText('No template selected', width / 2, height / 2)
-      }
-    } catch (error) {
-      console.error(`❌ Error rendering logo ${id}:`, error)
-      console.error('Error details:', {
-        errorMessage: error?.message || 'No message',
-        errorString: String(error),
-        templateId,
-        hasCode: !!code,
-        codeLength: code?.length
-      })
-      // Error state
-      ctx.fillStyle = '#fee2e2'
+    // Generate and render the actual logo
+    if (templateId) {
+      generateJSVisualization(ctx, templateId, parameters, currentTime, width, height)
+    } else {
+      console.log(`⚠️ No template selected for logo ${id}, showing placeholder`)
+      // Fallback placeholder
+      ctx.fillStyle = '#e5e7eb'
       ctx.fillRect(0, 0, width, height)
-      ctx.fillStyle = '#dc2626'
-      ctx.font = '14px sans-serif'
+      ctx.fillStyle = '#9ca3af'
+      ctx.font = '16px sans-serif'
       ctx.textAlign = 'center'
       ctx.textBaseline = 'middle'
-      ctx.fillText('Render Error', width / 2, height / 2)
+      ctx.fillText('No template selected', width / 2, height / 2)
     }
-  }, [id, code, parameters, width, height, currentTime])
+  }, [id, templateId, parameters, width, height, currentTime])
   
   return (
     <canvas 

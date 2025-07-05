@@ -15,22 +15,20 @@ import { Palette, ChevronDown } from 'lucide-react'
 import { useLogoStore } from '@/lib/stores/logoStore'
 import { useUIStore } from '@/lib/stores/uiStore'
 import { useSelectedLogo } from '@/lib/hooks/useSelectedLogo'
-import { loadTemplate, getAllTemplateInfo, type TemplateInfo } from '@/lib/template-registry-direct'
+import { getAllJSTemplates, loadJSTemplate, type JSTemplateInfo } from '@/lib/js-template-registry'
 
 export function TemplateSelector() {
-  const [availableTemplates, setAvailableTemplates] = useState<TemplateInfo[]>([])
+  const [availableTemplates, setAvailableTemplates] = useState<JSTemplateInfo[]>([])
   const { updateLogo, selectedLogoId, getLogoById } = useLogoStore()
   const { darkMode } = useUIStore()
   const { logo } = useSelectedLogo()
   
-  // Load all available templates
+  // Load all available JS templates
   useEffect(() => {
     const loadTemplates = async () => {
       try {
-        const templates = await getAllTemplateInfo()
-        // Only show templates that are actually converted (have code)
-        const validTemplates = templates.filter(t => t.code && t.code.length > 0)
-        setAvailableTemplates(validTemplates)
+        const templates = await getAllJSTemplates()
+        setAvailableTemplates(templates)
       } catch (error) {
         console.error('Failed to load templates:', error)
       }
@@ -64,19 +62,20 @@ export function TemplateSelector() {
           }
         })
       } else {
-        // Load the selected template directly
-        const template = await loadTemplate(templateId)
+        // Load the selected JS template
+        const template = await loadJSTemplate(templateId)
         if (!template) {
           console.error('Template not found:', templateId)
           return
         }
         
-        // console.log('Loaded template:', template.name, 'Applying to logo:', currentSelectedLogoId)
+        // Get template info for the name
+        const templateInfo = availableTemplates.find(t => t.id === templateId)
         
         // Update the logo with the new template
         const updatedLogo = {
-          templateId: template.id,
-          templateName: template.name,
+          templateId: templateId,
+          templateName: templateInfo?.name || templateId,
           // Don't store code - let the renderer look it up from the registry
           parameters: {
             ...currentLogo.parameters,

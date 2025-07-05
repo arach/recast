@@ -1,0 +1,10 @@
+{
+  "metadata": {
+    "id": "test-simple",
+    "name": "🔵 Simple Test",
+    "description": "A simple animated circle for testing",
+    "category": "test",
+    "version": "1.0.0"
+  },
+  "parameters": {}
+}
