@@ -1,6 +1,6 @@
 import { WaveGenerator, WaveParameters } from '@/core/wave-generator'
 import { GenerativeEngine, GenerativeParameters, GenerationOptions } from '@/core/generative-engine'
-import { loadTemplate } from '@/lib/template-registry.js'
+import { loadJSTemplate } from '@/lib/js-template-registry'
 
 export interface VisualizationParams {
   seed: string
@@ -431,7 +431,7 @@ export const executeCustomCode = async (
     if (templateIdMatch) {
       const templateId = templateIdMatch[1] || templateIdMatch[2]
       try {
-        const template = await loadTemplate(templateId)
+        const template = await loadJSTemplate(templateId)
         if (template) {
           template.execute(ctx, width, height, params, params.time)
           return { success: true } // Template executed successfully

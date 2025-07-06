@@ -144,7 +144,7 @@ const parameters = {
 
 function drawVisualization(ctx, width, height, params, time, utils) {
   // Apply universal background
-  utils.applyUniversalBackground(ctx, width, height, params);
+  utils.background.apply(ctx, width, height, params);
 
   // Extract parameters
   const centerX = width / 2;
@@ -455,4 +455,3 @@ const metadata = {
   }
 };
 
-export { parameters, metadata, drawVisualization };

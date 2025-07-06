@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 import { Template, Parameters } from '@/lib/types';
-import { loadTemplate, getAllTemplateInfo } from '@/lib/template-registry-direct';
+import { getAllJSTemplates, loadJSTemplate } from '@/lib/js-template-registry';
 import { useLogoStore } from './logoStore';
 
 interface TemplateStore {
@@ -34,7 +34,7 @@ export const useTemplateStore = create<TemplateStore>()(
         set({ loadingTemplates: true });
         
         try {
-          const templates = await getAllTemplateInfo();
+          const templates = await getAllJSTemplates();
           
           // Convert direct templates to Template format
           const templatesFormatted: Template[] = templates.map(template => ({
@@ -58,7 +58,7 @@ export const useTemplateStore = create<TemplateStore>()(
       // Load a specific template
       loadTemplate: async (templateId: string) => {
         try {
-          const template = await loadTemplate(templateId);
+          const template = await loadJSTemplate(templateId);
           
           if (!template) {
             console.error('Template not found:', templateId);
@@ -96,7 +96,7 @@ export const useTemplateStore = create<TemplateStore>()(
         if (!logo) return;
         
         try {
-          const template = await loadTemplate(templateId);
+          const template = await loadJSTemplate(templateId);
           if (!template) return;
           
           // Preserve content parameters

@@ -188,7 +188,7 @@ const parameters = {
 };
 
 function drawVisualization(ctx, width, height, params, time, utils) {
-  utils.applyUniversalBackground(ctx, width, height, params);
+  utils.background.apply(ctx, width, height, params);
   
   const fillColor = params.fillColor || '#8B4513';
   const strokeColor = params.strokeColor || '#3E2723';
@@ -696,4 +696,3 @@ const metadata = {
   }
 };
 
-export { parameters, metadata, drawVisualization };

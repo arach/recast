@@ -10,8 +10,7 @@ import { useUIStore } from '@/lib/stores/uiStore'
 import { useCanvasStore } from '@/lib/stores/canvasStore'
 import { useSelectedLogo } from '@/lib/hooks/useSelectedLogo'
 import { visualizationTypes } from '@/lib/monaco-types'
-import { loadTemplate, getAllTemplateInfo } from '@/lib/template-registry-direct'
-import type { LoadedTemplate } from '@/lib/theme-loader'
+import { getAllJSTemplates, loadJSTemplate, type JSTemplateInfo } from '@/lib/js-template-registry'
 import type { editor, languages } from 'monaco-editor'
 
 // Dynamically import Monaco to avoid SSR issues
@@ -39,7 +38,7 @@ export function CodeEditorPanel({ onClose }: CodeEditorPanelProps) {
   const [width, setWidth] = useState(500)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [isCollapsed, setIsCollapsed] = useState(true) // Start collapsed
-  const [availableTemplates, setAvailableTemplates] = useState<LoadedTemplate[]>([])
+  const [availableTemplates, setAvailableTemplates] = useState<JSTemplateInfo[]>([])
   const [loadingTemplates, setLoadingTemplates] = useState(true)
   
   // Add CSS animations
@@ -84,7 +83,7 @@ export function CodeEditorPanel({ onClose }: CodeEditorPanelProps) {
     const loadTemplates = async () => {
       try {
         setLoadingTemplates(true)
-        const templates = await getAllTemplateInfo()
+        const templates = await getAllJSTemplates()
         setAvailableTemplates(templates)
       } catch (error) {
         console.error('Failed to load templates:', error)

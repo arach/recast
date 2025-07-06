@@ -7,7 +7,7 @@
 
 function draw(ctx, width, height, params, time, utils) {
   // Apply universal background - exact match to TypeScript version
-  utils.applyUniversalBackground(ctx, width, height, params);
+  utils.background.apply(ctx, width, height, params);
   
   // Theme colors - exact match to TypeScript version
   const fillColor = params.fillColor || '#3b82f6';

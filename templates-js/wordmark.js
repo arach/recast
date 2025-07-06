@@ -6,7 +6,7 @@
 
 function draw(ctx, width, height, params, time, utils) {
   // Apply background
-  utils.applyUniversalBackground(ctx, width, height, params);
+  utils.background.apply(ctx, width, height, params);
   
   // Extract parameters with defaults
   const text = params.text || 'BRAND';

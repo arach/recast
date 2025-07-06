@@ -86,7 +86,7 @@ const parameters = {
 };
 
 function drawVisualization(ctx, width, height, params, time, utils) {
-  utils.applyUniversalBackground(ctx, width, height, params);
+  utils.background.apply(ctx, width, height, params);
   
   // Access universal properties
   const fillColor = params.fillColor || '#1DB954'; // Spotify green
@@ -219,4 +219,3 @@ const metadata = {
   }
 };
 
-export { parameters, metadata, drawVisualization };

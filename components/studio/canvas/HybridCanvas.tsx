@@ -89,6 +89,8 @@ export function HybridCanvas({
     }
   }, [offset, isPanning])
   
+  // Remove throttled functions - we now only update store on mouse up
+  
   useEffect(() => {
     const updateViewport = () => {
       setViewport({
@@ -174,6 +176,9 @@ export function HybridCanvas({
     }
   }
   
+  // Track logo position during dragging without updating store
+  const [draggingLogoPosition, setDraggingLogoPosition] = useState<{ x: number, y: number } | null>(null)
+  
   const handleMouseMove = (e: React.MouseEvent) => {
     if (isDraggingLogo && draggedLogoId) {
       const rect = svgRef.current?.getBoundingClientRect()
@@ -181,32 +186,42 @@ export function HybridCanvas({
         const mouseX = (e.clientX - rect.left) / zoom - localOffset.x
         const mouseY = (e.clientY - rect.top) / zoom - localOffset.y
         
-        updateLogo(draggedLogoId, {
-          position: {
-            x: mouseX - dragOffset.x,
-            y: mouseY - dragOffset.y
-          }
-        })
+        // Update local state only for smooth dragging
+        const newPosition = {
+          x: mouseX - dragOffset.x,
+          y: mouseY - dragOffset.y
+        }
+        setDraggingLogoPosition(newPosition)
+        
+        // Remove store updates during drag - only update on mouse up
       }
     } else if (isPanning) {
       const dx = e.clientX - panStart.x
       const dy = e.clientY - panStart.y
-      // Update local offset instead of store offset
-      setLocalOffset({
+      const newOffset = {
         x: panStartOffset.x + dx / zoom,
         y: panStartOffset.y + dy / zoom
-      })
+      }
+      // Update local offset only - no store updates during pan
+      setLocalOffset(newOffset)
     }
   }
   
   const handleMouseUp = () => {
     if (isPanning) {
-      // Commit the final offset to the store only on mouse up
+      // Commit final offset to store
       setOffset(localOffset)
+    }
+    if (isDraggingLogo && draggedLogoId && draggingLogoPosition) {
+      // Commit final logo position to store
+      updateLogo(draggedLogoId, {
+        position: draggingLogoPosition
+      })
     }
     setIsPanning(false)
     setIsDraggingLogo(false)
     setDraggedLogoId(null)
+    setDraggingLogoPosition(null)
   }
   
   // Handle zoom
@@ -232,9 +247,12 @@ export function HybridCanvas({
         y: -(svgY - mouseY / newZoom)
       }
       
-      setZoom(newZoom)
+      // Update local state immediately for smooth zooming
       setLocalOffset(newOffset)
-      setOffset(newOffset) // Commit zoom changes immediately
+      
+      // Only update zoom in store, not offset (less critical)
+      setZoom(newZoom)
+      // Commit offset less frequently or not at all during zoom
     }
   }
   
@@ -289,25 +307,21 @@ export function HybridCanvas({
           return null
         }
         
-        // Debug logging for templateId issues
-        if (typeof logo.templateId !== 'string') {
-          console.error(`🚨 Invalid templateId for logo ${logo.id}:`, {
-            templateId: logo.templateId,
-            type: typeof logo.templateId,
-            logoData: logo
-          })
-        }
+        // Use dragging position if this logo is being dragged
+        const position = (isDraggingLogo && draggedLogoId === logo.id && draggingLogoPosition) 
+          ? draggingLogoPosition 
+          : logo.position
         
         // Simple viewport check for performance
-        const isInViewport = logo.position.x >= -offset.x - 600 && 
-                            logo.position.x <= -offset.x + viewport.width/zoom + 600 &&
-                            logo.position.y >= -offset.y - 600 && 
-                            logo.position.y <= -offset.y + viewport.height/zoom + 600
+        const isInViewport = position.x >= -localOffset.x - 600 && 
+                            position.x <= -localOffset.x + viewport.width/zoom + 600 &&
+                            position.y >= -localOffset.y - 600 && 
+                            position.y <= -localOffset.y + viewport.height/zoom + 600
         
         return (
           <g 
             key={logo.id}
-            transform={`translate(${logo.position.x}, ${logo.position.y})`}
+            transform={`translate(${position.x}, ${position.y})`}
           >
             {/* White background with rounded corners */}
             <rect

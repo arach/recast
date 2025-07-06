@@ -4,8 +4,7 @@ import React, { useState, useEffect } from 'react'
 import { useSelectedLogo } from '@/lib/hooks/useSelectedLogo'
 import { useLogoStore } from '@/lib/stores/logoStore'
 import { useUIStore } from '@/lib/stores/uiStore'
-import { getAllTemplateInfo } from '@/lib/template-registry-direct'
-import type { LoadedTemplate } from '@/lib/theme-loader'
+import { getAllJSTemplates, type JSTemplateInfo } from '@/lib/js-template-registry'
 import { Sparkles, Layers } from 'lucide-react'
 
 export function TemplateSelectorModule() {
@@ -13,7 +12,7 @@ export function TemplateSelectorModule() {
   const updateLogo = useLogoStore(state => state.updateLogo)
   const { darkMode } = useUIStore()
   
-  const [availableTemplates, setAvailableTemplates] = useState<LoadedTemplate[]>([])
+  const [availableTemplates, setAvailableTemplates] = useState<JSTemplateInfo[]>([])
   const [loadingTemplates, setLoadingTemplates] = useState(true)
 
   // Load available templates
@@ -21,7 +20,7 @@ export function TemplateSelectorModule() {
     const loadTemplates = async () => {
       try {
         setLoadingTemplates(true)
-        const templates = await getAllTemplateInfo()
+        const templates = await getAllJSTemplates()
         setAvailableTemplates(templates)
       } catch (error) {
         console.error('Failed to load templates:', error)

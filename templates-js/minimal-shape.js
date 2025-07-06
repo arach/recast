@@ -75,7 +75,7 @@ const parameters = {
 
 function drawVisualization(ctx, width, height, params, time, utils) {
   // Apply universal background
-  utils.applyUniversalBackground(ctx, width, height, params);
+  utils.background.apply(ctx, width, height, params);
   
   // Get theme colors and opacity
   const fillColor = params.fillColor || '#0078D4';
@@ -315,4 +315,3 @@ const metadata = {
   }
 };
 
-export { parameters, metadata, drawVisualization };

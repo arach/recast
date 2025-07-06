@@ -1,5 +1,17 @@
-import { loadTemplate, templateRegistry } from './template-registry'
-import { utils } from '@reflow/template-utils'
+import { loadJSTemplate } from './js-template-registry'
+// Import all utilities from the package
+import * as templateUtils from '@reflow/template-utils'
+
+// Create utils object using only package exports with modern namespaced functions
+const utils = {
+  // All utilities from the package
+  background: templateUtils.background,
+  color: templateUtils.color,
+  canvas: templateUtils.canvas,
+  math: templateUtils.math,
+  shape: templateUtils.shape,
+  debug: templateUtils.debug
+}
 
 // Flatten nested parameter structures into a single level object
 function flattenParameters(params: any) {
@@ -33,8 +45,7 @@ let utilsInitialized = false
 function initializeUtils() {
   if (utilsInitialized) return
   
-  // Set the imported utils directly
-  templateRegistry.setUtils(utils)
+  // Utils are now directly available, no need to set them
   utilsInitialized = true
 }
 
@@ -53,7 +64,10 @@ export async function generateJSVisualization(
     // Ensure utils are initialized
     initializeUtils()
     
-    const template = await loadTemplate(templateId)
+    // Remove excessive logging
+    // console.log(`generateJSVisualization called for template: ${templateId}`)
+    
+    const template = await loadJSTemplate(templateId)
     
     if (!template) {
       throw new Error(`Template '${templateId}' not found`)
@@ -62,8 +76,22 @@ export async function generateJSVisualization(
     // Flatten the parameters before passing to template
     const flattenedParams = flattenParameters(parameters)
     
-    // The template registry already handles parameter merging and execution
-    template.drawVisualization(ctx, width, height, flattenedParams, currentTime)
+    // Execute the template code
+    // Create a function from the template code and execute it
+    const executeTemplate = new Function(
+      'ctx', 'width', 'height', 'params', 'time', 'utils',
+      template.code + '\n\n' +
+      '// Try both function names for compatibility\n' +
+      'if (typeof drawVisualization === "function") {\n' +
+      '  drawVisualization(ctx, width, height, params, time, utils);\n' +
+      '} else if (typeof draw === "function") {\n' +
+      '  draw(ctx, width, height, params, time, utils);\n' +
+      '} else {\n' +
+      '  console.error("No draw function found in template");\n' +
+      '}'
+    )
+    
+    executeTemplate(ctx, width, height, flattenedParams, currentTime, utils)
     
   } catch (error) {
     console.error('Error executing JS visualization:', error)

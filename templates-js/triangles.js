@@ -7,7 +7,7 @@
 
 function draw(ctx, width, height, params, time, utils) {
   // Apply universal background
-  utils.applyUniversalBackground(ctx, width, height, params);
+  utils.background.apply(ctx, width, height, params);
   
   // Extract parameters with defaults
   const frequency = params.frequency || 3;

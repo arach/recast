@@ -131,7 +131,7 @@ const parameters = {
 
 function drawVisualization(ctx, width, height, params, time, utils) {
   // Universal background handling
-  utils.applyUniversalBackground(ctx, width, height, params);
+  utils.background.apply(ctx, width, height, params);
   
   // Access universal properties
   const fillColor = params.fillColor || '#d4a574';
@@ -499,4 +499,3 @@ const metadata = {
   }
 };
 
-export { parameters, metadata, drawVisualization };
