@@ -6,29 +6,34 @@ This document tracks remaining cleanup tasks after the JavaScript template migra
 ## 🗑️ Files/Directories to Remove
 
 ### 1. Old TypeScript Templates Directory
-- [ ] `/templates/` - Entire directory with 33 TypeScript template files
+- [x] `/templates/` - Entire directory with 33 TypeScript template files ✅ REMOVED
   - Contains old TS templates like `apex-vercel.ts`, `architectural-grid.ts`, etc.
   - These have all been migrated to JavaScript or are no longer needed
   - **Action**: Delete entire directory
 
 ### 2. Unused API Routes
-- [ ] `/app/api/template-source/[templateId]/route.ts` - Old template source API
+- [x] `/app/api/template-source/[templateId]/route.ts` - Old template source API ✅ REMOVED
   - Check if this is still being used anywhere
   - **Action**: Likely delete if not used
 
 ### 3. Migration/Conversion Scripts
-- [ ] `/scripts/convert-templates.js` - Template conversion script
-  - [ ] `/scripts/clean-template-exports.ts` - Export cleaning script
+- [x] `/scripts/convert-templates.js` - Template conversion script ✅ REMOVED
+  - [x] `/scripts/clean-template-exports.ts` - Export cleaning script ✅ REMOVED
   - These were used during migration and are no longer needed
   - **Action**: Delete after confirming migration is complete
 
 ### 4. Unused Hooks
-- [ ] `/lib/hooks/useTemplateCode.ts` - Check if still used
+- [x] `/lib/hooks/useTemplateCode.ts` - Check if still used ✅ REMOVED
   - **Action**: Review usage and delete if obsolete
 
 ### 5. Old Template Presets
-- [ ] `/lib/template-presets.ts` - Check if this is still needed
+- [x] `/lib/template-presets.ts` - Check if this is still needed ✅ UPDATED
   - **Action**: Review and potentially remove or update
+
+### 6. Additional Files Removed
+- [x] `/lib/services/themeLoader.ts` - Old theme loading service ✅ REMOVED
+- [x] `/lib/hooks/useLogoHandlers.ts` - Updated to remove ThemeLoader dependencies ✅ UPDATED
+- [x] `/lib/presets/brandPresets.ts` - Updated to work with JS templates ✅ UPDATED
 
 ## 📝 Files to Review/Update
 
