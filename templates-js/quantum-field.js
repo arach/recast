@@ -1,215 +1,56 @@
-// ⚛️ Quantum Field - Visualize quantum mechanics with wave functions and energy levels
+// Helpers
+const slider = (def, min, max, step, label, unit, opts = {}) => ({ 
+  type: "slider", default: def, min, max, step, label, unit, ...opts 
+});
+const select = (def, options, label, opts = {}) => ({ 
+  type: "select", default: def, options, label, ...opts 
+});
 
+// Parameters
 const parameters = {
-  quantumState: {
-    type: 'select',
-    default: 2,
-    options: [
-      { value: 0, label: '⬇️ Ground' },
-      { value: 1, label: '⬆️ Excited' },
-      { value: 2, label: '🌀 Superposition' },
-      { value: 3, label: '🔗 Entangled' },
-      { value: 4, label: '💥 Collapsed' }
-    ],
-    label: 'Quantum State',
-    category: 'Quantum'
-  },
-  frequency: {
-    type: 'slider',
-    default: 1.8,
-    min: 0.8,
-    max: 3,
-    step: 0.1,
-    label: 'Wave Frequency',
-    category: 'Wave'
-  },
-  amplitude: {
-    type: 'slider',
-    default: 160,
-    min: 90,
-    max: 220,
-    step: 5,
-    label: 'Field Amplitude',
-    category: 'Wave'
-  },
-  fieldDensity: {
-    type: 'slider',
-    default: 0.7,
-    min: 0.4,
-    max: 1,
-    step: 0.05,
-    label: 'Field Density',
-    category: 'Field'
-  },
-  waveFunction: {
-    type: 'slider',
-    default: 0.8,
-    min: 0.3,
-    max: 1,
-    step: 0.05,
-    label: 'Wave Function',
-    category: 'Wave'
-  },
-  uncertainty: {
-    type: 'slider',
-    default: 0.4,
-    min: 0.2,
-    max: 0.8,
-    step: 0.05,
-    label: 'Heisenberg Uncertainty',
-    category: 'Quantum'
-  },
-  superposition: {
-    type: 'slider',
-    default: 0.6,
-    min: 0,
-    max: 1,
-    step: 0.05,
-    label: 'Superposition',
-    category: 'Quantum'
-  },
-  entanglement: {
-    type: 'slider',
-    default: 0.3,
-    min: 0,
-    max: 0.8,
-    step: 0.05,
-    label: 'Entanglement',
-    category: 'Quantum'
-  },
-  tunneling: {
-    type: 'slider',
-    default: 0.2,
-    min: 0,
-    max: 0.6,
-    step: 0.05,
-    label: 'Quantum Tunneling',
-    category: 'Quantum'
-  },
-  energyLevels: {
-    type: 'slider',
-    default: 7,
-    min: 3,
-    max: 12,
-    step: 1,
-    label: 'Energy Levels',
-    category: 'Energy'
-  },
-  energySpacing: {
-    type: 'slider',
-    default: 1.2,
-    min: 0.5,
-    max: 2,
-    step: 0.1,
-    label: 'Energy Spacing',
-    category: 'Energy'
-  },
-  quantumJumps: {
-    type: 'slider',
-    default: 0.4,
-    min: 0,
-    max: 1,
-    step: 0.05,
-    label: 'Quantum Jumps',
-    category: 'Energy'
-  },
-  probabilityCloud: {
-    type: 'slider',
-    default: 0.6,
-    min: 0.2,
-    max: 1,
-    step: 0.05,
-    label: 'Probability Cloud',
-    category: 'Visualization'
-  },
-  waveCollapse: {
-    type: 'slider',
-    default: 0.3,
-    min: 0,
-    max: 0.7,
-    step: 0.05,
-    label: 'Wave Collapse',
-    category: 'Quantum'
-  },
-  measurement: {
-    type: 'slider',
-    default: 0.2,
-    min: 0,
-    max: 0.5,
-    step: 0.05,
-    label: 'Measurement Effect',
-    category: 'Quantum'
-  },
-  fieldLines: {
-    type: 'slider',
-    default: 0.7,
-    min: 0.3,
-    max: 1,
-    step: 0.05,
-    label: 'Field Lines',
-    category: 'Field'
-  },
-  particleTrails: {
-    type: 'slider',
-    default: 0.4,
-    min: 0,
-    max: 0.8,
-    step: 0.05,
-    label: 'Particle Trails',
-    category: 'Visualization'
-  },
-  virtualParticles: {
-    type: 'slider',
-    default: 0.3,
-    min: 0,
-    max: 0.6,
-    step: 0.05,
-    label: 'Virtual Particles',
-    category: 'Visualization'
-  },
-  energySpectrum: {
-    type: 'slider',
-    default: 240,
-    min: 0,
-    max: 360,
-    step: 20,
-    label: 'Energy Spectrum Hue',
-    category: 'Color'
-  },
-  spectralWidth: {
-    type: 'slider',
-    default: 60,
-    min: 30,
-    max: 120,
-    step: 10,
-    label: 'Spectral Width',
-    category: 'Color'
-  },
-  quantumGlow: {
-    type: 'slider',
-    default: 0.8,
-    min: 0.4,
-    max: 1,
-    step: 0.05,
-    label: 'Quantum Glow',
-    category: 'Effects'
-  }
+  quantumState: select(2, [
+    { value: 0, label: '⬇️ Ground' },
+    { value: 1, label: '⬆️ Excited' },
+    { value: 2, label: '🌀 Superposition' },
+    { value: 3, label: '🔗 Entangled' },
+    { value: 4, label: '💥 Collapsed' }
+  ], 'Quantum State'),
+  frequency: slider(1.8, 0.8, 3, 0.1, 'Wave Frequency', 'Hz'),
+  amplitude: slider(160, 90, 220, 5, 'Field Amplitude', 'px'),
+  fieldDensity: slider(0.7, 0.4, 1, 0.05, 'Field Density'),
+  waveFunction: slider(0.8, 0.3, 1, 0.05, 'Wave Function'),
+  uncertainty: slider(0.4, 0.2, 0.8, 0.05, 'Heisenberg Uncertainty'),
+  superposition: slider(0.6, 0, 1, 0.05, 'Superposition'),
+  entanglement: slider(0.3, 0, 0.8, 0.05, 'Entanglement'),
+  tunneling: slider(0.2, 0, 0.6, 0.05, 'Quantum Tunneling'),
+  energyLevels: slider(7, 3, 12, 1, 'Energy Levels'),
+  energySpacing: slider(1.2, 0.5, 2, 0.1, 'Energy Spacing'),
+  quantumJumps: slider(0.4, 0, 1, 0.05, 'Quantum Jumps'),
+  probabilityCloud: slider(0.6, 0.2, 1, 0.05, 'Probability Cloud'),
+  waveCollapse: slider(0.3, 0, 0.7, 0.05, 'Wave Collapse'),
+  measurement: slider(0.2, 0, 0.5, 0.05, 'Measurement Effect'),
+  fieldLines: slider(0.7, 0.3, 1, 0.05, 'Field Lines'),
+  particleTrails: slider(0.4, 0, 0.8, 0.05, 'Particle Trails'),
+  virtualParticles: slider(0.3, 0, 0.6, 0.05, 'Virtual Particles'),
+  energySpectrum: slider(240, 0, 360, 20, 'Energy Spectrum Hue', '°'),
+  spectralWidth: slider(60, 30, 120, 10, 'Spectral Width', '°'),
+  quantumGlow: slider(0.8, 0.4, 1, 0.05, 'Quantum Glow')
 };
 
 function drawVisualization(ctx, width, height, params, time, utils) {
-  utils.background.apply(ctx, width, height, params);
+  const p = utils.params.load(params, ctx, width, height, time, { parameters });
   
-  const fillColor = params.fillColor || '#60a5fa';
-  const strokeColor = params.strokeColor || '#3b82f6';
-  const fillOpacity = params.fillOpacity ?? 0.8;
-  const strokeOpacity = params.strokeOpacity ?? 0.8;
+  const fillColor = p.fillColor || '#60a5fa';
+  const strokeColor = p.strokeColor || '#3b82f6';
+  const fillOpacity = p.fillOpacity ?? 0.8;
+  const strokeOpacity = p.strokeOpacity ?? 0.8;
   
   // Extract parameters
   const centerX = width / 2;
   const centerY = height / 2;
-  const frequency = params.frequency || 1.8;
-  const amplitude = params.amplitude || 160;
-  const quantumStateIndex = Math.round(params.quantumState || 2);
+  const frequency = p.frequency;
+  const amplitude = p.amplitude;
+  const quantumStateIndex = Math.round(p.quantumState);
   
   // Quantum states
   const quantumStates = [
@@ -223,34 +64,34 @@ function drawVisualization(ctx, width, height, params, time, utils) {
   const quantumState = quantumStates[Math.min(quantumStateIndex, quantumStates.length - 1)];
   
   // Field properties
-  const fieldDensity = params.fieldDensity || 0.7;
-  const waveFunction = params.waveFunction || 0.8;
-  const uncertainty = params.uncertainty || 0.4;
+  const fieldDensity = p.fieldDensity;
+  const waveFunction = p.waveFunction;
+  const uncertainty = p.uncertainty;
   
   // Quantum effects
-  const superposition = params.superposition || 0.6;
-  const entanglement = params.entanglement || 0.3;
-  const tunneling = params.tunneling || 0.2;
+  const superposition = p.superposition;
+  const entanglement = p.entanglement;
+  const tunneling = p.tunneling;
   
   // Energy levels
-  const energyLevels = Math.round(params.energyLevels || 7);
-  const energySpacing = params.energySpacing || 1.2;
-  const quantumJumps = params.quantumJumps || 0.4;
+  const energyLevels = Math.round(p.energyLevels);
+  const energySpacing = p.energySpacing;
+  const quantumJumps = p.quantumJumps;
   
   // Probability distributions
-  const probabilityCloud = params.probabilityCloud || 0.6;
-  const waveCollapse = params.waveCollapse || 0.3;
-  const measurement = params.measurement || 0.2;
+  const probabilityCloud = p.probabilityCloud;
+  const waveCollapse = p.waveCollapse;
+  const measurement = p.measurement;
   
   // Field visualization
-  const fieldLines = params.fieldLines || 0.7;
-  const particleTrails = params.particleTrails || 0.4;
-  const virtualParticles = params.virtualParticles || 0.3;
+  const fieldLines = p.fieldLines;
+  const particleTrails = p.particleTrails;
+  const virtualParticles = p.virtualParticles;
   
   // Color properties
-  const energySpectrum = params.energySpectrum || 240;
-  const spectralWidth = params.spectralWidth || 60;
-  const quantumGlow = params.quantumGlow || 0.8;
+  const energySpectrum = p.energySpectrum;
+  const spectralWidth = p.spectralWidth;
+  const quantumGlow = p.quantumGlow;
 
   // Helper functions
   function quantumWave(x, y, phase) {
@@ -738,16 +579,16 @@ function drawVisualization(ctx, width, height, params, time, utils) {
   drawQuantumField();
   
   // Draw outer boundary
-  if (params.strokeType !== 'none') {
+  if (p.strokeType !== 'none') {
     ctx.save();
     ctx.globalAlpha = strokeOpacity;
     
     ctx.strokeStyle = strokeColor;
-    ctx.lineWidth = params.strokeWidth || 1;
+    ctx.lineWidth = p.strokeWidth || 1;
     
-    if (params.strokeType === 'dashed') {
+    if (p.strokeType === 'dashed') {
       ctx.setLineDash([10, 5]);
-    } else if (params.strokeType === 'dotted') {
+    } else if (p.strokeType === 'dotted') {
       ctx.setLineDash([2, 3]);
     }
     
@@ -760,33 +601,15 @@ function drawVisualization(ctx, width, height, params, time, utils) {
   }
 }
 
+// Metadata
 const metadata = {
-  id: 'quantum-field',
   name: "⚛️ Quantum Field",
-  description: "Visualize quantum mechanics with wave functions, probability clouds, and energy levels",
-  parameters,
-  defaultParams: {
-    quantumState: 2,
-    frequency: 1.8,
-    amplitude: 160,
-    fieldDensity: 0.7,
-    waveFunction: 0.8,
-    uncertainty: 0.4,
-    superposition: 0.6,
-    entanglement: 0.3,
-    tunneling: 0.2,
-    energyLevels: 7,
-    energySpacing: 1.2,
-    quantumJumps: 0.4,
-    probabilityCloud: 0.6,
-    waveCollapse: 0.3,
-    measurement: 0.2,
-    fieldLines: 0.7,
-    particleTrails: 0.4,
-    virtualParticles: 0.3,
-    energySpectrum: 240,
-    spectralWidth: 60,
-    quantumGlow: 0.8
-  }
+  description: "Quantum mechanics visualization with wave functions",
+  category: "generative",
+  tags: ["quantum", "physics", "wave", "field", "mechanics", "science"],
+  author: "ReFlow",
+  version: "1.0.0"
 };
+
+export { parameters, metadata, drawVisualization };
 

@@ -1,99 +1,20 @@
-// ● Pulse (Spotify-style) - Pulsing concentric circles with theme colors or Spotify's signature green palette
-
-const parameters = {
-  colorMode: {
-    type: 'select',
-    default: 'theme',
-    options: [
-      { value: 'spotify', label: '🟢 Spotify' },
-      { value: 'theme', label: '🎨 Theme' }
-    ],
-    label: 'Color Mode',
-    category: 'Style'
-  },
-  frequency: {
-    type: 'slider',
-    default: 3,
-    min: 0.1,
-    max: 20,
-    step: 0.1,
-    label: 'Pulse Frequency',
-    category: 'Animation'
-  },
-  amplitude: {
-    type: 'slider',
-    default: 50,
-    min: 0,
-    max: 100,
-    step: 1,
-    label: 'Pulse Amplitude',
-    category: 'Animation'
-  },
-  radius: {
-    type: 'slider',
-    default: 50,
-    min: 10,
-    max: 200,
-    step: 1,
-    label: 'Base Radius',
-    category: 'Geometry'
-  },
-  layers: {
-    type: 'slider',
-    default: 2,
-    min: 1,
-    max: 8,
-    step: 1,
-    label: 'Circle Layers',
-    category: 'Geometry'
-  },
-  complexity: {
-    type: 'slider',
-    default: 0.3,
-    min: 0,
-    max: 1,
-    step: 0.01,
-    label: 'Orbital Complexity',
-    category: 'Effects'
-  },
-  chaos: {
-    type: 'slider',
-    default: 0.1,
-    min: 0,
-    max: 1,
-    step: 0.01,
-    label: 'Chaos Factor',
-    category: 'Effects'
-  },
-  damping: {
-    type: 'slider',
-    default: 0.9,
-    min: 0,
-    max: 1,
-    step: 0.01,
-    label: 'Motion Damping',
-    category: 'Animation'
-  },
-  colorVariation: {
-    type: 'slider',
-    default: 0.5,
-    min: 0,
-    max: 1,
-    step: 0.01,
-    label: 'Color Variation',
-    category: 'Color'
-  }
-};
+// Helpers
+const slider = (def, min, max, step, label, unit, opts = {}) => ({ 
+  type: "slider", default: def, min, max, step, label, unit, ...opts 
+});
+const select = (def, options, label, opts = {}) => ({ 
+  type: "select", default: def, options, label, ...opts 
+});
 
 function drawVisualization(ctx, width, height, params, time, utils) {
-  utils.background.apply(ctx, width, height, params);
+  const p = utils.params.load(params, ctx, width, height, time, { parameters });
   
   // Access universal properties
-  const fillColor = params.fillColor || '#1DB954'; // Spotify green
-  const strokeColor = params.strokeColor || '#1ED760'; // Lighter Spotify green
-  const fillOpacity = params.fillOpacity ?? 1;
-  const strokeOpacity = params.strokeOpacity ?? 0.8;
-  const colorMode = params.colorMode || 'theme';
+  const fillColor = p.fillColor || '#1DB954'; // Spotify green
+  const strokeColor = p.strokeColor || '#1ED760'; // Lighter Spotify green
+  const fillOpacity = p.fillOpacity ?? 1;
+  const strokeOpacity = p.strokeOpacity ?? 0.8;
+  const colorMode = p.colorMode || 'theme';
   
   // Helper to convert hex to HSL
   const hexToHsl = (hex) => {
@@ -125,14 +46,14 @@ function drawVisualization(ctx, width, height, params, time, utils) {
 
   const centerX = width / 2;
   const centerY = height / 2;
-  const baseRadius = params.radius || 50;
-  const layers = params.layers || 4;
-  const frequency = params.frequency || 3;
-  const amplitude = params.amplitude || 50;
-  const complexity = params.complexity || 0.3;
-  const chaos = params.chaos || 0.1;
-  const damping = params.damping || 0.9;
-  const colorVariation = params.colorVariation || 0.5;
+  const baseRadius = p.radius || 50;
+  const layers = p.layers || 4;
+  const frequency = p.frequency || 3;
+  const amplitude = p.amplitude || 50;
+  const complexity = p.complexity || 0.3;
+  const chaos = p.chaos || 0.1;
+  const damping = p.damping || 0.9;
+  const colorVariation = p.colorVariation || 0.5;
   
   // Generate multiple layers of circles
   for (let layer = 0; layer < layers; layer++) {
@@ -159,15 +80,15 @@ function drawVisualization(ctx, width, height, params, time, utils) {
     }
     
     // Draw main circles with stroke
-    if (params.strokeType !== 'none') {
+    if (p.strokeType !== 'none') {
       ctx.save();
       ctx.strokeStyle = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
-      ctx.lineWidth = params.strokeWidth || 3;
+      ctx.lineWidth = p.strokeWidth || 3;
       ctx.globalAlpha = (0.8 - layer * 0.1) * strokeOpacity;
       
-      if (params.strokeType === 'dashed') {
+      if (p.strokeType === 'dashed') {
         ctx.setLineDash([5, 5]);
-      } else if (params.strokeType === 'dotted') {
+      } else if (p.strokeType === 'dotted') {
         ctx.setLineDash([2, 2]);
       }
       
@@ -179,7 +100,7 @@ function drawVisualization(ctx, width, height, params, time, utils) {
     }
     
     // Add complexity with orbital elements
-    if (complexity > 0.3 && params.fillType !== 'none') {
+    if (complexity > 0.3 && p.fillType !== 'none') {
       const orbitCount = Math.floor(complexity * 8);
       for (let i = 0; i < orbitCount; i++) {
         const orbitAngle = (i / orbitCount) * Math.PI * 2 + layerPhase;
@@ -201,21 +122,32 @@ function drawVisualization(ctx, width, height, params, time, utils) {
   }
 }
 
-const metadata = {
-  id: 'pulse-spotify',
-  name: "● Pulse (Spotify-style)",
-  description: "Pulsing concentric circles with theme colors or Spotify's signature green palette",
-  parameters,
-  defaultParams: {
-    colorMode: 'theme',
-    frequency: 3,
-    amplitude: 50,
-    radius: 50,
-    layers: 2,
-    complexity: 0.3,
-    chaos: 0.1,
-    damping: 0.9,
-    colorVariation: 0.5
-  }
+// Parameters
+export const parameters = {
+  colorMode: select('theme', [
+    { value: 'spotify', label: '🟢 Spotify' },
+    { value: 'theme', label: '🎨 Theme' }
+  ], 'Color Mode'),
+  frequency: slider(3, 0.1, 20, 0.1, 'Pulse Frequency', 'Hz'),
+  amplitude: slider(50, 0, 100, 1, 'Pulse Amplitude', '%'),
+  radius: slider(50, 10, 200, 1, 'Base Radius', 'px'),
+  layers: slider(2, 1, 8, 1, 'Circle Layers', ''),
+  complexity: slider(0.3, 0, 1, 0.01, 'Orbital Complexity', ''),
+  chaos: slider(0.1, 0, 1, 0.01, 'Chaos Factor', ''),
+  damping: slider(0.9, 0, 1, 0.01, 'Motion Damping', ''),
+  colorVariation: slider(0.5, 0, 1, 0.01, 'Color Variation', '')
 };
+
+// Metadata
+export const metadata = {
+  name: "🎧 Pulse Spotify",
+  description: "Pulsing circles with orbital elements",
+  category: "generative",
+  tags: ["pulse", "spotify", "audio", "circles", "orbital"],
+  author: "ReFlow",
+  version: "1.0.0"
+};
+
+// Export
+export { drawVisualization };
 

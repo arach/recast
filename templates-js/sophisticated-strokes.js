@@ -1,165 +1,62 @@
-// 🎨 Sophisticated Strokes - Artistic brush strokes with calligraphy and texture effects
+// Helpers
+const slider = (def, min, max, step, label, unit, opts = {}) => ({ 
+  type: "slider", default: def, min, max, step, label, unit, ...opts 
+});
+const select = (def, options, label, opts = {}) => ({ 
+  type: "select", default: def, options, label, ...opts 
+});
 
+// Parameters
 const parameters = {
-  strokeStyle: {
-    type: 'select',
-    default: 2,
-    options: [
-      { value: 0, label: '✒️ Ink Pen' },
-      { value: 1, label: '🖌️ Brush' },
-      { value: 2, label: '🖋️ Calligraphy' },
-      { value: 3, label: '✏️ Pencil' },
-      { value: 4, label: '🖍️ Marker' }
-    ],
-    label: 'Stroke Style',
-    category: 'Style'
-  },
-  frequency: {
-    type: 'slider',
-    default: 0.8,
-    min: 0.1,
-    max: 2,
-    step: 0.1,
-    label: 'Flow Rhythm',
-    category: 'Movement'
-  },
-  amplitude: {
-    type: 'slider',
-    default: 100,
-    min: 60,
-    max: 180,
-    step: 5,
-    label: 'Stroke Reach',
-    category: 'Movement'
-  },
-  complexity: {
-    type: 'slider',
-    default: 0.6,
-    min: 0,
-    max: 1,
-    step: 0.05,
-    label: 'Stroke Complexity',
-    category: 'Movement'
-  },
-  strokeWeight: {
-    type: 'slider',
-    default: 8,
-    min: 2,
-    max: 20,
-    step: 1,
-    label: 'Stroke Weight',
-    category: 'Stroke'
-  },
-  strokeVariation: {
-    type: 'slider',
-    default: 0.5,
-    min: 0,
-    max: 1,
-    step: 0.05,
-    label: 'Weight Variation',
-    category: 'Stroke'
-  },
-  strokeTaper: {
-    type: 'slider',
-    default: 0.7,
-    min: 0,
-    max: 1,
-    step: 0.05,
-    label: 'Stroke Taper',
-    category: 'Stroke'
-  },
-  strokeTexture: {
-    type: 'slider',
-    default: 0.3,
-    min: 0,
-    max: 1,
-    step: 0.05,
-    label: 'Texture Amount',
-    category: 'Texture'
-  },
-  inkFlow: {
-    type: 'slider',
-    default: 0.8,
-    min: 0.3,
-    max: 1,
-    step: 0.05,
-    label: 'Ink Flow',
-    category: 'Texture'
-  },
-  paperTexture: {
-    type: 'slider',
-    default: 0.2,
-    min: 0,
-    max: 0.8,
-    step: 0.05,
-    label: 'Paper Texture',
-    category: 'Texture'
-  },
-  artisticFlair: {
-    type: 'slider',
-    default: 0.4,
-    min: 0,
-    max: 1,
-    step: 0.05,
-    label: 'Artistic Flair',
-    category: 'Effects'
-  },
-  inkSplatter: {
-    type: 'slider',
-    default: 0.1,
-    min: 0,
-    max: 0.5,
-    step: 0.05,
-    label: 'Ink Splatter',
-    category: 'Effects'
-  },
-  strokeCount: {
-    type: 'slider',
-    default: 3,
-    min: 1,
-    max: 7,
-    step: 1,
-    label: 'Stroke Count',
-    category: 'Composition'
-  },
-  layering: {
-    type: 'slider',
-    default: 0.3,
-    min: 0,
-    max: 1,
-    step: 0.05,
-    label: 'Stroke Layering',
-    category: 'Composition'
-  }
+  strokeStyle: select(2, [
+    { value: 0, label: '✒️ Ink Pen' },
+    { value: 1, label: '🖌️ Brush' },
+    { value: 2, label: '🖋️ Calligraphy' },
+    { value: 3, label: '✏️ Pencil' },
+    { value: 4, label: '🖍️ Marker' }
+  ], 'Stroke Style', { category: 'Style' }),
+  frequency: slider(0.8, 0.1, 2, 0.1, 'Flow Rhythm', '', { category: 'Movement' }),
+  amplitude: slider(100, 60, 180, 5, 'Stroke Reach', '', { category: 'Movement' }),
+  complexity: slider(0.6, 0, 1, 0.05, 'Stroke Complexity', '', { category: 'Movement' }),
+  strokeWeight: slider(8, 2, 20, 1, 'Stroke Weight', '', { category: 'Stroke' }),
+  strokeVariation: slider(0.5, 0, 1, 0.05, 'Weight Variation', '', { category: 'Stroke' }),
+  strokeTaper: slider(0.7, 0, 1, 0.05, 'Stroke Taper', '', { category: 'Stroke' }),
+  strokeTexture: slider(0.3, 0, 1, 0.05, 'Texture Amount', '', { category: 'Texture' }),
+  inkFlow: slider(0.8, 0.3, 1, 0.05, 'Ink Flow', '', { category: 'Texture' }),
+  paperTexture: slider(0.2, 0, 0.8, 0.05, 'Paper Texture', '', { category: 'Texture' }),
+  artisticFlair: slider(0.4, 0, 1, 0.05, 'Artistic Flair', '', { category: 'Effects' }),
+  inkSplatter: slider(0.1, 0, 0.5, 0.05, 'Ink Splatter', '', { category: 'Effects' }),
+  strokeCount: slider(3, 1, 7, 1, 'Stroke Count', '', { category: 'Composition' }),
+  layering: slider(0.3, 0, 1, 0.05, 'Stroke Layering', '', { category: 'Composition' })
 };
 
 function drawVisualization(ctx, width, height, params, time, utils) {
-  // Apply universal background
-  utils.background.apply(ctx, width, height, params);
+  // Load parameters with defaults
+  const p = utils.params.load(params, ctx, width, height, time, { parameters });
   
   // Access universal properties
-  const fillColor = params.fillColor || '#2c3e50';
-  const strokeColor = params.strokeColor || '#34495e';
-  const fillOpacity = params.fillOpacity ?? 0.9;
-  const strokeOpacity = params.strokeOpacity ?? 1;
+  const fillColor = p.fillColor || '#2c3e50';
+  const strokeColor = p.strokeColor || '#34495e';
+  const fillOpacity = p.fillOpacity ?? 0.9;
+  const strokeOpacity = p.strokeOpacity ?? 1;
 
   // Extract parameters
   const centerX = width / 2;
   const centerY = height / 2;
-  const strokeStyleNum = Math.round(params.strokeStyle || 2);
-  const frequency = params.frequency || 0.8;
-  const amplitude = params.amplitude || 100;
-  const complexity = params.complexity || 0.6;
-  const strokeWeight = params.strokeWeight || 8;
-  const strokeVariation = params.strokeVariation || 0.5;
-  const strokeTaper = params.strokeTaper || 0.7;
-  const strokeTexture = params.strokeTexture || 0.3;
-  const inkFlow = params.inkFlow || 0.8;
-  const paperTexture = params.paperTexture || 0.2;
-  const artisticFlair = params.artisticFlair || 0.4;
-  const inkSplatter = params.inkSplatter || 0.1;
-  const strokeCount = Math.round(params.strokeCount || 3);
-  const layering = params.layering || 0.3;
+  const strokeStyleNum = Math.round(p.strokeStyle);
+  const frequency = p.frequency;
+  const amplitude = p.amplitude;
+  const complexity = p.complexity;
+  const strokeWeight = p.strokeWeight;
+  const strokeVariation = p.strokeVariation;
+  const strokeTaper = p.strokeTaper;
+  const strokeTexture = p.strokeTexture;
+  const inkFlow = p.inkFlow;
+  const paperTexture = p.paperTexture;
+  const artisticFlair = p.artisticFlair;
+  const inkSplatter = p.inkSplatter;
+  const strokeCount = Math.round(p.strokeCount);
+  const layering = p.layering;
 
   // Scale based on canvas size
   const baseScale = Math.min(width, height) / 300;
@@ -512,26 +409,15 @@ function drawVisualization(ctx, width, height, params, time, utils) {
   }
 }
 
-const metadata = {
-  id: 'sophisticated-strokes',
-  name: "🎨 Sophisticated Strokes",
-  description: "Artistic brush strokes with calligraphy, texture effects, and various drawing tools",
-  parameters,
-  defaultParams: {
-    strokeStyle: 2,
-    frequency: 0.8,
-    amplitude: 100,
-    complexity: 0.6,
-    strokeWeight: 8,
-    strokeVariation: 0.5,
-    strokeTaper: 0.7,
-    strokeTexture: 0.3,
-    inkFlow: 0.8,
-    paperTexture: 0.2,
-    artisticFlair: 0.4,
-    inkSplatter: 0.1,
-    strokeCount: 3,
-    layering: 0.3
-  }
+// Metadata
+export const metadata = {
+  name: "🎨 Sophisticated Strokes", 
+  description: "Artistic brush strokes with calligraphy effects",
+  category: "artistic",
+  tags: ["brush", "strokes", "calligraphy", "artistic", "painting"],
+  author: "ReFlow",
+  version: "1.0.0"
 };
+
+export { parameters, drawVisualization };
 

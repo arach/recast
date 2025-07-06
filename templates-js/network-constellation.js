@@ -1,116 +1,44 @@
 // 🌐 Network Constellation - Brand-smart network formations creating globally recognized logo shapes
 
+// Helpers
+const slider = (def, min, max, step, label, unit, opts = {}) => ({ 
+  type: "slider", default: def, min, max, step, label, unit, ...opts 
+});
+const select = (def, options, label, opts = {}) => ({ 
+  type: "select", default: def, options, label, ...opts 
+});
+
+// Parameters
 const parameters = {
-  shapeType: {
-    type: 'select',
-    default: 0,
-    options: [
-      { value: 0, label: '⭕ Circle' },
-      { value: 1, label: '⭐ Star' },
-      { value: 2, label: '🛡️ Shield' },
-      { value: 3, label: '⬡ Hexagon' },
-      { value: 4, label: '♦️ Diamond' },
-      { value: 5, label: '▲ Triangle' }
-    ],
-    label: 'Network Shape',
-    category: 'Geometry'
-  },
-  nodeCount: {
-    type: 'slider',
-    default: 8,
-    min: 3,
-    max: 24,
-    step: 1,
-    label: 'Node Count',
-    category: 'Geometry'
-  },
-  connectionStyle: {
-    type: 'select',
-    default: 0,
-    options: [
-      { value: 0, label: '〰️ Flowing' },
-      { value: 1, label: '🧠 Neural' },
-      { value: 2, label: '🧲 Magnetic' },
-      { value: 3, label: '➖ Minimal' }
-    ],
-    label: 'Connection Style',
-    category: 'Effects'
-  },
-  frequency: {
-    type: 'slider',
-    default: 1.2,
-    min: 0.1,
-    max: 4,
-    step: 0.1,
-    label: 'Animation Speed',
-    category: 'Movement'
-  },
-  amplitude: {
-    type: 'slider',
-    default: 80,
-    min: 30,
-    max: 150,
-    step: 5,
-    label: 'Size',
-    category: 'Geometry'
-  },
-  complexity: {
-    type: 'slider',
-    default: 0.7,
-    min: 0,
-    max: 1,
-    step: 0.05,
-    label: 'Connection Density',
-    category: 'Network'
-  },
-  chaos: {
-    type: 'slider',
-    default: 0.15,
-    min: 0,
-    max: 1,
-    step: 0.05,
-    label: 'Node Chaos',
-    category: 'Effects'
-  },
-  layers: {
-    type: 'slider',
-    default: 2,
-    min: 1,
-    max: 5,
-    step: 1,
-    label: 'Depth Layers',
-    category: 'Geometry'
-  },
-  energyFlow: {
-    type: 'slider',
-    default: 0.8,
-    min: 0,
-    max: 1,
-    step: 0.05,
-    label: 'Energy Flow',
-    category: 'Network'
-  },
-  glowIntensity: {
-    type: 'slider',
-    default: 0.6,
-    min: 0,
-    max: 1,
-    step: 0.05,
-    label: 'Glow Intensity',
-    category: 'Effects'
-  },
-  damping: {
-    type: 'slider',
-    default: 0.8,
-    min: 0.3,
-    max: 1,
-    step: 0.05,
-    label: 'Layer Damping',
-    category: 'Effects'
-  }
+  shapeType: select(0, [
+    { value: 0, label: '⭕ Circle' },
+    { value: 1, label: '⭐ Star' },
+    { value: 2, label: '🛡️ Shield' },
+    { value: 3, label: '⬡ Hexagon' },
+    { value: 4, label: '♦️ Diamond' },
+    { value: 5, label: '▲ Triangle' }
+  ], 'Network Shape'),
+  nodeCount: slider(8, 3, 24, 1, 'Node Count'),
+  connectionStyle: select(0, [
+    { value: 0, label: '〰️ Flowing' },
+    { value: 1, label: '🧠 Neural' },
+    { value: 2, label: '🧲 Magnetic' },
+    { value: 3, label: '➖ Minimal' }
+  ], 'Connection Style'),
+  frequency: slider(1.2, 0.1, 4, 0.1, 'Animation Speed'),
+  amplitude: slider(80, 30, 150, 5, 'Size'),
+  complexity: slider(0.7, 0, 1, 0.05, 'Connection Density'),
+  chaos: slider(0.15, 0, 1, 0.05, 'Node Chaos'),
+  layers: slider(2, 1, 5, 1, 'Depth Layers'),
+  energyFlow: slider(0.8, 0, 1, 0.05, 'Energy Flow'),
+  glowIntensity: slider(0.6, 0, 1, 0.05, 'Glow Intensity'),
+  damping: slider(0.8, 0.3, 1, 0.05, 'Layer Damping')
 };
 
 function drawVisualization(ctx, width, height, params, time, utils) {
+  // Load parameters
+  const p = utils.params.load(params, ctx, width, height, time, { parameters });
+  
   // Apply universal background
   utils.background.apply(ctx, width, height, params);
   
@@ -123,25 +51,16 @@ function drawVisualization(ctx, width, height, params, time, utils) {
   // Extract parameters
   const centerX = width / 2;
   const centerY = height / 2;
-  const layers = params.layers || 2;
-  const frequency = params.frequency || 1.2;
-  const amplitude = params.amplitude || 80;
-  const complexity = params.complexity || 0.7;
-  const chaos = params.chaos || 0.15;
-  const damping = params.damping || 0.8;
-  const shapeTypeNum = Math.round(params.shapeType || 0);
+  const shapeTypeNum = Math.round(p.shapeType);
   const shapeTypes = ['circle', 'star', 'shield', 'hexagon', 'diamond', 'triangle'];
   const shapeType = shapeTypes[shapeTypeNum] || 'circle';
-  const nodeCount = params.nodeCount || 8;
-  const connectionStyleNum = Math.round(params.connectionStyle || 0);
+  const connectionStyleNum = Math.round(p.connectionStyle);
   const connectionStyles = ['flowing', 'neural', 'magnetic', 'minimal'];
   const connectionStyle = connectionStyles[connectionStyleNum] || 'flowing';
-  const energyFlow = params.energyFlow || 0.8;
-  const glowIntensity = params.glowIntensity || 0.6;
 
   // Base scale
   const baseScale = Math.min(width, height) / 400;
-  const scaledAmplitude = amplitude * baseScale;
+  const scaledAmplitude = p.amplitude * baseScale;
 
   // Seeded random
   let seed = 1;
@@ -157,13 +76,13 @@ function drawVisualization(ctx, width, height, params, time, utils) {
   }
 
   // Generate constellation layers
-  for (let layer = 0; layer < layers; layer++) {
-    const layerPhase = time * frequency + (layer * Math.PI / layers);
-    const layerScale = scaledAmplitude * Math.pow(damping, layer);
+  for (let layer = 0; layer < p.layers; layer++) {
+    const layerPhase = time * p.frequency + (layer * Math.PI / p.layers);
+    const layerScale = scaledAmplitude * Math.pow(p.damping, layer);
     const layerAlpha = (1 - layer * 0.3);
     
     // Color progression through brand-friendly spectrum
-    const hue = (layer / layers) * 60 + time * 10 + 220; // Blue to purple to pink
+    const hue = (layer / p.layers) * 60 + time * 10 + 220; // Blue to purple to pink
     const saturation = 80 - layer * 10;
     const lightness = 60 + Math.sin(layerPhase) * 20;
     
@@ -173,9 +92,9 @@ function drawVisualization(ctx, width, height, params, time, utils) {
       centerX, 
       centerY, 
       layerScale, 
-      nodeCount + layer * 2, 
+      p.nodeCount + layer * 2, 
       layerPhase, 
-      chaos, 
+      p.chaos, 
       seededRandom
     );
     
@@ -184,15 +103,15 @@ function drawVisualization(ctx, width, height, params, time, utils) {
       ctx, 
       nodes, 
       connectionStyle, 
-      complexity, 
-      energyFlow, 
+      p.complexity, 
+      p.energyFlow, 
       time, 
       layerPhase, 
       hue, 
       saturation, 
       lightness, 
       layerAlpha,
-      glowIntensity,
+      p.glowIntensity,
       params,
       fillColor,
       strokeColor,
@@ -211,7 +130,7 @@ function drawVisualization(ctx, width, height, params, time, utils) {
       saturation, 
       lightness, 
       layerAlpha,
-      glowIntensity,
+      p.glowIntensity,
       params,
       fillColor,
       fillOpacity
@@ -219,8 +138,8 @@ function drawVisualization(ctx, width, height, params, time, utils) {
   }
 
   // Add subtle network particles if high complexity
-  if (complexity > 0.6) {
-    drawNetworkParticles(ctx, centerX, centerY, scaledAmplitude, time, complexity);
+  if (p.complexity > 0.6) {
+    drawNetworkParticles(ctx, centerX, centerY, scaledAmplitude, time, p.complexity);
   }
 
   function generateBrandShapeNodes(shapeType, centerX, centerY, radius, nodeCount, phase, chaos, random) {
@@ -414,23 +333,16 @@ function drawVisualization(ctx, width, height, params, time, utils) {
   }
 }
 
+// Metadata
 const metadata = {
-  id: 'network-constellation',
   name: "🌐 Network Constellation",
-  description: "Brand-smart network formations creating globally recognized logo shapes",
-  parameters,
-  defaultParams: {
-    shapeType: 0,
-    nodeCount: 8,
-    connectionStyle: 0,
-    frequency: 1.2,
-    amplitude: 80,
-    complexity: 0.7,
-    chaos: 0.15,
-    layers: 2,
-    energyFlow: 0.8,
-    glowIntensity: 0.6,
-    damping: 0.8
-  }
+  description: "Connected nodes with dynamic particles",
+  category: "generative",
+  tags: ["network", "nodes", "constellation", "particles", "connected"],
+  author: "ReFlow",
+  version: "1.0.0"
 };
+
+// Exports
+export { parameters, metadata, drawVisualization };
 
