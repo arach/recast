@@ -62,7 +62,7 @@ export default function Hero() {
           >
             <div className="relative z-10 rounded-2xl overflow-hidden shadow-2xl">
               <img 
-                src="/images/reflow-wave-bars-hero.png" 
+                src={`${process.env.NODE_ENV === 'production' ? '/reflow' : ''}/images/reflow-wave-bars-hero.png`}
                 alt="ReFlow Wave Bars Visualization"
                 className="w-full h-auto"
               />
