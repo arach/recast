@@ -5,39 +5,20 @@
  */
 
 function draw(ctx, width, height, params, time, utils) {
-  // Apply background
-  utils.background.apply(ctx, width, height, params);
+  // Load and process all parameters - clean and deterministic
+  const p = utils.params.load(params, ctx, width, height, time, { parameters });
   
-  // Extract parameters with defaults
-  const barCount = params.barCount || 40;
-  const barSpacing = params.barSpacing || 2;
-  const colorMode = params.colorMode || 'spectrum';
-  const frequency = params.frequency || 3;
-  const amplitude = params.amplitude || 50;
-  const animationSpeed = params.animationSpeed || 1;
-  const barStyle = params.barStyle || 'rounded';
-  const waveType = params.waveType || 'sine';
-  const phaseShift = (params.phaseShift || 0) * Math.PI / 180;
-  const showWavePath = params.showWavePath || false;
-  const pathOpacity = params.pathOpacity || 0.15;
-  
-  // Theme colors
-  const fillColor = params.fillColor || '#3b82f6';
-  const strokeColor = params.strokeColor || '#1e40af';
-  const fillOpacity = params.fillOpacity ?? 1;
-  const strokeOpacity = params.strokeOpacity ?? 1;
+  // Template-specific parameters (defaults come from exported parameters)
+  const { barCount, barSpacing, colorMode, barStyle, waveType, showWavePath, pathOpacity } = p;
   
   // Calculate dimensions
   const totalSpacing = barSpacing * (barCount - 1);
   const availableWidth = width - totalSpacing;
   const barWidth = availableWidth / barCount;
   
-  // Time with animation speed
-  const animTime = time * animationSpeed;
-  
   // Wave function based on type
   const waveFunction = (t) => {
-    const phase = (t * frequency * Math.PI * 2) + animTime + phaseShift;
+    const phase = (t * p.frequency * Math.PI * 2) + p.animTime + (p.phaseShift || 0);
     switch (waveType) {
       case 'sine':
         return Math.sin(phase);
@@ -56,7 +37,7 @@ function draw(ctx, width, height, params, time, utils) {
   if (showWavePath) {
     ctx.save();
     ctx.globalAlpha = pathOpacity;
-    ctx.strokeStyle = strokeColor;
+    ctx.strokeStyle = p.strokeColor;
     ctx.lineWidth = 2;
     ctx.setLineDash([5, 5]);
     
@@ -64,7 +45,7 @@ function draw(ctx, width, height, params, time, utils) {
     for (let i = 0; i <= barCount; i++) {
       const t = i / barCount;
       const x = i * (barWidth + barSpacing) + barWidth / 2;
-      const y = height / 2 + waveFunction(t) * amplitude;
+      const y = height / 2 + waveFunction(t) * p.amplitude;
       
       if (i === 0) {
         ctx.moveTo(x, y);
@@ -83,10 +64,10 @@ function draw(ctx, width, height, params, time, utils) {
     const x = i * (barWidth + barSpacing);
     
     // Calculate wave position
-    const waveY = height / 2 + waveFunction(t) * amplitude;
+    const waveY = height / 2 + waveFunction(t) * p.amplitude;
     
     // Calculate bar height with secondary animation
-    const heightPhase = (t * frequency * 3 * Math.PI * 2) + animTime * 2;
+    const heightPhase = (t * p.frequency * 3 * Math.PI * 2) + p.animTime * 2;
     const barHeight = Math.abs(Math.sin(heightPhase) * 40) + 20;
     
     // Create gradient based on color mode
@@ -99,27 +80,27 @@ function draw(ctx, width, height, params, time, utils) {
       gradient.addColorStop(1, `hsla(${hue}, 70%, 60%, 0.9)`);
     } else if (colorMode === 'theme') {
       const phase = t * Math.PI * 2;
-      const lightness = 0.3 + Math.sin(phase + animTime) * 0.2;
-      const adjustedColor = utils.color.adjustBrightness(fillColor, lightness);
+      const lightness = 0.3 + Math.sin(phase + p.animTime) * 0.2;
+      const adjustedColor = utils.color.adjustBrightness(p.fillColor, lightness);
       gradient.addColorStop(0, adjustedColor);
-      gradient.addColorStop(0.5, fillColor);
+      gradient.addColorStop(0.5, p.fillColor);
       gradient.addColorStop(1, adjustedColor);
     } else if (colorMode === 'toneShift') {
-      const hsl = utils.color.hexToHsl(fillColor);
+      const hsl = utils.color.hexToHsl(p.fillColor);
       const hueShift = t * 120 - 60; // Shift ±60 degrees
       const hue = (hsl.h + hueShift + 360) % 360;
       gradient.addColorStop(0, `hsla(${hue}, ${hsl.s}%, ${Math.min(100, hsl.l + 10)}%, 0.9)`);
       gradient.addColorStop(0.5, `hsla(${hue}, ${hsl.s}%, ${hsl.l}%, 1)`);
       gradient.addColorStop(1, `hsla(${hue}, ${hsl.s}%, ${Math.min(100, hsl.l + 10)}%, 0.9)`);
     } else if (colorMode === 'mono') {
-      gradient.addColorStop(0, utils.color.withAlpha(fillColor, 0.7));
-      gradient.addColorStop(0.5, fillColor);
-      gradient.addColorStop(1, utils.color.withAlpha(fillColor, 0.7));
+      gradient.addColorStop(0, utils.color.withAlpha(p.fillColor, 0.7));
+      gradient.addColorStop(0.5, p.fillColor);
+      gradient.addColorStop(1, utils.color.withAlpha(p.fillColor, 0.7));
     }
     
     // Draw bar
     ctx.save();
-    ctx.globalAlpha = fillOpacity;
+    ctx.globalAlpha = p.theme.fillOpacity;
     ctx.fillStyle = gradient;
     
     if (barStyle === 'rounded') {
@@ -159,3 +140,51 @@ function draw(ctx, width, height, params, time, utils) {
     });
   }
 }
+
+// Helper functions for concise parameter definitions
+const slider = (def, min, max, step, label, unit, opts = {}) => ({ 
+  type: "slider", default: def, min, max, step, label, unit, ...opts 
+});
+const select = (def, options, label, opts = {}) => ({ 
+  type: "select", default: def, options, label, ...opts 
+});
+const toggle = (def, label, opts = {}) => ({ 
+  type: "toggle", default: def, label, ...opts 
+});
+
+// Parameter definitions - controls and defaults
+export const parameters = {
+  barCount: slider(40, 20, 100, 5, "Number of Bars"),
+  barSpacing: slider(2, 0, 10, 1, "Bar Spacing", "px"),
+  frequency: slider(3, 0.1, 20, 0.1, "Wave Frequency"),
+  amplitude: slider(50, 0, 100, 1, "Wave Amplitude", "%"),
+  animationSpeed: slider(1, 0, 5, 0.1, "Animation Speed", "x"),
+  phaseShift: slider(0, 0, 360, 1, "Phase Shift", "°", { when: { waveType: ["sine", "triangle"] } }),
+  pathOpacity: slider(0.15, 0, 1, 0.05, "Path Opacity", null, { when: { showWavePath: true } }),
+  
+  colorMode: select("spectrum", [
+    { value: "spectrum", label: "🌈 Rainbow Spectrum" },
+    { value: "theme", label: "🎨 Theme Colors" },
+    { value: "toneShift", label: "🎭 Tone Shift" },
+    { value: "mono", label: "⚫ Monochrome" }
+  ], "Color Mode"),
+  
+  barStyle: select("rounded", [
+    { value: "rounded", label: "Rounded" },
+    { value: "sharp", label: "Sharp" },
+    { value: "circle", label: "Circular Caps" }
+  ], "Bar Style"),
+  
+  waveType: select("sine", ["sine", "triangle", "square", "sawtooth"], "Wave Type"),
+  showWavePath: toggle(false, "Show Wave Path"),
+};
+
+// Template metadata
+export const metadata = {
+  name: "🌊 Wave Bars",
+  description: "Audio bars that follow wave patterns with customizable color modes",
+  category: "animated",
+  tags: ["wave", "bars", "audio", "animated", "colorful"],
+  author: "ReFlow",
+  version: "1.0.0"
+};
