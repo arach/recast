@@ -3,7 +3,7 @@ import { LogoIdManager } from '@/lib/utils/logoIdManager'
 export interface BrandPresetHandlers {
   updateCore: (params: any) => void
   updateCustom: (params: any) => void
-  loadTheme: (themeId: string) => Promise<void>
+  applyTemplate?: (templateId: string) => Promise<void>
   forceRender: () => void
 }
 
@@ -19,7 +19,9 @@ export class BrandPresets {
       console.log('✨ Creating Reflow brand identity...')
       
       const templateId = 'wordmark'
-      await handlers.loadTheme(templateId)
+      if (handlers.applyTemplate) {
+        await handlers.applyTemplate(templateId)
+      }
       
       const reflowParams = {
         text: 'reflow',

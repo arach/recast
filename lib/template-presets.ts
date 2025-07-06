@@ -160,21 +160,20 @@ export const minimalShapePresets: TemplatePreset[] = [
   }
 ];
 
-// Prism Google presets
-export const prismGooglePresets: TemplatePreset[] = [
+// Prism presets (for the JS prism template)
+export const prismPresets: TemplatePreset[] = [
   {
     id: 'classic-prism',
     name: 'Classic Prism',
-    description: 'Traditional triangular prism with 60° angles',
-    templateId: 'prism-google',
+    description: 'Traditional triangular prism with rainbow spectrum',
+    templateId: 'prism',
     params: {
-      prismWidth: 0.5,
-      prismHeight: 0.6,
-      prismAngle: 60,
-      refraction: 0.85,
-      separation: 0.15,
-      beamWidth: 0.08,
-      beamIntensity: 0.9
+      prismSize: 0.5,
+      lightBeamWidth: 2,
+      lightAngle: -30,
+      spectrumWidth: 0.4,
+      dispersion: 0.8,
+      style: 'classic'
     },
     tags: ['classic', 'physics', 'educational']
   },
@@ -182,33 +181,16 @@ export const prismGooglePresets: TemplatePreset[] = [
     id: 'wide-spectrum',
     name: 'Wide Spectrum',
     description: 'Wide prism with dramatic light spread',
-    templateId: 'prism-google',
+    templateId: 'prism',
     params: {
-      prismWidth: 0.7,
-      prismHeight: 0.5,
-      prismAngle: 45,
-      refraction: 0.95,
-      separation: 0.25,
-      beamWidth: 0.06,
-      beamIntensity: 0.95
+      prismSize: 0.6,
+      lightBeamWidth: 1.5,
+      lightAngle: -45,
+      spectrumWidth: 0.6,
+      dispersion: 1.0,
+      style: 'wide'
     },
     tags: ['dramatic', 'artistic', 'bold']
-  },
-  {
-    id: 'subtle-refraction',
-    name: 'Subtle Refraction',
-    description: 'Minimal prism with gentle light bending',
-    templateId: 'prism-google',
-    params: {
-      prismWidth: 0.4,
-      prismHeight: 0.5,
-      prismAngle: 75,
-      refraction: 0.65,
-      separation: 0.08,
-      beamWidth: 0.1,
-      beamIntensity: 0.8
-    },
-    tags: ['subtle', 'minimal', 'refined']
   }
 ];
 
@@ -217,7 +199,7 @@ export const templatePresets: Record<string, TemplatePreset[]> = {
   'letter-mark': letterMarkPresets,
   'wordmark': wordmarkPresets,
   'minimal-shape': minimalShapePresets,
-  'prism-google': prismGooglePresets,
+  'prism': prismPresets,
   // Add more as templates are created
 };
 
