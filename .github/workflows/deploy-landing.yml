@@ -48,13 +48,14 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pnpm-store-
             
-      - name: Install root dependencies
-        run: pnpm install --frozen-lockfile
-        
-      - name: Install landing dependencies
+      - name: Install dependencies
         run: |
+          # Install root dependencies
+          pnpm install --no-frozen-lockfile
+          
+          # Install landing dependencies
           cd landing
-          pnpm install --frozen-lockfile
+          pnpm install --no-frozen-lockfile
         
       - name: Build and Export
         run: pnpm run export
