@@ -48,22 +48,14 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pnpm-store-
             
-      - name: Install dependencies
+      - name: Install landing dependencies with npm
         run: |
-          # Navigate to landing directory first
           cd landing
+          # Use npm instead of pnpm to avoid workspace issues
+          npm install
           
-          # Remove any existing node_modules
-          rm -rf node_modules
-          
-          # Install dependencies with no workspace
-          pnpm install --no-frozen-lockfile --shamefully-hoist
-          
-          # Verify installation
-          ls -la node_modules/framer-motion || echo "Warning: framer-motion not found"
-        
       - name: Build and Export
-        run: pnpm run export
+        run: npm run export
         working-directory: ./landing
         env:
           NODE_ENV: production
