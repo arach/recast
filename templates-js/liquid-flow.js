@@ -1,235 +1,56 @@
-// 💧 Liquid Flow - Fluid organic shapes with surface tension and realistic liquid behavior
+/**
+ * 💧 Liquid Flow
+ * 
+ * Fluid organic shapes with surface tension and realistic liquid behavior
+ */
 
-const parameters = {
-  liquidType: {
-    type: 'select',
-    default: 1,
-    options: [
-      { value: 0, label: '💧 Water' },
-      { value: 1, label: '🛢️ Oil' },
-      { value: 2, label: '🍯 Honey' },
-      { value: 3, label: '🪙 Mercury' },
-      { value: 4, label: '⚡ Plasma' }
-    ],
-    label: 'Liquid Type',
-    category: 'Physics'
-  },
-  frequency: {
-    type: 'slider',
-    default: 0.6,
-    min: 0.2,
-    max: 1.2,
-    step: 0.05,
-    label: 'Flow Frequency',
-    category: 'Movement'
-  },
-  amplitude: {
-    type: 'slider',
-    default: 130,
-    min: 70,
-    max: 200,
-    step: 5,
-    label: 'Size',
-    category: 'Geometry'
-  },
-  viscosity: {
-    type: 'slider',
-    default: 0.4,
-    min: 0.1,
-    max: 1,
-    step: 0.05,
-    label: 'Viscosity',
-    category: 'Physics'
-  },
-  surfaceTension: {
-    type: 'slider',
-    default: 0.7,
-    min: 0.3,
-    max: 1,
-    step: 0.05,
-    label: 'Surface Tension',
-    category: 'Physics'
-  },
-  flowSpeed: {
-    type: 'slider',
-    default: 1.2,
-    min: 0.5,
-    max: 2.5,
-    step: 0.1,
-    label: 'Flow Speed',
-    category: 'Movement'
-  },
-  organicComplexity: {
-    type: 'slider',
-    default: 0.6,
-    min: 0.3,
-    max: 1,
-    step: 0.05,
-    label: 'Complexity',
-    category: 'Geometry'
-  },
-  turbulence: {
-    type: 'slider',
-    default: 0.3,
-    min: 0,
-    max: 0.8,
-    step: 0.05,
-    label: 'Turbulence',
-    category: 'Effects'
-  },
-  eddies: {
-    type: 'slider',
-    default: 0.4,
-    min: 0,
-    max: 1,
-    step: 0.05,
-    label: 'Eddies',
-    category: 'Effects'
-  },
-  meniscus: {
-    type: 'slider',
-    default: 0.5,
-    min: 0,
-    max: 1,
-    step: 0.05,
-    label: 'Meniscus Effect',
-    category: 'Surface'
-  },
-  droplets: {
-    type: 'slider',
-    default: 0.3,
-    min: 0,
-    max: 1,
-    step: 0.05,
-    label: 'Surface Droplets',
-    category: 'Surface'
-  },
-  ripples: {
-    type: 'slider',
-    default: 0.4,
-    min: 0,
-    max: 1,
-    step: 0.05,
-    label: 'Surface Ripples',
-    category: 'Surface'
-  },
-  transparency: {
-    type: 'slider',
-    default: 0.6,
-    min: 0.2,
-    max: 0.9,
-    step: 0.05,
-    label: 'Transparency',
-    category: 'Appearance'
-  },
-  refraction: {
-    type: 'slider',
-    default: 0.3,
-    min: 0,
-    max: 1,
-    step: 0.05,
-    label: 'Light Refraction',
-    category: 'Lighting'
-  },
-  caustics: {
-    type: 'slider',
-    default: 0.4,
-    min: 0,
-    max: 1,
-    step: 0.05,
-    label: 'Caustic Patterns',
-    category: 'Lighting'
-  },
-  fluidHue: {
-    type: 'slider',
-    default: 200,
-    min: 0,
-    max: 360,
-    step: 10,
-    label: 'Fluid Hue',
-    category: 'Color'
-  },
-  purity: {
-    type: 'slider',
-    default: 0.8,
-    min: 0.3,
-    max: 1,
-    step: 0.05,
-    label: 'Color Purity',
-    category: 'Color'
-  },
-  luminosity: {
-    type: 'slider',
-    default: 0.7,
-    min: 0.4,
-    max: 1,
-    step: 0.05,
-    label: 'Luminosity',
-    category: 'Color'
-  }
-};
+function draw(ctx, width, height, params, time, utils) {
+  utils.applyUniversalBackground(ctx, width, height, params);
 
-function drawVisualization(ctx, width, height, params, time, utils) {
-  utils.background.apply(ctx, width, height, params);
+  // Load parameters with new system
+  const p = utils.params.load(params, ctx, width, height, time, { parameters });
 
-  // Extract parameters
+  // Calculate derived values
   const centerX = width / 2;
   const centerY = height / 2;
-  const frequency = params.frequency || 0.6;
-  const amplitude = params.amplitude || 130;
-  const liquidTypeNum = Math.round(params.liquidType || 1);
-  const viscosity = params.viscosity || 0.4;
-  const surfaceTension = params.surfaceTension || 0.7;
-  const flowSpeed = params.flowSpeed || 1.2;
-  const organicComplexity = params.organicComplexity || 0.6;
-  const turbulence = params.turbulence || 0.3;
-  const eddies = params.eddies || 0.4;
-  const meniscus = params.meniscus || 0.5;
-  const droplets = params.droplets || 0.3;
-  const ripples = params.ripples || 0.4;
-  const transparency = params.transparency || 0.6;
-  const refraction = params.refraction || 0.3;
-  const caustics = params.caustics || 0.4;
-  const fluidHue = params.fluidHue || 200;
-  const purity = params.purity || 0.8;
-  const luminosity = params.luminosity || 0.7;
+  const liquidTypeNum = Math.round(p.liquidType);
 
   // Fluid scaling
   const baseScale = Math.min(width, height) / 350;
-  const scaledAmplitude = amplitude * baseScale;
+  const scaledAmplitude = p.amplitude * baseScale;
   
   // Fluid flow timing
-  const flowPhase = time * frequency * flowSpeed;
-  const liquidPulse = 1 + Math.sin(flowPhase * 0.3) * (1 - viscosity) * 0.1;
+  const flowPhase = time * p.frequency * p.flowSpeed;
+  const liquidPulse = 1 + Math.sin(flowPhase * 0.3) * (1 - p.viscosity) * 0.1;
 
   // Generate liquid form
   const liquidForm = generateFluidShape(
     liquidTypeNum, centerX, centerY, scaledAmplitude * liquidPulse,
-    viscosity, surfaceTension, organicComplexity, turbulence, eddies, flowPhase
+    p.viscosity, p.surfaceTension, p.organicComplexity, p.turbulence, p.eddies, flowPhase
   );
 
   // Fluid color system - now using universal fill parameters
-  const fluidColors = generateFluidColors(fluidHue, purity, luminosity, transparency, liquidTypeNum, params);
+  const fluidColors = generateFluidColors(p.fluidHue, p.purity, p.luminosity, p.transparency, liquidTypeNum, params);
 
   // Render caustic patterns (background effect)
-  if (caustics > 0.1) {
-    renderCausticPatterns(ctx, liquidForm, fluidColors, caustics, time, scaledAmplitude);
+  if (p.caustics > 0.1) {
+    renderCausticPatterns(ctx, liquidForm, fluidColors, p.caustics, time, scaledAmplitude);
   }
 
   // Render main liquid body with universal fill
-  renderLiquidBody(ctx, liquidForm, fluidColors, viscosity, surfaceTension, transparency, params, utils);
+  renderLiquidBody(ctx, liquidForm, fluidColors, p.viscosity, p.surfaceTension, p.transparency, params, utils);
 
   // Render surface effects
-  renderSurfaceEffects(ctx, liquidForm, fluidColors, meniscus, ripples, time, scaledAmplitude);
+  renderSurfaceEffects(ctx, liquidForm, fluidColors, p.meniscus, p.ripples, time, scaledAmplitude);
 
   // Render light refraction
-  if (refraction > 0.1) {
-    renderRefraction(ctx, liquidForm, fluidColors, refraction, centerX, centerY);
+  if (p.refraction > 0.1) {
+    renderRefraction(ctx, liquidForm, fluidColors, p.refraction, centerX, centerY);
   }
 
   // Render surface droplets
-  if (droplets > 0.1) {
-    renderSurfaceDroplets(ctx, liquidForm, fluidColors, droplets, time, scaledAmplitude);
+  if (p.droplets > 0.1) {
+    renderSurfaceDroplets(ctx, liquidForm, fluidColors, p.droplets, time, scaledAmplitude);
   }
 
   function generateFluidShape(liquidType, centerX, centerY, radius, viscosity, tension, complexity, turbulence, eddies, phase) {
@@ -567,29 +388,48 @@ function drawVisualization(ctx, width, height, params, time, utils) {
   }
 }
 
-const metadata = {
-  id: 'liquid-flow',
+// Helper functions for concise parameter definitions
+const slider = (def, min, max, step, label, unit, opts = {}) => ({ 
+  type: "slider", default: def, min, max, step, label, unit, ...opts 
+});
+const select = (def, options, label, opts = {}) => ({ 
+  type: "select", default: def, options, label, ...opts 
+});
+
+// Parameter definitions - controls and defaults
+export const parameters = {
+  liquidType: select(1, [
+    { value: 0, label: '💧 Water' },
+    { value: 1, label: '🛢️ Oil' },
+    { value: 2, label: '🍯 Honey' },
+    { value: 3, label: '🪙 Mercury' },
+    { value: 4, label: '⚡ Plasma' }
+  ], "Liquid Type"),
+  frequency: slider(0.6, 0.2, 1.2, 0.05, "Wave Frequency"),
+  amplitude: slider(130, 70, 200, 5, "Size"),
+  viscosity: slider(0.4, 0.1, 1, 0.05, "Viscosity"),
+  surfaceTension: slider(0.7, 0.3, 1, 0.05, "Surface Tension"),
+  flowSpeed: slider(1.2, 0.5, 2.5, 0.1, "Flow Speed"),
+  organicComplexity: slider(0.6, 0.3, 1, 0.05, "Organic Complexity"),
+  turbulence: slider(0.3, 0, 0.8, 0.05, "Turbulence"),
+  eddies: slider(0.4, 0, 1, 0.05, "Eddies"),
+  meniscus: slider(0.5, 0, 1, 0.05, "Meniscus"),
+  droplets: slider(0.3, 0, 1, 0.05, "Droplets"),
+  ripples: slider(0.4, 0, 1, 0.05, "Ripples"),
+  transparency: slider(0.6, 0.2, 0.9, 0.05, "Transparency"),
+  refraction: slider(0.3, 0, 1, 0.05, "Refraction"),
+  caustics: slider(0.4, 0, 1, 0.05, "Caustics"),
+  fluidHue: slider(200, 0, 360, 10, "Fluid Hue", "°"),
+  purity: slider(0.8, 0.3, 1, 0.05, "Purity"),
+  luminosity: slider(0.7, 0.4, 1, 0.05, "Luminosity")
+};
+
+// Template metadata
+export const metadata = {
   name: "💧 Liquid Flow",
   description: "Fluid organic shapes with surface tension, caustics, and realistic liquid behavior",
-  parameters,
-  defaultParams: {
-    liquidType: 1,
-    frequency: 0.6,
-    amplitude: 130,
-    viscosity: 0.4,
-    surfaceTension: 0.7,
-    flowSpeed: 1.2,
-    organicComplexity: 0.6,
-    turbulence: 0.3,
-    eddies: 0.4,
-    meniscus: 0.5,
-    droplets: 0.3,
-    ripples: 0.4,
-    transparency: 0.6,
-    refraction: 0.3,
-    caustics: 0.4,
-    fluidHue: 200,
-    purity: 0.8,
-    luminosity: 0.7
-  }
+  category: "physics",
+  tags: ["liquid", "fluid", "organic", "physics", "caustics"],
+  author: "ReFlow",
+  version: "1.0.0"
 };

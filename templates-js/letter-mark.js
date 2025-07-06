@@ -6,91 +6,58 @@
  */
 
 function draw(ctx, width, height, params, time, utils) {
-  // Debug logging to see what's actually happening
-  console.log('=== LETTER-MARK DEBUG ===');
-  console.log('Canvas size:', width, 'x', height);
-  console.log('Parameters received:', params);
-  console.log('Letter param:', params.letter);
-  console.log('FillColor param:', params.fillColor);
-  console.log('Style param:', params.style);
-  console.log('Utils available:', Object.keys(utils));
+  // Load and process all parameters - clean and deterministic
+  const p = utils.params.load(params, ctx, width, height, time, { parameters });
   
-  // Apply universal background - exact match to TypeScript version
-  utils.background.apply(ctx, width, height, params);
-  
-  // Get theme colors - exact match to TypeScript version
-  const fillColor = params.fillColor || '#000000';
-  const strokeColor = params.strokeColor || '#000000';
-  const backgroundColor = params.backgroundColor || '#ffffff';
-  const fillOpacity = params.fillOpacity ?? 1;
-  const strokeOpacity = params.strokeOpacity ?? 1;
-  
-  // Extract parameters - exact match to TypeScript version
-  const letter = params.letter || 'A';
-  const fontWeight = params.fontWeight || '600';
-  const style = params.style || 'modern';
-  const alignment = params.alignment || 'center';
-  const size = params.size || 0.7;
-  const letterSpacing = params.letterSpacing || 0;
-  const container = params.container || 'none';
-  const containerPadding = params.containerPadding || 0.2;
-  
-  // Calculate dimensions - exact match to TypeScript version
+  // Meaningful calculations
   const minDim = Math.min(width, height);
-  const fontSize = minDim * size;
+  const fontSize = minDim * p.size;
   const centerX = width / 2;
   const centerY = height / 2;
   
-  // Set up font - exact match to TypeScript version
-  let fontFamily = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-  if (style === 'rounded') {
-    fontFamily = '"SF Pro Rounded", -apple-system, BlinkMacSystemFont, sans-serif';
-  } else if (style === 'geometric') {
-    fontFamily = 'Futura, "Century Gothic", sans-serif';
-  } else if (style === 'classic') {
-    fontFamily = 'Georgia, "Times New Roman", serif';
-  }
+  // Set up font using centralized font system
+  const fontFamily = utils.font.get(p.style);
   
-  ctx.font = `${fontWeight} ${fontSize}px ${fontFamily}`;
-  ctx.textAlign = alignment;
+  ctx.font = `${p.fontWeight} ${fontSize}px ${fontFamily}`;
+  ctx.textAlign = p.alignment;
   ctx.textBaseline = 'middle';
   
-  // Apply letter spacing - exact match to TypeScript version
-  if (letterSpacing !== 0 && letter.length > 1) {
-    ctx.letterSpacing = `${letterSpacing}em`;
+  // Apply letter spacing
+  if (p.letterSpacing !== 0 && p.letter.length > 1) {
+    ctx.letterSpacing = `${p.letterSpacing}em`;
   }
   
-  // Calculate text position - exact match to TypeScript version
+  // Calculate text position
   let textX = centerX;
-  if (alignment === 'left') textX = width * 0.1;
-  else if (alignment === 'right') textX = width * 0.9;
+  if (p.alignment === 'left') textX = width * 0.1;
+  else if (p.alignment === 'right') textX = width * 0.9;
   
-  // Draw container if specified - exact match to TypeScript version
-  if (container !== 'none') {
-    const metrics = ctx.measureText(letter);
+  // Draw container if specified
+  if (p.container !== 'none') {
+    const metrics = ctx.measureText(p.letter);
     const textWidth = metrics.width;
     const textHeight = fontSize;
-    const padding = minDim * containerPadding;
+    const padding = minDim * p.containerPadding;
     
     ctx.save();
-    ctx.globalAlpha = fillOpacity;
-    ctx.fillStyle = fillColor;
+    ctx.globalAlpha = p.fillOpacity;
+    ctx.fillStyle = p.fillColor;
     
-    if (container === 'circle') {
+    if (p.container === 'circle') {
       const radius = Math.max(textWidth, textHeight) / 2 + padding;
       ctx.beginPath();
       ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
       ctx.fill();
       
       // Invert text color for contrast
-      ctx.fillStyle = backgroundColor;
-    } else if (container === 'square' || container === 'rounded') {
+      ctx.fillStyle = p.backgroundColor;
+    } else if (p.container === 'square' || p.container === 'rounded') {
       const boxSize = Math.max(textWidth, textHeight) + padding * 2;
       const boxX = centerX - boxSize / 2;
       const boxY = centerY - boxSize / 2;
       
       ctx.beginPath();
-      if (container === 'rounded') {
+      if (p.container === 'rounded') {
         const radius = boxSize * 0.1;
         ctx.roundRect(boxX, boxY, boxSize, boxSize, radius);
       } else {
@@ -99,27 +66,86 @@ function draw(ctx, width, height, params, time, utils) {
       ctx.fill();
       
       // Invert text color for contrast
-      ctx.fillStyle = backgroundColor;
+      ctx.fillStyle = p.backgroundColor;
     }
     ctx.restore();
   } else {
     // No container, use fill color for text
-    ctx.fillStyle = fillColor;
+    ctx.fillStyle = p.fillColor;
   }
   
-  // Draw the letter(s) - exact match to TypeScript version
+  // Draw the letter(s)
   ctx.save();
-  ctx.globalAlpha = fillOpacity;
-  ctx.fillText(letter, textX, centerY);
+  ctx.globalAlpha = p.fillOpacity;
+  ctx.fillText(p.letter, textX, centerY);
   ctx.restore();
   
-  // Optional: Add subtle depth with stroke - exact match to TypeScript version
-  if (params.strokeWidth && params.strokeWidth > 0) {
+  // Optional: Add subtle depth with stroke
+  if (p.strokeWidth && p.strokeWidth > 0) {
     ctx.save();
-    ctx.globalAlpha = strokeOpacity;
-    ctx.strokeStyle = strokeColor;
-    ctx.lineWidth = params.strokeWidth;
-    ctx.strokeText(letter, textX, centerY);
+    ctx.globalAlpha = p.strokeOpacity;
+    ctx.strokeStyle = p.strokeColor;
+    ctx.lineWidth = p.strokeWidth;
+    ctx.strokeText(p.letter, textX, centerY);
     ctx.restore();
   }
 }
+
+// Helper functions
+
+// Helper functions for concise parameter definitions
+const text = (def, label, placeholder, opts = {}) => ({ 
+  type: "text", default: def, label, placeholder, ...opts 
+});
+const slider = (def, min, max, step, label, unit, opts = {}) => ({ 
+  type: "slider", default: def, min, max, step, label, unit, ...opts 
+});
+const select = (def, options, label, opts = {}) => ({ 
+  type: "select", default: def, options, label, ...opts 
+});
+
+// Parameter definitions - controls and defaults
+export const parameters = {
+  // Typography
+  letter: text("A", "Letter(s)", "Enter letter(s) for your mark"),
+  fontWeight: select("600", [
+    { value: "300", label: "Light" },
+    { value: "400", label: "Regular" },
+    { value: "500", label: "Medium" },
+    { value: "600", label: "Semi-Bold" },
+    { value: "700", label: "Bold" },
+    { value: "900", label: "Black" }
+  ], "Font Weight"),
+  style: select("modern", [
+    { value: "modern", label: "Modern" },
+    { value: "rounded", label: "Rounded" },
+    { value: "geometric", label: "Geometric" },
+    { value: "classic", label: "Classic (Serif)" }
+  ], "Font Style"),
+  alignment: select("center", [
+    { value: "left", label: "Left" },
+    { value: "center", label: "Center" },
+    { value: "right", label: "Right" }
+  ], "Text Alignment"),
+  size: slider(0.7, 0.2, 1.0, 0.05, "Letter Size"),
+  letterSpacing: slider(0, -0.1, 0.5, 0.01, "Letter Spacing", "em"),
+  
+  // Container
+  container: select("none", [
+    { value: "none", label: "None" },
+    { value: "circle", label: "Circle" },
+    { value: "square", label: "Square" },
+    { value: "rounded", label: "Rounded Square" }
+  ], "Container Style"),
+  containerPadding: slider(0.2, 0.1, 0.5, 0.05, "Container Padding", null, { when: { container: ["circle", "square", "rounded"] } })
+};
+
+// Template metadata
+export const metadata = {
+  name: "🔤 Letter Mark",
+  description: "Clean, professional letter-based logos perfect for modern brands",
+  category: "typography",
+  tags: ["letter", "mark", "monogram", "logo", "brand", "initial"],
+  author: "ReFlow",
+  version: "1.0.0"
+};

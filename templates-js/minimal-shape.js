@@ -1,79 +1,29 @@
 // ◼ Minimal Shape - Simple geometric shapes for clean, modern brand identities
 
-const parameters = {
-  shape: {
-    type: 'select',
-    default: 'square',
-    options: [
-      { value: 'square', label: '◼ Square' },
-      { value: 'circle', label: '● Circle' },
-      { value: 'triangle', label: '▲ Triangle' },
-      { value: 'hexagon', label: '⬡ Hexagon' },
-      { value: 'diamond', label: '◆ Diamond' },
-      { value: 'grid', label: '⊞ Grid' }
-    ],
-    label: 'Shape Type',
-    category: 'Shape'
-  },
-  size: {
-    type: 'slider',
-    default: 0.6,
-    min: 0.3,
-    max: 0.8,
-    step: 0.05,
-    label: 'Shape Size',
-    category: 'Geometry'
-  },
-  cornerRadius: {
-    type: 'slider',
-    default: 0.1,
-    min: 0,
-    max: 0.5,
-    step: 0.05,
-    label: 'Corner Radius',
-    category: 'Shape'
-  },
-  rotation: {
-    type: 'slider',
-    default: 0,
-    min: 0,
-    max: 360,
-    step: 15,
-    label: 'Rotation Angle',
-    category: 'Transform'
-  },
-  thickness: {
-    type: 'slider',
-    default: 1,
-    min: 0,
-    max: 1,
-    step: 0.1,
-    label: 'Shape Thickness',
-    category: 'Shape'
-  },
-  gridGap: {
-    type: 'slider',
-    default: 0.05,
-    min: 0.02,
-    max: 0.15,
-    step: 0.01,
-    label: 'Grid Gap',
-    category: 'Grid'
-  },
-  gridColors: {
-    type: 'select',
-    default: 'theme',
-    options: [
-      { value: 'theme', label: '🎨 Theme Color' },
-      { value: 'microsoft', label: '🪟 Microsoft' },
-      { value: 'gradient', label: '🌈 Gradient' }
-    ],
-    label: 'Grid Colors',
-    category: 'Grid'
-  }
+function drawVisualization(ctx, width, height, params, time, utils) {
+  shape: select('square', [
+    { value: 'square', label: '◼ Square' },
+    { value: 'circle', label: '● Circle' },
+    { value: 'triangle', label: '▲ Triangle' },
+    { value: 'hexagon', label: '⬡ Hexagon' },
+    { value: 'diamond', label: '◆ Diamond' },
+    { value: 'grid', label: '⊞ Grid' }
+  ], 'Shape Type'),
+  size: slider(0.6, 0.3, 0.8, 0.05, 'Shape Size'),
+  cornerRadius: slider(0.1, 0, 0.5, 0.05, 'Corner Radius'),
+  rotation: slider(0, 0, 360, 15, 'Rotation Angle', '°'),
+  thickness: slider(1, 0, 1, 0.1, 'Shape Thickness'),
+  gridGap: slider(0.05, 0.02, 0.15, 0.01, 'Grid Gap'),
+  gridColors: select('theme', [
+    { value: 'theme', label: '🎨 Theme Color' },
+    { value: 'microsoft', label: '🪟 Microsoft' },
+    { value: 'gradient', label: '🌈 Gradient' }
+  ], 'Grid Colors')
 };
 
-function drawVisualization(ctx, width, height, params, time, utils) {
+  // Load parameters with new architecture
+  const p = utils.params.load(params, ctx, width, height, time, { parameters });
+  
   // Apply universal background
   utils.background.apply(ctx, width, height, params);
   
@@ -83,38 +33,29 @@ function drawVisualization(ctx, width, height, params, time, utils) {
   const fillOpacity = params.fillOpacity ?? 1;
   const strokeOpacity = params.strokeOpacity ?? 1;
   
-  // Extract parameters
-  const shape = params.shape || 'square';
-  const size = params.size || 0.6;
-  const cornerRadius = params.cornerRadius || 0.1;
-  const gridGap = params.gridGap || 0.05;
-  const gridColors = params.gridColors || 'theme';
-  const rotation = params.rotation || 0;
-  const thickness = params.thickness || 1;
-  
   // Calculate dimensions
   const minDim = Math.min(width, height);
-  const shapeSize = minDim * size;
+  const shapeSize = minDim * p.size;
   const centerX = width / 2;
   const centerY = height / 2;
   
   // Apply rotation
   ctx.save();
   ctx.translate(centerX, centerY);
-  ctx.rotate((rotation * Math.PI) / 180);
+  ctx.rotate((p.rotation * Math.PI) / 180);
   ctx.translate(-centerX, -centerY);
   
   // Draw based on shape
-  if (shape === 'grid') {
+  if (p.shape === 'grid') {
     // Microsoft-style 2x2 grid
-    const gap = shapeSize * gridGap;
+    const gap = shapeSize * p.gridGap;
     const squareSize = (shapeSize - gap) / 2;
     
     // Define colors
     let colors;
-    if (gridColors === 'microsoft') {
+    if (p.gridColors === 'microsoft') {
       colors = ['#F25022', '#7FBA00', '#00A4EF', '#FFB900']; // Microsoft colors
-    } else if (gridColors === 'gradient') {
+    } else if (p.gridColors === 'gradient') {
       // Create gradient variations of theme color
       const hexToHsl = (hex) => {
         const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
@@ -166,7 +107,7 @@ function drawVisualization(ctx, width, height, params, time, utils) {
     positions.forEach((pos, i) => {
       ctx.fillStyle = colors[i];
       ctx.globalAlpha = fillOpacity;
-      const radius = squareSize * cornerRadius;
+      const radius = squareSize * p.cornerRadius;
       
       // Create path for rounded rectangle
       ctx.beginPath();
@@ -207,10 +148,10 @@ function drawVisualization(ctx, width, height, params, time, utils) {
     
     ctx.globalAlpha = fillOpacity;
     
-    switch (shape) {
+    switch (p.shape) {
       case 'square':
         const halfSize = shapeSize / 2;
-        const radius = shapeSize * cornerRadius;
+        const radius = shapeSize * p.cornerRadius;
         ctx.beginPath();
         if (ctx.roundRect) {
           ctx.roundRect(centerX - halfSize, centerY - halfSize, shapeSize, shapeSize, radius);
@@ -233,10 +174,10 @@ function drawVisualization(ctx, width, height, params, time, utils) {
         
       case 'circle':
         ctx.beginPath();
-        if (thickness < 1) {
+        if (p.thickness < 1) {
           // Ring shape
           ctx.arc(centerX, centerY, shapeSize / 2, 0, Math.PI * 2);
-          ctx.arc(centerX, centerY, (shapeSize / 2) * (1 - thickness), 0, Math.PI * 2, true);
+          ctx.arc(centerX, centerY, (shapeSize / 2) * (1 - p.thickness), 0, Math.PI * 2, true);
         } else {
           // Filled circle
           ctx.arc(centerX, centerY, shapeSize / 2, 0, Math.PI * 2);
@@ -299,19 +240,43 @@ function drawVisualization(ctx, width, height, params, time, utils) {
   ctx.restore();
 }
 
-const metadata = {
-  id: 'minimal-shape',
-  name: "◼ Minimal Shape",
-  description: "Simple geometric shapes for clean, modern brand identities",
-  parameters,
-  defaultParams: {
-    shape: 'square',
-    size: 0.6,
-    cornerRadius: 0.1,
-    rotation: 0,
-    thickness: 1,
-    gridGap: 0.05,
-    gridColors: 'theme'
-  }
+// Helper functions
+const slider = (def, min, max, step, label, unit, opts = {}) => ({ 
+  type: "slider", default: def, min, max, step, label, unit, ...opts 
+});
+const select = (def, options, label, opts = {}) => ({ 
+  type: "select", default: def, options, label, ...opts 
+});
+
+export const parameters = {
+  shape: select('square', [
+    { value: 'square', label: '◼ Square' },
+    { value: 'circle', label: '● Circle' },
+    { value: 'triangle', label: '▲ Triangle' },
+    { value: 'hexagon', label: '⬡ Hexagon' },
+    { value: 'diamond', label: '◆ Diamond' },
+    { value: 'grid', label: '⊞ Grid' }
+  ], 'Shape Type'),
+  size: slider(0.6, 0.3, 0.8, 0.05, 'Shape Size'),
+  cornerRadius: slider(0.1, 0, 0.5, 0.05, 'Corner Radius'),
+  rotation: slider(0, 0, 360, 15, 'Rotation Angle', '°'),
+  thickness: slider(1, 0, 1, 0.1, 'Shape Thickness'),
+  gridGap: slider(0.05, 0.02, 0.15, 0.01, 'Grid Gap'),
+  gridColors: select('theme', [
+    { value: 'theme', label: '🎨 Theme Color' },
+    { value: 'microsoft', label: '🪟 Microsoft' },
+    { value: 'gradient', label: '🌈 Gradient' }
+  ], 'Grid Colors')
 };
+
+export const metadata = {
+  name: "⬜ Minimal Shape",
+  description: "Simple geometric shapes with clean aesthetics",
+  category: "geometric", 
+  tags: ["minimal", "geometric", "simple", "clean", "shape"],
+  author: "ReFlow",
+  version: "1.0.0"
+};
+
+export { drawVisualization as draw };
 

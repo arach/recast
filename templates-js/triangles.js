@@ -6,24 +6,8 @@
  */
 
 function draw(ctx, width, height, params, time, utils) {
-  // Apply universal background
-  utils.background.apply(ctx, width, height, params);
-  
-  // Extract parameters with defaults
-  const frequency = params.frequency || 3;
-  const amplitude = params.amplitude || 40;
-  const complexity = params.complexity || 0.4;
-  const chaos = params.chaos || 0.2;
-  const damping = params.damping || 0.85;
-  const layers = params.layers || 3;
-  const sides = params.sides || 3;
-  const rotation = params.rotation || 0;
-  
-  // Get theme colors
-  const fillColor = params.fillColor || '#000000';
-  const strokeColor = params.strokeColor || '#000000';
-  const fillOpacity = params.fillOpacity ?? 0.3;
-  const strokeOpacity = params.strokeOpacity ?? 0.8;
+  // Load and process all parameters - clean and deterministic
+  const p = utils.params.load(params, ctx, width, height, time, { parameters });
   
   const centerX = width / 2;
   const centerY = height / 2;
@@ -36,12 +20,12 @@ function draw(ctx, width, height, params, time, utils) {
   
   const calculatePhase = (index, total, timeOffset) => {
     const basePhase = (index / total) * Math.PI * 2;
-    return basePhase + timeOffset * frequency;
+    return basePhase + timeOffset * p.frequency;
   };
   
   const addChaos = (value, range) => {
-    if (chaos === 0) return value;
-    return value + (Math.random() - 0.5) * range * chaos;
+    if (p.chaos === 0) return value;
+    return value + (Math.random() - 0.5) * range * p.chaos;
   };
   
   // Create triangle path
@@ -60,14 +44,14 @@ function draw(ctx, width, height, params, time, utils) {
     return points;
   };
   
-  const baseSize = scaleToCanvas(amplitude, minDim);
+  const baseSize = scaleToCanvas(p.amplitude, minDim);
   
   // Draw triangles layer by layer
-  for (let layer = 0; layer < layers; layer++) {
+  for (let layer = 0; layer < p.layers; layer++) {
     // Calculate layer-specific parameters
-    const layerPhase = calculatePhase(layer, layers, time);
-    const layerSize = baseSize * Math.pow(damping, layer);
-    const layerRotation = rotation + (layerPhase * 180 / Math.PI);
+    const layerPhase = calculatePhase(layer, p.layers, time);
+    const layerSize = baseSize * Math.pow(p.damping, layer);
+    const layerRotation = p.rotation + (layerPhase * 180 / Math.PI);
     
     // Add chaos to position and rotation
     const chaosX = addChaos(0, layerSize * 0.2);
@@ -79,15 +63,15 @@ function draw(ctx, width, height, params, time, utils) {
     const finalY = Math.max(layerSize, Math.min(height - layerSize, centerY + chaosY));
     
     // Create triangle path
-    const trianglePoints = createTrianglePath(finalX, finalY, layerSize, layerRotation + chaosRotation, sides);
+    const trianglePoints = createTrianglePath(finalX, finalY, layerSize, layerRotation + chaosRotation, p.sides);
     
     // Draw main triangle
     ctx.save();
     
     // Fill
-    if (fillOpacity > 0) {
-      ctx.globalAlpha = fillOpacity * (0.8 - layer * 0.1);
-      ctx.fillStyle = fillColor;
+    if (p.theme.fillOpacity > 0) {
+      ctx.globalAlpha = p.theme.fillOpacity * (0.8 - layer * 0.1);
+      ctx.fillStyle = p.fillColor;
       ctx.beginPath();
       ctx.moveTo(trianglePoints[0].x, trianglePoints[0].y);
       for (let i = 1; i < trianglePoints.length; i++) {
@@ -98,9 +82,9 @@ function draw(ctx, width, height, params, time, utils) {
     }
     
     // Stroke
-    if (strokeOpacity > 0 && params.strokeWidth > 0) {
-      ctx.globalAlpha = strokeOpacity * (0.8 - layer * 0.1);
-      ctx.strokeStyle = strokeColor;
+    if (p.theme.strokeOpacity > 0 && p.theme.strokeWidth > 0) {
+      ctx.globalAlpha = p.theme.strokeOpacity * (0.8 - layer * 0.1);
+      ctx.strokeStyle = p.strokeColor;
       ctx.lineWidth = Math.max(1, layerSize / 30);
       ctx.beginPath();
       ctx.moveTo(trianglePoints[0].x, trianglePoints[0].y);
@@ -114,8 +98,8 @@ function draw(ctx, width, height, params, time, utils) {
     ctx.restore();
     
     // Add complexity: constellation or smaller triangles
-    if (complexity > 0 && layer < layers / 2) {
-      const complexityCount = Math.ceil(complexity * 5);
+    if (p.complexity > 0 && layer < p.layers / 2) {
+      const complexityCount = Math.ceil(p.complexity * 5);
       
       for (let i = 0; i < complexityCount; i++) {
         const orbitPhase = calculatePhase(i, complexityCount, time * 1.5);
@@ -133,8 +117,8 @@ function draw(ctx, width, height, params, time, utils) {
           ctx.save();
           
           // Small triangles use fill color
-          ctx.globalAlpha = fillOpacity * 0.6;
-          ctx.fillStyle = fillColor;
+          ctx.globalAlpha = p.theme.fillOpacity * 0.6;
+          ctx.fillStyle = p.fillColor;
           ctx.beginPath();
           ctx.moveTo(orbitPoints[0].x, orbitPoints[0].y);
           for (let j = 1; j < orbitPoints.length; j++) {
@@ -143,9 +127,9 @@ function draw(ctx, width, height, params, time, utils) {
           ctx.closePath();
           ctx.fill();
           
-          if (params.strokeWidth > 0) {
-            ctx.globalAlpha = strokeOpacity * 0.6;
-            ctx.strokeStyle = strokeColor;
+          if (p.theme.strokeWidth > 0) {
+            ctx.globalAlpha = p.theme.strokeOpacity * 0.6;
+            ctx.strokeStyle = p.strokeColor;
             ctx.lineWidth = Math.max(1, orbitSize / 20);
             ctx.stroke();
           }
@@ -157,10 +141,34 @@ function draw(ctx, width, height, params, time, utils) {
   }
 }
 
-// Export the template
-const template = { draw };
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = template;
-} else if (typeof window !== 'undefined') {
-  window.triangles = template;
-}
+// Helper functions
+const slider = (def, min, max, step, label, unit, opts = {}) => ({ 
+  type: "slider", default: def, min, max, step, label, unit, ...opts 
+});
+const select = (def, options, label, opts = {}) => ({ 
+  type: "select", default: def, options, label, ...opts 
+});
+const toggle = (def, label, opts = {}) => ({ 
+  type: "toggle", default: def, label, ...opts 
+});
+export const parameters = {
+  frequency: slider(3, 0.1, 10, 0.1, "Wave Frequency"),
+  amplitude: slider(40, 10, 100, 1, "Triangle Size", "%"),
+  complexity: slider(0.4, 0, 1, 0.1, "Complexity", null, { description: "Adds orbiting smaller triangles" }),
+  chaos: slider(0.2, 0, 1, 0.05, "Chaos", null, { description: "Random position and rotation variation" }),
+  damping: slider(0.85, 0.1, 1, 0.05, "Layer Damping", null, { description: "Size reduction per layer" }),
+  layers: slider(3, 1, 8, 1, "Number of Layers"),
+  sides: slider(3, 3, 12, 1, "Number of Sides", null, { description: "3 for triangles, higher for polygons" }),
+  rotation: slider(0, 0, 360, 1, "Base Rotation", "°"),
+};
+
+export const metadata = {
+  name: "🔺 Triangles",
+  description: "Spinning triangles, constellation patterns, and geometric formations",
+  category: "geometric",
+  tags: ["triangle", "polygon", "geometric", "animated", "layers"],
+  author: "ReFlow",
+  version: "1.0.0"
+};
+
+export { draw };

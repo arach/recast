@@ -1,0 +1,22 @@
+{
+  "name": "reflow-mcp-server",
+  "version": "0.1.0",
+  "description": "MCP server for ReFlow programmatic logo generation",
+  "main": "dist/index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index-lite.ts",
+    "build": "tsup src/index-lite.ts --format esm --dts --clean",
+    "start": "node dist/index-lite.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.4",
+    "nanoid": "^5.0.9"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.6",
+    "tsup": "^8.3.5",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3"
+  }
+}

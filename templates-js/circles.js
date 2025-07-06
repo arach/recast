@@ -9,51 +9,24 @@ function draw(ctx, width, height, params, time, utils) {
   // Apply universal background
   utils.background.apply(ctx, width, height, params);
   
-  // Extract parameters with defaults
-  const frequency = params.frequency || 2;
-  const amplitude = params.amplitude || 30;
-  const complexity = params.complexity || 0.5;
-  const chaos = params.chaos || 0.1;
-  const damping = params.damping || 0.8;
-  const layers = params.layers || 3;
-  const radius = params.radius || 50;
-  
-  // Get theme colors
-  const fillColor = params.fillColor || '#000000';
-  const strokeColor = params.strokeColor || '#000000';
-  const fillOpacity = params.fillOpacity ?? 0.8;
-  const strokeOpacity = params.strokeOpacity ?? 0.8;
+  // Load parameters with defaults
+  const p = utils.params.load(params, ctx, width, height, time, { parameters });
   
   const centerX = width / 2;
   const centerY = height / 2;
   const minDim = Math.min(width, height);
   
-  // Helper functions from original GeneratorBase
-  const scaleToCanvas = (value, canvasSize) => {
-    return (value / 100) * canvasSize;
-  };
-  
-  const calculatePhase = (index, total, timeOffset) => {
-    const basePhase = (index / total) * Math.PI * 2;
-    return basePhase + timeOffset * frequency;
-  };
-  
-  const addChaos = (value, range) => {
-    if (chaos === 0) return value;
-    return value + (Math.random() - 0.5) * range * chaos;
-  };
-  
   // Draw circles layer by layer
-  for (let layer = 0; layer < layers; layer++) {
+  for (let layer = 0; layer < p.layers; layer++) {
     // Calculate layer-specific parameters
-    const layerPhase = calculatePhase(layer, layers, time);
-    const layerRadius = scaleToCanvas(radius, minDim) * Math.pow(damping, layer);
-    const radiusVariation = scaleToCanvas(amplitude, minDim) * Math.sin(layerPhase);
+    const layerPhase = calculatePhase(layer, p.layers, time, p.frequency);
+    const layerRadius = scaleToCanvas(p.radius, minDim) * Math.pow(p.damping, layer);
+    const radiusVariation = scaleToCanvas(p.amplitude, minDim) * Math.sin(layerPhase);
     const finalRadius = Math.max(1, layerRadius + radiusVariation);
     
     // Add chaos to position
-    const chaosX = addChaos(0, finalRadius * 0.1);
-    const chaosY = addChaos(0, finalRadius * 0.1);
+    const chaosX = addChaos(0, finalRadius * 0.1, p.chaos);
+    const chaosY = addChaos(0, finalRadius * 0.1, p.chaos);
     
     // Calculate position
     const cx = Math.max(finalRadius, Math.min(width - finalRadius, centerX + chaosX));
@@ -61,8 +34,8 @@ function draw(ctx, width, height, params, time, utils) {
     
     // Draw main circle
     ctx.save();
-    ctx.globalAlpha = strokeOpacity * (0.8 - layer * 0.1);
-    ctx.strokeStyle = strokeColor;
+    ctx.globalAlpha = p.strokeOpacity * (0.8 - layer * 0.1);
+    ctx.strokeStyle = p.strokeColor;
     ctx.lineWidth = Math.max(1, finalRadius / 20);
     ctx.beginPath();
     ctx.arc(cx, cy, finalRadius, 0, Math.PI * 2);
@@ -70,11 +43,11 @@ function draw(ctx, width, height, params, time, utils) {
     ctx.restore();
     
     // Add complexity: orbital elements
-    if (complexity > 0 && layer < layers / 2) {
-      const complexityCount = Math.ceil(complexity * 6);
+    if (p.complexity > 0 && layer < p.layers / 2) {
+      const complexityCount = Math.ceil(p.complexity * 6);
       
       for (let i = 0; i < complexityCount; i++) {
-        const orbitPhase = calculatePhase(i, complexityCount, time * 2);
+        const orbitPhase = calculatePhase(i, complexityCount, time * 2, p.frequency);
         const orbitRadius = finalRadius * 0.7;
         const orbitX = centerX + chaosX + Math.cos(orbitPhase) * orbitRadius;
         const orbitY = centerY + chaosY + Math.sin(orbitPhase) * orbitRadius;
@@ -86,8 +59,8 @@ function draw(ctx, width, height, params, time, utils) {
         
         // Draw orbital circle
         ctx.save();
-        ctx.globalAlpha = fillOpacity * 0.6;
-        ctx.fillStyle = fillColor;
+        ctx.globalAlpha = p.fillOpacity * 0.6;
+        ctx.fillStyle = p.fillColor;
         ctx.beginPath();
         ctx.arc(finalOrbitX, finalOrbitY, orbitSize, 0, Math.PI * 2);
         ctx.fill();
@@ -97,10 +70,42 @@ function draw(ctx, width, height, params, time, utils) {
   }
 }
 
-// Export the template
-const template = { draw };
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = template;
-} else if (typeof window !== 'undefined') {
-  window.circles = template;
-}
+// Helper functions
+const scaleToCanvas = (value, canvasSize) => {
+  return (value / 100) * canvasSize;
+};
+
+const calculatePhase = (index, total, timeOffset, frequency) => {
+  const basePhase = (index / total) * Math.PI * 2;
+  return basePhase + timeOffset * frequency;
+};
+
+const addChaos = (value, range, chaos) => {
+  if (chaos === 0) return value;
+  return value + (Math.random() - 0.5) * range * chaos;
+};
+
+export const parameters = {
+  frequency: { default: 2, min: 0.1, max: 10, step: 0.1 },
+  amplitude: { default: 30, min: 0, max: 100, step: 1 },
+  complexity: { default: 0.5, min: 0, max: 1, step: 0.1 },
+  chaos: { default: 0.1, min: 0, max: 1, step: 0.1 },
+  damping: { default: 0.8, min: 0.1, max: 1, step: 0.1 },
+  layers: { default: 3, min: 1, max: 10, step: 1 },
+  radius: { default: 50, min: 5, max: 100, step: 1 },
+  fillColor: { default: '#000000', type: 'color' },
+  strokeColor: { default: '#000000', type: 'color' },
+  fillOpacity: { default: 0.8, min: 0, max: 1, step: 0.1 },
+  strokeOpacity: { default: 0.8, min: 0, max: 1, step: 0.1 }
+};
+
+export const metadata = {
+  name: "⭕ Circles",
+  description: "Pulsing circles, orbital patterns, and nested ring systems",
+  author: "ReFlow",
+  version: "1.0.0",
+  tags: ["geometric", "circles", "animation", "orbital"]
+};
+
+export { draw };
+

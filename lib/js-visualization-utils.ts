@@ -1,6 +1,8 @@
 import { loadJSTemplate } from './js-template-registry'
 // Import all utilities from the package
 import * as templateUtils from '@reflow/template-utils'
+// Import local parameter utilities
+import { params } from './template-utils'
 
 // Create utils object using only package exports with modern namespaced functions
 const utils = {
@@ -10,7 +12,9 @@ const utils = {
   canvas: templateUtils.canvas,
   math: templateUtils.math,
   shape: templateUtils.shape,
-  debug: templateUtils.debug
+  debug: templateUtils.debug,
+  // Local parameter utilities
+  params
 }
 
 // Flatten nested parameter structures into a single level object
@@ -77,10 +81,17 @@ export async function generateJSVisualization(
     const flattenedParams = flattenParameters(parameters)
     
     // Execute the template code
-    // Create a function from the template code and execute it
+    // Strip export statements from template code as Function constructor doesn't support ES modules
+    let codeToExecute = template.code
+    
+    // Remove all export statements
+    codeToExecute = codeToExecute.replace(/export\s+(const|function)\s+/g, '')
+    codeToExecute = codeToExecute.replace(/export\s*\{[^}]*\}\s*;?/g, '')
+    
+    // Create a function from the cleaned template code and execute it
     const executeTemplate = new Function(
       'ctx', 'width', 'height', 'params', 'time', 'utils',
-      template.code + '\n\n' +
+      codeToExecute + '\n\n' +
       '// Try both function names for compatibility\n' +
       'if (typeof drawVisualization === "function") {\n' +
       '  drawVisualization(ctx, width, height, params, time, utils);\n' +
