@@ -50,12 +50,17 @@ jobs:
             
       - name: Install dependencies
         run: |
-          # Install root dependencies
-          pnpm install --no-frozen-lockfile
-          
-          # Install landing dependencies
+          # Navigate to landing directory first
           cd landing
-          pnpm install --no-frozen-lockfile
+          
+          # Remove any existing node_modules
+          rm -rf node_modules
+          
+          # Install dependencies with no workspace
+          pnpm install --no-frozen-lockfile --shamefully-hoist
+          
+          # Verify installation
+          ls -la node_modules/framer-motion || echo "Warning: framer-motion not found"
         
       - name: Build and Export
         run: pnpm run export
