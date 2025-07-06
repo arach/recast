@@ -20,7 +20,6 @@ import { useRunCodeShortcut } from '@/lib/hooks/useKeyboardShortcuts'
 import { useDebugAction } from '@/lib/debug/useDebugAction'
 
 // Services
-import { ThemeLoader } from '@/lib/services/themeLoader'
 import { stateTracer } from '@/lib/debug/stateUpdateTracer'
 import { SavedShape, SavedLogo } from '@/lib/storage'
 

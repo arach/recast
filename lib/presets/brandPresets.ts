@@ -117,13 +117,8 @@ export class BrandPresets {
     
     await new Promise(resolve => setTimeout(resolve, 200))
     
-    // Import templates
-    const [wordmark, letterMark, waveBars, prismGoogle] = await Promise.all([
-      import('@/templates/wordmark'),
-      import('@/templates/letter-mark'),
-      import('@/templates/wave-bars'),
-      import('@/templates/prism-google')
-    ])
+    // Load JS templates
+    const { loadJSTemplate } = await import('@/lib/js-template-registry')
     
     
     const positions = [
@@ -136,7 +131,6 @@ export class BrandPresets {
     // Create logos with their configurations
     const logoConfigs = [
       {
-        template: wordmark,
         templateId: 'wordmark',
         position: positions[0],
         params: {
@@ -154,7 +148,6 @@ export class BrandPresets {
         }
       },
       {
-        template: letterMark,
         templateId: 'letter-mark',
         position: positions[1],
         params: {
@@ -169,7 +162,6 @@ export class BrandPresets {
         }
       },
       {
-        template: waveBars,
         templateId: 'wave-bars',
         position: positions[2],
         params: {
@@ -180,9 +172,7 @@ export class BrandPresets {
           fillGradientEnd: '#06b6d4',
           fillGradientDirection: 45,
           strokeType: 'none',
-          backgroundType: 'transparent'
-        },
-        coreParams: {
+          backgroundType: 'transparent',
           frequency: 2,
           amplitude: 40,
           complexity: 0.2,
@@ -190,13 +180,9 @@ export class BrandPresets {
         }
       },
       {
-        template: prismGoogle,
-        templateId: 'prism-google',
+        templateId: 'prism',
         position: positions[3],
         params: {
-          symmetry: 6,
-          radius: 60,
-          colorMode: 'monochrome',
           fillType: 'solid',
           fillColor: '#000000',
           strokeType: 'none',
@@ -218,8 +204,7 @@ export class BrandPresets {
         // Update existing first logo
         logoId = logoStore.logos[0].id
         logoStore.updateLogo(logoId, {
-          templateId: config.templateId,
-          templateName: config.template.name
+          templateId: config.templateId
         })
         logoStore.updateLogoPosition(logoId, config.position)
       } else {
@@ -229,8 +214,7 @@ export class BrandPresets {
         
         // Immediately update with correct template info to ensure it sticks
         logoStore.updateLogo(logoId, {
-          templateId: config.templateId,
-          templateName: config.template.name
+          templateId: config.templateId
         })
         logoStore.updateLogoPosition(logoId, config.position)
       }
