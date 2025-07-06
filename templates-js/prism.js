@@ -4,29 +4,27 @@
  * Clean geometric prism with isometric 3D perspective and subtle animation
  */
 
-function draw(ctx, width, height, params, time, utils) {
+const parameters = {
+  frequency: { default: 0.6, range: [0.1, 2.0, 0.1] },
+  amplitude: { default: 100, range: [50, 200, 5] },
+  prismSides: { default: 6, range: [3, 12, 1] },
+  prismHeight: { default: 1, range: [0.5, 2.0, 0.1] },
+  cornerRadius: { default: 4, range: [0, 20, 1] },
+  shapeRotation: { default: 0, range: [0, 360, 5] },
+  showInternalStructure: { default: true, range: [false, true] },
+  depthRatio: { default: 0.6, range: [0.2, 1.0, 0.1] },
+  perspectiveAngle: { default: 30, range: [10, 60, 5] },
+  rotationY: { default: 0, range: [-45, 45, 5] },
+  rotationX: { default: 0, range: [-45, 45, 5] },
+  faceShading: { default: 0.15, range: [0, 0.5, 0.05] }
+};
+
+function drawVisualization(ctx, width, height, params, time, utils) {
   // Apply background
-  utils.background.apply(ctx, width, height, params);
+  utils.applyUniversalBackground(ctx, width, height, params);
   
-  // Extract parameters with defaults
-  const frequency = params.frequency || 0.6;
-  const amplitude = params.amplitude || 100;
-  const prismSides = params.prismSides || 6;
-  const prismHeight = params.prismHeight || 1;
-  const cornerRadius = params.cornerRadius || 4;
-  const shapeRotation = (params.shapeRotation || 0) * (Math.PI / 180);
-  const showInternalStructure = params.showInternalStructure ?? true;
-  const depthRatio = params.depthRatio || 0.6;
-  const perspectiveAngle = (params.perspectiveAngle || 30) * (Math.PI / 180);
-  const rotationY = (params.rotationY || 0) * (Math.PI / 180);
-  const rotationX = (params.rotationX || 0) * (Math.PI / 180);
-  const faceShading = params.faceShading || 0.15;
-  
-  // Theme colors
-  const fillColor = params.fillColor || '#3b82f6';
-  const strokeColor = params.strokeColor || '#1e40af';
-  const fillOpacity = params.fillOpacity ?? 1;
-  const strokeOpacity = params.strokeOpacity ?? 1;
+  // Load parameters with new system
+  const p = utils.params.load(params, ctx, width, height, time, { parameters });
   
   // Calculate dimensions
   const centerX = width / 2;
@@ -34,15 +32,21 @@ function draw(ctx, width, height, params, time, utils) {
   
   // Base scale
   const baseScale = Math.min(width, height) / 400;
-  const scaledAmplitude = amplitude * baseScale;
+  const scaledAmplitude = p.amplitude * baseScale;
   
   // Animation
-  const animationPhase = time * frequency;
+  const animationPhase = time * p.frequency;
   const breathingScale = 1 + Math.sin(animationPhase) * 0.05;
   
   // Calculate prism geometry
   const radius = scaledAmplitude * breathingScale;
-  const depth = radius * depthRatio;
+  const depth = radius * p.depthRatio;
+  
+  // Convert degrees to radians
+  const shapeRotation = p.shapeRotation * (Math.PI / 180);
+  const perspectiveAngle = p.perspectiveAngle * (Math.PI / 180);
+  const rotationY = p.rotationY * (Math.PI / 180);
+  const rotationX = p.rotationX * (Math.PI / 180);
   
   // Isometric projection helpers
   const cos30 = Math.cos(perspectiveAngle);
@@ -50,10 +54,10 @@ function draw(ctx, width, height, params, time, utils) {
   
   // Generate front face vertices
   const frontVertices = [];
-  for (let i = 0; i < prismSides; i++) {
-    const angle = (i / prismSides) * Math.PI * 2 + shapeRotation;
+  for (let i = 0; i < p.prismSides; i++) {
+    const angle = (i / p.prismSides) * Math.PI * 2 + shapeRotation;
     const x = Math.cos(angle) * radius;
-    const y = Math.sin(angle) * radius * prismHeight;
+    const y = Math.sin(angle) * radius * p.prismHeight;
     frontVertices.push({ x, y });
   }
   
@@ -94,13 +98,13 @@ function draw(ctx, width, height, params, time, utils) {
   }
   
   // Draw back face (if visible)
-  if (showInternalStructure) {
+  if (p.showInternalStructure) {
     ctx.save();
-    ctx.globalAlpha = fillOpacity * 0.6;
+    ctx.globalAlpha = 0.6;
     
     // Draw back face with rounded corners if needed
-    if (cornerRadius > 0) {
-      utils.canvas.drawRoundedPolygon(ctx, backVertices, cornerRadius * 0.8);
+    if (p.cornerRadius > 0) {
+      drawRoundedPolygon(ctx, backVertices, p.cornerRadius * 0.8);
     } else {
       ctx.beginPath();
       backVertices.forEach((v, i) => {
@@ -110,33 +114,24 @@ function draw(ctx, width, height, params, time, utils) {
       ctx.closePath();
     }
     
-    // Darker fill for back face
-    ctx.fillStyle = utils.color.adjustBrightness(fillColor, -faceShading);
-    ctx.fill();
+    // Apply universal fill with darker shade for back face
+    const bounds = getBounds(backVertices);
+    utils.applyUniversalFill(ctx, bounds.width, bounds.height, params, {
+      x: bounds.minX,
+      y: bounds.minY,
+      darken: p.faceShading
+    });
     
-    // Back face stroke
-    if (params.strokeType !== 'none' && params.strokeWidth > 0) {
-      ctx.globalAlpha = strokeOpacity * 0.7;
-      ctx.strokeStyle = strokeColor;
-      ctx.lineWidth = 1;
-      
-      if (params.strokeType === 'dashed') {
-        ctx.setLineDash([params.strokeDashSize || 5, params.strokeGapSize || 5]);
-      } else if (params.strokeType === 'dotted') {
-        ctx.setLineDash([params.strokeDashSize || 2, params.strokeGapSize || 3]);
-      }
-      
-      ctx.stroke();
-      ctx.setLineDash([]);
-    }
+    // Apply universal stroke
+    utils.applyUniversalStroke(ctx, params, { opacity: 0.7 });
     
     ctx.restore();
   }
   
   // Draw side faces
   const visibleFaces = [];
-  for (let i = 0; i < prismSides; i++) {
-    const nextI = (i + 1) % prismSides;
+  for (let i = 0; i < p.prismSides; i++) {
+    const nextI = (i + 1) % p.prismSides;
     
     // Calculate face normal to determine visibility (simple approximation)
     const dx = frontVertices[nextI].x - frontVertices[i].x;
@@ -152,7 +147,7 @@ function draw(ctx, width, height, params, time, utils) {
           backVertices[nextI],
           backVertices[i]
         ],
-        brightness: -faceShading * 0.5 * (1 + normal.x / Math.sqrt(normal.x * normal.x + normal.y * normal.y))
+        brightness: -p.faceShading * 0.5 * (1 + normal.x / Math.sqrt(normal.x * normal.x + normal.y * normal.y))
       });
     }
   }
@@ -167,7 +162,7 @@ function draw(ctx, width, height, params, time, utils) {
   // Draw visible side faces
   visibleFaces.forEach(face => {
     ctx.save();
-    ctx.globalAlpha = fillOpacity * 0.8;
+    ctx.globalAlpha = 0.8;
     
     ctx.beginPath();
     face.vertices.forEach((v, i) => {
@@ -176,57 +171,42 @@ function draw(ctx, width, height, params, time, utils) {
     });
     ctx.closePath();
     
-    ctx.fillStyle = utils.color.adjustBrightness(fillColor, face.brightness);
-    ctx.fill();
+    // Apply universal fill with brightness adjustment
+    const faceBounds = getBounds(face.vertices);
+    utils.applyUniversalFill(ctx, faceBounds.width, faceBounds.height, params, {
+      x: faceBounds.minX,
+      y: faceBounds.minY,
+      darken: face.brightness
+    });
     
-    if (params.strokeType !== 'none' && params.strokeWidth > 0) {
-      ctx.globalAlpha = strokeOpacity * 0.6;
-      ctx.strokeStyle = strokeColor;
-      ctx.lineWidth = 1;
-      
-      if (params.strokeType === 'dashed') {
-        ctx.setLineDash([params.strokeDashSize || 5, params.strokeGapSize || 5]);
-      } else if (params.strokeType === 'dotted') {
-        ctx.setLineDash([params.strokeDashSize || 2, params.strokeGapSize || 3]);
-      }
-      
-      ctx.stroke();
-      ctx.setLineDash([]);
-    }
+    // Apply universal stroke
+    utils.applyUniversalStroke(ctx, params, { opacity: 0.6 });
     
     ctx.restore();
   });
   
   // Draw connecting edges
-  if (showInternalStructure) {
+  if (p.showInternalStructure) {
     ctx.save();
-    ctx.globalAlpha = strokeOpacity * 0.5;
-    ctx.strokeStyle = strokeColor;
-    ctx.lineWidth = 1;
     
-    if (params.strokeType === 'dashed') {
-      ctx.setLineDash([params.strokeDashSize || 5, params.strokeGapSize || 5]);
-    } else if (params.strokeType === 'dotted') {
-      ctx.setLineDash([params.strokeDashSize || 2, params.strokeGapSize || 3]);
-    }
-    
-    for (let i = 0; i < prismSides; i++) {
+    for (let i = 0; i < p.prismSides; i++) {
       ctx.beginPath();
       ctx.moveTo(frontVertices[i].x, frontVertices[i].y);
       ctx.lineTo(backVertices[i].x, backVertices[i].y);
       ctx.stroke();
     }
     
-    ctx.setLineDash([]);
+    // Apply universal stroke
+    utils.applyUniversalStroke(ctx, params, { opacity: 0.5 });
+    
     ctx.restore();
   }
   
   // Draw front face
   ctx.save();
-  ctx.globalAlpha = fillOpacity;
   
-  if (cornerRadius > 0) {
-    utils.canvas.drawRoundedPolygon(ctx, frontVertices, cornerRadius);
+  if (p.cornerRadius > 0) {
+    drawRoundedPolygon(ctx, frontVertices, p.cornerRadius);
   } else {
     ctx.beginPath();
     frontVertices.forEach((v, i) => {
@@ -236,25 +216,15 @@ function draw(ctx, width, height, params, time, utils) {
     ctx.closePath();
   }
   
-  // Fill front face
-  ctx.fillStyle = fillColor;
-  ctx.fill();
+  // Apply universal fill
+  const frontBounds = getBounds(frontVertices);
+  utils.applyUniversalFill(ctx, frontBounds.width, frontBounds.height, params, {
+    x: frontBounds.minX,
+    y: frontBounds.minY
+  });
   
-  // Stroke front face
-  if (params.strokeType !== 'none' && params.strokeWidth > 0) {
-    ctx.globalAlpha = strokeOpacity;
-    ctx.strokeStyle = strokeColor;
-    ctx.lineWidth = params.strokeWidth || 2;
-    
-    if (params.strokeType === 'dashed') {
-      ctx.setLineDash([params.strokeDashSize || 5, params.strokeGapSize || 5]);
-    } else if (params.strokeType === 'dotted') {
-      ctx.setLineDash([params.strokeDashSize || 2, params.strokeGapSize || 3]);
-    }
-    
-    ctx.stroke();
-    ctx.setLineDash([]);
-  }
+  // Apply universal stroke
+  utils.applyUniversalStroke(ctx, params);
   
   ctx.restore();
   
@@ -267,8 +237,8 @@ function draw(ctx, width, height, params, time, utils) {
     y: v.y * 0.7
   }));
   
-  if (cornerRadius > 0) {
-    utils.canvas.drawRoundedPolygon(ctx, highlightVertices, cornerRadius * 0.7);
+  if (p.cornerRadius > 0) {
+    drawRoundedPolygon(ctx, highlightVertices, p.cornerRadius * 0.7);
   } else {
     ctx.beginPath();
     highlightVertices.forEach((v, i) => {
@@ -278,20 +248,94 @@ function draw(ctx, width, height, params, time, utils) {
     ctx.closePath();
   }
   
-  ctx.fillStyle = utils.color.adjustBrightness(fillColor, 0.2);
-  ctx.fill();
-  ctx.restore();
+  // Apply lighter fill for highlight
+  const highlightBounds = getBounds(highlightVertices);
+  utils.applyUniversalFill(ctx, highlightBounds.width, highlightBounds.height, params, {
+    x: highlightBounds.minX,
+    y: highlightBounds.minY,
+    lighten: 0.2
+  });
   
   ctx.restore();
   
-  // Debug info
-  if (utils.debug) {
-    utils.debug.log('Prism rendered', {
-      sides: prismSides,
-      radius: radius.toFixed(1),
-      depth: depth.toFixed(1),
-      visibleFaces: visibleFaces.length,
-      time: time.toFixed(2)
-    });
+  ctx.restore();
+  
+  // Helper functions
+  function drawRoundedPolygon(ctx, vertices, radius) {
+    if (vertices.length < 3) return;
+    
+    ctx.beginPath();
+    
+    for (let i = 0; i < vertices.length; i++) {
+      const current = vertices[i];
+      const next = vertices[(i + 1) % vertices.length];
+      const prev = vertices[(i - 1 + vertices.length) % vertices.length];
+      
+      // Calculate angles for rounded corners
+      const angle1 = Math.atan2(current.y - prev.y, current.x - prev.x);
+      const angle2 = Math.atan2(next.y - current.y, next.x - current.x);
+      
+      const cornerX1 = current.x - Math.cos(angle1) * radius;
+      const cornerY1 = current.y - Math.sin(angle1) * radius;
+      const cornerX2 = current.x + Math.cos(angle2) * radius;
+      const cornerY2 = current.y + Math.sin(angle2) * radius;
+      
+      if (i === 0) {
+        ctx.moveTo(cornerX1, cornerY1);
+      } else {
+        ctx.lineTo(cornerX1, cornerY1);
+      }
+      
+      ctx.quadraticCurveTo(current.x, current.y, cornerX2, cornerY2);
+    }
+    
+    ctx.closePath();
+  }
+  
+  function getBounds(vertices) {
+    const xs = vertices.map(v => v.x);
+    const ys = vertices.map(v => v.y);
+    const minX = Math.min(...xs);
+    const maxX = Math.max(...xs);
+    const minY = Math.min(...ys);
+    const maxY = Math.max(...ys);
+    
+    return {
+      minX, maxX, minY, maxY,
+      width: maxX - minX,
+      height: maxY - minY,
+      centerX: (minX + maxX) / 2,
+      centerY: (minY + maxY) / 2
+    };
   }
 }
+
+// Helper functions and template exports
+function getDefaultParams() {
+  return {
+    frequency: 0.6,
+    amplitude: 100,
+    prismSides: 6,
+    prismHeight: 1,
+    cornerRadius: 4,
+    shapeRotation: 0,
+    showInternalStructure: true,
+    depthRatio: 0.6,
+    perspectiveAngle: 30,
+    rotationY: 0,
+    rotationX: 0,
+    faceShading: 0.15
+  };
+}
+
+const metadata = {
+  id: 'prism',
+  name: "🔮 Prism",
+  description: "Clean geometric prism with isometric 3D perspective and subtle animation",
+  category: 'geometry',
+  tags: ['3d', 'prism', 'geometric', 'isometric', 'polygon'],
+  parameters,
+  defaultParams: getDefaultParams()
+};
+
+export { parameters, metadata, drawVisualization };
