@@ -1,169 +1,18 @@
-// 💫 Neon Glow - Cyberpunk-inspired glowing neon effects with electric energy
+/**
+ * 💫 Neon Glow
+ * 
+ * Cyberpunk-inspired glowing neon effects with electric energy and circuit aesthetics
+ */
 
-const parameters = {
-  neonStyle: {
-    type: 'select',
-    default: 1,
-    options: [
-      { value: 0, label: '🚧 Tube' },
-      { value: 1, label: '🔌 Wire' },
-      { value: 2, label: '⚡ Plasma' },
-      { value: 3, label: '🔦 Laser' },
-      { value: 4, label: '🌐 Hologram' }
-    ],
-    label: 'Neon Style',
-    category: 'Style'
-  },
-  frequency: {
-    type: 'slider',
-    default: 1.8,
-    min: 0.5,
-    max: 3,
-    step: 0.1,
-    label: 'Electric Frequency',
-    category: 'Movement'
-  },
-  amplitude: {
-    type: 'slider',
-    default: 140,
-    min: 80,
-    max: 200,
-    step: 5,
-    label: 'Neon Size',
-    category: 'Geometry'
-  },
-  complexity: {
-    type: 'slider',
-    default: 0.6,
-    min: 0.2,
-    max: 1,
-    step: 0.05,
-    label: 'Circuit Complexity',
-    category: 'Geometry'
-  },
-  glowIntensity: {
-    type: 'slider',
-    default: 0.8,
-    min: 0.3,
-    max: 1,
-    step: 0.05,
-    label: 'Glow Intensity',
-    category: 'Glow'
-  },
-  glowRadius: {
-    type: 'slider',
-    default: 25,
-    min: 10,
-    max: 50,
-    step: 2,
-    label: 'Glow Radius',
-    category: 'Glow'
-  },
-  glowLayers: {
-    type: 'slider',
-    default: 4,
-    min: 2,
-    max: 6,
-    step: 1,
-    label: 'Glow Layers',
-    category: 'Glow'
-  },
-  electricSpark: {
-    type: 'slider',
-    default: 0.4,
-    min: 0,
-    max: 1,
-    step: 0.05,
-    label: 'Electric Sparks',
-    category: 'Effects'
-  },
-  energyFlow: {
-    type: 'slider',
-    default: 0.6,
-    min: 0,
-    max: 1,
-    step: 0.05,
-    label: 'Energy Flow',
-    category: 'Effects'
-  },
-  circuitBreaks: {
-    type: 'slider',
-    default: 0.1,
-    min: 0,
-    max: 0.3,
-    step: 0.02,
-    label: 'Circuit Breaks',
-    category: 'Effects'
-  },
-  neonHue: {
-    type: 'slider',
-    default: 180,
-    min: 0,
-    max: 360,
-    step: 10,
-    label: 'Neon Hue',
-    category: 'Color'
-  },
-  colorShift: {
-    type: 'slider',
-    default: 20,
-    min: 0,
-    max: 60,
-    step: 5,
-    label: 'Color Shift Range',
-    category: 'Color'
-  },
-  saturation: {
-    type: 'slider',
-    default: 1,
-    min: 0.8,
-    max: 1,
-    step: 0.02,
-    label: 'Color Saturation',
-    category: 'Color'
-  },
-  pulseSpeed: {
-    type: 'slider',
-    default: 1.5,
-    min: 0.5,
-    max: 3,
-    step: 0.1,
-    label: 'Pulse Speed',
-    category: 'Animation'
-  },
-  flicker: {
-    type: 'slider',
-    default: 0.15,
-    min: 0,
-    max: 0.5,
-    step: 0.05,
-    label: 'Neon Flicker',
-    category: 'Animation'
-  }
-};
+function draw(ctx, width, height, params, time, utils) {
+  // Load and process all parameters - clean and deterministic
+  const p = utils.params.load(params, ctx, width, height, time, { parameters });
 
-function drawVisualization(ctx, width, height, params, time, utils) {
-  // Apply universal background
-  utils.background.apply(ctx, width, height, params);
-
-  // Extract parameters
+  // Template-specific parameters (defaults come from exported parameters)
   const centerX = width / 2;
   const centerY = height / 2;
-  const frequency = params.frequency || 1.8;
-  const amplitude = params.amplitude || 140;
-  const complexity = params.complexity || 0.6;
-  const neonStyleNum = Math.round(params.neonStyle || 1);
-  const glowIntensity = params.glowIntensity || 0.8;
-  const glowRadius = params.glowRadius || 25;
-  const glowLayers = Math.round(params.glowLayers || 4);
-  const electricSpark = params.electricSpark || 0.4;
-  const energyFlow = params.energyFlow || 0.6;
-  const circuitBreaks = params.circuitBreaks || 0.1;
-  const neonHue = params.neonHue || 180;
-  const colorShift = params.colorShift || 20;
-  const saturation = params.saturation || 1;
-  const pulseSpeed = params.pulseSpeed || 1.5;
-  const flicker = params.flicker || 0.15;
+  const { frequency, amplitude, complexity, neonStyle, glowIntensity, glowRadius, glowLayers, electricSpark, energyFlow, circuitBreaks, neonHue, colorShift, saturation, pulseSpeed, flicker } = p;
+  const neonStyleNum = Math.round(neonStyle);
 
   // Neon scale and pulsing
   const baseScale = Math.min(width, height) / 350;
@@ -191,7 +40,7 @@ function drawVisualization(ctx, width, height, params, time, utils) {
   }
 
   // Render main neon tube
-  renderNeonCore(ctx, neonPath, neonColors, neonStyleNum, flickerEffect, params, utils);
+  renderNeonCore(ctx, neonPath, neonColors, neonStyleNum, flickerEffect, p, utils);
 
   // Electric spark effects
   if (electricSpark > 0.1) {
@@ -297,20 +146,20 @@ function drawVisualization(ctx, width, height, params, time, utils) {
     ctx.restore();
   }
 
-  function renderNeonCore(ctx, points, colors, style, flicker, params, utils) {
+  function renderNeonCore(ctx, points, colors, style, flicker, p, utils) {
     ctx.save();
     ctx.globalAlpha = flicker;
     
     // Core neon line
-    ctx.strokeStyle = params.strokeColor || colors.core;
-    ctx.lineWidth = params.strokeWidth || (style === 3 ? 1 : 2); // Laser is thinner
+    ctx.strokeStyle = p.strokeColor || colors.core;
+    ctx.lineWidth = p.strokeWidth || (style === 3 ? 1 : 2); // Laser is thinner
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
     
     // Apply universal stroke style
-    if (params.strokeType === 'dashed') {
+    if (p.strokeType === 'dashed') {
       ctx.setLineDash([ctx.lineWidth * 4, ctx.lineWidth * 2]);
-    } else if (params.strokeType === 'dotted') {
+    } else if (p.strokeType === 'dotted') {
       ctx.setLineDash([ctx.lineWidth, ctx.lineWidth * 2]);
     }
     
@@ -431,27 +280,46 @@ function drawVisualization(ctx, width, height, params, time, utils) {
   }
 }
 
-const metadata = {
-  id: 'neon-glow',
+// Helper functions for concise parameter definitions
+const slider = (def, min, max, step, label, unit, opts = {}) => ({ 
+  type: "slider", default: def, min, max, step, label, unit, ...opts 
+});
+const select = (def, options, label, opts = {}) => ({ 
+  type: "select", default: def, options, label, ...opts 
+});
+
+// Parameter definitions - controls and defaults
+export const parameters = {
+  neonStyle: select(1, [
+    { value: 0, label: '🚧 Tube' },
+    { value: 1, label: '🔌 Wire' },
+    { value: 2, label: '⚡ Plasma' },
+    { value: 3, label: '🔦 Laser' },
+    { value: 4, label: '🌐 Hologram' }
+  ], 'Neon Style'),
+  frequency: slider(1.8, 0.5, 3, 0.1, 'Electric Frequency'),
+  amplitude: slider(140, 80, 200, 5, 'Neon Size'),
+  complexity: slider(0.6, 0.2, 1, 0.05, 'Circuit Complexity'),
+  glowIntensity: slider(0.8, 0.3, 1, 0.05, 'Glow Intensity'),
+  glowRadius: slider(25, 10, 50, 2, 'Glow Radius', 'px'),
+  glowLayers: slider(4, 2, 6, 1, 'Glow Layers'),
+  electricSpark: slider(0.4, 0, 1, 0.05, 'Electric Sparks'),
+  energyFlow: slider(0.6, 0, 1, 0.05, 'Energy Flow'),
+  circuitBreaks: slider(0.1, 0, 0.3, 0.02, 'Circuit Breaks'),
+  neonHue: slider(180, 0, 360, 10, 'Neon Hue', '°'),
+  colorShift: slider(20, 0, 60, 5, 'Color Shift Range', '°'),
+  saturation: slider(1, 0.8, 1, 0.02, 'Color Saturation'),
+  pulseSpeed: slider(1.5, 0.5, 3, 0.1, 'Pulse Speed', 'x'),
+  flicker: slider(0.15, 0, 0.5, 0.05, 'Neon Flicker')
+};
+
+// Template metadata
+export const metadata = {
   name: "💫 Neon Glow",
   description: "Cyberpunk-inspired glowing neon effects with electric energy and circuit aesthetics",
-  parameters,
-  defaultParams: {
-    neonStyle: 1,
-    frequency: 1.8,
-    amplitude: 140,
-    complexity: 0.6,
-    glowIntensity: 0.8,
-    glowRadius: 25,
-    glowLayers: 4,
-    electricSpark: 0.4,
-    energyFlow: 0.6,
-    circuitBreaks: 0.1,
-    neonHue: 180,
-    colorShift: 20,
-    saturation: 1,
-    pulseSpeed: 1.5,
-    flicker: 0.15
-  }
+  category: "effects",
+  tags: ["neon", "glow", "cyberpunk", "electric", "animated", "circuits"],
+  author: "ReFlow",
+  version: "1.0.0"
 };
 

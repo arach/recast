@@ -6,34 +6,11 @@
  */
 
 function draw(ctx, width, height, params, time, utils) {
-  // Debug logging to see what's actually happening
-  console.log('=== LETTER-MARK DEBUG ===');
-  console.log('Canvas size:', width, 'x', height);
-  console.log('Parameters received:', params);
-  console.log('Letter param:', params.letter);
-  console.log('FillColor param:', params.fillColor);
-  console.log('Style param:', params.style);
-  console.log('Utils available:', Object.keys(utils));
+  // Load and process all parameters - clean and deterministic
+  const p = utils.params.load(params, ctx, width, height, time, { parameters });
   
-  // Apply universal background - exact match to TypeScript version
-  utils.background.apply(ctx, width, height, params);
-  
-  // Get theme colors - exact match to TypeScript version
-  const fillColor = params.fillColor || '#000000';
-  const strokeColor = params.strokeColor || '#000000';
-  const backgroundColor = params.backgroundColor || '#ffffff';
-  const fillOpacity = params.fillOpacity ?? 1;
-  const strokeOpacity = params.strokeOpacity ?? 1;
-  
-  // Extract parameters - exact match to TypeScript version
-  const letter = params.letter || 'A';
-  const fontWeight = params.fontWeight || '600';
-  const style = params.style || 'modern';
-  const alignment = params.alignment || 'center';
-  const size = params.size || 0.7;
-  const letterSpacing = params.letterSpacing || 0;
-  const container = params.container || 'none';
-  const containerPadding = params.containerPadding || 0.2;
+  // Template-specific parameters (defaults come from exported parameters)
+  const { letter, fontWeight, style, alignment, size, letterSpacing, container, containerPadding } = p;
   
   // Calculate dimensions - exact match to TypeScript version
   const minDim = Math.min(width, height);
@@ -73,8 +50,8 @@ function draw(ctx, width, height, params, time, utils) {
     const padding = minDim * containerPadding;
     
     ctx.save();
-    ctx.globalAlpha = fillOpacity;
-    ctx.fillStyle = fillColor;
+    ctx.globalAlpha = p.fillOpacity;
+    ctx.fillStyle = p.fillColor;
     
     if (container === 'circle') {
       const radius = Math.max(textWidth, textHeight) / 2 + padding;
@@ -83,7 +60,7 @@ function draw(ctx, width, height, params, time, utils) {
       ctx.fill();
       
       // Invert text color for contrast
-      ctx.fillStyle = backgroundColor;
+      ctx.fillStyle = p.backgroundColor;
     } else if (container === 'square' || container === 'rounded') {
       const boxSize = Math.max(textWidth, textHeight) + padding * 2;
       const boxX = centerX - boxSize / 2;
@@ -99,27 +76,84 @@ function draw(ctx, width, height, params, time, utils) {
       ctx.fill();
       
       // Invert text color for contrast
-      ctx.fillStyle = backgroundColor;
+      ctx.fillStyle = p.backgroundColor;
     }
     ctx.restore();
   } else {
     // No container, use fill color for text
-    ctx.fillStyle = fillColor;
+    ctx.fillStyle = p.fillColor;
   }
   
   // Draw the letter(s) - exact match to TypeScript version
   ctx.save();
-  ctx.globalAlpha = fillOpacity;
+  ctx.globalAlpha = p.fillOpacity;
   ctx.fillText(letter, textX, centerY);
   ctx.restore();
   
   // Optional: Add subtle depth with stroke - exact match to TypeScript version
-  if (params.strokeWidth && params.strokeWidth > 0) {
+  if (p.strokeWidth && p.strokeWidth > 0) {
     ctx.save();
-    ctx.globalAlpha = strokeOpacity;
-    ctx.strokeStyle = strokeColor;
-    ctx.lineWidth = params.strokeWidth;
+    ctx.globalAlpha = p.strokeOpacity;
+    ctx.strokeStyle = p.strokeColor;
+    ctx.lineWidth = p.strokeWidth;
     ctx.strokeText(letter, textX, centerY);
     ctx.restore();
   }
 }
+
+// Helper functions for concise parameter definitions
+const text = (def, label, placeholder, opts = {}) => ({ 
+  type: "text", default: def, label, placeholder, ...opts 
+});
+const slider = (def, min, max, step, label, unit, opts = {}) => ({ 
+  type: "slider", default: def, min, max, step, label, unit, ...opts 
+});
+const select = (def, options, label, opts = {}) => ({ 
+  type: "select", default: def, options, label, ...opts 
+});
+
+// Parameter definitions - controls and defaults
+export const parameters = {
+  // Typography
+  letter: text("A", "Letter(s)", "Enter letter(s) for your mark"),
+  fontWeight: select("600", [
+    { value: "300", label: "Light" },
+    { value: "400", label: "Regular" },
+    { value: "500", label: "Medium" },
+    { value: "600", label: "Semi-Bold" },
+    { value: "700", label: "Bold" },
+    { value: "900", label: "Black" }
+  ], "Font Weight"),
+  style: select("modern", [
+    { value: "modern", label: "Modern" },
+    { value: "rounded", label: "Rounded" },
+    { value: "geometric", label: "Geometric" },
+    { value: "classic", label: "Classic (Serif)" }
+  ], "Font Style"),
+  alignment: select("center", [
+    { value: "left", label: "Left" },
+    { value: "center", label: "Center" },
+    { value: "right", label: "Right" }
+  ], "Text Alignment"),
+  size: slider(0.7, 0.2, 1.0, 0.05, "Letter Size"),
+  letterSpacing: slider(0, -0.1, 0.5, 0.01, "Letter Spacing", "em"),
+  
+  // Container
+  container: select("none", [
+    { value: "none", label: "None" },
+    { value: "circle", label: "Circle" },
+    { value: "square", label: "Square" },
+    { value: "rounded", label: "Rounded Square" }
+  ], "Container Style"),
+  containerPadding: slider(0.2, 0.1, 0.5, 0.05, "Container Padding", null, { when: { container: ["circle", "square", "rounded"] } })
+};
+
+// Template metadata
+export const metadata = {
+  name: "🔤 Letter Mark",
+  description: "Clean, professional letter-based logos perfect for modern brands",
+  category: "typography",
+  tags: ["letter", "mark", "monogram", "logo", "brand", "initial"],
+  author: "ReFlow",
+  version: "1.0.0"
+};

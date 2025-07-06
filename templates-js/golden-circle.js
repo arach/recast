@@ -1,195 +1,62 @@
-// ◯ Golden Circle - Fibonacci-based proportions with sophisticated organic elegance
+/**
+ * ◯ Golden Circle
+ * 
+ * Fibonacci-based proportions with sophisticated organic elegance
+ * Features mathematical golden ratio proportions and organic variations
+ */
 
-const parameters = {
-  circleStyle: {
-    type: 'select',
-    default: 0,
-    options: [
-      { value: 0, label: '⭕ Perfect Circle' },
-      { value: 1, label: '🌿 Organic' },
-      { value: 2, label: '🐚 Fibonacci Spiral' },
-      { value: 3, label: '⬡ Segmented' },
-      { value: 4, label: '💫 Breathing' }
-    ],
-    label: 'Circle Style',
-    category: 'Style'
-  },
-  goldenProportion: {
-    type: 'slider',
-    default: 1.618,
-    min: 0.5,
-    max: 2,
-    step: 0.05,
-    label: 'Golden Proportion',
-    category: 'Mathematics'
-  },
-  fibonacciInfluence: {
-    type: 'slider',
-    default: 0.3,
-    min: 0,
-    max: 1,
-    step: 0.05,
-    label: 'Fibonacci Influence',
-    category: 'Mathematics'
-  },
-  organicVariation: {
-    type: 'slider',
-    default: 0.08,
-    min: 0,
-    max: 0.3,
-    step: 0.01,
-    label: 'Organic Variation',
-    category: 'Geometry'
-  },
-  mathematicalPurity: {
-    type: 'slider',
-    default: 0.9,
-    min: 0.7,
-    max: 1,
-    step: 0.01,
-    label: 'Mathematical Purity',
-    category: 'Mathematics'
-  },
-  concentricLayers: {
-    type: 'slider',
-    default: 1,
-    min: 1,
-    max: 4,
-    step: 1,
-    label: 'Concentric Layers',
-    category: 'Geometry'
-  },
-  spiralTightness: {
-    type: 'slider',
-    default: 0.8,
-    min: 0.1,
-    max: 2,
-    step: 0.1,
-    label: 'Spiral Tightness',
-    category: 'Geometry'
-  },
-  fillStyle: {
-    type: 'select',
-    default: 'radial',
-    options: [
-      { value: 'none', label: '🚫 None' },
-      { value: 'solid', label: '⬜ Solid' },
-      { value: 'radial', label: '🎯 Radial' },
-      { value: 'fibonacci', label: '🐚 Fibonacci' }
-    ],
-    label: 'Fill Style',
-    category: 'Appearance'
-  },
-  colorMode: {
-    type: 'select',
-    default: 'theme',
-    options: [
-      { value: 'theme', label: '🎨 Theme' },
-      { value: 'golden', label: '🌟 Golden' },
-      { value: 'custom', label: '🔧 Custom' }
-    ],
-    label: 'Color Mode',
-    category: 'Color'
-  },
-  warmth: {
-    type: 'slider',
-    default: 0.7,
-    min: 0.3,
-    max: 1,
-    step: 0.05,
-    label: 'Warmth',
-    category: 'Color'
-  },
-  sophistication: {
-    type: 'slider',
-    default: 0.6,
-    min: 0.4,
-    max: 0.9,
-    step: 0.05,
-    label: 'Sophistication',
-    category: 'Color'
-  },
-  innerGlow: {
-    type: 'slider',
-    default: 0.15,
-    min: 0,
-    max: 0.4,
-    step: 0.05,
-    label: 'Inner Glow',
-    category: 'Effects'
-  },
-  breathingMotion: {
-    type: 'slider',
-    default: 0.05,
-    min: 0,
-    max: 0.2,
-    step: 0.02,
-    label: 'Breathing Motion',
-    category: 'Animation'
-  }
-};
-
-function drawVisualization(ctx, width, height, params, time, utils) {
-  // Universal background handling
+function draw(ctx, width, height, params, time, utils) {
+  // Apply universal background
   utils.background.apply(ctx, width, height, params);
   
-  // Access universal properties
+  // Load parameters with defaults
+  const p = utils.params.load(params, ctx, width, height, time, { parameters });
+
+  // Calculate center and base dimensions
+  const centerX = width / 2;
+  const centerY = height / 2;
+  const circleStyleNum = Math.round(p.circleStyle);
+  
+  // Access universal properties for color fallback
   const fillColor = params.fillColor || '#d4a574';
   const strokeColor = params.strokeColor || '#b8935f';
   const fillOpacity = params.fillOpacity ?? 1;
   const strokeOpacity = params.strokeOpacity ?? 1;
 
-  // Extract parameters
-  const centerX = width / 2;
-  const centerY = height / 2;
-  const circleStyleNum = Math.round(params.circleStyle || 0);
-  const goldenProportion = params.goldenProportion || 1.618;
-  const fibonacciInfluence = params.fibonacciInfluence || 0.3;
-  const organicVariation = params.organicVariation || 0.08;
-  const mathematicalPurity = params.mathematicalPurity || 0.9;
-  const concentricLayers = Math.round(params.concentricLayers || 1);
-  const spiralTightness = params.spiralTightness || 0.8;
-  const fillStyle = params.fillStyle || 'radial';
-  const colorMode = params.colorMode || 'theme';
-  const warmth = params.warmth || 0.7;
-  const sophistication = params.sophistication || 0.6;
-  const innerGlow = params.innerGlow || 0.15;
-  const breathingMotion = params.breathingMotion || 0.05;
-
   // Golden ratio calculations for perfect proportions
-  const phi = goldenProportion;
+  const phi = p.goldenProportion;
   const logoSize = Math.min(width, height) * 0.55; // Brand-appropriate sizing
   const baseRadius = logoSize / 2;
   
   // Breathing animation - very subtle for brand use
   const breathingPhase = time * 0.8;
-  const breathingPulse = 1 + Math.sin(breathingPhase) * breathingMotion;
+  const breathingPulse = 1 + Math.sin(breathingPhase) * p.breathingMotion;
   const animatedRadius = baseRadius * breathingPulse;
 
   // Create sophisticated color palette
-  const brandColors = createSophisticatedPalette(fillColor, strokeColor, colorMode, warmth, sophistication);
+  const brandColors = createSophisticatedPalette(fillColor, strokeColor, p.colorMode, p.warmth, p.sophistication);
 
   // Generate circle path based on style
   const circlePath = generateGoldenCircle(
     circleStyleNum, centerX, centerY, animatedRadius,
-    phi, fibonacciInfluence, organicVariation, mathematicalPurity, spiralTightness, time
+    phi, p.fibonacciInfluence, p.organicVariation, p.mathematicalPurity, p.spiralTightness, time
   );
 
   // Render inner glow for sophistication (larger sizes only)
-  if (innerGlow > 0.05 && Math.min(width, height) > 80) {
-    renderInnerGlow(ctx, circlePath, brandColors, innerGlow, animatedRadius, centerX, centerY);
+  if (p.innerGlow > 0.05 && Math.min(width, height) > 80) {
+    renderInnerGlow(ctx, circlePath, brandColors, p.innerGlow, animatedRadius, centerX, centerY);
   }
 
   // Render concentric layers
-  for (let layer = concentricLayers - 1; layer >= 0; layer--) {
+  for (let layer = p.concentricLayers - 1; layer >= 0; layer--) {
     const layerRadius = animatedRadius * (1 - layer * 0.15);
     const layerAlpha = 1 - layer * 0.2;
     const layerPath = generateGoldenCircle(
       circleStyleNum, centerX, centerY, layerRadius,
-      phi, fibonacciInfluence * (1 - layer * 0.3), organicVariation, mathematicalPurity, spiralTightness, time
+      phi, p.fibonacciInfluence * (1 - layer * 0.3), p.organicVariation, p.mathematicalPurity, p.spiralTightness, time
     );
     
-    renderCircleLayer(ctx, layerPath, brandColors, fillStyle, layerAlpha, centerX, centerY, layerRadius, phi, params, fillColor, fillOpacity);
+    renderCircleLayer(ctx, layerPath, brandColors, p.fillStyle, layerAlpha, centerX, centerY, layerRadius, phi, params, fillColor, fillOpacity);
   }
 
   // Render universal stroke if specified
@@ -477,25 +344,59 @@ function drawVisualization(ctx, width, height, params, time, utils) {
   }
 }
 
+// Parameter definitions using helper functions
+const parameters = {
+  circleStyle: select(0, [
+    { value: 0, label: '⭕ Perfect Circle' },
+    { value: 1, label: '🌿 Organic' },
+    { value: 2, label: '🐚 Fibonacci Spiral' },
+    { value: 3, label: '⬡ Segmented' },
+    { value: 4, label: '💫 Breathing' }
+  ], 'Circle Style'),
+  goldenProportion: slider(1.618, 0.5, 2, 0.05, 'Golden Proportion'),
+  fibonacciInfluence: slider(0.3, 0, 1, 0.05, 'Fibonacci Influence'),
+  organicVariation: slider(0.08, 0, 0.3, 0.01, 'Organic Variation'),
+  mathematicalPurity: slider(0.9, 0.7, 1, 0.01, 'Mathematical Purity'),
+  concentricLayers: slider(1, 1, 4, 1, 'Concentric Layers'),
+  spiralTightness: slider(0.8, 0.1, 2, 0.1, 'Spiral Tightness'),
+  fillStyle: select('radial', [
+    { value: 'none', label: '🚫 None' },
+    { value: 'solid', label: '⬜ Solid' },
+    { value: 'radial', label: '🎯 Radial' },
+    { value: 'fibonacci', label: '🐚 Fibonacci' }
+  ], 'Fill Style'),
+  colorMode: select('theme', [
+    { value: 'theme', label: '🎨 Theme' },
+    { value: 'golden', label: '🌟 Golden' },
+    { value: 'custom', label: '🔧 Custom' }
+  ], 'Color Mode'),
+  warmth: slider(0.7, 0.3, 1, 0.05, 'Warmth'),
+  sophistication: slider(0.6, 0.4, 0.9, 0.05, 'Sophistication'),
+  innerGlow: slider(0.15, 0, 0.4, 0.05, 'Inner Glow'),
+  breathingMotion: slider(0.05, 0, 0.2, 0.02, 'Breathing Motion')
+};
+
+// Helper functions
+const slider = (def, min, max, step, label, unit, opts = {}) => ({ 
+  type: "slider", default: def, min, max, step, label, unit, ...opts 
+});
+
+const select = (def, options, label, opts = {}) => ({ 
+  type: "select", default: def, options, label, ...opts 
+});
+
+const toggle = (def, label, opts = {}) => ({ 
+  type: "toggle", default: def, label, ...opts 
+});
+
+// Metadata
 const metadata = {
-  id: 'golden-circle',
   name: "◯ Golden Circle",
   description: "Fibonacci-based proportions with sophisticated organic elegance and mathematical harmony",
-  parameters,
-  defaultParams: {
-    circleStyle: 0,
-    goldenProportion: 1.618,
-    fibonacciInfluence: 0.3,
-    organicVariation: 0.08,
-    mathematicalPurity: 0.9,
-    concentricLayers: 1,
-    spiralTightness: 0.8,
-    fillStyle: 'radial',
-    colorMode: 'theme',
-    warmth: 0.7,
-    sophistication: 0.6,
-    innerGlow: 0.15,
-    breathingMotion: 0.05
-  }
+  category: "geometric",
+  tags: ["geometric", "golden-ratio", "fibonacci", "organic", "mathematical"]
 };
+
+// Export the template
+export { draw, parameters, metadata };
 

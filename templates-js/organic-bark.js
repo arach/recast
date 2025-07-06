@@ -1,206 +1,23 @@
-// 🌳 Organic Bark - Natural wood textures with growth patterns and organic character
+/**
+ * 🌳 Organic Bark
+ * 
+ * Natural wood textures with growth patterns and organic character
+ */
 
-const parameters = {
-  barkType: {
-    type: 'select',
-    default: 1,
-    options: [
-      { value: 0, label: '🌳 Oak' },
-      { value: 1, label: '🌲 Pine' },
-      { value: 2, label: '🌿 Birch' },
-      { value: 3, label: '🌴 Redwood' },
-      { value: 4, label: '🗿 Ancient' }
-    ],
-    label: 'Bark Type',
-    category: 'Species'
-  },
-  frequency: {
-    type: 'slider',
-    default: 0.6,
-    min: 0.2,
-    max: 1.5,
-    step: 0.05,
-    label: 'Pattern Frequency',
-    category: 'Pattern'
-  },
-  amplitude: {
-    type: 'slider',
-    default: 140,
-    min: 80,
-    max: 200,
-    step: 5,
-    label: 'Texture Scale',
-    category: 'Pattern'
-  },
-  growthComplexity: {
-    type: 'slider',
-    default: 0.7,
-    min: 0.3,
-    max: 1,
-    step: 0.05,
-    label: 'Growth Complexity',
-    category: 'Natural Growth'
-  },
-  naturalVariation: {
-    type: 'slider',
-    default: 0.8,
-    min: 0.5,
-    max: 1,
-    step: 0.05,
-    label: 'Natural Variation',
-    category: 'Natural Growth'
-  },
-  organicFlow: {
-    type: 'slider',
-    default: 0.75,
-    min: 0.4,
-    max: 1,
-    step: 0.05,
-    label: 'Organic Flow',
-    category: 'Natural Growth'
-  },
-  barkRoughness: {
-    type: 'slider',
-    default: 0.6,
-    min: 0.2,
-    max: 1,
-    step: 0.05,
-    label: 'Bark Roughness',
-    category: 'Texture'
-  },
-  ridgeDepth: {
-    type: 'slider',
-    default: 0.4,
-    min: 0.1,
-    max: 0.8,
-    step: 0.05,
-    label: 'Ridge Depth',
-    category: 'Texture'
-  },
-  furrowWidth: {
-    type: 'slider',
-    default: 0.3,
-    min: 0.1,
-    max: 0.6,
-    step: 0.05,
-    label: 'Furrow Width',
-    category: 'Texture'
-  },
-  growthRings: {
-    type: 'slider',
-    default: 0.5,
-    min: 0,
-    max: 1,
-    step: 0.05,
-    label: 'Growth Rings',
-    category: 'Character'
-  },
-  branchMarks: {
-    type: 'slider',
-    default: 0.3,
-    min: 0,
-    max: 0.8,
-    step: 0.05,
-    label: 'Branch Marks',
-    category: 'Character'
-  },
-  weathering: {
-    type: 'slider',
-    default: 0.4,
-    min: 0,
-    max: 0.8,
-    step: 0.05,
-    label: 'Weathering',
-    category: 'Environmental'
-  },
-  lichens: {
-    type: 'slider',
-    default: 0.2,
-    min: 0,
-    max: 0.6,
-    step: 0.05,
-    label: 'Lichens',
-    category: 'Environmental'
-  },
-  moss: {
-    type: 'slider',
-    default: 0.15,
-    min: 0,
-    max: 0.5,
-    step: 0.05,
-    label: 'Moss Coverage',
-    category: 'Environmental'
-  },
-  insects: {
-    type: 'slider',
-    default: 0.1,
-    min: 0,
-    max: 0.4,
-    step: 0.05,
-    label: 'Insect Holes',
-    category: 'Environmental'
-  },
-  treeAge: {
-    type: 'slider',
-    default: 0.6,
-    min: 0.3,
-    max: 1,
-    step: 0.05,
-    label: 'Tree Age',
-    category: 'Character'
-  },
-  characterMarks: {
-    type: 'slider',
-    default: 0.3,
-    min: 0,
-    max: 0.8,
-    step: 0.05,
-    label: 'Character Marks',
-    category: 'Character'
-  },
-  woodHue: {
-    type: 'slider',
-    default: 25,
-    min: 0,
-    max: 60,
-    step: 5,
-    label: 'Wood Hue',
-    category: 'Color'
-  },
-  weatheredTone: {
-    type: 'slider',
-    default: 0.6,
-    min: 0.3,
-    max: 1,
-    step: 0.05,
-    label: 'Weathered Tone',
-    category: 'Color'
-  },
-  naturalSaturation: {
-    type: 'slider',
-    default: 0.5,
-    min: 0.3,
-    max: 0.8,
-    step: 0.05,
-    label: 'Natural Saturation',
-    category: 'Color'
-  }
-};
-
-function drawVisualization(ctx, width, height, params, time, utils) {
-  utils.background.apply(ctx, width, height, params);
+function draw(ctx, width, height, params, time, utils) {
+  // Load and process all parameters - clean and deterministic
+  const p = utils.params.load(params, ctx, width, height, time, { parameters });
   
-  const fillColor = params.fillColor || '#8B4513';
-  const strokeColor = params.strokeColor || '#3E2723';
-  const fillOpacity = params.fillOpacity ?? 0.9;
-  const strokeOpacity = params.strokeOpacity ?? 0.8;
+  // Template-specific parameters (defaults come from exported parameters)
+  const { barkType, frequency, amplitude, growthComplexity, naturalVariation, organicFlow } = p;
+  const { barkRoughness, ridgeDepth, furrowWidth, growthRings, branchMarks } = p;
+  const { weathering, lichens, moss, insects, treeAge, characterMarks } = p;
+  const { woodHue, weatheredTone, naturalSaturation } = p;
 
-  // Extract parameters
+  // Calculate dimensions
   const centerX = width / 2;
   const centerY = height / 2;
-  const frequency = params.frequency || 0.6;
-  const amplitude = params.amplitude || 140;
-  const barkTypeNum = Math.round(params.barkType || 1);
+  const barkTypeNum = Math.round(barkType);
   
   // Bark types
   const barkTypes = [
@@ -211,34 +28,7 @@ function drawVisualization(ctx, width, height, params, time, utils) {
     { name: 'Ancient', ridgePattern: 0.9, furrowDepth: 1.0, textureDensity: 1.0 }
   ];
   
-  const barkType = barkTypes[Math.min(barkTypeNum, barkTypes.length - 1)];
-  
-  // Natural variation factors
-  const growthComplexity = params.growthComplexity || 0.7;
-  const naturalVariation = params.naturalVariation || 0.8;
-  const organicFlow = params.organicFlow || 0.75;
-  
-  // Texture properties
-  const barkRoughness = params.barkRoughness || 0.6;
-  const ridgeDepth = params.ridgeDepth || 0.4;
-  const furrowWidth = params.furrowWidth || 0.3;
-  
-  // Natural elements
-  const growthRings = params.growthRings || 0.5;
-  const branchMarks = params.branchMarks || 0.3;
-  const weathering = params.weathering || 0.4;
-  const lichens = params.lichens || 0.2;
-  const moss = params.moss || 0.15;
-  const insects = params.insects || 0.1;
-  
-  // Character properties
-  const treeAge = params.treeAge || 0.6;
-  const characterMarks = params.characterMarks || 0.3;
-  
-  // Color properties
-  const woodHue = params.woodHue || 25;
-  const weatheredTone = params.weatheredTone || 0.6;
-  const naturalSaturation = params.naturalSaturation || 0.5;
+  const currentBarkType = barkTypes[Math.min(barkTypeNum, barkTypes.length - 1)];
 
   // Helper functions for organic shapes
   function organicNoise(x, y, scale, octaves = 3) {
@@ -289,18 +79,18 @@ function drawVisualization(ctx, width, height, params, time, utils) {
     const saturation = 35 * naturalSaturation;
     const lightness = 35 + weatheredTone * 20;
     
-    if (params.fillType !== 'none') {
+    if (p.theme.fillType !== 'none') {
       ctx.save();
-      ctx.globalAlpha = fillOpacity;
+      ctx.globalAlpha = p.theme.fillOpacity;
       
-      if (params.fillType === 'gradient') {
+      if (p.theme.fillType === 'gradient') {
         const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, amplitude * 1.5);
         gradient.addColorStop(0, `hsl(${hue}, ${saturation}%, ${lightness + 10}%)`);
         gradient.addColorStop(0.5, `hsl(${hue}, ${saturation}%, ${lightness}%)`);
         gradient.addColorStop(1, `hsl(${hue - 5}, ${saturation - 10}%, ${lightness - 15}%)`);
         ctx.fillStyle = gradient;
       } else {
-        ctx.fillStyle = fillColor;
+        ctx.fillStyle = p.fillColor;
       }
       
       ctx.fillRect(centerX - amplitude * 2, centerY - amplitude * 2, amplitude * 4, amplitude * 4);
@@ -308,10 +98,10 @@ function drawVisualization(ctx, width, height, params, time, utils) {
     }
     
     // Draw bark ridges and furrows
-    const ridgeCount = Math.floor(12 * barkType.textureDensity * barkRoughness);
+    const ridgeCount = Math.floor(12 * currentBarkType.textureDensity * barkRoughness);
     for (let i = 0; i < ridgeCount; i++) {
       ctx.save();
-      ctx.globalAlpha = fillOpacity;
+      ctx.globalAlpha = p.theme.fillOpacity;
       
       const ridgeAngle = (i / ridgeCount) * Math.PI * 2 + organicNoise(i, time * 0.1, 2) * 0.5;
       const ridgeStart = amplitude * 0.3;
@@ -357,7 +147,7 @@ function drawVisualization(ctx, width, height, params, time, utils) {
     // Draw growth rings
     if (growthRings > 0) {
       ctx.save();
-      ctx.globalAlpha = growthRings * 0.3 * fillOpacity;
+      ctx.globalAlpha = growthRings * 0.3 * p.theme.fillOpacity;
       
       const ringCount = Math.floor(5 + treeAge * 10);
       for (let i = 0; i < ringCount; i++) {
@@ -391,7 +181,7 @@ function drawVisualization(ctx, width, height, params, time, utils) {
     // Draw branch marks/scars
     if (branchMarks > 0) {
       ctx.save();
-      ctx.globalAlpha = fillOpacity;
+      ctx.globalAlpha = p.theme.fillOpacity;
       
       const markCount = Math.floor(3 + branchMarks * 5);
       for (let i = 0; i < markCount; i++) {
@@ -427,7 +217,7 @@ function drawVisualization(ctx, width, height, params, time, utils) {
     // Draw weathering effects
     if (weathering > 0) {
       ctx.save();
-      ctx.globalAlpha = weathering * 0.4 * fillOpacity;
+      ctx.globalAlpha = weathering * 0.4 * p.theme.fillOpacity;
       
       // Create weathered patches
       const weatherCount = Math.floor(5 + weathering * 10);
@@ -471,7 +261,7 @@ function drawVisualization(ctx, width, height, params, time, utils) {
     // Draw lichens
     if (lichens > 0) {
       ctx.save();
-      ctx.globalAlpha = lichens * fillOpacity;
+      ctx.globalAlpha = lichens * p.theme.fillOpacity;
       
       const lichenCount = Math.floor(4 + lichens * 8);
       for (let i = 0; i < lichenCount; i++) {
@@ -505,7 +295,7 @@ function drawVisualization(ctx, width, height, params, time, utils) {
     // Draw moss
     if (moss > 0) {
       ctx.save();
-      ctx.globalAlpha = moss * fillOpacity;
+      ctx.globalAlpha = moss * p.theme.fillOpacity;
       
       const mossPatches = Math.floor(3 + moss * 6);
       for (let i = 0; i < mossPatches; i++) {
@@ -544,7 +334,7 @@ function drawVisualization(ctx, width, height, params, time, utils) {
     // Draw insect holes
     if (insects > 0) {
       ctx.save();
-      ctx.globalAlpha = fillOpacity;
+      ctx.globalAlpha = p.theme.fillOpacity;
       
       const holeCount = Math.floor(2 + insects * 8);
       for (let i = 0; i < holeCount; i++) {
@@ -570,7 +360,7 @@ function drawVisualization(ctx, width, height, params, time, utils) {
     // Draw character marks
     if (characterMarks > 0) {
       ctx.save();
-      ctx.globalAlpha = characterMarks * 0.6 * fillOpacity;
+      ctx.globalAlpha = characterMarks * 0.6 * p.theme.fillOpacity;
       
       const markTypes = Math.floor(2 + characterMarks * 4);
       for (let i = 0; i < markTypes; i++) {
@@ -624,16 +414,16 @@ function drawVisualization(ctx, width, height, params, time, utils) {
     ctx.restore();
     
     // Draw outer edge/stroke
-    if (params.strokeType !== 'none') {
+    if (p.theme.strokeType !== 'none') {
       ctx.save();
-      ctx.globalAlpha = strokeOpacity;
+      ctx.globalAlpha = p.theme.strokeOpacity;
       
-      ctx.strokeStyle = strokeColor;
-      ctx.lineWidth = params.strokeWidth || 1.5;
+      ctx.strokeStyle = p.strokeColor;
+      ctx.lineWidth = p.theme.strokeWidth || 1.5;
       
-      if (params.strokeType === 'dashed') {
+      if (p.theme.strokeType === 'dashed') {
         ctx.setLineDash([10, 5]);
-      } else if (params.strokeType === 'dotted') {
+      } else if (p.theme.strokeType === 'dotted') {
         ctx.setLineDash([2, 3]);
       }
       
@@ -667,32 +457,57 @@ function drawVisualization(ctx, width, height, params, time, utils) {
   drawBarkTexture();
 }
 
-const metadata = {
-  id: 'organic-bark',
+// Helper functions for concise parameter definitions
+const slider = (def, min, max, step, label, unit, opts = {}) => ({ 
+  type: "slider", default: def, min, max, step, label, unit, ...opts 
+});
+const select = (def, options, label, opts = {}) => ({ 
+  type: "select", default: def, options, label, ...opts 
+});
+
+// Parameter definitions - controls and defaults
+export const parameters = {
+  barkType: select(1, [
+    { value: 0, label: '🌳 Oak' },
+    { value: 1, label: '🌲 Pine' },
+    { value: 2, label: '🌿 Birch' },
+    { value: 3, label: '🌴 Redwood' },
+    { value: 4, label: '🗿 Ancient' }
+  ], 'Bark Type'),
+  
+  frequency: slider(0.6, 0.2, 1.5, 0.05, 'Pattern Frequency'),
+  amplitude: slider(140, 80, 200, 5, 'Texture Scale', 'px'),
+  
+  growthComplexity: slider(0.7, 0.3, 1, 0.05, 'Growth Complexity'),
+  naturalVariation: slider(0.8, 0.5, 1, 0.05, 'Natural Variation'),
+  organicFlow: slider(0.75, 0.4, 1, 0.05, 'Organic Flow'),
+  
+  barkRoughness: slider(0.6, 0.2, 1, 0.05, 'Bark Roughness'),
+  ridgeDepth: slider(0.4, 0.1, 0.8, 0.05, 'Ridge Depth'),
+  furrowWidth: slider(0.3, 0.1, 0.6, 0.05, 'Furrow Width'),
+  
+  growthRings: slider(0.5, 0, 1, 0.05, 'Growth Rings'),
+  branchMarks: slider(0.3, 0, 0.8, 0.05, 'Branch Marks'),
+  treeAge: slider(0.6, 0.3, 1, 0.05, 'Tree Age'),
+  characterMarks: slider(0.3, 0, 0.8, 0.05, 'Character Marks'),
+  
+  weathering: slider(0.4, 0, 0.8, 0.05, 'Weathering'),
+  lichens: slider(0.2, 0, 0.6, 0.05, 'Lichens'),
+  moss: slider(0.15, 0, 0.5, 0.05, 'Moss Coverage'),
+  insects: slider(0.1, 0, 0.4, 0.05, 'Insect Holes'),
+  
+  woodHue: slider(25, 0, 60, 5, 'Wood Hue', '°'),
+  weatheredTone: slider(0.6, 0.3, 1, 0.05, 'Weathered Tone'),
+  naturalSaturation: slider(0.5, 0.3, 0.8, 0.05, 'Natural Saturation')
+};
+
+// Template metadata
+export const metadata = {
   name: "🌳 Organic Bark",
   description: "Natural wood textures with growth patterns, weathering, and organic character marks",
-  parameters,
-  defaultParams: {
-    barkType: 1,
-    frequency: 0.6,
-    amplitude: 140,
-    growthComplexity: 0.7,
-    naturalVariation: 0.8,
-    organicFlow: 0.75,
-    barkRoughness: 0.6,
-    ridgeDepth: 0.4,
-    furrowWidth: 0.3,
-    growthRings: 0.5,
-    branchMarks: 0.3,
-    weathering: 0.4,
-    lichens: 0.2,
-    moss: 0.15,
-    insects: 0.1,
-    treeAge: 0.6,
-    characterMarks: 0.3,
-    woodHue: 25,
-    weatheredTone: 0.6,
-    naturalSaturation: 0.5
-  }
+  category: "organic",
+  tags: ["bark", "wood", "natural", "texture", "organic", "tree"],
+  author: "ReFlow",
+  version: "1.0.0"
 };
 
