@@ -16,32 +16,17 @@ function draw(ctx, width, height, params, time, utils) {
   const centerY = height / 2;
   const minDim = Math.min(width, height);
   
-  // Helper functions from original GeneratorBase
-  const scaleToCanvas = (value, canvasSize) => {
-    return (value / 100) * canvasSize;
-  };
-  
-  const calculatePhase = (index, total, timeOffset) => {
-    const basePhase = (index / total) * Math.PI * 2;
-    return basePhase + timeOffset * p.frequency;
-  };
-  
-  const addChaos = (value, range) => {
-    if (p.chaos === 0) return value;
-    return value + (Math.random() - 0.5) * range * p.chaos;
-  };
-  
   // Draw circles layer by layer
   for (let layer = 0; layer < p.layers; layer++) {
     // Calculate layer-specific parameters
-    const layerPhase = calculatePhase(layer, p.layers, time);
+    const layerPhase = calculatePhase(layer, p.layers, time, p.frequency);
     const layerRadius = scaleToCanvas(p.radius, minDim) * Math.pow(p.damping, layer);
     const radiusVariation = scaleToCanvas(p.amplitude, minDim) * Math.sin(layerPhase);
     const finalRadius = Math.max(1, layerRadius + radiusVariation);
     
     // Add chaos to position
-    const chaosX = addChaos(0, finalRadius * 0.1);
-    const chaosY = addChaos(0, finalRadius * 0.1);
+    const chaosX = addChaos(0, finalRadius * 0.1, p.chaos);
+    const chaosY = addChaos(0, finalRadius * 0.1, p.chaos);
     
     // Calculate position
     const cx = Math.max(finalRadius, Math.min(width - finalRadius, centerX + chaosX));
@@ -62,7 +47,7 @@ function draw(ctx, width, height, params, time, utils) {
       const complexityCount = Math.ceil(p.complexity * 6);
       
       for (let i = 0; i < complexityCount; i++) {
-        const orbitPhase = calculatePhase(i, complexityCount, time * 2);
+        const orbitPhase = calculatePhase(i, complexityCount, time * 2, p.frequency);
         const orbitRadius = finalRadius * 0.7;
         const orbitX = centerX + chaosX + Math.cos(orbitPhase) * orbitRadius;
         const orbitY = centerY + chaosY + Math.sin(orbitPhase) * orbitRadius;
@@ -85,8 +70,22 @@ function draw(ctx, width, height, params, time, utils) {
   }
 }
 
-// Parameter definitions
-const parameters = {
+// Helper functions
+const scaleToCanvas = (value, canvasSize) => {
+  return (value / 100) * canvasSize;
+};
+
+const calculatePhase = (index, total, timeOffset, frequency) => {
+  const basePhase = (index / total) * Math.PI * 2;
+  return basePhase + timeOffset * frequency;
+};
+
+const addChaos = (value, range, chaos) => {
+  if (chaos === 0) return value;
+  return value + (Math.random() - 0.5) * range * chaos;
+};
+
+export const parameters = {
   frequency: { default: 2, min: 0.1, max: 10, step: 0.1 },
   amplitude: { default: 30, min: 0, max: 100, step: 1 },
   complexity: { default: 0.5, min: 0, max: 1, step: 0.1 },
@@ -100,21 +99,7 @@ const parameters = {
   strokeOpacity: { default: 0.8, min: 0, max: 1, step: 0.1 }
 };
 
-// Helper functions
-const slider = (label, key, min, max, step = 1, defaultValue = min) => ({
-  label, key, min, max, step, defaultValue, type: 'slider'
-});
-
-const select = (label, key, options, defaultValue = options[0]) => ({
-  label, key, options, defaultValue, type: 'select'
-});
-
-const toggle = (label, key, defaultValue = false) => ({
-  label, key, defaultValue, type: 'toggle'
-});
-
-// Metadata
-const metadata = {
+export const metadata = {
   name: "⭕ Circles",
   description: "Pulsing circles, orbital patterns, and nested ring systems",
   author: "ReFlow",
@@ -122,10 +107,5 @@ const metadata = {
   tags: ["geometric", "circles", "animation", "orbital"]
 };
 
-// Export the template
-const template = { draw };
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { template, parameters, metadata, slider, select, toggle };
-} else if (typeof window !== 'undefined') {
-  window.circles = { template, parameters, metadata, slider, select, toggle };
-}
+export { draw };
+

@@ -8,34 +8,33 @@ function draw(ctx, width, height, params, time, utils) {
   // Load and process all parameters - clean and deterministic
   const p = utils.params.load(params, ctx, width, height, time, { parameters });
 
-  // Template-specific parameters (defaults come from exported parameters)
+  // Calculate dimensions and meaningful transformations
   const centerX = width / 2;
   const centerY = height / 2;
-  const { frequency, amplitude, complexity, neonStyle, glowIntensity, glowRadius, glowLayers, electricSpark, energyFlow, circuitBreaks, neonHue, colorShift, saturation, pulseSpeed, flicker } = p;
-  const neonStyleNum = Math.round(neonStyle);
+  const neonStyleNum = Math.round(p.neonStyle);
 
   // Neon scale and pulsing
   const baseScale = Math.min(width, height) / 350;
-  const scaledAmplitude = amplitude * baseScale;
+  const scaledAmplitude = p.amplitude * baseScale;
   
   // Electric pulse with flicker
-  const electricPhase = time * frequency * pulseSpeed;
-  const flickerEffect = 1 + Math.sin(time * 10) * flicker * Math.random();
+  const electricPhase = time * p.frequency * p.pulseSpeed;
+  const flickerEffect = 1 + Math.sin(time * 10) * p.flicker * Math.random();
   const neonPulse = (1 + Math.sin(electricPhase) * 0.2) * flickerEffect;
 
   // Generate neon path
   const neonPath = generateNeonPath(
     neonStyleNum, centerX, centerY, scaledAmplitude * neonPulse,
-    complexity, electricPhase, circuitBreaks
+    p.complexity, electricPhase, p.circuitBreaks
   );
 
   // Neon color system
-  const neonColors = generateNeonColors(neonHue, colorShift, saturation, time);
+  const neonColors = generateNeonColors(p.neonHue, p.colorShift, p.saturation, time);
 
   // Render multi-layer glow effect
-  for (let layer = glowLayers - 1; layer >= 0; layer--) {
-    const layerRadius = glowRadius * (layer + 1) / glowLayers;
-    const layerAlpha = glowIntensity * (1 - layer * 0.15);
+  for (let layer = p.glowLayers - 1; layer >= 0; layer--) {
+    const layerRadius = p.glowRadius * (layer + 1) / p.glowLayers;
+    const layerAlpha = p.glowIntensity * (1 - layer * 0.15);
     renderGlowLayer(ctx, neonPath, neonColors, layerRadius, layerAlpha, layer);
   }
 
@@ -43,13 +42,13 @@ function draw(ctx, width, height, params, time, utils) {
   renderNeonCore(ctx, neonPath, neonColors, neonStyleNum, flickerEffect, p, utils);
 
   // Electric spark effects
-  if (electricSpark > 0.1) {
-    renderElectricSparks(ctx, neonPath, neonColors, electricSpark, time, scaledAmplitude);
+  if (p.electricSpark > 0.1) {
+    renderElectricSparks(ctx, neonPath, neonColors, p.electricSpark, time, scaledAmplitude);
   }
 
   // Energy flow animation
-  if (energyFlow > 0.1) {
-    renderEnergyFlow(ctx, neonPath, neonColors, energyFlow, time, pulseSpeed);
+  if (p.energyFlow > 0.1) {
+    renderEnergyFlow(ctx, neonPath, neonColors, p.energyFlow, time, p.pulseSpeed);
   }
 
   function generateNeonPath(style, centerX, centerY, radius, complexity, phase, breaks) {

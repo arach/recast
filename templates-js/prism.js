@@ -1,24 +1,3 @@
-/**
- * 🔮 Prism
- * 
- * Clean geometric prism with isometric 3D perspective and subtle animation
- */
-
-const parameters = {
-  frequency: { default: 0.6, range: [0.1, 2.0, 0.1] },
-  amplitude: { default: 100, range: [50, 200, 5] },
-  prismSides: { default: 6, range: [3, 12, 1] },
-  prismHeight: { default: 1, range: [0.5, 2.0, 0.1] },
-  cornerRadius: { default: 4, range: [0, 20, 1] },
-  shapeRotation: { default: 0, range: [0, 360, 5] },
-  showInternalStructure: { default: true, range: [false, true] },
-  depthRatio: { default: 0.6, range: [0.2, 1.0, 0.1] },
-  perspectiveAngle: { default: 30, range: [10, 60, 5] },
-  rotationY: { default: 0, range: [-45, 45, 5] },
-  rotationX: { default: 0, range: [-45, 45, 5] },
-  faceShading: { default: 0.15, range: [0, 0.5, 0.05] }
-};
-
 function drawVisualization(ctx, width, height, params, time, utils) {
   // Apply background
   utils.applyUniversalBackground(ctx, width, height, params);
@@ -310,9 +289,29 @@ function drawVisualization(ctx, width, height, params, time, utils) {
   }
 }
 
-// Helper functions and template exports
-function getDefaultParams() {
-  return {
+const parameters = {
+  frequency: { default: 0.6, range: [0.1, 2.0, 0.1] },
+  amplitude: { default: 100, range: [50, 200, 5] },
+  prismSides: { default: 6, range: [3, 12, 1] },
+  prismHeight: { default: 1, range: [0.5, 2.0, 0.1] },
+  cornerRadius: { default: 4, range: [0, 20, 1] },
+  shapeRotation: { default: 0, range: [0, 360, 5] },
+  showInternalStructure: { default: true, range: [false, true] },
+  depthRatio: { default: 0.6, range: [0.2, 1.0, 0.1] },
+  perspectiveAngle: { default: 30, range: [10, 60, 5] },
+  rotationY: { default: 0, range: [-45, 45, 5] },
+  rotationX: { default: 0, range: [-45, 45, 5] },
+  faceShading: { default: 0.15, range: [0, 0.5, 0.05] }
+};
+
+export const metadata = {
+  id: 'prism',
+  name: "🔮 Prism",
+  description: "Clean geometric prism with isometric 3D perspective and subtle animation",
+  category: 'geometry',
+  tags: ['3d', 'prism', 'geometric', 'isometric', 'polygon'],
+  parameters,
+  defaultParams: {
     frequency: 0.6,
     amplitude: 100,
     prismSides: 6,
@@ -325,17 +324,7 @@ function getDefaultParams() {
     rotationY: 0,
     rotationX: 0,
     faceShading: 0.15
-  };
-}
-
-const metadata = {
-  id: 'prism',
-  name: "🔮 Prism",
-  description: "Clean geometric prism with isometric 3D perspective and subtle animation",
-  category: 'geometry',
-  tags: ['3d', 'prism', 'geometric', 'isometric', 'polygon'],
-  parameters,
-  defaultParams: getDefaultParams()
+  }
 };
 
-export { parameters, metadata, drawVisualization };
+export { parameters, drawVisualization };

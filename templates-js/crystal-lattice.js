@@ -1,47 +1,4 @@
-// Helpers
-const slider = (def, min, max, step, label, unit, opts = {}) => ({ 
-  type: "slider", default: def, min, max, step, label, unit, ...opts 
-});
-
-const select = (def, options, label, opts = {}) => ({ 
-  type: "select", default: def, options, label, ...opts 
-});
-
-// Parameters
-export const parameters = {
-  latticeType: select(2, [
-    { value: 0, label: '⬜ Cubic' },
-    { value: 1, label: '⬡ Hexagonal' },
-    { value: 2, label: '💎 Diamond' },
-    { value: 3, label: '🔷 Prismatic' },
-    { value: 4, label: '❄️ Fractal' }
-  ], 'Lattice Type', { category: 'Structure' }),
-  materialType: select(1, [
-    { value: 0, label: '🔮 Quartz' },
-    { value: 1, label: '💍 Diamond' },
-    { value: 2, label: '🔵 Sapphire' },
-    { value: 3, label: '🟢 Emerald' },
-    { value: 4, label: '🌈 Opal' }
-  ], 'Material Type', { category: 'Material' }),
-  frequency: slider(0.8, 0.3, 1.5, 0.05, 'Growth Speed', '', { category: 'Animation' }),
-  amplitude: slider(120, 70, 180, 5, 'Crystal Size', '', { category: 'Geometry' }),
-  crystallineOrder: slider(0.9, 0.7, 1, 0.02, 'Crystalline Order', '', { category: 'Structure' }),
-  facetPrecision: slider(0.95, 0.8, 1, 0.01, 'Facet Precision', '', { category: 'Structure' }),
-  symmetryLevel: slider(6, 2, 8, 1, 'Symmetry Level', '', { category: 'Structure' }),
-  facetCount: slider(12, 6, 24, 2, 'Facet Count', '', { category: 'Structure' }),
-  lightRefraction: slider(0.7, 0.3, 1, 0.05, 'Light Refraction', '', { category: 'Optics' }),
-  internalReflection: slider(0.5, 0.2, 0.8, 0.05, 'Internal Reflection', '', { category: 'Optics' }),
-  dispersion: slider(0.3, 0, 0.6, 0.05, 'Spectral Dispersion', '', { category: 'Optics' }),
-  brilliance: slider(0.8, 0.5, 1, 0.05, 'Brilliance', '', { category: 'Optics' }),
-  fire: slider(0.4, 0.2, 0.8, 0.05, 'Fire Effect', '', { category: 'Optics' }),
-  transparency: slider(0.7, 0.4, 0.9, 0.05, 'Transparency', '', { category: 'Material' }),
-  purity: slider(0.9, 0.6, 1, 0.02, 'Crystal Purity', '', { category: 'Material' }),
-  crystalHue: slider(210, 0, 360, 10, 'Crystal Hue', '', { category: 'Color' }),
-  surfaceRoughness: slider(0.05, 0, 0.3, 0.02, 'Surface Roughness', '', { category: 'Material' }),
-  crystallineFlaws: slider(0.03, 0, 0.2, 0.01, 'Crystal Flaws', '', { category: 'Material' })
-};
-
-export function drawVisualization(ctx, width, height, params, time, utils) {
+function drawVisualization(ctx, width, height, params, time, utils) {
   // Load parameters with new pattern
   const p = utils.params.load(params, ctx, width, height, time, { parameters });
   
@@ -476,7 +433,47 @@ export function drawVisualization(ctx, width, height, params, time, utils) {
   }
 }
 
-// Metadata
+// Helper functions
+const slider = (def, min, max, step, label, unit, opts = {}) => ({ 
+  type: "slider", default: def, min, max, step, label, unit, ...opts 
+});
+const select = (def, options, label, opts = {}) => ({ 
+  type: "select", default: def, options, label, ...opts 
+});
+
+export const parameters = {
+  latticeType: select(2, [
+    { value: 0, label: '⬜ Cubic' },
+    { value: 1, label: '⬡ Hexagonal' },
+    { value: 2, label: '💎 Diamond' },
+    { value: 3, label: '🔷 Prismatic' },
+    { value: 4, label: '❄️ Fractal' }
+  ], 'Lattice Type', { category: 'Structure' }),
+  materialType: select(1, [
+    { value: 0, label: '🔮 Quartz' },
+    { value: 1, label: '💍 Diamond' },
+    { value: 2, label: '🔵 Sapphire' },
+    { value: 3, label: '🟢 Emerald' },
+    { value: 4, label: '🌈 Opal' }
+  ], 'Material Type', { category: 'Material' }),
+  frequency: slider(0.8, 0.3, 1.5, 0.05, 'Growth Speed', '', { category: 'Animation' }),
+  amplitude: slider(120, 70, 180, 5, 'Crystal Size', '', { category: 'Geometry' }),
+  crystallineOrder: slider(0.9, 0.7, 1, 0.02, 'Crystalline Order', '', { category: 'Structure' }),
+  facetPrecision: slider(0.95, 0.8, 1, 0.01, 'Facet Precision', '', { category: 'Structure' }),
+  symmetryLevel: slider(6, 2, 8, 1, 'Symmetry Level', '', { category: 'Structure' }),
+  facetCount: slider(12, 6, 24, 2, 'Facet Count', '', { category: 'Structure' }),
+  lightRefraction: slider(0.7, 0.3, 1, 0.05, 'Light Refraction', '', { category: 'Optics' }),
+  internalReflection: slider(0.5, 0.2, 0.8, 0.05, 'Internal Reflection', '', { category: 'Optics' }),
+  dispersion: slider(0.3, 0, 0.6, 0.05, 'Spectral Dispersion', '', { category: 'Optics' }),
+  brilliance: slider(0.8, 0.5, 1, 0.05, 'Brilliance', '', { category: 'Optics' }),
+  fire: slider(0.4, 0.2, 0.8, 0.05, 'Fire Effect', '', { category: 'Optics' }),
+  transparency: slider(0.7, 0.4, 0.9, 0.05, 'Transparency', '', { category: 'Material' }),
+  purity: slider(0.9, 0.6, 1, 0.02, 'Crystal Purity', '', { category: 'Material' }),
+  crystalHue: slider(210, 0, 360, 10, 'Crystal Hue', '', { category: 'Color' }),
+  surfaceRoughness: slider(0.05, 0, 0.3, 0.02, 'Surface Roughness', '', { category: 'Material' }),
+  crystallineFlaws: slider(0.03, 0, 0.2, 0.01, 'Crystal Flaws', '', { category: 'Material' })
+};
+
 export const metadata = {
   name: "💎 Crystal Lattice",
   description: "Crystalline structures with light refraction",
@@ -485,4 +482,3 @@ export const metadata = {
   author: "ReFlow",
   version: "1.0.0"
 };
-

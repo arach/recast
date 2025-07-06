@@ -1,15 +1,6 @@
 // ◼ Minimal Shape - Simple geometric shapes for clean, modern brand identities
 
-// Helpers
-const slider = (def, min, max, step, label, unit, opts = {}) => ({ 
-  type: "slider", default: def, min, max, step, label, unit, ...opts 
-});
-const select = (def, options, label, opts = {}) => ({ 
-  type: "select", default: def, options, label, ...opts 
-});
-
-// Parameters
-const parameters = {
+function drawVisualization(ctx, width, height, params, time, utils) {
   shape: select('square', [
     { value: 'square', label: '◼ Square' },
     { value: 'circle', label: '● Circle' },
@@ -30,7 +21,6 @@ const parameters = {
   ], 'Grid Colors')
 };
 
-function drawVisualization(ctx, width, height, params, time, utils) {
   // Load parameters with new architecture
   const p = utils.params.load(params, ctx, width, height, time, { parameters });
   
@@ -250,7 +240,35 @@ function drawVisualization(ctx, width, height, params, time, utils) {
   ctx.restore();
 }
 
-// Metadata
+// Helper functions
+const slider = (def, min, max, step, label, unit, opts = {}) => ({ 
+  type: "slider", default: def, min, max, step, label, unit, ...opts 
+});
+const select = (def, options, label, opts = {}) => ({ 
+  type: "select", default: def, options, label, ...opts 
+});
+
+export const parameters = {
+  shape: select('square', [
+    { value: 'square', label: '◼ Square' },
+    { value: 'circle', label: '● Circle' },
+    { value: 'triangle', label: '▲ Triangle' },
+    { value: 'hexagon', label: '⬡ Hexagon' },
+    { value: 'diamond', label: '◆ Diamond' },
+    { value: 'grid', label: '⊞ Grid' }
+  ], 'Shape Type'),
+  size: slider(0.6, 0.3, 0.8, 0.05, 'Shape Size'),
+  cornerRadius: slider(0.1, 0, 0.5, 0.05, 'Corner Radius'),
+  rotation: slider(0, 0, 360, 15, 'Rotation Angle', '°'),
+  thickness: slider(1, 0, 1, 0.1, 'Shape Thickness'),
+  gridGap: slider(0.05, 0.02, 0.15, 0.01, 'Grid Gap'),
+  gridColors: select('theme', [
+    { value: 'theme', label: '🎨 Theme Color' },
+    { value: 'microsoft', label: '🪟 Microsoft' },
+    { value: 'gradient', label: '🌈 Gradient' }
+  ], 'Grid Colors')
+};
+
 export const metadata = {
   name: "⬜ Minimal Shape",
   description: "Simple geometric shapes with clean aesthetics",
@@ -260,6 +278,5 @@ export const metadata = {
   version: "1.0.0"
 };
 
-// Exports
-export { parameters, drawVisualization };
+export { drawVisualization as draw };
 

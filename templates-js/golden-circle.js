@@ -24,7 +24,6 @@ function draw(ctx, width, height, params, time, utils) {
   const strokeOpacity = params.strokeOpacity ?? 1;
 
   // Golden ratio calculations for perfect proportions
-  const phi = p.goldenProportion;
   const logoSize = Math.min(width, height) * 0.55; // Brand-appropriate sizing
   const baseRadius = logoSize / 2;
   
@@ -344,8 +343,20 @@ function draw(ctx, width, height, params, time, utils) {
   }
 }
 
-// Parameter definitions using helper functions
-const parameters = {
+// Helper functions
+const slider = (def, min, max, step, label, unit, opts = {}) => ({ 
+  type: "slider", default: def, min, max, step, label, unit, ...opts 
+});
+
+const select = (def, options, label, opts = {}) => ({ 
+  type: "select", default: def, options, label, ...opts 
+});
+
+const toggle = (def, label, opts = {}) => ({ 
+  type: "toggle", default: def, label, ...opts 
+});
+
+export const parameters = {
   circleStyle: select(0, [
     { value: 0, label: '⭕ Perfect Circle' },
     { value: 1, label: '🌿 Organic' },
@@ -376,27 +387,12 @@ const parameters = {
   breathingMotion: slider(0.05, 0, 0.2, 0.02, 'Breathing Motion')
 };
 
-// Helper functions
-const slider = (def, min, max, step, label, unit, opts = {}) => ({ 
-  type: "slider", default: def, min, max, step, label, unit, ...opts 
-});
-
-const select = (def, options, label, opts = {}) => ({ 
-  type: "select", default: def, options, label, ...opts 
-});
-
-const toggle = (def, label, opts = {}) => ({ 
-  type: "toggle", default: def, label, ...opts 
-});
-
-// Metadata
-const metadata = {
+export const metadata = {
   name: "◯ Golden Circle",
   description: "Fibonacci-based proportions with sophisticated organic elegance and mathematical harmony",
   category: "geometric",
   tags: ["geometric", "golden-ratio", "fibonacci", "organic", "mathematical"]
 };
 
-// Export the template
-export { draw, parameters, metadata };
+export { draw };
 

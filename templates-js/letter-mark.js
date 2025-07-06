@@ -9,51 +9,41 @@ function draw(ctx, width, height, params, time, utils) {
   // Load and process all parameters - clean and deterministic
   const p = utils.params.load(params, ctx, width, height, time, { parameters });
   
-  // Template-specific parameters (defaults come from exported parameters)
-  const { letter, fontWeight, style, alignment, size, letterSpacing, container, containerPadding } = p;
-  
-  // Calculate dimensions - exact match to TypeScript version
+  // Meaningful calculations
   const minDim = Math.min(width, height);
-  const fontSize = minDim * size;
+  const fontSize = minDim * p.size;
   const centerX = width / 2;
   const centerY = height / 2;
   
-  // Set up font - exact match to TypeScript version
-  let fontFamily = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-  if (style === 'rounded') {
-    fontFamily = '"SF Pro Rounded", -apple-system, BlinkMacSystemFont, sans-serif';
-  } else if (style === 'geometric') {
-    fontFamily = 'Futura, "Century Gothic", sans-serif';
-  } else if (style === 'classic') {
-    fontFamily = 'Georgia, "Times New Roman", serif';
-  }
+  // Set up font using centralized font system
+  const fontFamily = utils.font.get(p.style);
   
-  ctx.font = `${fontWeight} ${fontSize}px ${fontFamily}`;
-  ctx.textAlign = alignment;
+  ctx.font = `${p.fontWeight} ${fontSize}px ${fontFamily}`;
+  ctx.textAlign = p.alignment;
   ctx.textBaseline = 'middle';
   
-  // Apply letter spacing - exact match to TypeScript version
-  if (letterSpacing !== 0 && letter.length > 1) {
-    ctx.letterSpacing = `${letterSpacing}em`;
+  // Apply letter spacing
+  if (p.letterSpacing !== 0 && p.letter.length > 1) {
+    ctx.letterSpacing = `${p.letterSpacing}em`;
   }
   
-  // Calculate text position - exact match to TypeScript version
+  // Calculate text position
   let textX = centerX;
-  if (alignment === 'left') textX = width * 0.1;
-  else if (alignment === 'right') textX = width * 0.9;
+  if (p.alignment === 'left') textX = width * 0.1;
+  else if (p.alignment === 'right') textX = width * 0.9;
   
-  // Draw container if specified - exact match to TypeScript version
-  if (container !== 'none') {
-    const metrics = ctx.measureText(letter);
+  // Draw container if specified
+  if (p.container !== 'none') {
+    const metrics = ctx.measureText(p.letter);
     const textWidth = metrics.width;
     const textHeight = fontSize;
-    const padding = minDim * containerPadding;
+    const padding = minDim * p.containerPadding;
     
     ctx.save();
     ctx.globalAlpha = p.fillOpacity;
     ctx.fillStyle = p.fillColor;
     
-    if (container === 'circle') {
+    if (p.container === 'circle') {
       const radius = Math.max(textWidth, textHeight) / 2 + padding;
       ctx.beginPath();
       ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
@@ -61,13 +51,13 @@ function draw(ctx, width, height, params, time, utils) {
       
       // Invert text color for contrast
       ctx.fillStyle = p.backgroundColor;
-    } else if (container === 'square' || container === 'rounded') {
+    } else if (p.container === 'square' || p.container === 'rounded') {
       const boxSize = Math.max(textWidth, textHeight) + padding * 2;
       const boxX = centerX - boxSize / 2;
       const boxY = centerY - boxSize / 2;
       
       ctx.beginPath();
-      if (container === 'rounded') {
+      if (p.container === 'rounded') {
         const radius = boxSize * 0.1;
         ctx.roundRect(boxX, boxY, boxSize, boxSize, radius);
       } else {
@@ -84,22 +74,24 @@ function draw(ctx, width, height, params, time, utils) {
     ctx.fillStyle = p.fillColor;
   }
   
-  // Draw the letter(s) - exact match to TypeScript version
+  // Draw the letter(s)
   ctx.save();
   ctx.globalAlpha = p.fillOpacity;
-  ctx.fillText(letter, textX, centerY);
+  ctx.fillText(p.letter, textX, centerY);
   ctx.restore();
   
-  // Optional: Add subtle depth with stroke - exact match to TypeScript version
+  // Optional: Add subtle depth with stroke
   if (p.strokeWidth && p.strokeWidth > 0) {
     ctx.save();
     ctx.globalAlpha = p.strokeOpacity;
     ctx.strokeStyle = p.strokeColor;
     ctx.lineWidth = p.strokeWidth;
-    ctx.strokeText(letter, textX, centerY);
+    ctx.strokeText(p.letter, textX, centerY);
     ctx.restore();
   }
 }
+
+// Helper functions
 
 // Helper functions for concise parameter definitions
 const text = (def, label, placeholder, opts = {}) => ({ 

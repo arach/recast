@@ -8,16 +8,10 @@ function draw(ctx, width, height, params, time, utils) {
   // Load and process all parameters - clean and deterministic
   const p = utils.params.load(params, ctx, width, height, time, { parameters });
   
-  // Template-specific parameters (defaults come from exported parameters)
-  const { barkType, frequency, amplitude, growthComplexity, naturalVariation, organicFlow } = p;
-  const { barkRoughness, ridgeDepth, furrowWidth, growthRings, branchMarks } = p;
-  const { weathering, lichens, moss, insects, treeAge, characterMarks } = p;
-  const { woodHue, weatheredTone, naturalSaturation } = p;
-
-  // Calculate dimensions
+  // Calculate dimensions and meaningful transformations
   const centerX = width / 2;
   const centerY = height / 2;
-  const barkTypeNum = Math.round(barkType);
+  const barkTypeNum = Math.round(p.barkType);
   
   // Bark types
   const barkTypes = [
@@ -55,11 +49,11 @@ function draw(ctx, width, height, params, time, utils) {
     const points = 72;
     for (let i = 0; i <= points; i++) {
       const angle = (i / points) * Math.PI * 2;
-      const baseRadius = amplitude;
-      const noiseX = Math.cos(angle) * frequency;
-      const noiseY = Math.sin(angle) * frequency;
-      const noise = organicNoise(noiseX + time * 0.05, noiseY, 2, 4) * naturalVariation;
-      const growthNoise = organicNoise(noiseX * 0.5, noiseY * 0.5 + time * 0.02, 1, 3) * growthComplexity;
+      const baseRadius = p.amplitude;
+      const noiseX = Math.cos(angle) * p.frequency;
+      const noiseY = Math.sin(angle) * p.frequency;
+      const noise = organicNoise(noiseX + time * 0.05, noiseY, 2, 4) * p.naturalVariation;
+      const growthNoise = organicNoise(noiseX * 0.5, noiseY * 0.5 + time * 0.02, 1, 3) * p.growthComplexity;
       const radius = baseRadius * (1 + noise * 0.3 + growthNoise * 0.2);
       
       const x = centerX + Math.cos(angle) * radius;
@@ -75,16 +69,16 @@ function draw(ctx, width, height, params, time, utils) {
     ctx.clip();
     
     // Fill base color with natural wood hue
-    const hue = woodHue;
-    const saturation = 35 * naturalSaturation;
-    const lightness = 35 + weatheredTone * 20;
+    const hue = p.woodHue;
+    const saturation = 35 * p.naturalSaturation;
+    const lightness = 35 + p.weatheredTone * 20;
     
     if (p.theme.fillType !== 'none') {
       ctx.save();
       ctx.globalAlpha = p.theme.fillOpacity;
       
       if (p.theme.fillType === 'gradient') {
-        const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, amplitude * 1.5);
+        const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, p.amplitude * 1.5);
         gradient.addColorStop(0, `hsl(${hue}, ${saturation}%, ${lightness + 10}%)`);
         gradient.addColorStop(0.5, `hsl(${hue}, ${saturation}%, ${lightness}%)`);
         gradient.addColorStop(1, `hsl(${hue - 5}, ${saturation - 10}%, ${lightness - 15}%)`);
@@ -93,20 +87,20 @@ function draw(ctx, width, height, params, time, utils) {
         ctx.fillStyle = p.fillColor;
       }
       
-      ctx.fillRect(centerX - amplitude * 2, centerY - amplitude * 2, amplitude * 4, amplitude * 4);
+      ctx.fillRect(centerX - p.amplitude * 2, centerY - p.amplitude * 2, p.amplitude * 4, p.amplitude * 4);
       ctx.restore();
     }
     
     // Draw bark ridges and furrows
-    const ridgeCount = Math.floor(12 * currentBarkType.textureDensity * barkRoughness);
+    const ridgeCount = Math.floor(12 * currentBarkType.textureDensity * p.barkRoughness);
     for (let i = 0; i < ridgeCount; i++) {
       ctx.save();
       ctx.globalAlpha = p.theme.fillOpacity;
       
       const ridgeAngle = (i / ridgeCount) * Math.PI * 2 + organicNoise(i, time * 0.1, 2) * 0.5;
-      const ridgeStart = amplitude * 0.3;
-      const ridgeEnd = amplitude * (1 + organicNoise(i, time * 0.05, 1) * 0.3);
-      const ridgeThickness = furrowWidth * 20 * (1 + organicNoise(i * 2, time * 0.05, 1) * 0.5);
+      const ridgeStart = p.amplitude * 0.3;
+      const ridgeEnd = p.amplitude * (1 + organicNoise(i, time * 0.05, 1) * 0.3);
+      const ridgeThickness = p.furrowWidth * 20 * (1 + organicNoise(i * 2, time * 0.05, 1) * 0.5);
       
       // Create ridge gradient
       const x1 = centerX + Math.cos(ridgeAngle) * ridgeStart;
@@ -116,7 +110,7 @@ function draw(ctx, width, height, params, time, utils) {
       
       const ridgeGradient = ctx.createLinearGradient(x1, y1, x2, y2);
       ridgeGradient.addColorStop(0, `hsla(${hue}, ${saturation}%, ${lightness - 10}%, 0.1)`);
-      ridgeGradient.addColorStop(0.5, `hsla(${hue - 5}, ${saturation - 5}%, ${lightness - 20}%, ${ridgeDepth})`);
+      ridgeGradient.addColorStop(0.5, `hsla(${hue - 5}, ${saturation - 5}%, ${lightness - 20}%, ${p.ridgeDepth})`);
       ridgeGradient.addColorStop(1, `hsla(${hue - 10}, ${saturation - 10}%, ${lightness - 30}%, 0.1)`);
       
       // Draw organic ridge
@@ -129,7 +123,7 @@ function draw(ctx, width, height, params, time, utils) {
       for (let j = 0; j <= ridgePoints; j++) {
         const t = j / ridgePoints;
         const r = ridgeStart + (ridgeEnd - ridgeStart) * t;
-        const wobble = organicNoise(i + j * 0.1, time * 0.05, 3) * organicFlow * 10;
+        const wobble = organicNoise(i + j * 0.1, time * 0.05, 3) * p.organicFlow * 10;
         const x = centerX + Math.cos(ridgeAngle + wobble * 0.01) * r;
         const y = centerY + Math.sin(ridgeAngle + wobble * 0.01) * r;
         
@@ -145,14 +139,14 @@ function draw(ctx, width, height, params, time, utils) {
     }
     
     // Draw growth rings
-    if (growthRings > 0) {
+    if (p.growthRings > 0) {
       ctx.save();
-      ctx.globalAlpha = growthRings * 0.3 * p.theme.fillOpacity;
+      ctx.globalAlpha = p.growthRings * 0.3 * p.theme.fillOpacity;
       
-      const ringCount = Math.floor(5 + treeAge * 10);
+      const ringCount = Math.floor(5 + p.treeAge * 10);
       for (let i = 0; i < ringCount; i++) {
-        const ringRadius = amplitude * 0.3 + (amplitude * 0.7 * i / ringCount);
-        const ringAlpha = (1 - i / ringCount) * growthRings * 0.2;
+        const ringRadius = p.amplitude * 0.3 + (p.amplitude * 0.7 * i / ringCount);
+        const ringAlpha = (1 - i / ringCount) * p.growthRings * 0.2;
         
         ctx.strokeStyle = `hsla(${hue - 5}, ${saturation - 10}%, ${lightness - 15}%, ${ringAlpha})`;
         ctx.lineWidth = 1 + organicNoise(i, time * 0.1, 2) * 2;
@@ -179,15 +173,15 @@ function draw(ctx, width, height, params, time, utils) {
     }
     
     // Draw branch marks/scars
-    if (branchMarks > 0) {
+    if (p.branchMarks > 0) {
       ctx.save();
       ctx.globalAlpha = p.theme.fillOpacity;
       
-      const markCount = Math.floor(3 + branchMarks * 5);
+      const markCount = Math.floor(3 + p.branchMarks * 5);
       for (let i = 0; i < markCount; i++) {
         const markAngle = organicNoise(i * 7, time * 0.1, 1) * Math.PI * 2;
-        const markRadius = amplitude * (0.4 + organicNoise(i * 3, time * 0.05, 1) * 0.4);
-        const markSize = 10 + branchMarks * 20 * (0.5 + organicNoise(i * 5, time * 0.05, 1) * 0.5);
+        const markRadius = p.amplitude * (0.4 + organicNoise(i * 3, time * 0.05, 1) * 0.4);
+        const markSize = 10 + p.branchMarks * 20 * (0.5 + organicNoise(i * 5, time * 0.05, 1) * 0.5);
         
         const markX = centerX + Math.cos(markAngle) * markRadius;
         const markY = centerY + Math.sin(markAngle) * markRadius;
@@ -199,8 +193,8 @@ function draw(ctx, width, height, params, time, utils) {
         ctx.scale(1, 0.6);
         
         const scarGradient = ctx.createRadialGradient(0, 0, 0, 0, 0, markSize);
-        scarGradient.addColorStop(0, `hsla(${hue - 10}, ${saturation - 20}%, ${lightness - 30}%, ${branchMarks * 0.8})`);
-        scarGradient.addColorStop(0.7, `hsla(${hue - 5}, ${saturation - 15}%, ${lightness - 20}%, ${branchMarks * 0.4})`);
+        scarGradient.addColorStop(0, `hsla(${hue - 10}, ${saturation - 20}%, ${lightness - 30}%, ${p.branchMarks * 0.8})`);
+        scarGradient.addColorStop(0.7, `hsla(${hue - 5}, ${saturation - 15}%, ${lightness - 20}%, ${p.branchMarks * 0.4})`);
         scarGradient.addColorStop(1, `hsla(${hue}, ${saturation - 10}%, ${lightness - 10}%, 0)`);
         
         ctx.fillStyle = scarGradient;
@@ -215,22 +209,22 @@ function draw(ctx, width, height, params, time, utils) {
     }
     
     // Draw weathering effects
-    if (weathering > 0) {
+    if (p.weathering > 0) {
       ctx.save();
-      ctx.globalAlpha = weathering * 0.4 * p.theme.fillOpacity;
+      ctx.globalAlpha = p.weathering * 0.4 * p.theme.fillOpacity;
       
       // Create weathered patches
-      const weatherCount = Math.floor(5 + weathering * 10);
+      const weatherCount = Math.floor(5 + p.weathering * 10);
       for (let i = 0; i < weatherCount; i++) {
-        const weatherX = centerX + (Math.random() - 0.5) * amplitude * 1.8;
-        const weatherY = centerY + (Math.random() - 0.5) * amplitude * 1.8;
-        const weatherSize = 20 + Math.random() * 40 * weathering;
+        const weatherX = centerX + (Math.random() - 0.5) * p.amplitude * 1.8;
+        const weatherY = centerY + (Math.random() - 0.5) * p.amplitude * 1.8;
+        const weatherSize = 20 + Math.random() * 40 * p.weathering;
         
         const weatherGradient = ctx.createRadialGradient(
           weatherX, weatherY, 0,
           weatherX, weatherY, weatherSize
         );
-        weatherGradient.addColorStop(0, `hsla(${hue}, ${saturation * 0.5}%, ${lightness + 10}%, ${weathering * 0.3})`);
+        weatherGradient.addColorStop(0, `hsla(${hue}, ${saturation * 0.5}%, ${lightness + 10}%, ${p.weathering * 0.3})`);
         weatherGradient.addColorStop(1, `hsla(${hue}, ${saturation * 0.5}%, ${lightness + 10}%, 0)`);
         
         ctx.fillStyle = weatherGradient;
@@ -259,19 +253,19 @@ function draw(ctx, width, height, params, time, utils) {
     }
     
     // Draw lichens
-    if (lichens > 0) {
+    if (p.lichens > 0) {
       ctx.save();
-      ctx.globalAlpha = lichens * p.theme.fillOpacity;
+      ctx.globalAlpha = p.lichens * p.theme.fillOpacity;
       
-      const lichenCount = Math.floor(4 + lichens * 8);
+      const lichenCount = Math.floor(4 + p.lichens * 8);
       for (let i = 0; i < lichenCount; i++) {
-        const lichenX = centerX + (Math.random() - 0.5) * amplitude * 1.6;
-        const lichenY = centerY + (Math.random() - 0.5) * amplitude * 1.6;
-        const lichenSize = 5 + Math.random() * 15 * lichens;
+        const lichenX = centerX + (Math.random() - 0.5) * p.amplitude * 1.6;
+        const lichenY = centerY + (Math.random() - 0.5) * p.amplitude * 1.6;
+        const lichenSize = 5 + Math.random() * 15 * p.lichens;
         
         // Lichen colors (pale greens and yellows)
         const lichenHue = 60 + Math.random() * 40;
-        ctx.fillStyle = `hsla(${lichenHue}, 40%, 60%, ${lichens * 0.6})`;
+        ctx.fillStyle = `hsla(${lichenHue}, 40%, 60%, ${p.lichens * 0.6})`;
         
         // Draw circular lichen patches
         ctx.beginPath();
@@ -279,7 +273,7 @@ function draw(ctx, width, height, params, time, utils) {
         ctx.fill();
         
         // Add texture
-        ctx.fillStyle = `hsla(${lichenHue}, 30%, 70%, ${lichens * 0.3})`;
+        ctx.fillStyle = `hsla(${lichenHue}, 30%, 70%, ${p.lichens * 0.3})`;
         for (let j = 0; j < 5; j++) {
           const dotX = lichenX + (Math.random() - 0.5) * lichenSize;
           const dotY = lichenY + (Math.random() - 0.5) * lichenSize;
@@ -293,23 +287,23 @@ function draw(ctx, width, height, params, time, utils) {
     }
     
     // Draw moss
-    if (moss > 0) {
+    if (p.moss > 0) {
       ctx.save();
-      ctx.globalAlpha = moss * p.theme.fillOpacity;
+      ctx.globalAlpha = p.moss * p.theme.fillOpacity;
       
-      const mossPatches = Math.floor(3 + moss * 6);
+      const mossPatches = Math.floor(3 + p.moss * 6);
       for (let i = 0; i < mossPatches; i++) {
-        const mossX = centerX + (Math.random() - 0.5) * amplitude * 1.4;
-        const mossY = centerY + (Math.random() - 0.5) * amplitude * 1.4;
-        const mossSize = 15 + Math.random() * 30 * moss;
+        const mossX = centerX + (Math.random() - 0.5) * p.amplitude * 1.4;
+        const mossY = centerY + (Math.random() - 0.5) * p.amplitude * 1.4;
+        const mossSize = 15 + Math.random() * 30 * p.moss;
         
         // Moss gradient (deep greens)
         const mossGradient = ctx.createRadialGradient(
           mossX, mossY, 0,
           mossX, mossY, mossSize
         );
-        mossGradient.addColorStop(0, `hsla(120, 40%, 35%, ${moss * 0.7})`);
-        mossGradient.addColorStop(0.5, `hsla(115, 35%, 30%, ${moss * 0.5})`);
+        mossGradient.addColorStop(0, `hsla(120, 40%, 35%, ${p.moss * 0.7})`);
+        mossGradient.addColorStop(0.5, `hsla(115, 35%, 30%, ${p.moss * 0.5})`);
         mossGradient.addColorStop(1, `hsla(110, 30%, 25%, 0)`);
         
         ctx.fillStyle = mossGradient;
@@ -332,24 +326,24 @@ function draw(ctx, width, height, params, time, utils) {
     }
     
     // Draw insect holes
-    if (insects > 0) {
+    if (p.insects > 0) {
       ctx.save();
       ctx.globalAlpha = p.theme.fillOpacity;
       
-      const holeCount = Math.floor(2 + insects * 8);
+      const holeCount = Math.floor(2 + p.insects * 8);
       for (let i = 0; i < holeCount; i++) {
-        const holeX = centerX + (Math.random() - 0.5) * amplitude * 1.5;
-        const holeY = centerY + (Math.random() - 0.5) * amplitude * 1.5;
-        const holeSize = 2 + Math.random() * 4 * insects;
+        const holeX = centerX + (Math.random() - 0.5) * p.amplitude * 1.5;
+        const holeY = centerY + (Math.random() - 0.5) * p.amplitude * 1.5;
+        const holeSize = 2 + Math.random() * 4 * p.insects;
         
         // Dark hole
-        ctx.fillStyle = `hsla(${hue - 20}, ${saturation - 20}%, ${lightness - 40}%, ${insects * 0.8})`;
+        ctx.fillStyle = `hsla(${hue - 20}, ${saturation - 20}%, ${lightness - 40}%, ${p.insects * 0.8})`;
         ctx.beginPath();
         ctx.arc(holeX, holeY, holeSize, 0, Math.PI * 2);
         ctx.fill();
         
         // Hole edge
-        ctx.strokeStyle = `hsla(${hue - 10}, ${saturation - 10}%, ${lightness - 25}%, ${insects * 0.4})`;
+        ctx.strokeStyle = `hsla(${hue - 10}, ${saturation - 10}%, ${lightness - 25}%, ${p.insects * 0.4})`;
         ctx.lineWidth = 1;
         ctx.stroke();
       }
@@ -358,22 +352,22 @@ function draw(ctx, width, height, params, time, utils) {
     }
     
     // Draw character marks
-    if (characterMarks > 0) {
+    if (p.characterMarks > 0) {
       ctx.save();
-      ctx.globalAlpha = characterMarks * 0.6 * p.theme.fillOpacity;
+      ctx.globalAlpha = p.characterMarks * 0.6 * p.theme.fillOpacity;
       
-      const markTypes = Math.floor(2 + characterMarks * 4);
+      const markTypes = Math.floor(2 + p.characterMarks * 4);
       for (let i = 0; i < markTypes; i++) {
-        const markX = centerX + (Math.random() - 0.5) * amplitude * 1.2;
-        const markY = centerY + (Math.random() - 0.5) * amplitude * 1.2;
+        const markX = centerX + (Math.random() - 0.5) * p.amplitude * 1.2;
+        const markY = centerY + (Math.random() - 0.5) * p.amplitude * 1.2;
         
-        ctx.strokeStyle = `hsla(${hue - 15}, ${saturation - 15}%, ${lightness - 25}%, ${characterMarks * 0.5})`;
+        ctx.strokeStyle = `hsla(${hue - 15}, ${saturation - 15}%, ${lightness - 25}%, ${p.characterMarks * 0.5})`;
         ctx.lineWidth = 1 + Math.random() * 3;
         ctx.lineCap = 'round';
         
         // Draw various character marks (scratches, cuts, etc.)
         ctx.beginPath();
-        const markLength = 10 + Math.random() * 30 * characterMarks;
+        const markLength = 10 + Math.random() * 30 * p.characterMarks;
         const markAngle = Math.random() * Math.PI * 2;
         
         if (Math.random() > 0.5) {
@@ -391,7 +385,7 @@ function draw(ctx, width, height, params, time, utils) {
           const curvePoints = 5;
           for (let j = 0; j <= curvePoints; j++) {
             const t = j / curvePoints;
-            const curve = Math.sin(t * Math.PI) * 10 * characterMarks;
+            const curve = Math.sin(t * Math.PI) * 10 * p.characterMarks;
             const x = markX + Math.cos(markAngle) * (markLength * (t - 0.5)) + 
                      Math.cos(markAngle + Math.PI / 2) * curve;
             const y = markY + Math.sin(markAngle) * (markLength * (t - 0.5)) + 
@@ -431,11 +425,11 @@ function draw(ctx, width, height, params, time, utils) {
       const points = 72;
       for (let i = 0; i <= points; i++) {
         const angle = (i / points) * Math.PI * 2;
-        const baseRadius = amplitude;
-        const noiseX = Math.cos(angle) * frequency;
-        const noiseY = Math.sin(angle) * frequency;
-        const noise = organicNoise(noiseX + time * 0.05, noiseY, 2, 4) * naturalVariation;
-        const growthNoise = organicNoise(noiseX * 0.5, noiseY * 0.5 + time * 0.02, 1, 3) * growthComplexity;
+        const baseRadius = p.amplitude;
+        const noiseX = Math.cos(angle) * p.frequency;
+        const noiseY = Math.sin(angle) * p.frequency;
+        const noise = organicNoise(noiseX + time * 0.05, noiseY, 2, 4) * p.naturalVariation;
+        const growthNoise = organicNoise(noiseX * 0.5, noiseY * 0.5 + time * 0.02, 1, 3) * p.growthComplexity;
         const radius = baseRadius * (1 + noise * 0.3 + growthNoise * 0.2);
         
         const x = centerX + Math.cos(angle) * radius;

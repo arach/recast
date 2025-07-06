@@ -8,117 +8,51 @@ function draw(ctx, width, height, params, time, utils) {
   // Load and process all parameters - clean and deterministic
   const p = utils.params.load(params, ctx, width, height, time, { parameters });
   
-  // Template-specific parameters (defaults come from exported parameters)
-  const { text, fontStyle, fontWeight, letterSpacing, size, lineHeight, textTransform,
-          underline, underlineWeight, underlineOffset, showFrame, frameStyle, 
-          frameStrokeStyle, frameStrokeWidth, framePadding, frameRadius,
-          textAnimation, animationSpeed, animationIntensity } = p;
-  
-  // Helper function to draw rounded rectangle
-  function drawRoundedRect(ctx, x, y, width, height, radius) {
-    if (radius === 0) {
-      ctx.rect(x, y, width, height);
-    } else {
-      ctx.moveTo(x + radius, y);
-      ctx.lineTo(x + width - radius, y);
-      ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
-      ctx.lineTo(x + width, y + height - radius);
-      ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
-      ctx.lineTo(x + radius, y + height);
-      ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
-      ctx.lineTo(x, y + radius);
-      ctx.quadraticCurveTo(x, y, x + radius, y);
-    }
-  }
-  
-  // Apply text transform
-  function applyTextTransform(text, transform) {
-    switch (transform) {
-      case 'uppercase':
-        return text.toUpperCase();
-      case 'lowercase':
-        return text.toLowerCase();
-      case 'capitalize':
-        return text.split(' ').map(word => 
-          word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-        ).join(' ');
-      default:
-        return text;
-    }
-  }
-  
-  const displayText = applyTextTransform(text, textTransform);
-  
-  // Calculate dimensions
+  // Meaningful calculations
+  const displayText = applyTextTransform(p.text, p.textTransform);
   const minDim = Math.min(width, height);
-  const fontSize = minDim * size * 0.2;
-  
-  // Set up font
-  let fontFamily = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-  switch (fontStyle) {
-    case 'tech':
-      fontFamily = '"SF Mono", Monaco, "Courier New", monospace';
-      break;
-    case 'elegant':
-      fontFamily = '"Playfair Display", Georgia, serif';
-      break;
-    case 'bold':
-      fontFamily = '"Arial Black", "Helvetica Neue", sans-serif';
-      break;
-    case 'minimal':
-      fontFamily = 'Helvetica, Arial, sans-serif';
-      break;
-    case 'silkscreen':
-      fontFamily = 'Silkscreen, monospace';
-      break;
-    case 'orbitron':
-      fontFamily = 'Orbitron, sans-serif';
-      break;
-    case 'doto':
-      fontFamily = '"DotGothic16", monospace';
-      break;
-    case 'custom':
-      fontFamily = p.customFont || fontFamily;
-      break;
-  }
-  
-  ctx.font = `${fontWeight} ${fontSize}px ${fontFamily}`;
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  
-  // Split text into lines
+  const fontSize = minDim * p.size * 0.2;
+  const centerX = width / 2;
+  const centerY = height / 2;
   const lines = displayText.split('\n');
-  const totalHeight = lines.length * fontSize * lineHeight;
-  const startY = height / 2 - totalHeight / 2 + fontSize / 2;
+  const totalHeight = lines.length * fontSize * p.lineHeight;
+  const startY = centerY - totalHeight / 2 + fontSize / 2;
   
-  // Calculate animation offsets
+  // Animation calculations
   const animTime = p.animTime;
   let animOffsetX = 0;
   let animOffsetY = 0;
   let animRotation = 0;
   let animScale = 1;
   
-  switch (textAnimation) {
+  switch (p.textAnimation) {
     case 'float':
-      animOffsetY = Math.sin(animTime) * 10 * animationIntensity;
+      animOffsetY = Math.sin(animTime) * 10 * p.animationIntensity;
       break;
     case 'wave':
       // Applied per character
       break;
     case 'pulse':
-      animScale = 1 + Math.sin(animTime * 2) * 0.1 * animationIntensity;
+      animScale = 1 + Math.sin(animTime * 2) * 0.1 * p.animationIntensity;
       break;
     case 'rotate':
-      animRotation = Math.sin(animTime) * 0.1 * animationIntensity;
+      animRotation = Math.sin(animTime) * 0.1 * p.animationIntensity;
       break;
     case 'shake':
-      animOffsetX = (Math.random() - 0.5) * 5 * animationIntensity;
-      animOffsetY = (Math.random() - 0.5) * 5 * animationIntensity;
+      animOffsetX = (Math.random() - 0.5) * 5 * p.animationIntensity;
+      animOffsetY = (Math.random() - 0.5) * 5 * p.animationIntensity;
       break;
   }
   
+  // Set up font using centralized font system
+  const fontFamily = utils.font.get(p.fontStyle, p.customFont);
+  
+  ctx.font = `${p.fontWeight} ${fontSize}px ${fontFamily}`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  
   // Draw frame if enabled
-  if (showFrame) {
+  if (p.showFrame) {
     ctx.save();
     
     // Pre-calculate text bounds
@@ -129,53 +63,53 @@ function draw(ctx, width, height, params, time, utils) {
     });
     
     // Add letter spacing to width calculation
-    if (letterSpacing > 0) {
-      maxWidth += (Math.max(...lines.map(l => l.length)) - 1) * fontSize * letterSpacing;
+    if (p.letterSpacing > 0) {
+      maxWidth += (Math.max(...lines.map(l => l.length)) - 1) * fontSize * p.letterSpacing;
     }
     
     // Calculate frame dimensions
-    const frameX = width / 2 - maxWidth / 2 - framePadding;
-    const frameY = startY - fontSize / 2 - framePadding;
-    const frameWidth = maxWidth + framePadding * 2;
-    const frameHeight = totalHeight + framePadding * 2;
+    const frameX = centerX - maxWidth / 2 - p.framePadding;
+    const frameY = startY - fontSize / 2 - p.framePadding;
+    const frameWidth = maxWidth + p.framePadding * 2;
+    const frameHeight = totalHeight + p.framePadding * 2;
     
     // Apply frame animation
-    ctx.translate(width / 2 + animOffsetX, height / 2 + animOffsetY);
+    ctx.translate(centerX + animOffsetX, centerY + animOffsetY);
     ctx.rotate(animRotation);
     ctx.scale(animScale, animScale);
-    ctx.translate(-width / 2, -height / 2);
+    ctx.translate(-centerX, -centerY);
     
     // Draw based on frame style
-    if (frameStyle === 'filled' || frameStyle === 'filled-inverse') {
+    if (p.frameStyle === 'filled' || p.frameStyle === 'filled-inverse') {
       ctx.globalAlpha = p.fillOpacity;
-      ctx.fillStyle = frameStyle === 'filled' ? p.strokeColor : p.fillColor;
+      ctx.fillStyle = p.frameStyle === 'filled' ? p.strokeColor : p.fillColor;
       ctx.beginPath();
-      drawRoundedRect(ctx, frameX, frameY, frameWidth, frameHeight, frameRadius);
+      drawRoundedRect(ctx, frameX, frameY, frameWidth, frameHeight, p.frameRadius);
       ctx.fill();
     } else {
       ctx.globalAlpha = p.strokeOpacity;
       ctx.strokeStyle = p.strokeColor;
-      ctx.lineWidth = frameStrokeWidth;
+      ctx.lineWidth = p.frameStrokeWidth;
       
-      switch (frameStrokeStyle) {
+      switch (p.frameStrokeStyle) {
         case 'dashed':
-          ctx.setLineDash([frameStrokeWidth * 3, frameStrokeWidth * 2]);
+          ctx.setLineDash([p.frameStrokeWidth * 3, p.frameStrokeWidth * 2]);
           break;
         case 'dotted':
-          ctx.setLineDash([frameStrokeWidth, frameStrokeWidth * 1.5]);
+          ctx.setLineDash([p.frameStrokeWidth, p.frameStrokeWidth * 1.5]);
           break;
         case 'double':
-          const gap = frameStrokeWidth * 1.5;
+          const gap = p.frameStrokeWidth * 1.5;
           ctx.beginPath();
-          drawRoundedRect(ctx, frameX - gap, frameY - gap, frameWidth + gap * 2, frameHeight + gap * 2, frameRadius);
+          drawRoundedRect(ctx, frameX - gap, frameY - gap, frameWidth + gap * 2, frameHeight + gap * 2, p.frameRadius);
           ctx.stroke();
           ctx.beginPath();
-          drawRoundedRect(ctx, frameX, frameY, frameWidth, frameHeight, frameRadius);
+          drawRoundedRect(ctx, frameX, frameY, frameWidth, frameHeight, p.frameRadius);
           ctx.stroke();
           break;
         default:
           ctx.beginPath();
-          drawRoundedRect(ctx, frameX, frameY, frameWidth, frameHeight, frameRadius);
+          drawRoundedRect(ctx, frameX, frameY, frameWidth, frameHeight, p.frameRadius);
           ctx.stroke();
       }
       
@@ -189,65 +123,65 @@ function draw(ctx, width, height, params, time, utils) {
   ctx.save();
   
   // Apply global text animation transforms
-  if (textAnimation !== 'wave' && textAnimation !== 'none') {
-    ctx.translate(width / 2 + animOffsetX, height / 2 + animOffsetY);
+  if (p.textAnimation !== 'wave' && p.textAnimation !== 'none') {
+    ctx.translate(centerX + animOffsetX, centerY + animOffsetY);
     ctx.rotate(animRotation);
     ctx.scale(animScale, animScale);
-    ctx.translate(-width / 2, -height / 2);
+    ctx.translate(-centerX, -centerY);
   }
   
   // Draw each line
   lines.forEach((line, lineIndex) => {
-    const y = startY + lineIndex * fontSize * lineHeight;
+    const y = startY + lineIndex * fontSize * p.lineHeight;
     
     ctx.save();
     ctx.globalAlpha = p.fillOpacity;
     
     // Apply letter spacing and per-character animations
-    if (letterSpacing > 0 || textAnimation === 'wave') {
+    if (p.letterSpacing > 0 || p.textAnimation === 'wave') {
       const chars = line.split('');
       const metrics = ctx.measureText(line);
-      const totalWidth = metrics.width + (chars.length - 1) * fontSize * letterSpacing;
-      let x = width / 2 - totalWidth / 2;
+      const totalWidth = metrics.width + (chars.length - 1) * fontSize * p.letterSpacing;
+      let x = centerX - totalWidth / 2;
       
       ctx.textAlign = 'left';
       chars.forEach((char, charIndex) => {
         let charY = y;
         let charX = x;
         
-        if (textAnimation === 'wave') {
+        if (p.textAnimation === 'wave') {
           const wavePhase = (charIndex / chars.length) * Math.PI * 2;
-          charY += Math.sin(animTime * 3 + wavePhase) * 10 * animationIntensity;
+          charY += Math.sin(animTime * 3 + wavePhase) * 10 * p.animationIntensity;
         }
         
-        ctx.fillStyle = (showFrame && frameStyle === 'filled-inverse') ? p.strokeColor : p.fillColor;
+        ctx.fillStyle = (p.showFrame && p.frameStyle === 'filled-inverse') ? p.strokeColor : p.fillColor;
         ctx.fillText(char, charX, charY);
-        x += ctx.measureText(char).width + fontSize * letterSpacing;
+        x += ctx.measureText(char).width + fontSize * p.letterSpacing;
       });
       ctx.textAlign = 'center';
     } else {
-      ctx.fillStyle = (showFrame && frameStyle === 'filled-inverse') ? strokeColor : fillColor;
-      ctx.fillText(line, width / 2, y);
+      ctx.fillStyle = (p.showFrame && p.frameStyle === 'filled-inverse') ? p.strokeColor : p.fillColor;
+      ctx.fillText(line, centerX, y);
     }
     
     ctx.restore();
     
     // Draw underline if enabled
-    if (underline && lineIndex === lines.length - 1) {
+    if (p.underline && lineIndex === lines.length - 1) {
       ctx.save();
       ctx.globalAlpha = p.fillOpacity;
       
       const metrics = ctx.measureText(line);
-      const underlineWidth = metrics.width + (letterSpacing > 0 ? (line.length - 1) * fontSize * letterSpacing : 0);
-      const underlineY = y + fontSize / 2 + underlineOffset;
+      const underlineWidth = metrics.width + (p.letterSpacing > 0 ? (line.length - 1) * fontSize * p.letterSpacing : 0);
+      const underlineY = y + fontSize / 2 + p.underlineOffset;
       
-      ctx.strokeStyle = (showFrame && frameStyle === 'filled-inverse') ? p.strokeColor : p.fillColor;
-      ctx.lineWidth = underlineWeight;
+      ctx.strokeStyle = (p.showFrame && p.frameStyle === 'filled-inverse') ? p.strokeColor : p.fillColor;
+      ctx.lineWidth = p.underlineWeight;
       ctx.lineCap = 'round';
       
       ctx.beginPath();
-      ctx.moveTo(width / 2 - underlineWidth / 2, underlineY);
-      ctx.lineTo(width / 2 + underlineWidth / 2, underlineY);
+      ctx.moveTo(centerX - underlineWidth / 2, underlineY);
+      ctx.lineTo(centerX + underlineWidth / 2, underlineY);
       ctx.stroke();
       
       ctx.restore();
@@ -262,8 +196,8 @@ function draw(ctx, width, height, params, time, utils) {
     ctx.lineWidth = p.strokeWidth;
     
     lines.forEach((line, index) => {
-      const y = startY + index * fontSize * lineHeight;
-      ctx.strokeText(line, width / 2, y);
+      const y = startY + index * fontSize * p.lineHeight;
+      ctx.strokeText(line, centerX, y);
     });
     
     ctx.restore();
@@ -275,11 +209,43 @@ function draw(ctx, width, height, params, time, utils) {
   if (utils.debug) {
     utils.debug.log('Wordmark rendered', {
       text: displayText,
-      fontStyle,
+      fontStyle: p.fontStyle,
       fontSize: fontSize.toFixed(1),
-      showFrame,
-      animation: textAnimation
+      showFrame: p.showFrame,
+      animation: p.textAnimation
     });
+  }
+}
+
+// Helper functions
+function drawRoundedRect(ctx, x, y, width, height, radius) {
+  if (radius === 0) {
+    ctx.rect(x, y, width, height);
+  } else {
+    ctx.moveTo(x + radius, y);
+    ctx.lineTo(x + width - radius, y);
+    ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+    ctx.lineTo(x + width, y + height - radius);
+    ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+    ctx.lineTo(x + radius, y + height);
+    ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+    ctx.lineTo(x, y + radius);
+    ctx.quadraticCurveTo(x, y, x + radius, y);
+  }
+}
+
+function applyTextTransform(text, transform) {
+  switch (transform) {
+    case 'uppercase':
+      return text.toUpperCase();
+    case 'lowercase':
+      return text.toLowerCase();
+    case 'capitalize':
+      return text.split(' ').map(word => 
+        word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+      ).join(' ');
+    default:
+      return text;
   }
 }
 

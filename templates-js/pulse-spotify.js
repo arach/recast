@@ -16,51 +16,43 @@ function drawVisualization(ctx, width, height, params, time, utils) {
   const strokeOpacity = p.strokeOpacity ?? 0.8;
   const colorMode = p.colorMode || 'theme';
   
-  // Helper to convert hex to HSL
-  const hexToHsl = (hex) => {
-    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-    if (!result) return [0, 0, 50];
-    
-    let r = parseInt(result[1], 16) / 255;
-    let g = parseInt(result[2], 16) / 255;
-    let b = parseInt(result[3], 16) / 255;
-    
-    const max = Math.max(r, g, b), min = Math.min(r, g, b);
-    let h, s, l = (max + min) / 2;
-    
-    if (max === min) {
-      h = s = 0;
-    } else {
-      const d = max - min;
-      s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-      switch (max) {
-        case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
-        case g: h = ((b - r) / d + 2) / 6; break;
-        case b: h = ((r - g) / d + 4) / 6; break;
-        default: h = 0;
-      }
+// Helper functions
+const hexToHsl = (hex) => {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  if (!result) return [0, 0, 50];
+  
+  let r = parseInt(result[1], 16) / 255;
+  let g = parseInt(result[2], 16) / 255;
+  let b = parseInt(result[3], 16) / 255;
+  
+  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  let h, s, l = (max + min) / 2;
+  
+  if (max === min) {
+    h = s = 0;
+  } else {
+    const d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    switch (max) {
+      case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
+      case g: h = ((b - r) / d + 2) / 6; break;
+      case b: h = ((r - g) / d + 4) / 6; break;
+      default: h = 0;
     }
-    
-    return [h * 360, s * 100, l * 100];
-  };
+  }
+  
+  return [h * 360, s * 100, l * 100];
+};
 
   const centerX = width / 2;
   const centerY = height / 2;
-  const baseRadius = p.radius || 50;
-  const layers = p.layers || 4;
-  const frequency = p.frequency || 3;
-  const amplitude = p.amplitude || 50;
-  const complexity = p.complexity || 0.3;
-  const chaos = p.chaos || 0.1;
-  const damping = p.damping || 0.9;
-  const colorVariation = p.colorVariation || 0.5;
   
   // Generate multiple layers of circles
-  for (let layer = 0; layer < layers; layer++) {
-    const layerPhase = (layer / layers) * Math.PI * 2 + time * frequency * 0.5;
-    const layerRadius = baseRadius * (1 + layer * 0.3);
-    const chaosOffset = chaos * 20 * (Math.sin(time * 1.7 + layer) + Math.sin(time * 2.3 + layer * 1.5));
-    const radiusVariation = amplitude * Math.sin(layerPhase) * damping + chaosOffset;
+  for (let layer = 0; layer < p.layers; layer++) {
+    const layerPhase = (layer / p.layers) * Math.PI * 2 + time * p.frequency * 0.5;
+    const layerRadius = p.radius * (1 + layer * 0.3);
+    const chaosOffset = p.chaos * 20 * (Math.sin(time * 1.7 + layer) + Math.sin(time * 2.3 + layer * 1.5));
+    const radiusVariation = p.amplitude * Math.sin(layerPhase) * p.damping + chaosOffset;
     const finalRadius = Math.max(10, layerRadius + radiusVariation);
     
     // Color based on mode
@@ -68,13 +60,13 @@ function drawVisualization(ctx, width, height, params, time, utils) {
     
     if (colorMode === 'spotify') {
       // Spotify-inspired green color palette
-      hue = 140 + (layer / layers) * 20 + colorVariation * 15 * Math.sin(time + layer);
+      hue = 140 + (layer / p.layers) * 20 + p.colorVariation * 15 * Math.sin(time + layer);
       saturation = 70 - layer * 5;
       lightness = 50 + layer * 5;
     } else {
       // Theme colors with layer variations
       const [baseHue, baseSat, baseLum] = hexToHsl(layer % 2 === 0 ? fillColor : strokeColor);
-      hue = baseHue + (layer / layers) * 30 + colorVariation * 20 * Math.sin(time + layer);
+      hue = baseHue + (layer / p.layers) * 30 + p.colorVariation * 20 * Math.sin(time + layer);
       saturation = baseSat - layer * 5;
       lightness = baseLum + layer * 10;
     }
@@ -100,18 +92,18 @@ function drawVisualization(ctx, width, height, params, time, utils) {
     }
     
     // Add complexity with orbital elements
-    if (complexity > 0.3 && p.fillType !== 'none') {
-      const orbitCount = Math.floor(complexity * 8);
+    if (p.complexity > 0.3 && p.fillType !== 'none') {
+      const orbitCount = Math.floor(p.complexity * 8);
       for (let i = 0; i < orbitCount; i++) {
         const orbitAngle = (i / orbitCount) * Math.PI * 2 + layerPhase;
-        const orbitOffset = chaos * 10 * Math.sin(time * 3 + i);
+        const orbitOffset = p.chaos * 10 * Math.sin(time * 3 + i);
         const orbitX = centerX + Math.cos(orbitAngle) * (finalRadius * 0.7 + orbitOffset);
         const orbitY = centerY + Math.sin(orbitAngle) * (finalRadius * 0.7 + orbitOffset);
-        const orbitRadius = 5 + layer * 2 + chaos * 3 * Math.sin(time * 5 + i);
+        const orbitRadius = 5 + layer * 2 + p.chaos * 3 * Math.sin(time * 5 + i);
         
         ctx.save();
         ctx.fillStyle = `hsl(${(hue + 10) % 360}, ${Math.min(100, saturation + 10)}%, ${Math.min(90, lightness + 20)}%)`;
-        ctx.globalAlpha = (0.6 - complexity * 0.3) * fillOpacity;
+        ctx.globalAlpha = (0.6 - p.complexity * 0.3) * fillOpacity;
         
         ctx.beginPath();
         ctx.arc(orbitX, orbitY, Math.max(2, orbitRadius), 0, Math.PI * 2);

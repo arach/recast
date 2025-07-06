@@ -9,9 +9,6 @@ function draw(ctx, width, height, params, time, utils) {
   // Load and process all parameters - clean and deterministic
   const p = utils.params.load(params, ctx, width, height, time, { parameters });
   
-  // Template-specific parameters (defaults come from exported parameters)
-  const { frequency, amplitude, complexity, chaos, damping, layers, sides, rotation } = p;
-  
   const centerX = width / 2;
   const centerY = height / 2;
   const minDim = Math.min(width, height);
@@ -23,12 +20,12 @@ function draw(ctx, width, height, params, time, utils) {
   
   const calculatePhase = (index, total, timeOffset) => {
     const basePhase = (index / total) * Math.PI * 2;
-    return basePhase + timeOffset * frequency;
+    return basePhase + timeOffset * p.frequency;
   };
   
   const addChaos = (value, range) => {
-    if (chaos === 0) return value;
-    return value + (Math.random() - 0.5) * range * chaos;
+    if (p.chaos === 0) return value;
+    return value + (Math.random() - 0.5) * range * p.chaos;
   };
   
   // Create triangle path
@@ -47,14 +44,14 @@ function draw(ctx, width, height, params, time, utils) {
     return points;
   };
   
-  const baseSize = scaleToCanvas(amplitude, minDim);
+  const baseSize = scaleToCanvas(p.amplitude, minDim);
   
   // Draw triangles layer by layer
-  for (let layer = 0; layer < layers; layer++) {
+  for (let layer = 0; layer < p.layers; layer++) {
     // Calculate layer-specific parameters
-    const layerPhase = calculatePhase(layer, layers, time);
-    const layerSize = baseSize * Math.pow(damping, layer);
-    const layerRotation = rotation + (layerPhase * 180 / Math.PI);
+    const layerPhase = calculatePhase(layer, p.layers, time);
+    const layerSize = baseSize * Math.pow(p.damping, layer);
+    const layerRotation = p.rotation + (layerPhase * 180 / Math.PI);
     
     // Add chaos to position and rotation
     const chaosX = addChaos(0, layerSize * 0.2);
@@ -66,7 +63,7 @@ function draw(ctx, width, height, params, time, utils) {
     const finalY = Math.max(layerSize, Math.min(height - layerSize, centerY + chaosY));
     
     // Create triangle path
-    const trianglePoints = createTrianglePath(finalX, finalY, layerSize, layerRotation + chaosRotation, sides);
+    const trianglePoints = createTrianglePath(finalX, finalY, layerSize, layerRotation + chaosRotation, p.sides);
     
     // Draw main triangle
     ctx.save();
@@ -101,8 +98,8 @@ function draw(ctx, width, height, params, time, utils) {
     ctx.restore();
     
     // Add complexity: constellation or smaller triangles
-    if (complexity > 0 && layer < layers / 2) {
-      const complexityCount = Math.ceil(complexity * 5);
+    if (p.complexity > 0 && layer < p.layers / 2) {
+      const complexityCount = Math.ceil(p.complexity * 5);
       
       for (let i = 0; i < complexityCount; i++) {
         const orbitPhase = calculatePhase(i, complexityCount, time * 1.5);
@@ -144,7 +141,7 @@ function draw(ctx, width, height, params, time, utils) {
   }
 }
 
-// Helper functions for concise parameter definitions
+// Helper functions
 const slider = (def, min, max, step, label, unit, opts = {}) => ({ 
   type: "slider", default: def, min, max, step, label, unit, ...opts 
 });
@@ -154,8 +151,6 @@ const select = (def, options, label, opts = {}) => ({
 const toggle = (def, label, opts = {}) => ({ 
   type: "toggle", default: def, label, ...opts 
 });
-
-// Parameter definitions - controls and defaults
 export const parameters = {
   frequency: slider(3, 0.1, 10, 0.1, "Wave Frequency"),
   amplitude: slider(40, 10, 100, 1, "Triangle Size", "%"),
@@ -167,7 +162,6 @@ export const parameters = {
   rotation: slider(0, 0, 360, 1, "Base Rotation", "°"),
 };
 
-// Template metadata
 export const metadata = {
   name: "🔺 Triangles",
   description: "Spinning triangles, constellation patterns, and geometric formations",
@@ -177,10 +171,4 @@ export const metadata = {
   version: "1.0.0"
 };
 
-// Export the template
-const template = { draw };
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = template;
-} else if (typeof window !== 'undefined') {
-  window.triangles = template;
-}
+export { draw };

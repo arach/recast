@@ -1,39 +1,16 @@
-// 💧 Liquid Flow - Fluid organic shapes with surface tension and realistic liquid behavior
+/**
+ * 💧 Liquid Flow
+ * 
+ * Fluid organic shapes with surface tension and realistic liquid behavior
+ */
 
-const parameters = {
-  liquidType: { default: 1, range: [0, 4, 1], options: [
-    { value: 0, label: '💧 Water' },
-    { value: 1, label: '🛢️ Oil' },
-    { value: 2, label: '🍯 Honey' },
-    { value: 3, label: '🪙 Mercury' },
-    { value: 4, label: '⚡ Plasma' }
-  ]},
-  frequency: { default: 0.6, range: [0.2, 1.2, 0.05] },
-  amplitude: { default: 130, range: [70, 200, 5] },
-  viscosity: { default: 0.4, range: [0.1, 1, 0.05] },
-  surfaceTension: { default: 0.7, range: [0.3, 1, 0.05] },
-  flowSpeed: { default: 1.2, range: [0.5, 2.5, 0.1] },
-  organicComplexity: { default: 0.6, range: [0.3, 1, 0.05] },
-  turbulence: { default: 0.3, range: [0, 0.8, 0.05] },
-  eddies: { default: 0.4, range: [0, 1, 0.05] },
-  meniscus: { default: 0.5, range: [0, 1, 0.05] },
-  droplets: { default: 0.3, range: [0, 1, 0.05] },
-  ripples: { default: 0.4, range: [0, 1, 0.05] },
-  transparency: { default: 0.6, range: [0.2, 0.9, 0.05] },
-  refraction: { default: 0.3, range: [0, 1, 0.05] },
-  caustics: { default: 0.4, range: [0, 1, 0.05] },
-  fluidHue: { default: 200, range: [0, 360, 10] },
-  purity: { default: 0.8, range: [0.3, 1, 0.05] },
-  luminosity: { default: 0.7, range: [0.4, 1, 0.05] }
-};
-
-function drawVisualization(ctx, width, height, params, time, utils) {
+function draw(ctx, width, height, params, time, utils) {
   utils.applyUniversalBackground(ctx, width, height, params);
 
   // Load parameters with new system
   const p = utils.params.load(params, ctx, width, height, time, { parameters });
 
-  // Extract parameters
+  // Calculate derived values
   const centerX = width / 2;
   const centerY = height / 2;
   const liquidTypeNum = Math.round(p.liquidType);
@@ -411,38 +388,48 @@ function drawVisualization(ctx, width, height, params, time, utils) {
   }
 }
 
-// Helper functions and template exports
-function getDefaultParams() {
-  return {
-    liquidType: 1,
-    frequency: 0.6,
-    amplitude: 130,
-    viscosity: 0.4,
-    surfaceTension: 0.7,
-    flowSpeed: 1.2,
-    organicComplexity: 0.6,
-    turbulence: 0.3,
-    eddies: 0.4,
-    meniscus: 0.5,
-    droplets: 0.3,
-    ripples: 0.4,
-    transparency: 0.6,
-    refraction: 0.3,
-    caustics: 0.4,
-    fluidHue: 200,
-    purity: 0.8,
-    luminosity: 0.7
-  };
-}
+// Helper functions for concise parameter definitions
+const slider = (def, min, max, step, label, unit, opts = {}) => ({ 
+  type: "slider", default: def, min, max, step, label, unit, ...opts 
+});
+const select = (def, options, label, opts = {}) => ({ 
+  type: "select", default: def, options, label, ...opts 
+});
 
-const metadata = {
-  id: 'liquid-flow',
-  name: "💧 Liquid Flow",
-  description: "Fluid organic shapes with surface tension, caustics, and realistic liquid behavior",
-  category: 'physics',
-  tags: ['liquid', 'fluid', 'organic', 'physics', 'caustics'],
-  parameters,
-  defaultParams: getDefaultParams()
+// Parameter definitions - controls and defaults
+export const parameters = {
+  liquidType: select(1, [
+    { value: 0, label: '💧 Water' },
+    { value: 1, label: '🛢️ Oil' },
+    { value: 2, label: '🍯 Honey' },
+    { value: 3, label: '🪙 Mercury' },
+    { value: 4, label: '⚡ Plasma' }
+  ], "Liquid Type"),
+  frequency: slider(0.6, 0.2, 1.2, 0.05, "Wave Frequency"),
+  amplitude: slider(130, 70, 200, 5, "Size"),
+  viscosity: slider(0.4, 0.1, 1, 0.05, "Viscosity"),
+  surfaceTension: slider(0.7, 0.3, 1, 0.05, "Surface Tension"),
+  flowSpeed: slider(1.2, 0.5, 2.5, 0.1, "Flow Speed"),
+  organicComplexity: slider(0.6, 0.3, 1, 0.05, "Organic Complexity"),
+  turbulence: slider(0.3, 0, 0.8, 0.05, "Turbulence"),
+  eddies: slider(0.4, 0, 1, 0.05, "Eddies"),
+  meniscus: slider(0.5, 0, 1, 0.05, "Meniscus"),
+  droplets: slider(0.3, 0, 1, 0.05, "Droplets"),
+  ripples: slider(0.4, 0, 1, 0.05, "Ripples"),
+  transparency: slider(0.6, 0.2, 0.9, 0.05, "Transparency"),
+  refraction: slider(0.3, 0, 1, 0.05, "Refraction"),
+  caustics: slider(0.4, 0, 1, 0.05, "Caustics"),
+  fluidHue: slider(200, 0, 360, 10, "Fluid Hue", "°"),
+  purity: slider(0.8, 0.3, 1, 0.05, "Purity"),
+  luminosity: slider(0.7, 0.4, 1, 0.05, "Luminosity")
 };
 
-export { parameters, metadata, drawVisualization };
+// Template metadata
+export const metadata = {
+  name: "💧 Liquid Flow",
+  description: "Fluid organic shapes with surface tension, caustics, and realistic liquid behavior",
+  category: "physics",
+  tags: ["liquid", "fluid", "organic", "physics", "caustics"],
+  author: "ReFlow",
+  version: "1.0.0"
+};

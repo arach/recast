@@ -8,18 +8,16 @@ function draw(ctx, width, height, params, time, utils) {
   // Load and process all parameters - clean and deterministic
   const p = utils.params.load(params, ctx, width, height, time, { parameters });
   
-  // Template-specific parameters (defaults come from exported parameters)
-  const { barCount, barSpacing, colorMode, barStyle, waveType, showWavePath, pathOpacity } = p;
   
   // Calculate dimensions
-  const totalSpacing = barSpacing * (barCount - 1);
+  const totalSpacing = p.barSpacing * (p.barCount - 1);
   const availableWidth = width - totalSpacing;
-  const barWidth = availableWidth / barCount;
+  const barWidth = availableWidth / p.barCount;
   
   // Wave function based on type
   const waveFunction = (t) => {
     const phase = (t * p.frequency * Math.PI * 2) + p.animTime + (p.phaseShift || 0);
-    switch (waveType) {
+    switch (p.waveType) {
       case 'sine':
         return Math.sin(phase);
       case 'triangle':
@@ -34,17 +32,17 @@ function draw(ctx, width, height, params, time, utils) {
   };
   
   // Draw wave path if enabled
-  if (showWavePath) {
+  if (p.showWavePath) {
     ctx.save();
-    ctx.globalAlpha = pathOpacity;
+    ctx.globalAlpha = p.pathOpacity;
     ctx.strokeStyle = p.strokeColor;
     ctx.lineWidth = 2;
     ctx.setLineDash([5, 5]);
     
     ctx.beginPath();
-    for (let i = 0; i <= barCount; i++) {
-      const t = i / barCount;
-      const x = i * (barWidth + barSpacing) + barWidth / 2;
+    for (let i = 0; i <= p.barCount; i++) {
+      const t = i / p.barCount;
+      const x = i * (barWidth + p.barSpacing) + barWidth / 2;
       const y = height / 2 + waveFunction(t) * p.amplitude;
       
       if (i === 0) {
@@ -59,9 +57,9 @@ function draw(ctx, width, height, params, time, utils) {
   }
   
   // Draw bars
-  for (let i = 0; i < barCount; i++) {
-    const t = i / barCount;
-    const x = i * (barWidth + barSpacing);
+  for (let i = 0; i < p.barCount; i++) {
+    const t = i / p.barCount;
+    const x = i * (barWidth + p.barSpacing);
     
     // Calculate wave position
     const waveY = height / 2 + waveFunction(t) * p.amplitude;
@@ -73,26 +71,26 @@ function draw(ctx, width, height, params, time, utils) {
     // Create gradient based on color mode
     const gradient = ctx.createLinearGradient(x, waveY - barHeight/2, x, waveY + barHeight/2);
     
-    if (colorMode === 'spectrum') {
+    if (p.colorMode === 'spectrum') {
       const hue = t * 360;
       gradient.addColorStop(0, `hsla(${hue}, 70%, 60%, 0.9)`);
       gradient.addColorStop(0.5, `hsla(${hue}, 80%, 50%, 1)`);
       gradient.addColorStop(1, `hsla(${hue}, 70%, 60%, 0.9)`);
-    } else if (colorMode === 'theme') {
+    } else if (p.colorMode === 'theme') {
       const phase = t * Math.PI * 2;
       const lightness = 0.3 + Math.sin(phase + p.animTime) * 0.2;
       const adjustedColor = utils.color.adjustBrightness(p.fillColor, lightness);
       gradient.addColorStop(0, adjustedColor);
       gradient.addColorStop(0.5, p.fillColor);
       gradient.addColorStop(1, adjustedColor);
-    } else if (colorMode === 'toneShift') {
+    } else if (p.colorMode === 'toneShift') {
       const hsl = utils.color.hexToHsl(p.fillColor);
       const hueShift = t * 120 - 60; // Shift ±60 degrees
       const hue = (hsl.h + hueShift + 360) % 360;
       gradient.addColorStop(0, `hsla(${hue}, ${hsl.s}%, ${Math.min(100, hsl.l + 10)}%, 0.9)`);
       gradient.addColorStop(0.5, `hsla(${hue}, ${hsl.s}%, ${hsl.l}%, 1)`);
       gradient.addColorStop(1, `hsla(${hue}, ${hsl.s}%, ${Math.min(100, hsl.l + 10)}%, 0.9)`);
-    } else if (colorMode === 'mono') {
+    } else if (p.colorMode === 'mono') {
       gradient.addColorStop(0, utils.color.withAlpha(p.fillColor, 0.7));
       gradient.addColorStop(0.5, p.fillColor);
       gradient.addColorStop(1, utils.color.withAlpha(p.fillColor, 0.7));
@@ -103,12 +101,12 @@ function draw(ctx, width, height, params, time, utils) {
     ctx.globalAlpha = p.theme.fillOpacity;
     ctx.fillStyle = gradient;
     
-    if (barStyle === 'rounded') {
+    if (p.barStyle === 'rounded') {
       const radius = Math.min(barWidth / 3, 8);
       utils.canvas.fillRect(ctx, x, waveY - barHeight/2, barWidth, barHeight, radius);
-    } else if (barStyle === 'sharp') {
+    } else if (p.barStyle === 'sharp') {
       ctx.fillRect(x, waveY - barHeight/2, barWidth, barHeight);
-    } else if (barStyle === 'circle') {
+    } else if (p.barStyle === 'circle') {
       // Bar with circular caps
       const radius = barWidth / 2;
       ctx.beginPath();
@@ -121,7 +119,7 @@ function draw(ctx, width, height, params, time, utils) {
     }
     
     // Add decorative circles for tall bars
-    if (barHeight > 25 && barStyle === 'rounded') {
+    if (barHeight > 25 && p.barStyle === 'rounded') {
       const circleRadius = barWidth / 2.5;
       utils.canvas.fillCircle(ctx, x + barWidth/2, waveY - barHeight/2 - 4, circleRadius);
       utils.canvas.fillCircle(ctx, x + barWidth/2, waveY + barHeight/2 + 4, circleRadius);
@@ -133,9 +131,9 @@ function draw(ctx, width, height, params, time, utils) {
   // Debug info in dev mode
   if (utils.debug) {
     utils.debug.log('Wave bars rendered', {
-      barCount,
-      colorMode,
-      waveType,
+      barCount: p.barCount,
+      colorMode: p.colorMode,
+      waveType: p.waveType,
       time: time.toFixed(2)
     });
   }

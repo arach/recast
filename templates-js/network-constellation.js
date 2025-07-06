@@ -1,41 +1,10 @@
-// 🌐 Network Constellation - Brand-smart network formations creating globally recognized logo shapes
+/**
+ * 🌐 Network Constellation
+ * 
+ * Brand-smart network formations creating globally recognized logo shapes
+ */
 
-// Helpers
-const slider = (def, min, max, step, label, unit, opts = {}) => ({ 
-  type: "slider", default: def, min, max, step, label, unit, ...opts 
-});
-const select = (def, options, label, opts = {}) => ({ 
-  type: "select", default: def, options, label, ...opts 
-});
-
-// Parameters
-const parameters = {
-  shapeType: select(0, [
-    { value: 0, label: '⭕ Circle' },
-    { value: 1, label: '⭐ Star' },
-    { value: 2, label: '🛡️ Shield' },
-    { value: 3, label: '⬡ Hexagon' },
-    { value: 4, label: '♦️ Diamond' },
-    { value: 5, label: '▲ Triangle' }
-  ], 'Network Shape'),
-  nodeCount: slider(8, 3, 24, 1, 'Node Count'),
-  connectionStyle: select(0, [
-    { value: 0, label: '〰️ Flowing' },
-    { value: 1, label: '🧠 Neural' },
-    { value: 2, label: '🧲 Magnetic' },
-    { value: 3, label: '➖ Minimal' }
-  ], 'Connection Style'),
-  frequency: slider(1.2, 0.1, 4, 0.1, 'Animation Speed'),
-  amplitude: slider(80, 30, 150, 5, 'Size'),
-  complexity: slider(0.7, 0, 1, 0.05, 'Connection Density'),
-  chaos: slider(0.15, 0, 1, 0.05, 'Node Chaos'),
-  layers: slider(2, 1, 5, 1, 'Depth Layers'),
-  energyFlow: slider(0.8, 0, 1, 0.05, 'Energy Flow'),
-  glowIntensity: slider(0.6, 0, 1, 0.05, 'Glow Intensity'),
-  damping: slider(0.8, 0.3, 1, 0.05, 'Layer Damping')
-};
-
-function drawVisualization(ctx, width, height, params, time, utils) {
+function draw(ctx, width, height, params, time, utils) {
   // Load parameters
   const p = utils.params.load(params, ctx, width, height, time, { parameters });
   
@@ -48,7 +17,7 @@ function drawVisualization(ctx, width, height, params, time, utils) {
   const fillOpacity = params.fillOpacity ?? 0.7;
   const strokeOpacity = params.strokeOpacity ?? 0.8;
 
-  // Extract parameters
+  // Calculate derived values
   const centerX = width / 2;
   const centerY = height / 2;
   const shapeTypeNum = Math.round(p.shapeType);
@@ -333,8 +302,43 @@ function drawVisualization(ctx, width, height, params, time, utils) {
   }
 }
 
-// Metadata
-const metadata = {
+// Helper functions for concise parameter definitions
+const slider = (def, min, max, step, label, unit, opts = {}) => ({ 
+  type: "slider", default: def, min, max, step, label, unit, ...opts 
+});
+const select = (def, options, label, opts = {}) => ({ 
+  type: "select", default: def, options, label, ...opts 
+});
+
+// Parameter definitions - controls and defaults
+export const parameters = {
+  shapeType: select(0, [
+    { value: 0, label: '⭕ Circle' },
+    { value: 1, label: '⭐ Star' },
+    { value: 2, label: '🛡️ Shield' },
+    { value: 3, label: '⬡ Hexagon' },
+    { value: 4, label: '♦️ Diamond' },
+    { value: 5, label: '▲ Triangle' }
+  ], 'Network Shape'),
+  nodeCount: slider(8, 3, 24, 1, 'Node Count'),
+  connectionStyle: select(0, [
+    { value: 0, label: '〰️ Flowing' },
+    { value: 1, label: '🧠 Neural' },
+    { value: 2, label: '🧲 Magnetic' },
+    { value: 3, label: '➖ Minimal' }
+  ], 'Connection Style'),
+  frequency: slider(1.2, 0.1, 4, 0.1, 'Animation Speed'),
+  amplitude: slider(80, 30, 150, 5, 'Size'),
+  complexity: slider(0.7, 0, 1, 0.05, 'Connection Density'),
+  chaos: slider(0.15, 0, 1, 0.05, 'Node Chaos'),
+  layers: slider(2, 1, 5, 1, 'Depth Layers'),
+  energyFlow: slider(0.8, 0, 1, 0.05, 'Energy Flow'),
+  glowIntensity: slider(0.6, 0, 1, 0.05, 'Glow Intensity'),
+  damping: slider(0.8, 0.3, 1, 0.05, 'Layer Damping')
+};
+
+// Template metadata
+export const metadata = {
   name: "🌐 Network Constellation",
   description: "Connected nodes with dynamic particles",
   category: "generative",
@@ -342,7 +346,4 @@ const metadata = {
   author: "ReFlow",
   version: "1.0.0"
 };
-
-// Exports
-export { parameters, metadata, drawVisualization };
 

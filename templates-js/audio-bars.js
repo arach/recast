@@ -9,44 +9,42 @@ function draw(ctx, width, height, params, time, utils) {
   // Load and process all parameters - clean and deterministic
   const p = utils.params.load(params, ctx, width, height, time, { parameters });
   
-  // Template-specific parameters (defaults come from exported parameters)
-  const { barCount, barSpacing, colorMode, frequency, amplitude, complexity, chaos } = p;
   
   // Calculate dimensions
-  const barWidth = (width - barSpacing * (barCount - 1)) / barCount;
+  const barWidth = (width - p.barSpacing * (p.barCount - 1)) / p.barCount;
   const centerY = height / 2;
 
-  for (let i = 0; i < barCount; i++) {
-    const x = i * (barWidth + barSpacing);
-    const t = i / barCount;
+  for (let i = 0; i < p.barCount; i++) {
+    const x = i * (barWidth + p.barSpacing);
+    const t = i / p.barCount;
     
     // Generate wave-based bar heights using the parameters
-    const waveY = Math.sin((t * frequency * Math.PI * 2) + time) * amplitude;
-    const harmonics = Math.sin((t * frequency * 3 * Math.PI * 2) + time * 2) * amplitude * complexity;
-    const chaosValue = (Math.random() - 0.5) * chaos * amplitude;
+    const waveY = Math.sin((t * p.frequency * Math.PI * 2) + time) * p.amplitude;
+    const harmonics = Math.sin((t * p.frequency * 3 * Math.PI * 2) + time * 2) * p.amplitude * p.complexity;
+    const chaosValue = (Math.random() - 0.5) * p.chaos * p.amplitude;
     const dampedValue = waveY + harmonics + chaosValue;
     const barHeight = Math.abs(dampedValue) + 10;
     
     // Create gradient based on color mode - exact match to TypeScript version
     const gradient = ctx.createLinearGradient(x, centerY - barHeight/2, x, centerY + barHeight/2);
     
-    if (colorMode === 'spectrum') {
+    if (p.colorMode === 'spectrum') {
       // Original rainbow spectrum
-      const hue = (i / barCount) * 360;
+      const hue = (i / p.barCount) * 360;
       gradient.addColorStop(0, `hsla(${hue}, 70%, 60%, 0.9)`);
       gradient.addColorStop(0.5, `hsla(${hue}, 80%, 50%, 1)`);
       gradient.addColorStop(1, `hsla(${hue}, 70%, 60%, 0.9)`);
-    } else if (colorMode === 'theme') {
+    } else if (p.colorMode === 'theme') {
       // Use theme colors with intensity variations based on bar height
-      const intensity = barHeight / (amplitude * 2);
+      const intensity = barHeight / (p.amplitude * 2);
       const lightness = 0.2 + intensity * 0.3;
       gradient.addColorStop(0, utils.adjustColor(p.fillColor, lightness + 0.2));
       gradient.addColorStop(0.5, p.fillColor);
       gradient.addColorStop(1, utils.adjustColor(p.fillColor, lightness + 0.2));
-    } else if (colorMode === 'toneShift') {
+    } else if (p.colorMode === 'toneShift') {
       // Shift hue based on theme color - exact match to TypeScript version  
-      const [baseHue, baseSat, baseLum] = utils.hexToHsl(fillColor);
-      const hueShift = (i / params.barCount) * 180 - 90; // Shift ±90 degrees
+      const [baseHue, baseSat, baseLum] = utils.hexToHsl(p.fillColor);
+      const hueShift = (i / p.barCount) * 180 - 90; // Shift ±90 degrees
       const hue = (baseHue + hueShift + 360) % 360;
       gradient.addColorStop(0, `hsla(${hue}, ${baseSat}%, ${baseLum + 10}%, 0.9)`);
       gradient.addColorStop(0.5, `hsla(${hue}, ${baseSat}%, ${baseLum}%, 1)`);
@@ -114,10 +112,10 @@ function draw(ctx, width, height, params, time, utils) {
   // Debug info in dev mode
   if (utils.debug) {
     utils.debug.log('Audio bars rendered', {
-      barCount,
-      colorMode,
-      frequency: frequency.toFixed(2),
-      amplitude: amplitude.toFixed(1)
+      barCount: p.barCount,
+      colorMode: p.colorMode,
+      frequency: p.frequency.toFixed(2),
+      amplitude: p.amplitude.toFixed(1)
     });
   }
 }
