@@ -60,8 +60,13 @@ export default function Hero() {
             transition={{ duration: 0.8, delay: 0.2 }}
             className="relative"
           >
-            <div className="relative z-10">
-              <AnimatedLogo />
+            <div className="relative z-10 rounded-2xl overflow-hidden shadow-2xl">
+              <img 
+                src="/images/reflow-wave-bars-hero.png" 
+                alt="ReFlow Wave Bars Visualization"
+                className="w-full h-auto"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent"></div>
             </div>
             <div className="absolute inset-0 bg-gradient-to-r from-reflow-blue/20 via-reflow-purple/20 to-reflow-pink/20 blur-3xl animate-pulse-slow" />
           </motion.div>

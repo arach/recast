@@ -1,6 +1,11 @@
 # ReFlow - Programmatic Logo Generation
 
 <div align="center">
+  <img src="docs/images/reflow-wave-bars-hero.png" alt="ReFlow Wave Bars Visualization" width="800" />
+  
+  <br />
+  <br />
+  
   <img src="https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" />
   <img src="https://img.shields.io/badge/Next.js-000000?style=for-the-badge&logo=next.js&logoColor=white" alt="Next.js" />
   <img src="https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" alt="React" />
