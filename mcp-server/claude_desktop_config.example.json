@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "reflow": {
+      "command": "node",
+      "args": ["~/dev/reflow/mcp-server/dist/index.js"],
+      "env": {}
+    }
+  }
+}
