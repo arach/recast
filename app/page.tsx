@@ -188,6 +188,8 @@ export default function Home({ params }: PageProps = {}) {
       
       try {
         const { canvasId: id } = await params
+        if (!id) return // No canvas ID provided
+        
         setCanvasId(id)
         setLoadingCanvas(true)
         

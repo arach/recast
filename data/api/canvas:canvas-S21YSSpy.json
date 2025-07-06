@@ -1,0 +1,54 @@
+{
+  "id": "canvas-S21YSSpy",
+  "name": "Canvas 7/6/2025",
+  "description": "1 logo",
+  "layout": "grid",
+  "logos": [
+    {
+      "id": "logo-5MSI0jAI",
+      "templateId": "wordmark",
+      "parameters": {
+        "text": "grab();",
+        "fontStyle": "tech",
+        "customFont": "Arial",
+        "fontWeight": "400",
+        "letterSpacing": 0.05,
+        "size": 0.25,
+        "lineHeight": 1.1,
+        "textTransform": "none",
+        "underline": false,
+        "underlineWeight": 3,
+        "underlineOffset": 5,
+        "showFrame": false,
+        "frameStyle": "outline",
+        "frameStrokeStyle": "solid",
+        "frameStrokeWidth": 3,
+        "framePadding": 40,
+        "frameRadius": 0,
+        "textAnimation": "none",
+        "animationSpeed": 1,
+        "animationIntensity": 0.5
+      },
+      "position": {
+        "x": -1443.492646063517,
+        "y": 1533.369748128308
+      },
+      "size": {
+        "width": 180,
+        "height": 180
+      },
+      "metadata": {
+        "name": "Logo logo-4zdSLpi9"
+      }
+    }
+  ],
+  "settings": {},
+  "metadata": {
+    "createdAt": "2025-07-06T20:31:25.528Z",
+    "updatedAt": "2025-07-06T20:31:45.126Z",
+    "lastAccessedAt": "2025-07-06T20:37:23.690Z",
+    "isPublic": false
+  },
+  "createdAt": "2025-07-06T20:31:25.528Z",
+  "updatedAt": "2025-07-06T20:37:23.691Z"
+}

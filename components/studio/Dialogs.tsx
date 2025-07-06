@@ -71,7 +71,7 @@ export function Dialogs({
         shapeName={currentShapeName}
         code={selectedLogo?.code || ''}
         params={{
-          seed: coreParams?.frequency.toString() || '',
+          seed: coreParams?.frequency?.toString() || '',
           frequency: coreParams?.frequency || 4,
           amplitude: coreParams?.amplitude || 50,
           complexity: coreParams?.complexity || 0.5,

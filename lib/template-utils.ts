@@ -123,3 +123,42 @@ export function hexToHsl(hex: string): [number, number, number] {
   
   return [h * 360, s * 100, l * 100];
 }
+
+/**
+ * Extract common template parameters with defaults
+ * Eliminates boilerplate parameter extraction in templates
+ */
+export function extractTemplateParams(params: any) {
+  // Universal theme colors
+  const theme = {
+    fillColor: params.fillColor || '#000000',
+    strokeColor: params.strokeColor || '#000000', 
+    fillOpacity: params.fillOpacity ?? 1,
+    strokeOpacity: params.strokeOpacity ?? 1,
+  };
+
+  // Common animation parameters
+  const animation = {
+    animationSpeed: params.animationSpeed || 1,
+    animationIntensity: params.animationIntensity || 0.5,
+  };
+
+  // Return flattened params with organized groups
+  return {
+    ...flattenParameters(params),
+    theme,
+    animation,
+  };
+}
+
+/**
+ * Apply universal background and return extracted parameters
+ * One-liner setup for templates
+ */
+export function setupTemplate(ctx: CanvasRenderingContext2D, width: number, height: number, params: any) {
+  // Apply background first
+  applyUniversalBackground(ctx, width, height, params);
+  
+  // Return extracted parameters
+  return extractTemplateParams(params);
+}
