@@ -1,0 +1,46 @@
+{
+  "name": "@reflow/template-utils",
+  "version": "0.1.0",
+  "description": "Utility functions for ReFlow visualization templates",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.cjs",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "clean": "rm -rf dist",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest"
+  },
+  "keywords": [
+    "reflow",
+    "visualization",
+    "templates",
+    "canvas",
+    "utilities"
+  ],
+  "author": "ReFlow Team",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "jsdom": "^26.1.0",
+    "tsup": "^8.0.1",
+    "typescript": "^5.0.0",
+    "vitest": "^1.0.0"
+  },
+  "peerDependencies": {
+    "seedrandom": "^3.0.5"
+  }
+}

@@ -1,0 +1,228 @@
+{
+  "metadata": {
+    "id": "wordmark",
+    "name": "📝 Wordmark",
+    "description": "Professional text-based logos with customizable typography and optional frames",
+    "category": "text",
+    "tags": ["text", "wordmark", "typography", "logo", "brand"],
+    "author": "ReFlow",
+    "version": "1.0.0"
+  },
+  "parameters": {
+    "text": {
+      "type": "text",
+      "default": "BRAND",
+      "label": "Text",
+      "placeholder": "Enter your brand name",
+      "multiline": true,
+      "category": "Typography"
+    },
+    "fontStyle": {
+      "type": "select",
+      "default": "modern",
+      "options": [
+        { "value": "modern", "label": "Modern" },
+        { "value": "tech", "label": "Tech (Monospace)" },
+        { "value": "elegant", "label": "Elegant (Serif)" },
+        { "value": "bold", "label": "Bold (Heavy)" },
+        { "value": "minimal", "label": "Minimal" },
+        { "value": "silkscreen", "label": "Silkscreen" },
+        { "value": "orbitron", "label": "Orbitron" },
+        { "value": "doto", "label": "DotGothic16" },
+        { "value": "custom", "label": "Custom Font" }
+      ],
+      "label": "Font Style",
+      "category": "Typography"
+    },
+    "customFont": {
+      "type": "text",
+      "default": "Arial",
+      "label": "Custom Font Name",
+      "placeholder": "e.g., 'Times New Roman'",
+      "category": "Typography",
+      "when": { "fontStyle": "custom" }
+    },
+    "fontWeight": {
+      "type": "select",
+      "default": "500",
+      "options": [
+        { "value": "300", "label": "Light" },
+        { "value": "400", "label": "Regular" },
+        { "value": "500", "label": "Medium" },
+        { "value": "600", "label": "Semi-Bold" },
+        { "value": "700", "label": "Bold" },
+        { "value": "900", "label": "Black" }
+      ],
+      "label": "Font Weight",
+      "category": "Typography"
+    },
+    "letterSpacing": {
+      "type": "slider",
+      "default": 0.05,
+      "min": -0.05,
+      "max": 0.3,
+      "step": 0.01,
+      "label": "Letter Spacing",
+      "category": "Typography",
+      "unit": "em"
+    },
+    "size": {
+      "type": "slider",
+      "default": 0.5,
+      "min": 0.1,
+      "max": 0.9,
+      "step": 0.05,
+      "label": "Text Size",
+      "category": "Typography"
+    },
+    "lineHeight": {
+      "type": "slider",
+      "default": 1.2,
+      "min": 0.8,
+      "max": 2.0,
+      "step": 0.1,
+      "label": "Line Height",
+      "category": "Typography",
+      "unit": "em"
+    },
+    "textTransform": {
+      "type": "select",
+      "default": "uppercase",
+      "options": [
+        { "value": "none", "label": "None" },
+        { "value": "uppercase", "label": "UPPERCASE" },
+        { "value": "lowercase", "label": "lowercase" },
+        { "value": "capitalize", "label": "Capitalize" }
+      ],
+      "label": "Text Transform",
+      "category": "Typography"
+    },
+    "underline": {
+      "type": "toggle",
+      "default": false,
+      "label": "Show Underline",
+      "category": "Typography"
+    },
+    "underlineWeight": {
+      "type": "slider",
+      "default": 3,
+      "min": 1,
+      "max": 10,
+      "step": 1,
+      "label": "Underline Weight",
+      "category": "Typography",
+      "unit": "px",
+      "when": { "underline": true }
+    },
+    "underlineOffset": {
+      "type": "slider",
+      "default": 5,
+      "min": 0,
+      "max": 20,
+      "step": 1,
+      "label": "Underline Offset",
+      "category": "Typography",
+      "unit": "px",
+      "when": { "underline": true }
+    },
+    "showFrame": {
+      "type": "toggle",
+      "default": false,
+      "label": "Show Frame",
+      "category": "Frame"
+    },
+    "frameStyle": {
+      "type": "select",
+      "default": "outline",
+      "options": [
+        { "value": "outline", "label": "Outline" },
+        { "value": "filled", "label": "Filled" },
+        { "value": "filled-inverse", "label": "Filled (Inverse)" }
+      ],
+      "label": "Frame Style",
+      "category": "Frame",
+      "when": { "showFrame": true }
+    },
+    "frameStrokeStyle": {
+      "type": "select",
+      "default": "solid",
+      "options": [
+        { "value": "solid", "label": "Solid" },
+        { "value": "dashed", "label": "Dashed" },
+        { "value": "dotted", "label": "Dotted" },
+        { "value": "double", "label": "Double" }
+      ],
+      "label": "Frame Stroke Style",
+      "category": "Frame",
+      "when": { "showFrame": true, "frameStyle": "outline" }
+    },
+    "frameStrokeWidth": {
+      "type": "slider",
+      "default": 3,
+      "min": 1,
+      "max": 10,
+      "step": 1,
+      "label": "Frame Stroke Width",
+      "category": "Frame",
+      "unit": "px",
+      "when": { "showFrame": true, "frameStyle": "outline" }
+    },
+    "framePadding": {
+      "type": "slider",
+      "default": 40,
+      "min": 10,
+      "max": 100,
+      "step": 5,
+      "label": "Frame Padding",
+      "category": "Frame",
+      "unit": "px",
+      "when": { "showFrame": true }
+    },
+    "frameRadius": {
+      "type": "slider",
+      "default": 0,
+      "min": 0,
+      "max": 50,
+      "step": 2,
+      "label": "Frame Corner Radius",
+      "category": "Frame",
+      "unit": "px",
+      "when": { "showFrame": true }
+    },
+    "textAnimation": {
+      "type": "select",
+      "default": "none",
+      "options": [
+        { "value": "none", "label": "None" },
+        { "value": "float", "label": "Float" },
+        { "value": "wave", "label": "Wave" },
+        { "value": "pulse", "label": "Pulse" },
+        { "value": "rotate", "label": "Rotate" },
+        { "value": "shake", "label": "Shake" }
+      ],
+      "label": "Text Animation",
+      "category": "Animation"
+    },
+    "animationSpeed": {
+      "type": "slider",
+      "default": 1,
+      "min": 0.1,
+      "max": 5,
+      "step": 0.1,
+      "label": "Animation Speed",
+      "category": "Animation",
+      "unit": "x",
+      "when": { "textAnimation": ["float", "wave", "pulse", "rotate", "shake"] }
+    },
+    "animationIntensity": {
+      "type": "slider",
+      "default": 0.5,
+      "min": 0,
+      "max": 1,
+      "step": 0.1,
+      "label": "Animation Intensity",
+      "category": "Animation",
+      "when": { "textAnimation": ["float", "wave", "pulse", "rotate", "shake"] }
+    }
+  }
+}

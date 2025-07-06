@@ -1,14 +1,8 @@
-/**
- * Shared utility functions for templates
- * These functions are injected into the template execution context
- */
+// Re-export everything from the @reflow/template-utils package
+export * from '@reflow/template-utils';
+export type { TemplateUtils } from '@reflow/template-utils';
 
-export interface TemplateUtils {
-  applyUniversalBackground: typeof applyUniversalBackground;
-  adjustColor: typeof adjustColor;
-  hexToHsl: typeof hexToHsl;
-}
-
+// Keep local utility functions that aren't in the package yet
 /**
  * Generate defaultParams from parameter definitions
  */
@@ -19,6 +13,36 @@ export function generateDefaultParams(parameters: Record<string, any>): Record<s
   }, {} as Record<string, any>);
 }
 
+/**
+ * Flatten nested parameter structures into a single level object
+ * Ensures all parameters are available at root level
+ */
+export function flattenParameters(params: any) {
+  const flatParams = {
+    ...params,
+    // Flatten core parameters
+    ...(params.core || {}),
+    // Flatten style parameters  
+    ...(params.style || {}),
+    // Flatten custom parameters
+    ...(params.custom || {}),
+    // Flatten content parameters
+    ...(params.content || {})
+  };
+  
+  // Legacy support: also check customParameters
+  if (params.customParameters) {
+    Object.keys(params.customParameters).forEach(key => {
+      if (flatParams[key] === undefined) {
+        flatParams[key] = params.customParameters[key];
+      }
+    });
+  }
+  
+  return flatParams;
+}
+
+// TODO: Move these to the package
 export function applyUniversalBackground(
   ctx: CanvasRenderingContext2D, 
   width: number, 
@@ -98,33 +122,4 @@ export function hexToHsl(hex: string): [number, number, number] {
   }
   
   return [h * 360, s * 100, l * 100];
-}
-
-/**
- * Flatten nested parameters for template compatibility
- * Ensures all parameters are available at root level
- */
-export function flattenParameters(params: any) {
-  const flatParams = {
-    ...params,
-    // Flatten core parameters
-    ...(params.core || {}),
-    // Flatten style parameters  
-    ...(params.style || {}),
-    // Flatten custom parameters
-    ...(params.custom || {}),
-    // Flatten content parameters
-    ...(params.content || {})
-  };
-  
-  // Legacy support: also check customParameters
-  if (params.customParameters) {
-    Object.keys(params.customParameters).forEach(key => {
-      if (flatParams[key] === undefined) {
-        flatParams[key] = params.customParameters[key];
-      }
-    });
-  }
-  
-  return flatParams;
 }

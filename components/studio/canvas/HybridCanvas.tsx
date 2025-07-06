@@ -4,8 +4,7 @@ import React, { useRef, useEffect, useState } from 'react'
 import { useCanvasStore } from '@/lib/stores/canvasStore'
 import { useLogoStore } from '@/lib/stores/logoStore'
 import { useUIStore } from '@/lib/stores/uiStore'
-import { generateVisualization } from '@/lib/visualization-utils'
-import { useTemplateCode } from '@/lib/hooks/useTemplateCode'
+import { generateJSVisualization } from '@/lib/js-visualization-utils'
 
 interface LogoCanvasProps {
   id: string
@@ -19,7 +18,6 @@ interface LogoCanvasProps {
 // Pure rendering component - no interaction logic
 // Note: React.memo might prevent re-renders when templateId changes
 const LogoCanvas = React.memo(function LogoCanvas({ id, templateId, parameters, width, height, currentTime = 0 }: LogoCanvasProps) {
-  const { code } = useTemplateCode(templateId)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   
   useEffect(() => {
@@ -32,41 +30,21 @@ const LogoCanvas = React.memo(function LogoCanvas({ id, templateId, parameters, 
     // Clear canvas
     ctx.clearRect(0, 0, width, height)
     
-    try {
-      // Generate and render the actual logo
-      if (code) {
-        generateVisualization(ctx, code, parameters, currentTime, width, height)
-        // Don't log during animation - too noisy!
-      } else {
-        console.log(`⚠️ No code for logo ${id}, showing placeholder`)
-        // Fallback placeholder
-        ctx.fillStyle = '#e5e7eb'
-        ctx.fillRect(0, 0, width, height)
-        ctx.fillStyle = '#9ca3af'
-        ctx.font = '16px sans-serif'
-        ctx.textAlign = 'center'
-        ctx.textBaseline = 'middle'
-        ctx.fillText('No template selected', width / 2, height / 2)
-      }
-    } catch (error) {
-      console.error(`❌ Error rendering logo ${id}:`, error)
-      console.error('Error details:', {
-        errorMessage: error?.message || 'No message',
-        errorString: String(error),
-        templateId,
-        hasCode: !!code,
-        codeLength: code?.length
-      })
-      // Error state
-      ctx.fillStyle = '#fee2e2'
+    // Generate and render the actual logo
+    if (templateId) {
+      generateJSVisualization(ctx, templateId, parameters, currentTime, width, height)
+    } else {
+      console.log(`⚠️ No template selected for logo ${id}, showing placeholder`)
+      // Fallback placeholder
+      ctx.fillStyle = '#e5e7eb'
       ctx.fillRect(0, 0, width, height)
-      ctx.fillStyle = '#dc2626'
-      ctx.font = '14px sans-serif'
+      ctx.fillStyle = '#9ca3af'
+      ctx.font = '16px sans-serif'
       ctx.textAlign = 'center'
       ctx.textBaseline = 'middle'
-      ctx.fillText('Render Error', width / 2, height / 2)
+      ctx.fillText('No template selected', width / 2, height / 2)
     }
-  }, [id, code, parameters, width, height, currentTime])
+  }, [id, templateId, parameters, width, height, currentTime])
   
   return (
     <canvas 
@@ -97,8 +75,21 @@ export function HybridCanvas({
   const [currentTime, setCurrentTime] = useState(0)
   const svgRef = useRef<SVGSVGElement>(null)
   
+  // Local offset state during panning to avoid constant store updates
+  const [localOffset, setLocalOffset] = useState(offset)
+  const [panStartOffset, setPanStartOffset] = useState(offset)
+  
   // Calculate viewport for SVG
   const [viewport, setViewport] = useState({ width: 1920, height: 1080 })
+  
+  // Sync local offset with store offset when it changes externally
+  useEffect(() => {
+    if (!isPanning) {
+      setLocalOffset(offset)
+    }
+  }, [offset, isPanning])
+  
+  // Remove throttled functions - we now only update store on mouse up
   
   useEffect(() => {
     const updateViewport = () => {
@@ -113,7 +104,8 @@ export function HybridCanvas({
     return () => window.removeEventListener('resize', updateViewport)
   }, [])
   
-  const viewBox = `${-offset.x} ${-offset.y} ${viewport.width / zoom} ${viewport.height / zoom}`
+  // Use localOffset for immediate visual feedback during panning
+  const viewBox = `${-localOffset.x} ${-localOffset.y} ${viewport.width / zoom} ${viewport.height / zoom}`
   
   // Add non-passive wheel event listener to prevent default scrolling
   useEffect(() => {
@@ -180,38 +172,56 @@ export function HybridCanvas({
     if (e.button === 0 && !e.ctrlKey && !e.metaKey && !isDraggingLogo) { // Left click only
       setIsPanning(true)
       setPanStart({ x: e.clientX, y: e.clientY })
+      setPanStartOffset(localOffset) // Capture the offset at start of pan
     }
   }
+  
+  // Track logo position during dragging without updating store
+  const [draggingLogoPosition, setDraggingLogoPosition] = useState<{ x: number, y: number } | null>(null)
   
   const handleMouseMove = (e: React.MouseEvent) => {
     if (isDraggingLogo && draggedLogoId) {
       const rect = svgRef.current?.getBoundingClientRect()
       if (rect) {
-        const mouseX = (e.clientX - rect.left) / zoom - offset.x
-        const mouseY = (e.clientY - rect.top) / zoom - offset.y
+        const mouseX = (e.clientX - rect.left) / zoom - localOffset.x
+        const mouseY = (e.clientY - rect.top) / zoom - localOffset.y
         
-        updateLogo(draggedLogoId, {
-          position: {
-            x: mouseX - dragOffset.x,
-            y: mouseY - dragOffset.y
-          }
-        })
+        // Update local state only for smooth dragging
+        const newPosition = {
+          x: mouseX - dragOffset.x,
+          y: mouseY - dragOffset.y
+        }
+        setDraggingLogoPosition(newPosition)
+        
+        // Remove store updates during drag - only update on mouse up
       }
     } else if (isPanning) {
       const dx = e.clientX - panStart.x
       const dy = e.clientY - panStart.y
-      setOffset({
-        x: offset.x + dx / zoom,
-        y: offset.y + dy / zoom
-      })
-      setPanStart({ x: e.clientX, y: e.clientY })
+      const newOffset = {
+        x: panStartOffset.x + dx / zoom,
+        y: panStartOffset.y + dy / zoom
+      }
+      // Update local offset only - no store updates during pan
+      setLocalOffset(newOffset)
     }
   }
   
   const handleMouseUp = () => {
+    if (isPanning) {
+      // Commit final offset to store
+      setOffset(localOffset)
+    }
+    if (isDraggingLogo && draggedLogoId && draggingLogoPosition) {
+      // Commit final logo position to store
+      updateLogo(draggedLogoId, {
+        position: draggingLogoPosition
+      })
+    }
     setIsPanning(false)
     setIsDraggingLogo(false)
     setDraggedLogoId(null)
+    setDraggingLogoPosition(null)
   }
   
   // Handle zoom
@@ -228,8 +238,8 @@ export function HybridCanvas({
       const mouseY = e.clientY - rect.top
       
       // Convert mouse position to SVG coordinates
-      const svgX = -offset.x + mouseX / zoom
-      const svgY = -offset.y + mouseY / zoom
+      const svgX = -localOffset.x + mouseX / zoom
+      const svgY = -localOffset.y + mouseY / zoom
       
       // Calculate new offset to keep mouse position fixed
       const newOffset = {
@@ -237,8 +247,12 @@ export function HybridCanvas({
         y: -(svgY - mouseY / newZoom)
       }
       
+      // Update local state immediately for smooth zooming
+      setLocalOffset(newOffset)
+      
+      // Only update zoom in store, not offset (less critical)
       setZoom(newZoom)
-      setOffset(newOffset)
+      // Commit offset less frequently or not at all during zoom
     }
   }
   
@@ -293,25 +307,21 @@ export function HybridCanvas({
           return null
         }
         
-        // Debug logging for templateId issues
-        if (typeof logo.templateId !== 'string') {
-          console.error(`🚨 Invalid templateId for logo ${logo.id}:`, {
-            templateId: logo.templateId,
-            type: typeof logo.templateId,
-            logoData: logo
-          })
-        }
+        // Use dragging position if this logo is being dragged
+        const position = (isDraggingLogo && draggedLogoId === logo.id && draggingLogoPosition) 
+          ? draggingLogoPosition 
+          : logo.position
         
         // Simple viewport check for performance
-        const isInViewport = logo.position.x >= -offset.x - 600 && 
-                            logo.position.x <= -offset.x + viewport.width/zoom + 600 &&
-                            logo.position.y >= -offset.y - 600 && 
-                            logo.position.y <= -offset.y + viewport.height/zoom + 600
+        const isInViewport = position.x >= -localOffset.x - 600 && 
+                            position.x <= -localOffset.x + viewport.width/zoom + 600 &&
+                            position.y >= -localOffset.y - 600 && 
+                            position.y <= -localOffset.y + viewport.height/zoom + 600
         
         return (
           <g 
             key={logo.id}
-            transform={`translate(${logo.position.x}, ${logo.position.y})`}
+            transform={`translate(${position.x}, ${position.y})`}
           >
             {/* White background with rounded corners */}
             <rect

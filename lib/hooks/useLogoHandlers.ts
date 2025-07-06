@@ -1,7 +1,6 @@
 import { useCallback } from 'react'
 import { useLogoStore } from '@/lib/stores/logoStore'
 import { useSelectedLogo } from './useSelectedLogo'
-import { ThemeLoader } from '@/lib/services/themeLoader'
 import { SavedShape, SavedLogo } from '@/lib/storage'
 
 interface UseLogoHandlersOptions {
@@ -20,45 +19,7 @@ export function useLogoHandlers(options: UseLogoHandlersOptions = {}) {
     updateSelectedLogoCode
   } = useSelectedLogo()
   
-  // Load theme by ID
-  const loadThemeById = useCallback(async (
-    themeId: string,
-    customDefaults?: Record<string, any>
-  ) => {
-    if (!selectedLogoId) return
-    
-    try {
-      const theme = await ThemeLoader.loadThemePreservingText(
-        themeId,
-        customParams,
-        customDefaults
-      )
-      
-      // Update logo in store
-      updateLogo(selectedLogoId, {
-        code: theme.code,
-        templateId: theme.id,
-        templateName: theme.name,
-      })
-      
-      // Update parameters
-      updateLogoParameters(selectedLogoId, {
-        custom: theme.parameters
-      })
-      
-      options.onForceRender?.()
-    } catch (error) {
-      console.error('Failed to load theme:', error)
-    }
-  }, [selectedLogoId, customParams, updateLogo, updateLogoParameters, options])
-  
-  // Handle industry theme selection
-  const handleIndustryThemeSelect = useCallback(async (
-    themeId: string,
-    industryDefaults?: Record<string, any>
-  ) => {
-    await loadThemeById(themeId, industryDefaults)
-  }, [loadThemeById])
+  // Removed old theme loading functions - using JS templates now
   
   // Handle brand personality (parameters only)
   const handleApplyBrandPersonality = useCallback((
@@ -74,7 +35,14 @@ export function useLogoHandlers(options: UseLogoHandlersOptions = {}) {
   const handleApplyColorTheme = useCallback((
     themedParams: Record<string, any>
   ) => {
-    const colorParams = ThemeLoader.filterColorParameters(themedParams)
+    // Filter to only color parameters
+    const colorParams: Record<string, any> = {}
+    const colorKeys = ['fillColor', 'strokeColor', 'backgroundColor', 'fillOpacity', 'strokeOpacity']
+    colorKeys.forEach(key => {
+      if (themedParams[key] !== undefined) {
+        colorParams[key] = themedParams[key]
+      }
+    })
     
     if (selectedLogoId) {
       updateStyle({
@@ -102,13 +70,15 @@ export function useLogoHandlers(options: UseLogoHandlersOptions = {}) {
     brandPreset: any
   ) => {
     try {
-      // Load base preset if different
-      if (brandPreset.preset !== selectedLogo?.templateId) {
-        await loadThemeById(brandPreset.preset)
-      }
-      
       // Filter out text parameters
-      const filteredParams = ThemeLoader.filterNonTextParameters(brandPreset.params)
+      const textParams = ['text', 'letter', 'letters', 'brandName', 'words', 'title', 'subtitle']
+      const filteredParams: Record<string, any> = {}
+      
+      Object.entries(brandPreset.params || {}).forEach(([key, value]) => {
+        if (!textParams.includes(key)) {
+          filteredParams[key] = value
+        }
+      })
       
       if (selectedLogoId) {
         updateCustom(filteredParams)
@@ -117,7 +87,7 @@ export function useLogoHandlers(options: UseLogoHandlersOptions = {}) {
     } catch (error) {
       console.error('Failed to apply brand preset:', error)
     }
-  }, [selectedLogoId, selectedLogo?.templateId, loadThemeById, updateCustom, options])
+  }, [selectedLogoId, updateCustom, options])
   
   // Handle shape loading
   const handleLoadShape = useCallback((shape: SavedShape) => {
@@ -159,8 +129,6 @@ export function useLogoHandlers(options: UseLogoHandlersOptions = {}) {
   }, [selectedLogoId, updateCore, updateStyle, updateCustom, options])
   
   return {
-    loadThemeById,
-    handleIndustryThemeSelect,
     handleApplyBrandPersonality,
     handleApplyColorTheme,
     handleApplyTemplatePreset,

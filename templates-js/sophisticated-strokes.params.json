@@ -1,0 +1,139 @@
+{
+  "parameters": {
+    "strokeStyle": {
+      "type": "select",
+      "default": 2,
+      "options": [
+        { "value": 0, "label": "🖋️ Ink Pen" },
+        { "value": 1, "label": "🖌️ Brush" },
+        { "value": 2, "label": "✒️ Calligraphy" },
+        { "value": 3, "label": "✏️ Pencil" },
+        { "value": 4, "label": "🖍️ Marker" }
+      ],
+      "label": "Stroke Style",
+      "category": "Style"
+    },
+    "strokeThickness": {
+      "type": "slider",
+      "default": 3,
+      "min": 1,
+      "max": 10,
+      "step": 0.5,
+      "label": "Thickness",
+      "category": "Stroke"
+    },
+    "strokeVariation": {
+      "type": "slider",
+      "default": 0.5,
+      "min": 0,
+      "max": 1,
+      "step": 0.05,
+      "label": "Variation",
+      "category": "Stroke"
+    },
+    "strokeSpeed": {
+      "type": "slider",
+      "default": 0.8,
+      "min": 0.3,
+      "max": 2,
+      "step": 0.1,
+      "label": "Speed",
+      "category": "Movement"
+    },
+    "strokeCurvature": {
+      "type": "slider",
+      "default": 0.6,
+      "min": 0,
+      "max": 1,
+      "step": 0.05,
+      "label": "Curvature",
+      "category": "Stroke"
+    },
+    "strokeTaper": {
+      "type": "slider",
+      "default": 0.7,
+      "min": 0,
+      "max": 1,
+      "step": 0.05,
+      "label": "Taper",
+      "category": "Stroke"
+    },
+    "pressure": {
+      "type": "slider",
+      "default": 0.6,
+      "min": 0.1,
+      "max": 1,
+      "step": 0.05,
+      "label": "Pressure",
+      "category": "Stroke"
+    },
+    "inkFlow": {
+      "type": "slider",
+      "default": 0.8,
+      "min": 0.3,
+      "max": 1,
+      "step": 0.05,
+      "label": "Ink Flow",
+      "category": "Material"
+    },
+    "inkBleed": {
+      "type": "slider",
+      "default": 0.1,
+      "min": 0,
+      "max": 0.5,
+      "step": 0.05,
+      "label": "Ink Bleed",
+      "category": "Material"
+    },
+    "paperTexture": {
+      "type": "slider",
+      "default": 0.2,
+      "min": 0,
+      "max": 1,
+      "step": 0.05,
+      "label": "Paper Texture",
+      "category": "Surface"
+    },
+    "artisticFlair": {
+      "type": "slider",
+      "default": 0.4,
+      "min": 0,
+      "max": 1,
+      "step": 0.05,
+      "label": "Artistic Flair",
+      "category": "Style"
+    },
+    "inkSplatter": {
+      "type": "slider",
+      "default": 0.1,
+      "min": 0,
+      "max": 1,
+      "step": 0.05,
+      "label": "Splatter",
+      "category": "Effects"
+    },
+    "strokeCount": {
+      "type": "slider",
+      "default": 3,
+      "min": 1,
+      "max": 8,
+      "step": 1,
+      "label": "Stroke Count",
+      "category": "Composition"
+    },
+    "layering": {
+      "type": "slider",
+      "default": 0.3,
+      "min": 0,
+      "max": 1,
+      "step": 0.05,
+      "label": "Layering",
+      "category": "Composition"
+    }
+  },
+  "metadata": {
+    "id": "sophisticated-strokes",
+    "name": "🎨 Sophisticated Strokes",
+    "description": "Artistic brush strokes with calligraphy effects"
+  }
+}

@@ -9,15 +9,18 @@
     "dev": "next dev --port ${PORT:-3002}",
     "dev:alt": "next dev --port 3012",
     "dev:clean": "pnpm clean && next dev --port ${PORT:-3002}",
-    "build": "tsup && next build",
+    "build": "pnpm build:packages && tsup && next build",
     "build:lib": "tsup",
+    "build:packages": "pnpm --filter './packages/**' build",
+    "build:utils": "pnpm --filter '@reflow/template-utils' build",
     "start": "next start",
     "clean": "rm -rf .next dist node_modules/.cache .turbopack",
     "dev:fresh": "pnpm clean && pnpm dev",
     "reset": "pnpm clean && pnpm install",
     "lint": "eslint . --ext .ts,.tsx",
     "test": "vitest",
-    "generate:logo": "pnpm build:lib && node scripts/generate-logo.js"
+    "generate:logo": "pnpm build:lib && node scripts/generate-logo.js",
+    "dev:utils": "pnpm --filter '@reflow/template-utils' dev"
   },
   "keywords": [
     "generative",
@@ -46,7 +49,10 @@
     "@radix-ui/react-slot": "^1.2.3",
     "@radix-ui/react-switch": "^1.2.5",
     "@radix-ui/react-tooltip": "^1.2.7",
+    "@reflow/template-utils": "workspace:*",
+    "@swc/wasm-web": "^1.12.9",
     "@types/better-sqlite3": "^7.6.13",
+    "@types/lodash": "^4.17.20",
     "@uiw/react-codemirror": "^4.23.13",
     "ai": "^4.3.16",
     "better-auth": "^1.2.12",
@@ -57,8 +63,10 @@
     "clsx": "^2.1.1",
     "file-saver": "^2.0.5",
     "gifencoder": "^2.0.1",
+    "immer": "^10.1.1",
     "jszip": "^3.10.1",
     "kysely": "^0.28.2",
+    "lodash": "^4.17.21",
     "lucide-react": "^0.523.0",
     "monaco-editor": "^0.52.2",
     "next": "15.3.4",
@@ -71,6 +79,8 @@
     "zustand": "^4.5.4"
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.3.0",
     "@types/file-saver": "^2.0.7",
     "@types/gifencoder": "^2.0.1",
     "@types/node": "^20.11.5",
@@ -78,8 +88,13 @@
     "@types/react-dom": "^18.3.0",
     "@typescript-eslint/eslint-plugin": "^6.19.0",
     "@typescript-eslint/parser": "^6.19.0",
+    "@vitejs/plugin-react": "^4.6.0",
+    "ajv": "^8.17.1",
     "autoprefixer": "^10.4.19",
+    "esbuild": "^0.25.5",
     "eslint": "^8.56.0",
+    "jsdom": "^26.1.0",
+    "playwright": "^1.53.2",
     "postcss": "^8.4.39",
     "puppeteer": "^24.11.1",
     "tailwindcss": "^3.4.4",
@@ -89,5 +104,8 @@
   },
   "engines": {
     "node": ">=18"
-  }
+  },
+  "workspaces": [
+    "packages/*"
+  ]
 }

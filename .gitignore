@@ -45,3 +45,7 @@ next-env.d.ts
 
 # claude configuration (local settings)
 /.claude/
+
+# compiled template utils (should not be in public)
+/public/template-utils.js
+/public/template-utils.d.ts

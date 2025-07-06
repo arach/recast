@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Inter, Silkscreen, Orbitron } from 'next/font/google'
 import './globals.css'
 import { DarkModeProvider } from '@/components/providers/DarkModeProvider'
+import { DevelopmentProvider } from '@/components/providers/DevelopmentProvider'
 
 const inter = Inter({ subsets: ['latin'] })
 const silkscreen = Silkscreen({ 
@@ -42,7 +43,9 @@ export default function RootLayout({
       </head>
       <body className={inter.className}>
         <DarkModeProvider>
-          {children}
+          <DevelopmentProvider>
+            {children}
+          </DevelopmentProvider>
         </DarkModeProvider>
       </body>
     </html>

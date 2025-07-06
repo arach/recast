@@ -1,0 +1,99 @@
+{
+  "metadata": {
+    "id": "letter-mark",
+    "name": "🔤 Letter Mark",
+    "description": "Clean, professional letter-based logos perfect for modern brands",
+    "category": "text",
+    "tags": ["letter", "monogram", "initial", "text", "minimal"],
+    "author": "ReFlow",
+    "version": "1.0.0"
+  },
+  "parameters": {
+    "letter": {
+      "type": "text",
+      "default": "A",
+      "label": "Letter(s)",
+      "placeholder": "Enter letter(s)",
+      "maxLength": 3,
+      "category": "Content"
+    },
+    "fontWeight": {
+      "type": "select",
+      "default": "600",
+      "options": [
+        { "value": "300", "label": "Light" },
+        { "value": "400", "label": "Regular" },
+        { "value": "500", "label": "Medium" },
+        { "value": "600", "label": "Semi-Bold" },
+        { "value": "700", "label": "Bold" },
+        { "value": "800", "label": "Extra Bold" }
+      ],
+      "label": "Font Weight",
+      "category": "Typography"
+    },
+    "style": {
+      "type": "select",
+      "default": "modern",
+      "options": [
+        { "value": "modern", "label": "Modern" },
+        { "value": "rounded", "label": "Rounded" },
+        { "value": "geometric", "label": "Geometric" },
+        { "value": "classic", "label": "Classic (Serif)" }
+      ],
+      "label": "Style",
+      "category": "Typography"
+    },
+    "alignment": {
+      "type": "select",
+      "default": "center",
+      "options": [
+        { "value": "left", "label": "Left" },
+        { "value": "center", "label": "Center" },
+        { "value": "right", "label": "Right" }
+      ],
+      "label": "Alignment",
+      "category": "Layout"
+    },
+    "size": {
+      "type": "slider",
+      "default": 0.7,
+      "min": 0.3,
+      "max": 0.9,
+      "step": 0.05,
+      "label": "Size",
+      "category": "Layout"
+    },
+    "letterSpacing": {
+      "type": "slider",
+      "default": 0,
+      "min": -0.1,
+      "max": 0.3,
+      "step": 0.02,
+      "label": "Letter Spacing",
+      "category": "Typography",
+      "unit": "em"
+    },
+    "container": {
+      "type": "select",
+      "default": "none",
+      "options": [
+        { "value": "none", "label": "None" },
+        { "value": "circle", "label": "Circle" },
+        { "value": "square", "label": "Square" },
+        { "value": "rounded", "label": "Rounded Square" }
+      ],
+      "label": "Container Shape",
+      "category": "Container"
+    },
+    "containerPadding": {
+      "type": "slider",
+      "default": 0.2,
+      "min": 0.1,
+      "max": 0.4,
+      "step": 0.05,
+      "label": "Container Padding",
+      "category": "Container",
+      "when": { "container": ["circle", "square", "rounded"] }
+    }
+  }
+}

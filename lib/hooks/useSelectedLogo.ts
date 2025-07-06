@@ -34,7 +34,6 @@ export function useSelectedLogo() {
   
   const updateStyle = (params: Partial<Parameters['style']>) => {
     if (selectedLogoId) {
-      console.log('useSelectedLogo: Updating style params', params);
       updateLogoParameters(selectedLogoId, { style: params });
       // Force a re-render
       const { setRenderTrigger } = useUIStore.getState();
@@ -50,7 +49,6 @@ export function useSelectedLogo() {
   
   const updateCustom = (params: Record<string, any>) => {
     if (selectedLogoId) {
-      console.log('useSelectedLogo: Updating custom params', params);
       updateLogoParameters(selectedLogoId, { custom: params });
       // Force a re-render
       const { setRenderTrigger } = useUIStore.getState();

@@ -4,8 +4,7 @@ import React, { useState, useEffect } from 'react'
 import { useSelectedLogo } from '@/lib/hooks/useSelectedLogo'
 import { useLogoStore } from '@/lib/stores/logoStore'
 import { useUIStore } from '@/lib/stores/uiStore'
-import { getAllTemplateInfo } from '@/lib/template-registry-direct'
-import type { LoadedTemplate } from '@/lib/template-registry-direct'
+import { getAllJSTemplates, type JSTemplateInfo } from '@/lib/js-template-registry'
 import { cn } from '@/lib/utils'
 import { 
   Info, 
@@ -27,7 +26,7 @@ export function LogoDetailsModule() {
   const updateLogo = useLogoStore(state => state.updateLogo)
   const { darkMode } = useUIStore()
   
-  const [availableTemplates, setAvailableTemplates] = useState<LoadedTemplate[]>([])
+  const [availableTemplates, setAvailableTemplates] = useState<JSTemplateInfo[]>([])
   const [loadingTemplates, setLoadingTemplates] = useState(true)
   const [showCode, setShowCode] = useState(false)
 
@@ -36,7 +35,7 @@ export function LogoDetailsModule() {
     const loadTemplates = async () => {
       try {
         setLoadingTemplates(true)
-        const templates = await getAllTemplateInfo()
+        const templates = await getAllJSTemplates()
         setAvailableTemplates(templates)
       } catch (error) {
         console.error('Failed to load templates:', error)

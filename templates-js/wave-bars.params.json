@@ -1,0 +1,118 @@
+{
+  "metadata": {
+    "id": "wave-bars",
+    "name": "🌊 Wave Bars",
+    "description": "Audio bars that follow wave patterns with customizable color modes",
+    "category": "animated",
+    "tags": ["wave", "bars", "audio", "animated", "colorful"],
+    "author": "ReFlow",
+    "version": "1.0.0"
+  },
+  "parameters": {
+    "barCount": {
+      "type": "slider",
+      "default": 40,
+      "min": 20,
+      "max": 100,
+      "step": 5,
+      "label": "Number of Bars",
+      "category": "Geometry"
+    },
+    "barSpacing": {
+      "type": "slider",
+      "default": 2,
+      "min": 0,
+      "max": 10,
+      "step": 1,
+      "label": "Bar Spacing",
+      "category": "Geometry",
+      "unit": "px"
+    },
+    "colorMode": {
+      "type": "select",
+      "default": "spectrum",
+      "options": [
+        { "value": "spectrum", "label": "🌈 Rainbow Spectrum" },
+        { "value": "theme", "label": "🎨 Theme Colors" },
+        { "value": "toneShift", "label": "🎭 Tone Shift" },
+        { "value": "mono", "label": "⚫ Monochrome" }
+      ],
+      "label": "Color Mode",
+      "category": "Effects"
+    },
+    "frequency": {
+      "type": "slider",
+      "default": 3,
+      "min": 0.1,
+      "max": 20,
+      "step": 0.1,
+      "label": "Wave Frequency",
+      "category": "Animation"
+    },
+    "amplitude": {
+      "type": "slider",
+      "default": 50,
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "label": "Wave Amplitude",
+      "category": "Animation",
+      "unit": "%"
+    },
+    "animationSpeed": {
+      "type": "slider",
+      "default": 1,
+      "min": 0,
+      "max": 5,
+      "step": 0.1,
+      "label": "Animation Speed",
+      "category": "Animation",
+      "unit": "x"
+    },
+    "barStyle": {
+      "type": "select",
+      "default": "rounded",
+      "options": [
+        { "value": "rounded", "label": "Rounded" },
+        { "value": "sharp", "label": "Sharp" },
+        { "value": "circle", "label": "Circular Caps" }
+      ],
+      "label": "Bar Style",
+      "category": "Geometry"
+    },
+    "waveType": {
+      "type": "select",
+      "default": "sine",
+      "options": ["sine", "triangle", "square", "sawtooth"],
+      "label": "Wave Type",
+      "category": "Animation"
+    },
+    "phaseShift": {
+      "type": "slider",
+      "default": 0,
+      "min": 0,
+      "max": 360,
+      "step": 1,
+      "label": "Phase Shift",
+      "category": "Animation",
+      "unit": "°",
+      "when": { "waveType": ["sine", "triangle"] }
+    },
+    "showWavePath": {
+      "type": "toggle",
+      "default": false,
+      "label": "Show Wave Path",
+      "category": "Effects"
+    },
+    "pathOpacity": {
+      "type": "slider",
+      "default": 0.15,
+      "min": 0,
+      "max": 1,
+      "step": 0.05,
+      "label": "Path Opacity",
+      "category": "Effects",
+      "when": { "showWavePath": true }
+    }
+  }
+}
