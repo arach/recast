@@ -1,0 +1,140 @@
+{
+  "spectrum": {
+    "id": "spectrum",
+    "full_url": "/?template=wave-bars&barCount=60&barSpacing=0&frequency=3.5&amplitude=40&waveType=sine&colorMode=spectrum&animationSpeed=0.8&showWavePath=true&pathOpacity=0.2&seed=reflow-spectrum-2024",
+    "template": "wave-bars",
+    "params": {
+      "barCount": 60,
+      "barSpacing": 0,
+      "frequency": 3.5,
+      "amplitude": 40,
+      "waveType": "sine",
+      "colorMode": "spectrum",
+      "animationSpeed": 0.8,
+      "showWavePath": true,
+      "pathOpacity": 0.2,
+      "seed": "reflow-spectrum-2024"
+    },
+    "created_at": "2025-07-06T03:28:07.761Z",
+    "clicks": 6
+  },
+  "infinity": {
+    "id": "infinity",
+    "full_url": "/?template=wave-bars&barCount=32&barSpacing=1&frequency=2.4&amplitude=45&phaseShift=90&waveType=sine&colorMode=mono&fillType=gradient&fillGradientStart=%230066FF&fillGradientEnd=%2300FFFF&fillGradientDirection=45&seed=reflow-infinity-2024",
+    "template": "wave-bars",
+    "params": {
+      "barCount": 32,
+      "barSpacing": 1,
+      "frequency": 2.4,
+      "amplitude": 45,
+      "phaseShift": 90,
+      "waveType": "sine",
+      "colorMode": "mono",
+      "fillType": "gradient",
+      "fillGradientStart": "#0066FF",
+      "fillGradientEnd": "#00FFFF",
+      "fillGradientDirection": 45,
+      "seed": "reflow-infinity-2024"
+    },
+    "created_at": "2025-07-06T03:28:07.763Z",
+    "clicks": 2
+  },
+  "letterR": {
+    "id": "letterR",
+    "full_url": "/?template=letter-mark&letter=R&fontSize=120&fontWeight=700&fillType=gradient&fillGradientStart=%237C3AED&fillGradientEnd=%2306B6D4&fillGradientDirection=135&containerType=circle&seed=reflow-letter-2024",
+    "template": "letter-mark",
+    "params": {
+      "letter": "R",
+      "fontSize": 120,
+      "fontWeight": 700,
+      "fillType": "gradient",
+      "fillGradientStart": "#7C3AED",
+      "fillGradientEnd": "#06B6D4",
+      "fillGradientDirection": 135,
+      "containerType": "circle",
+      "seed": "reflow-letter-2024"
+    },
+    "created_at": "2025-07-06T03:28:07.763Z",
+    "clicks": 3
+  },
+  "minimal": {
+    "id": "minimal",
+    "full_url": "/?template=wordmark&text=reflow&fontFamily=Inter%2C+-apple-system%2C+BlinkMacSystemFont%2C+sans-serif&fontSize=48&fontWeight=600&letterSpacing=-2&textTransform=lowercase&fillType=solid&fillColor=%23000000&strokeType=none&backgroundType=transparent&frequency=0&amplitude=0&seed=reflow-minimal-2024",
+    "template": "wordmark",
+    "params": {
+      "text": "reflow",
+      "fontFamily": "Inter, -apple-system, BlinkMacSystemFont, sans-serif",
+      "fontSize": 48,
+      "fontWeight": 600,
+      "letterSpacing": -2,
+      "textTransform": "lowercase",
+      "fillType": "solid",
+      "fillColor": "#000000",
+      "strokeType": "none",
+      "backgroundType": "transparent",
+      "frequency": 0,
+      "amplitude": 0,
+      "seed": "reflow-minimal-2024"
+    },
+    "created_at": "2025-07-06T03:28:07.763Z",
+    "clicks": 2
+  },
+  "pulse": {
+    "id": "pulse",
+    "full_url": "/?template=pulse-spotify&pulseCount=5&pulseSpeed=1.2&maxRadius=100&colorMode=mono&fillType=solid&fillColor=%23000000&fillOpacity=0.8&strokeType=solid&strokeColor=%23000000&strokeWidth=2&seed=reflow-pulse-2024",
+    "template": "pulse-spotify",
+    "params": {
+      "pulseCount": 5,
+      "pulseSpeed": 1.2,
+      "maxRadius": 100,
+      "colorMode": "mono",
+      "fillType": "solid",
+      "fillColor": "#000000",
+      "fillOpacity": 0.8,
+      "strokeType": "solid",
+      "strokeColor": "#000000",
+      "strokeWidth": 2,
+      "seed": "reflow-pulse-2024"
+    },
+    "created_at": "2025-07-06T03:28:07.763Z",
+    "clicks": 4
+  },
+  "Y5-CFL": {
+    "id": "Y5-CFL",
+    "full_url": "/?template=wordmark&text=reflow&fontFamily=Inter%2C+-apple-system%2C+BlinkMacSystemFont%2C+sans-serif&fontSize=48&fontWeight=700&letterSpacing=-3&textTransform=lowercase&fillType=solid&fillColor=%23000000&strokeType=solid&strokeColor=%23000000&strokeWidth=8&backgroundType=solid&backgroundColor=%23FFFFFF&containerType=rectangle&containerPadding=40&containerStrokeWidth=4&containerStrokeColor=%23000000&seed=reflow-border-2024",
+    "template": "wordmark",
+    "params": {
+      "text": "reflow",
+      "fontFamily": "Inter, -apple-system, BlinkMacSystemFont, sans-serif",
+      "fontSize": 48,
+      "fontWeight": 700,
+      "letterSpacing": -3,
+      "textTransform": "lowercase",
+      "fillType": "solid",
+      "fillColor": "#000000",
+      "strokeType": "solid",
+      "strokeColor": "#000000",
+      "strokeWidth": 8,
+      "backgroundType": "solid",
+      "backgroundColor": "#FFFFFF",
+      "containerType": "rectangle",
+      "containerPadding": 40,
+      "containerStrokeWidth": 4,
+      "containerStrokeColor": "#000000",
+      "seed": "reflow-border-2024"
+    },
+    "created_at": "2025-07-06T04:26:16.505Z",
+    "clicks": 1
+  },
+  "U0EACk": {
+    "id": "U0EACk",
+    "full_url": "/canvas/canvas-LzdaqIKd",
+    "template": "canvas",
+    "params": {
+      "title": "My Brand Exploration",
+      "description": "Testing different logo concepts"
+    },
+    "created_at": "2025-07-06T17:25:36.384Z",
+    "clicks": 0
+  }
+}

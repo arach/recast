@@ -7,10 +7,12 @@ import { LeftSidebar } from '@/components/studio/LeftSidebar'
 import { ToolsContainer } from '@/components/studio/tools/ToolsContainer'
 import { Dialogs } from '@/components/studio/Dialogs'
 import { DebugOverlay } from '@/components/debug/DebugOverlay'
+import { CodeEditorPanel } from '@/components/studio/CodeEditorPanel'
 
 // Hooks
 import { useLogoStore } from '@/lib/stores/logoStore'
 import { useUIStore } from '@/lib/stores/uiStore'
+import { useTemplateStore } from '@/lib/stores/templateStore'
 import { useSelectedLogo } from '@/lib/hooks/useSelectedLogo'
 import { useURLParameters } from '@/lib/hooks/useURLParameters'
 import { usePageEffects } from '@/lib/hooks/usePageEffects'
@@ -22,14 +24,24 @@ import { useDebugAction } from '@/lib/debug/useDebugAction'
 // Services
 import { stateTracer } from '@/lib/debug/stateUpdateTracer'
 import { SavedShape, SavedLogo } from '@/lib/storage'
+import { getCanvas } from '@/lib/api/canvas-api'
+import type { Canvas } from '@/app/api/_lib/types'
 
-export default function Home() {
+interface PageProps {
+  params?: Promise<{ canvasId: string }>
+}
+
+export default function Home({ params }: PageProps = {}) {
   const [mounted, setMounted] = useState(false)
   const [forceRender, setForceRender] = useState(0)
+  const [showCodeEditor, setShowCodeEditor] = useState(false)
+  const [canvasId, setCanvasId] = useState<string | null>(null)
+  const [loadingCanvas, setLoadingCanvas] = useState(false)
   
   // Store state - only access what React needs
-  const { selectedLogoId } = useLogoStore()
+  const { selectedLogoId, initializeLogos } = useLogoStore()
   const { darkMode } = useUIStore()
+  const { applyTemplate } = useTemplateStore()
   
   // Selected logo utilities
   const selectedLogoUtils = useSelectedLogo()
@@ -54,7 +66,11 @@ export default function Home() {
   
   // URL parameters
   useURLParameters({
-    onTemplateLoad: logoHandlers.loadThemeById
+    onTemplateLoad: async (templateId: string) => {
+      if (selectedLogoId) {
+        await applyTemplate(selectedLogoId, templateId)
+      }
+    }
   })
   
   // Page effects (theme detection, dev utilities)
@@ -62,7 +78,11 @@ export default function Home() {
     onRunCode: () => setForceRender(prev => prev + 1),
     updateCore,
     updateCustom,
-    loadThemeById: logoHandlers.loadThemeById,
+    loadThemeById: async (templateId: string) => {
+      if (selectedLogoId) {
+        await applyTemplate(selectedLogoId, templateId)
+      }
+    },
     forceRender: () => setForceRender(prev => prev + 1)
   })
   
@@ -161,6 +181,43 @@ export default function Home() {
     }
   ])
   
+  // Load canvas if ID provided
+  useEffect(() => {
+    async function loadCanvas() {
+      if (!params) return
+      
+      try {
+        const { canvasId: id } = await params
+        setCanvasId(id)
+        setLoadingCanvas(true)
+        
+        const canvas = await getCanvas(id)
+        
+        // Convert API logos to app format
+        const appLogos = canvas.logos.map(logo => ({
+          id: logo.id,
+          templateId: logo.templateId,
+          parameters: {
+            core: logo.parameters.core || {},
+            style: logo.parameters.style || {},
+            custom: logo.parameters.custom || logo.parameters,
+          },
+          position: logo.position,
+          name: logo.metadata?.name || `Logo ${logo.id}`,
+          createdAt: Date.now(),
+        }))
+        
+        initializeLogos(appLogos)
+        setLoadingCanvas(false)
+      } catch (err) {
+        console.error('Failed to load canvas:', err)
+        setLoadingCanvas(false)
+      }
+    }
+    
+    loadCanvas()
+  }, [params, initializeLogos])
+
   // Mount effect
   useEffect(() => {
     setMounted(true)
@@ -168,9 +225,17 @@ export default function Home() {
   
   if (!mounted) return null
   
+  if (loadingCanvas) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-white">
+        <div className="text-gray-600">Loading canvas...</div>
+      </div>
+    )
+  }
+  
   return (
     <div className="h-screen overflow-hidden bg-gradient-to-br from-gray-50 to-white flex flex-col">
-      <StudioHeader />
+      <StudioHeader onToggleCodeEditor={() => setShowCodeEditor(!showCodeEditor)} />
 
       <div className="relative flex-1 overflow-hidden">
         {/* Canvas takes full space */}
@@ -181,6 +246,12 @@ export default function Home() {
         
         {/* Tools panel overlays on the right */}
         <ToolsContainer />
+        
+        {/* Code editor panel slides in from the right */}
+        <CodeEditorPanel 
+          isOpen={showCodeEditor} 
+          onClose={() => setShowCodeEditor(false)} 
+        />
       </div>
       
       <Dialogs
@@ -192,7 +263,11 @@ export default function Home() {
         onLoadShape={handleLoadShape}
         onLoadLogo={handleLoadLogo}
         onSelectTheme={(themeId, defaults, industryId) => {
-          logoHandlers.handleIndustryThemeSelect(themeId, defaults)
+          if (selectedLogoId) {
+          applyTemplate(selectedLogoId, themeId).then(() => {
+            updateCustom(defaults)
+          })
+        }
           dialogState.setCurrentIndustry(industryId)
           dialogState.setShowIndustrySelector(false)
         }}

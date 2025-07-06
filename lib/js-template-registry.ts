@@ -9,6 +9,7 @@ export interface JSTemplateInfo {
   name: string
   description: string
   category?: string
+  parameters?: any
 }
 
 // Our JS templates
@@ -40,7 +41,31 @@ const JS_TEMPLATES: JSTemplateInfo[] = [
 ]
 
 export async function getAllJSTemplates(): Promise<JSTemplateInfo[]> {
-  return JS_TEMPLATES
+  // For server-side, load parameters from files
+  if (typeof window === 'undefined') {
+    const templatesWithParams = await Promise.all(
+      JS_TEMPLATES.map(async (template) => {
+        try {
+          const fs = await import('fs/promises');
+          const path = await import('path');
+          const paramsPath = path.default.join(process.cwd(), 'templates-js', `${template.id}.params.json`);
+          const paramsData = await fs.default.readFile(paramsPath, 'utf-8');
+          const parsed = JSON.parse(paramsData);
+          return {
+            ...template,
+            parameters: parsed.parameters || {}
+          };
+        } catch (error) {
+          console.warn(`Failed to load parameters for ${template.id}:`, error);
+          return template;
+        }
+      })
+    );
+    return templatesWithParams;
+  }
+  
+  // For client-side, return basic info
+  return JS_TEMPLATES;
 }
 
 export async function loadJSTemplate(templateId: string) {

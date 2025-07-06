@@ -30,8 +30,14 @@ import { useSelectedLogo } from '@/lib/hooks/useSelectedLogo'
 import { exportCanvasAsPNG } from '@/lib/export-utils'
 import { generateWaveBars, executeCustomCode, VisualizationParams } from '@/lib/visualization-generators'
 import { TemplateSelector } from '@/components/studio/TemplateSelector'
+import { SaveCanvasButton } from '@/components/studio/SaveCanvasButton'
+import { EditorModeButton } from '@/components/studio/EditorModeButton'
 
-export function StudioHeader() {
+interface StudioHeaderProps {
+  onToggleCodeEditor?: () => void
+}
+
+export function StudioHeader({ onToggleCodeEditor }: StudioHeaderProps) {
   const { toggleSavedItems, toggleSaveDialog, toggleIndustryModal, darkMode, setDarkMode } = useUIStore()
   const { logos, selectedLogoId, updateLogo, randomizeLogo } = useLogoStore()
   const logo = useSelectedLogo()
@@ -209,6 +215,13 @@ export function StudioHeader() {
 
         <div className="flex items-center space-x-3">
           <TemplateSelector />
+          
+          <div className={`h-6 w-px ${
+            darkMode ? 'bg-gray-700' : 'bg-gray-200'
+          }`} />
+          
+          <SaveCanvasButton />
+          <EditorModeButton onClick={onToggleCodeEditor || (() => {})} />
           
           <div className={`h-6 w-px ${
             darkMode ? 'bg-gray-700' : 'bg-gray-200'

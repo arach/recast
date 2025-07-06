@@ -1,0 +1,52 @@
+{
+  "id": "canvas-uI5hZQdH",
+  "name": "Canvas 7/6/2025",
+  "description": "1 logo",
+  "layout": "grid",
+  "logos": [
+    {
+      "id": "logo-4zdSLpi9",
+      "templateId": "wordmark",
+      "parameters": {
+        "text": "reflow();",
+        "fontStyle": "tech",
+        "customFont": "Arial",
+        "fontWeight": "500",
+        "letterSpacing": -0.03,
+        "size": 0.25,
+        "lineHeight": 0.9,
+        "textTransform": "lowercase",
+        "underline": false,
+        "underlineWeight": 3,
+        "underlineOffset": 0,
+        "showFrame": true,
+        "frameStyle": "outline",
+        "frameStrokeStyle": "solid",
+        "frameStrokeWidth": 3,
+        "framePadding": 40,
+        "frameRadius": 0,
+        "textAnimation": "none",
+        "animationSpeed": 1,
+        "animationIntensity": 0.5
+      },
+      "position": {
+        "x": -937.1195246511138,
+        "y": 1490.6269542503492
+      },
+      "size": {
+        "width": 180,
+        "height": 180
+      },
+      "metadata": {}
+    }
+  ],
+  "settings": {},
+  "metadata": {
+    "createdAt": "2025-07-06T18:14:05.472Z",
+    "updatedAt": "2025-07-06T18:14:05.783Z",
+    "lastAccessedAt": "2025-07-06T18:14:07.349Z",
+    "isPublic": false
+  },
+  "createdAt": "2025-07-06T18:14:05.472Z",
+  "updatedAt": "2025-07-06T18:14:07.350Z"
+}

@@ -7,12 +7,10 @@
   "scripts": {
     "dev": "tsx watch src/index-lite.ts",
     "build": "tsup src/index-lite.ts --format esm --dts --clean",
-    "build:full": "tsup src/index.ts --format esm --dts --clean",
     "start": "node dist/index-lite.js"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.4",
-    "canvas": "^2.11.2",
     "nanoid": "^5.0.9"
   },
   "devDependencies": {

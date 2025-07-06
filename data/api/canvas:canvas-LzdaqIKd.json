@@ -1,0 +1,93 @@
+{
+  "id": "canvas-LzdaqIKd",
+  "name": "My Brand Exploration",
+  "description": "Testing different logo concepts",
+  "layout": "grid",
+  "logos": [
+    {
+      "id": "logo-c1Hp0MBy",
+      "templateId": "wave-bars",
+      "parameters": {},
+      "position": {
+        "x": 50,
+        "y": 50
+      },
+      "size": {
+        "width": 180,
+        "height": 180
+      },
+      "metadata": {
+        "name": "Colorful Wave Variant",
+        "notes": "Higher frequency for more dynamic feel"
+      }
+    },
+    {
+      "id": "logo-ofqr7oKk",
+      "templateId": "wave-bars",
+      "parameters": {
+        "barCount": 80,
+        "barSpacing": 2,
+        "colorMode": "spectrum",
+        "frequency": 4.5,
+        "amplitude": 60,
+        "animationSpeed": 1,
+        "barStyle": "rounded",
+        "waveType": "sine",
+        "phaseShift": 0,
+        "showWavePath": false,
+        "pathOpacity": 0.15
+      },
+      "position": {
+        "x": 270,
+        "y": 50
+      },
+      "size": {
+        "width": 180,
+        "height": 180
+      },
+      "metadata": {
+        "name": "Colorful Wave Variant",
+        "notes": "Higher frequency for more dynamic feel"
+      }
+    },
+    {
+      "id": "logo-AZMyZNoM",
+      "templateId": "wave-bars",
+      "parameters": {
+        "barCount": 80,
+        "barSpacing": 2,
+        "colorMode": "mono",
+        "frequency": 2,
+        "amplitude": 60,
+        "animationSpeed": 1,
+        "barStyle": "rounded",
+        "waveType": "sine",
+        "phaseShift": 0,
+        "showWavePath": false,
+        "pathOpacity": 0.15
+      },
+      "position": {
+        "x": 470,
+        "y": 50
+      },
+      "size": {
+        "width": 180,
+        "height": 180
+      },
+      "locked": false,
+      "metadata": {
+        "name": "Colorful Wave Variant (Copy)",
+        "notes": "Duplicated from logo-ofqr7oKk"
+      }
+    }
+  ],
+  "settings": {},
+  "metadata": {
+    "createdAt": "2025-07-06T15:09:58.418Z",
+    "updatedAt": "2025-07-06T17:24:02.872Z",
+    "lastAccessedAt": "2025-07-06T17:23:48.535Z",
+    "isPublic": false
+  },
+  "createdAt": "2025-07-06T15:09:58.418Z",
+  "updatedAt": "2025-07-06T17:24:02.873Z"
+}
