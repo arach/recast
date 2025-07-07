@@ -2,7 +2,7 @@ import { loadJSTemplate } from './js-template-registry'
 // Import all utilities from the package
 import * as templateUtils from '@reflow/template-utils'
 // Import local parameter utilities
-import { params } from './template-utils'
+import { params, iso } from './template-utils'
 
 // Create utils object using only package exports with modern namespaced functions
 const utils = {
@@ -14,7 +14,9 @@ const utils = {
   shape: templateUtils.shape,
   debug: templateUtils.debug,
   // Local parameter utilities
-  params
+  params,
+  // Isometric utilities
+  iso
 }
 
 // Flatten nested parameter structures into a single level object

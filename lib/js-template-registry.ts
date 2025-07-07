@@ -37,7 +37,10 @@ const JS_TEMPLATES: JSTemplateInfo[] = [
   // Artistic
   { id: 'neon-glow', name: '✨ Neon Glow', description: 'Glowing neon effects with electric pulses', category: 'artistic' },
   { id: 'organic-bark', name: '🌳 Organic Bark', description: 'Natural wood textures with growth patterns', category: 'artistic' },
-  { id: 'sophisticated-strokes', name: '🎨 Sophisticated Strokes', description: 'Artistic brush strokes with calligraphy effects', category: 'artistic' }
+  { id: 'sophisticated-strokes', name: '🎨 Sophisticated Strokes', description: 'Artistic brush strokes with calligraphy effects', category: 'artistic' },
+  
+  // Isometric
+  { id: 'tech-tower', name: '🏢 Tech Tower', description: 'Isometric tech building with animated glowing windows', category: 'isometric' }
 ]
 
 export async function getAllJSTemplates(): Promise<JSTemplateInfo[]> {

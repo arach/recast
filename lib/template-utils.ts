@@ -386,3 +386,298 @@ export function setupTemplate(
 export function setupTemplateStatic(ctx: CanvasRenderingContext2D, width: number, height: number, params: any) {
   return setupTemplate(ctx, width, height, params, 0);
 }
+
+/**
+ * Isometric 3D Utilities
+ * 
+ * Provides utilities for creating isometric 3D graphics in 2D canvas.
+ * Uses standard isometric projection with 30° angles.
+ */
+
+// Isometric projection constants
+const ISO_ANGLE = Math.PI / 6; // 30 degrees
+const ISO_COS = Math.cos(ISO_ANGLE);
+const ISO_SIN = Math.sin(ISO_ANGLE);
+
+/**
+ * 3D Point interface
+ */
+interface Point3D {
+  x: number;
+  y: number;
+  z: number;
+}
+
+/**
+ * 2D Point interface
+ */
+interface Point2D {
+  x: number;
+  y: number;
+}
+
+/**
+ * Project 3D coordinates to 2D isometric view
+ * 
+ * @param x - X coordinate (left/right)
+ * @param y - Y coordinate (front/back) 
+ * @param z - Z coordinate (up/down)
+ * @returns 2D point in isometric projection
+ */
+function project3D(x: number, y: number, z: number): Point2D {
+  return {
+    x: (x - y) * ISO_COS,
+    y: (x + y) * ISO_SIN - z
+  };
+}
+
+/**
+ * Calculate lighting intensity for a face based on its normal
+ * 
+ * @param normal - Face normal vector
+ * @param lightDir - Light direction vector (normalized)
+ * @returns Lighting intensity (0-1)
+ */
+function calculateLighting(normal: Point3D, lightDir: Point3D = { x: -1, y: 1, z: 1 }): number {
+  // Normalize light direction
+  const lightLength = Math.sqrt(lightDir.x * lightDir.x + lightDir.y * lightDir.y + lightDir.z * lightDir.z);
+  const normalizedLight = {
+    x: lightDir.x / lightLength,
+    y: lightDir.y / lightLength,
+    z: lightDir.z / lightLength
+  };
+  
+  // Calculate dot product (cosine of angle)
+  const dot = normal.x * normalizedLight.x + normal.y * normalizedLight.y + normal.z * normalizedLight.z;
+  
+  // Return intensity (0.3 to 1.0 range for better visibility)
+  return Math.max(0.3, Math.min(1.0, dot));
+}
+
+/**
+ * Adjust color brightness based on lighting
+ */
+function adjustColorBrightness(color: string, intensity: number): string {
+  // Parse hex color
+  const hex = color.replace('#', '');
+  const r = parseInt(hex.substr(0, 2), 16);
+  const g = parseInt(hex.substr(2, 2), 16);
+  const b = parseInt(hex.substr(4, 2), 16);
+  
+  // Apply intensity
+  const newR = Math.round(r * intensity);
+  const newG = Math.round(g * intensity);
+  const newB = Math.round(b * intensity);
+  
+  // Convert back to hex
+  return `#${newR.toString(16).padStart(2, '0')}${newG.toString(16).padStart(2, '0')}${newB.toString(16).padStart(2, '0')}`;
+}
+
+/**
+ * Draw an isometric cube
+ * 
+ * @param ctx - Canvas context
+ * @param x - X position in 3D space
+ * @param y - Y position in 3D space
+ * @param z - Z position in 3D space
+ * @param size - Cube size
+ * @param color - Base color
+ * @param options - Drawing options
+ */
+function drawCube(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  z: number,
+  size: number,
+  color: string = '#4a90e2',
+  options: {
+    lighting?: boolean;
+    stroke?: boolean;
+    strokeColor?: string;
+    strokeWidth?: number;
+  } = {}
+) {
+  const { lighting = true, stroke = true, strokeColor = '#2c5aa0', strokeWidth = 1 } = options;
+  
+  // Define cube vertices
+  const vertices = [
+    project3D(x, y, z + size),         // 0: top-left-front
+    project3D(x + size, y, z + size), // 1: top-right-front
+    project3D(x + size, y + size, z + size), // 2: top-right-back
+    project3D(x, y + size, z + size), // 3: top-left-back
+    project3D(x, y, z),               // 4: bottom-left-front
+    project3D(x + size, y, z),        // 5: bottom-right-front
+    project3D(x + size, y + size, z), // 6: bottom-right-back
+    project3D(x, y + size, z)         // 7: bottom-left-back
+  ];
+  
+  // Draw visible faces (top, left, right)
+  const faces = [
+    {
+      points: [vertices[0], vertices[1], vertices[2], vertices[3]], // top
+      normal: { x: 0, y: 0, z: 1 },
+      visible: true
+    },
+    {
+      points: [vertices[0], vertices[4], vertices[5], vertices[1]], // front
+      normal: { x: 0, y: -1, z: 0 },
+      visible: true
+    },
+    {
+      points: [vertices[1], vertices[5], vertices[6], vertices[2]], // right
+      normal: { x: 1, y: 0, z: 0 },
+      visible: true
+    }
+  ];
+  
+  // Draw each visible face
+  faces.forEach(face => {
+    if (!face.visible) return;
+    
+    ctx.save();
+    
+    // Calculate face color with lighting
+    let faceColor = color;
+    if (lighting) {
+      const intensity = calculateLighting(face.normal);
+      faceColor = adjustColorBrightness(color, intensity);
+    }
+    
+    // Draw face
+    ctx.fillStyle = faceColor;
+    ctx.beginPath();
+    ctx.moveTo(face.points[0].x, face.points[0].y);
+    for (let i = 1; i < face.points.length; i++) {
+      ctx.lineTo(face.points[i].x, face.points[i].y);
+    }
+    ctx.closePath();
+    ctx.fill();
+    
+    // Draw stroke
+    if (stroke) {
+      ctx.strokeStyle = strokeColor;
+      ctx.lineWidth = strokeWidth;
+      ctx.stroke();
+    }
+    
+    ctx.restore();
+  });
+}
+
+/**
+ * Draw an isometric building (stack of cubes)
+ * 
+ * @param ctx - Canvas context
+ * @param x - X position in 3D space
+ * @param y - Y position in 3D space
+ * @param z - Z position in 3D space
+ * @param width - Building width
+ * @param depth - Building depth
+ * @param height - Building height
+ * @param color - Base color
+ * @param options - Drawing options
+ */
+function drawBuilding(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  z: number,
+  width: number,
+  depth: number,
+  height: number,
+  color: string = '#4a90e2',
+  options: {
+    windows?: boolean;
+    windowColor?: string;
+    lighting?: boolean;
+    stroke?: boolean;
+  } = {}
+) {
+  const { windows = true, windowColor = '#ffeb3b', lighting = true, stroke = true } = options;
+  
+  // Draw the main building structure
+  drawCube(ctx, x, y, z, width, color, { lighting, stroke });
+  
+  // Add height by drawing additional layers
+  for (let layer = 1; layer < height; layer++) {
+    drawCube(ctx, x, y, z + (layer * width), width, color, { lighting, stroke });
+  }
+  
+  // Add windows if enabled
+  if (windows) {
+    const windowSize = width * 0.15;
+    const windowSpacing = width * 0.25;
+    
+    // Front face windows
+    for (let floor = 0; floor < height; floor++) {
+      for (let col = 0; col < Math.floor(width / windowSpacing); col++) {
+        const windowX = x + windowSpacing + (col * windowSpacing);
+        const windowY = y - 0.1; // Slightly in front
+        const windowZ = z + (floor * width) + windowSpacing;
+        
+        if (windowX + windowSize < x + width) {
+          drawCube(ctx, windowX, windowY, windowZ, windowSize, windowColor, {
+            lighting: false,
+            stroke: false
+          });
+        }
+      }
+    }
+    
+    // Right face windows  
+    for (let floor = 0; floor < height; floor++) {
+      for (let row = 0; row < Math.floor(depth / windowSpacing); row++) {
+        const windowX = x + width + 0.1; // Slightly to the right
+        const windowY = y + windowSpacing + (row * windowSpacing);
+        const windowZ = z + (floor * width) + windowSpacing;
+        
+        if (windowY + windowSize < y + depth) {
+          drawCube(ctx, windowX, windowY, windowZ, windowSize, windowColor, {
+            lighting: false,
+            stroke: false
+          });
+        }
+      }
+    }
+  }
+}
+
+/**
+ * Isometric utilities namespace for templates
+ */
+export const iso = {
+  /**
+   * Project 3D coordinates to 2D isometric view
+   */
+  project: project3D,
+  
+  /**
+   * Draw an isometric cube
+   */
+  drawCube,
+  
+  /**
+   * Draw an isometric building
+   */
+  drawBuilding,
+  
+  /**
+   * Calculate lighting intensity
+   */
+  lighting: calculateLighting,
+  
+  /**
+   * Adjust color brightness
+   */
+  adjustBrightness: adjustColorBrightness,
+  
+  /**
+   * Isometric projection constants
+   */
+  constants: {
+    ANGLE: ISO_ANGLE,
+    COS: ISO_COS,
+    SIN: ISO_SIN
+  }
+};
