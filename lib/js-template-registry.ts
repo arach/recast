@@ -40,7 +40,8 @@ const JS_TEMPLATES: JSTemplateInfo[] = [
   { id: 'sophisticated-strokes', name: '🎨 Sophisticated Strokes', description: 'Artistic brush strokes with calligraphy effects', category: 'artistic' },
   
   // Isometric
-  { id: 'tech-tower', name: '🏢 Tech Tower', description: 'Isometric tech building with animated glowing windows', category: 'isometric' }
+  { id: 'tech-tower', name: '🏢 Tech Tower', description: 'Isometric tech building with animated glowing windows', category: 'isometric' },
+  { id: 'exploded-tech-stack', name: '🏗️ Exploded Tech Stack', description: 'Multi-layer architecture visualization with animated layer separation', category: 'isometric' }
 ]
 
 export async function getAllJSTemplates(): Promise<JSTemplateInfo[]> {
@@ -84,7 +85,15 @@ export async function loadJSTemplate(templateId: string) {
     
     // Parse the code to extract parameters and metadata using regex
     // This is a client-side approach since we can't use dynamic imports in the browser
-    const parametersMatch = code.match(/export const parameters = ([\s\S]*?);\s*(?=\/\/|export|$)/)
+    
+    // Try multiple patterns for parameters
+    let parametersMatch = code.match(/export const parameters = ([\s\S]*?);\s*(?=\/\/|export|$)/)
+    
+    // If not found, try non-exported parameters (like prism.js)
+    if (!parametersMatch) {
+      parametersMatch = code.match(/const parameters = ([\s\S]*?);\s*(?=\/\/|export|$)/)
+    }
+    
     const metadataMatch = code.match(/export const metadata = ([\s\S]*?);\s*(?=\/\/|export|$)/)
     
     let parameters = {}
@@ -92,22 +101,98 @@ export async function loadJSTemplate(templateId: string) {
     
     try {
       if (parametersMatch) {
-        // Extract parameter defaults using a more targeted approach
         const paramText = parametersMatch[1]
-        const defaultsMatch = paramText.match(/\b(\w+):\s*\w+\([^,]*,\s*([^,]*),/g)
-        if (defaultsMatch) {
-          parameters = defaultsMatch.reduce((acc, match) => {
-            const parts = match.match(/(\w+):\s*\w+\([^,]*,\s*([^,]*),/)
-            if (parts) {
-              const [, key, defaultValue] = parts
-              acc[key] = { default: JSON.parse(defaultValue.trim()) }
-            }
-            return acc
-          }, {} as any)
+        
+        // Try to parse as JavaScript object literal first (most robust approach)
+        try {
+          // Create a safe evaluation context
+          const helperFunctions = {
+            slider: (def: any, min: any, max: any, step: any, label?: string, unit?: string, opts = {}) => ({ 
+              type: "slider", default: def, min, max, step, label, unit, ...opts 
+            }),
+            select: (def: any, options: any, label?: string, opts = {}) => ({ 
+              type: "select", default: def, options, label, ...opts 
+            }),
+            toggle: (def: any, label?: string, opts = {}) => ({ 
+              type: "toggle", default: def, label, ...opts 
+            })
+          }
+          
+          // Create function to evaluate the parameters object
+          const evalFunction = new Function(
+            'slider', 'select', 'toggle',
+            `return ${paramText}`
+          )
+          
+          parameters = evalFunction(
+            helperFunctions.slider,
+            helperFunctions.select, 
+            helperFunctions.toggle
+          )
+          
+        } catch (evalError) {
+          console.warn(`Failed to evaluate parameters object for ${templateId}, falling back to regex parsing:`, evalError)
+          
+          // Fallback: regex-based parsing for different formats
+          
+          // Format 1: Helper functions (slider, select, toggle)
+          const helperMatches = paramText.match(/(\w+):\s*(\w+)\([^)]+\)/g)
+          if (helperMatches && helperMatches.length > 0) {
+            parameters = helperMatches.reduce((acc, match) => {
+              const keyMatch = match.match(/(\w+):/)
+              if (keyMatch) {
+                // Extract just the default value for now
+                const defaultMatch = match.match(/\w+\([^,]*,\s*([^,)]+)/)
+                if (defaultMatch) {
+                  try {
+                    acc[keyMatch[1]] = { default: JSON.parse(defaultMatch[1].trim()) }
+                  } catch {
+                    acc[keyMatch[1]] = { default: defaultMatch[1].trim().replace(/["']/g, '') }
+                  }
+                }
+              }
+              return acc
+            }, {} as any)
+          }
+          
+          // Format 2: Object literal with default ({ default: value, ... })
+          const objectMatches = paramText.match(/(\w+):\s*\{[^}]+\}/g)
+          if (objectMatches && objectMatches.length > 0) {
+            objectMatches.forEach(match => {
+              const keyMatch = match.match(/(\w+):/)
+              const defaultMatch = match.match(/default:\s*([^,}]+)/)
+              if (keyMatch && defaultMatch) {
+                try {
+                  parameters[keyMatch[1]] = { default: JSON.parse(defaultMatch[1].trim()) }
+                } catch {
+                  parameters[keyMatch[1]] = { default: defaultMatch[1].trim().replace(/["']/g, '') }
+                }
+              }
+            })
+          }
         }
       }
+      
       if (metadataMatch) {
-        metadata = JSON.parse(metadataMatch[1].replace(/([a-zA-Z0-9_]+):/g, '"$1":'))
+        try {
+          // Try to evaluate metadata object as JavaScript first
+          const metadataFunction = new Function(`return ${metadataMatch[1]}`)
+          metadata = metadataFunction()
+        } catch (evalError) {
+          console.warn(`Failed to evaluate metadata for ${templateId}, extracting basic info:`, evalError.message)
+          // Extract basic metadata fields manually
+          const metadataText = metadataMatch[1]
+          
+          const nameMatch = metadataText.match(/name:\s*["']([^"']+)["']/)
+          const descMatch = metadataText.match(/description:\s*["']([^"']+)["']/)
+          const categoryMatch = metadataText.match(/category:\s*["']([^"']+)["']/)
+          
+          metadata = {
+            name: nameMatch ? nameMatch[1] : templateId,
+            description: descMatch ? descMatch[1] : '',
+            category: categoryMatch ? categoryMatch[1] : 'other'
+          }
+        }
       }
     } catch (parseError) {
       console.warn(`Failed to parse template exports for ${templateId}:`, parseError)
