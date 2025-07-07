@@ -114,13 +114,13 @@ export function BrandStyleTool() {
                 <>
                   <input
                     type="color"
-                    value={styleParams.fillColor}
+                    value={styleParams.fillColor || '#3b82f6'}
                     onChange={(e) => updateStyle({ fillColor: e.target.value })}
                     className="w-6 h-6 border border-gray-300 rounded cursor-pointer"
                   />
                   <div className="flex items-center gap-1 flex-1">
                     <Slider
-                      value={[styleParams.fillOpacity]}
+                      value={[styleParams.fillOpacity ?? 1]}
                       onValueChange={([value]) => updateStyle({ fillOpacity: value })}
                       min={0}
                       max={1}
@@ -128,7 +128,7 @@ export function BrandStyleTool() {
                       className="flex-1"
                     />
                     <span className="text-xs text-gray-500 w-10 text-right">
-                      {Math.round((styleParams.fillOpacity || 1) * 100)}%
+                      {Math.round((styleParams.fillOpacity ?? 1) * 100)}%
                     </span>
                   </div>
                 </>
@@ -154,14 +154,14 @@ export function BrandStyleTool() {
                 <>
                   <input
                     type="color"
-                    value={styleParams.strokeColor}
+                    value={styleParams.strokeColor || '#1e40af'}
                     onChange={(e) => updateStyle({ strokeColor: e.target.value })}
                     className="w-6 h-6 border border-gray-300 rounded cursor-pointer"
                   />
                   <div className="flex items-center gap-1">
                     <span className="text-xs text-gray-500">W:</span>
                     <Slider
-                      value={[styleParams.strokeWidth]}
+                      value={[styleParams.strokeWidth ?? 2]}
                       onValueChange={([value]) => updateStyle({ strokeWidth: value })}
                       min={0}
                       max={10}
@@ -169,7 +169,7 @@ export function BrandStyleTool() {
                       className="w-16"
                     />
                     <span className="text-xs text-gray-500 w-6 text-right">
-                      {styleParams.strokeWidth}
+                      {styleParams.strokeWidth ?? 2}
                     </span>
                   </div>
                 </>
@@ -194,7 +194,7 @@ export function BrandStyleTool() {
                 <>
                   <input
                     type="color"
-                    value={styleParams.backgroundColor}
+                    value={styleParams.backgroundColor || '#ffffff'}
                     onChange={(e) => updateStyle({ backgroundColor: e.target.value })}
                     className="w-6 h-6 border border-gray-300 rounded cursor-pointer"
                   />

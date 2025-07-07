@@ -162,7 +162,7 @@ export function UnifiedParametersTool() {
           
           <div className="grid grid-cols-2 gap-x-3 gap-y-3">
             {templateParams.map(([key, param]) => {
-              const value = customParams[key] ?? param.default;
+              const value = customParams[key] ?? param.default ?? 0;
 
               return (
                 <div key={key} className="space-y-1">
@@ -174,7 +174,7 @@ export function UnifiedParametersTool() {
                   {param.type === 'slider' && (
                     <div className="flex items-center gap-3">
                       <Slider
-                        value={[value]}
+                        value={[typeof value === 'number' ? value : 0]}
                         onValueChange={([v]) => updateCustom({ [key]: v })}
                         min={param.min || param.range?.[0] || 0}
                         max={param.max || param.range?.[1] || 100}
@@ -189,7 +189,7 @@ export function UnifiedParametersTool() {
 
                   {param.type === 'select' && (
                     <Select
-                      value={String(value)}
+                      value={String(value || '')}
                       onValueChange={(v) => updateCustom({ [key]: v })}
                     >
                       <SelectTrigger className="text-xs">
@@ -210,7 +210,7 @@ export function UnifiedParametersTool() {
 
                   {param.type === 'toggle' && (
                     <Switch
-                      checked={value}
+                      checked={Boolean(value)}
                       onCheckedChange={(checked) => updateCustom({ [key]: checked })}
                     />
                   )}
@@ -219,7 +219,7 @@ export function UnifiedParametersTool() {
                   {!param.type && param.range && (
                     <div className="flex items-center gap-3">
                       <Slider
-                        value={[value]}
+                        value={[typeof value === 'number' ? value : param.range[0] || 0]}
                         onValueChange={([v]) => updateCustom({ [key]: v })}
                         min={param.range[0]}
                         max={param.range[1]}
@@ -234,7 +234,7 @@ export function UnifiedParametersTool() {
                   
                   {!param.type && param.options && (
                     <Select
-                      value={String(value)}
+                      value={String(value || '')}
                       onValueChange={(v) => updateCustom({ [key]: v })}
                     >
                       <SelectTrigger className="text-xs">
