@@ -347,66 +347,9 @@ function draw(ctx, width, height, params, time, utils) {
       ctx.fill();
     }
     
-    // Mini-compass in top-right corner
-    const compassSize = 40;
-    const compassX = width - compassSize - 10;
-    const compassY = 10 + compassSize / 2;
+    // Compass removed - not needed in coordinate grid system
     
-    ctx.save();
-    ctx.translate(compassX, compassY);
-    
-    // Compass background
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-    ctx.beginPath();
-    ctx.arc(0, 0, compassSize / 2, 0, Math.PI * 2);
-    ctx.fill();
-    
-    // Compass border
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
-    ctx.lineWidth = 1;
-    ctx.stroke();
-    
-    // North arrow
-    ctx.fillStyle = 'rgba(255, 100, 100, 0.8)';
-    ctx.beginPath();
-    ctx.moveTo(0, -compassSize / 3);
-    ctx.lineTo(-5, -5);
-    ctx.lineTo(5, -5);
-    ctx.closePath();
-    ctx.fill();
-    
-    // N label
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-    ctx.font = '10px monospace';
-    ctx.textAlign = 'center';
-    ctx.fillText('N', 0, -compassSize / 2 + 5);
-    
-    ctx.restore();
-    
-    // Coordinate display (bottom-left) with safety checks
-    const safeOffsetX = isFinite(viewport.offsetX) ? viewport.offsetX : 0;
-    const safeOffsetY = isFinite(viewport.offsetY) ? viewport.offsetY : 0;
-    const worldCenterX = (-safeOffsetX + width / 2) / safeZoom;
-    const worldCenterY = (-safeOffsetY + height / 2) / safeZoom;
-    
-    // Additional safety checks for display values
-    const displayCenterX = isFinite(worldCenterX) ? worldCenterX.toFixed(0) : '0';
-    const displayCenterY = isFinite(worldCenterY) ? worldCenterY.toFixed(0) : '0';
-    const displayZoom = isFinite(safeZoom) ? safeZoom.toFixed(2) : '1.00';
-    const displayLevel = isFinite(safeZoom) && safeZoom > 0 ? Math.floor(Math.log2(safeZoom)) : 0;
-    
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-    ctx.fillRect(10, height - 55, 180, 45);
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
-    ctx.lineWidth = 1;
-    ctx.strokeRect(10, height - 55, 180, 45);
-    
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-    ctx.font = '11px monospace';
-    ctx.textAlign = 'left';
-    ctx.fillText(`Center: ${displayCenterX}, ${displayCenterY}`, 15, height - 40);
-    ctx.fillText(`Zoom: ${displayZoom}x (Level ${displayLevel})`, 15, height - 25);
-    ctx.fillText(`Grid: ${gridSize}px`, 15, height - 10);
+    // Coordinate display removed - handled by React overlay component
     
     // Draw studio viewport boundary (original viewing area)
     const studioWidth = 400; // Typical studio canvas size

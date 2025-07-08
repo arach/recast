@@ -7,6 +7,8 @@ import html2canvas from 'html2canvas';
 import { generateJSVisualization } from '@/lib/js-visualization-utils';
 import { getAllJSTemplates } from '@/lib/js-template-registry';
 import TargetOverlay from '@/components/TargetOverlay';
+import ParameterEditor from '@/components/ParameterEditor';
+import { ZoomIn, ZoomOut, Home, Search } from 'lucide-react';
 
 // Logo rendering component with pan/zoom for the spec sheet
 interface LogoCanvasProps {
@@ -548,12 +550,34 @@ function LogoCanvas({ logo, width, height }: LogoCanvasProps) {
 
   const handleWheel = (e: React.WheelEvent) => {
     e.preventDefault();
-    console.log('🎢 Wheel event - deltaY:', e.deltaY, 'current zoom:', viewport.zoom);
+    
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    
+    // Get mouse position relative to canvas
+    const rect = canvas.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+    
+    console.log('🎢 Wheel event - deltaY:', e.deltaY, 'mouse:', mouseX, mouseY);
+    
     const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1;
+    
     setViewport(prev => {
       const newZoom = Math.max(0.1, Math.min(5, prev.zoom * zoomFactor));
-      console.log('🔍 Zoom update - old:', prev.zoom, 'new:', newZoom);
-      return { ...prev, zoom: newZoom };
+      
+      // Zoom towards mouse position (Google Maps style)
+      const zoomRatio = newZoom / prev.zoom;
+      const newX = mouseX + (prev.x - mouseX) * zoomRatio;
+      const newY = mouseY + (prev.y - mouseY) * zoomRatio;
+      
+      console.log('🔍 Zoom towards mouse - old zoom:', prev.zoom.toFixed(2), 'new:', newZoom.toFixed(2));
+      
+      return {
+        x: newX,
+        y: newY,
+        zoom: newZoom
+      };
     });
   };
 
@@ -608,67 +632,44 @@ function LogoCanvas({ logo, width, height }: LogoCanvasProps) {
         }}
       />
       
-      {/* Viewport controls - always visible for testing */}
+      {/* Viewport controls - subtle and less prominent */}
       <div className="absolute top-2 right-2">
-        <div className="flex gap-1">
+        <div className="flex gap-1 bg-black/20 backdrop-blur-sm rounded-md p-1 border border-white/10">
           <button
             onClick={() => {
-              console.log('🔍 Zoom in clicked');
-              setViewport(prev => {
-                const newViewport = { ...prev, zoom: prev.zoom * 1.2 };
-                console.log('🔍 New zoom:', newViewport.zoom);
-                return newViewport;
-              });
+              setViewport(prev => ({ ...prev, zoom: prev.zoom * 1.2 }));
             }}
-            className="w-8 h-8 bg-black/70 text-white hover:bg-black/90 rounded text-sm flex items-center justify-center font-bold"
+            className="w-7 h-7 bg-white/10 text-white/70 hover:bg-white/20 hover:text-white/90 rounded text-sm flex items-center justify-center transition-all border border-white/20"
             title="Zoom In"
           >
-            +
+            <ZoomIn size={14} />
           </button>
           <button
             onClick={() => {
-              console.log('🔍 Zoom out clicked');
-              setViewport(prev => {
-                const newViewport = { ...prev, zoom: prev.zoom * 0.8 };
-                console.log('🔍 New zoom:', newViewport.zoom);
-                return newViewport;
-              });
+              setViewport(prev => ({ ...prev, zoom: prev.zoom * 0.8 }));
             }}
-            className="w-8 h-8 bg-black/70 text-white hover:bg-black/90 rounded text-sm flex items-center justify-center font-bold"
+            className="w-7 h-7 bg-white/10 text-white/70 hover:bg-white/20 hover:text-white/90 rounded text-sm flex items-center justify-center transition-all border border-white/20"
             title="Zoom Out"
           >
-            −
+            <ZoomOut size={14} />
           </button>
           <button
             onClick={() => {
-              console.log('🔄 Reset clicked');
               resetViewport();
             }}
-            className="w-8 h-8 bg-black/70 text-white hover:bg-black/90 rounded text-sm flex items-center justify-center font-bold"
-            title="Reset View"
+            className="w-7 h-7 bg-white/10 text-white/70 hover:bg-white/20 hover:text-white/90 rounded text-sm flex items-center justify-center transition-all border border-white/20"
+            title="Center View"
           >
-            ⌂
+            <Home size={14} />
           </button>
           <button
             onClick={() => {
-              console.log('🎯 Go to origin clicked');
-              setViewport(prev => ({ ...prev, x: 0, y: 0 }));
-            }}
-            className="w-8 h-8 bg-red-600/70 text-white hover:bg-red-600/90 rounded text-sm flex items-center justify-center font-bold"
-            title="Go to Origin (0,0)"
-          >
-            ✛
-          </button>
-          <button
-            onClick={() => {
-              console.log('🔍 Find drawing clicked');
-              // Set a good view for wave bars - they start at x=0 and extend right
               setViewport({ x: width/2, y: height/2, zoom: 1.0 });
             }}
-            className="w-8 h-8 bg-blue-600/70 text-white hover:bg-blue-600/90 rounded text-sm flex items-center justify-center font-bold"
+            className="w-7 h-7 bg-white/10 text-white/70 hover:bg-white/20 hover:text-white/90 rounded text-sm flex items-center justify-center transition-all border border-white/20"
             title="Find Drawing"
           >
-            🔍
+            <Search size={14} />
           </button>
         </div>
       </div>
@@ -685,21 +686,29 @@ function LogoCanvas({ logo, width, height }: LogoCanvasProps) {
       
       {/* Viewport info - always visible and properly styled */}
       <div className="absolute bottom-2 left-2">
-        <div className="bg-black/70 text-white/90 px-3 py-2 rounded-lg shadow-lg border border-white/10 text-xs font-mono">
-          <div>Center: {((-viewport.x + width / 2) / viewport.zoom).toFixed(0)}, {((-viewport.y + height / 2) / viewport.zoom).toFixed(0)}</div>
-          <div>Zoom: {viewport.zoom.toFixed(2)}x (Level {Math.floor(Math.log2(viewport.zoom))})</div>
-          <div>Grid: {(() => {
-            const baseGridSize = 100;
-            const zoomLevel = Math.log2(viewport.zoom);
-            // Use same calculation as grid rendering for consistency
-            const gridSize = baseGridSize * Math.pow(2, Math.round(zoomLevel * 8) / 8);
-            return gridSize;
-          })()}px</div>
+        <div className="bg-black/70 text-white/90 px-3 py-2 rounded-lg shadow-lg border border-white/10 font-mono">
+          <div className="text-[10px]">
+            <span className="text-white/60 font-semibold">Center:</span> 
+            <span className="text-white text-[11px] ml-1">{((-viewport.x + width / 2) / viewport.zoom).toFixed(0)}, {((-viewport.y + height / 2) / viewport.zoom).toFixed(0)}</span>
+          </div>
+          <div className="text-[10px]">
+            <span className="text-white/60 font-semibold">Zoom:</span> 
+            <span className="text-white text-[11px] ml-1">{viewport.zoom.toFixed(2)}x (Level {Math.floor(Math.log2(viewport.zoom))})</span>
+          </div>
+          <div className="text-[10px]">
+            <span className="text-white/60 font-semibold">Grid:</span> 
+            <span className="text-white text-[11px] ml-1">{(() => {
+              const baseGridSize = 100;
+              const zoomLevel = Math.log2(viewport.zoom);
+              const gridSize = baseGridSize * Math.pow(2, Math.round(zoomLevel * 8) / 8);
+              return gridSize;
+            })()}px</span>
+          </div>
           {isDragging && (
-            <div className="text-blue-400 mt-1">• Dragging</div>
+            <div className="text-blue-400 mt-1 text-[10px] font-semibold">• Dragging</div>
           )}
           {isSnapping && (
-            <div className="text-green-400 mt-1">• Snapping to grid</div>
+            <div className="text-green-400 mt-1 text-[10px] font-semibold">• Snapping to grid</div>
           )}
         </div>
       </div>
@@ -737,10 +746,50 @@ export default function SpecSheetPage() {
   const [availableTemplates, setAvailableTemplates] = useState<any[]>([]);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>('wave-bars');
   
+  // Parameter editing state
+  const [currentParameters, setCurrentParameters] = useState<any>({
+    frequency: 3,
+    amplitude: 50,
+    colorMode: "spectrum",
+    waveType: "sine",
+    animationSpeed: 1.2,
+    barCount: 40,
+    barSpacing: 2
+  });
+  
   // Load available templates
   useEffect(() => {
     getAllJSTemplates().then(setAvailableTemplates);
   }, []);
+
+  // Load template-specific default parameters when template changes
+  useEffect(() => {
+    const loadTemplateDefaults = async () => {
+      if (!selectedTemplateId) return;
+      
+      try {
+        const templates = await getAllJSTemplates();
+        const template = templates.find(t => t.id === selectedTemplateId);
+        
+        if (template?.parameters) {
+          // Extract default values from parameter definitions
+          const defaults: any = {};
+          Object.entries(template.parameters).forEach(([key, param]: [string, any]) => {
+            if (param.default !== undefined) {
+              defaults[key] = param.default;
+            }
+          });
+          
+          // Set template-specific defaults
+          setCurrentParameters(defaults);
+        }
+      } catch (error) {
+        console.error('Failed to load template defaults:', error);
+      }
+    };
+    
+    loadTemplateDefaults();
+  }, [selectedTemplateId]);
 
   // Real-time controls state
   const [sheetOptions, setSheetOptions] = useState<SpecSheetOptions>({
@@ -1087,27 +1136,27 @@ export default function SpecSheetPage() {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-2xl font-extralight text-white/90 mb-2 relative group" style={{ fontFamily: "'Geist Mono', 'JetBrains Mono', 'IBM Plex Mono', 'Fira Mono', 'Menlo', 'Monaco', 'Consolas', monospace", textShadow: '0 2px 16px rgba(80,180,255,0.08)' }}>
+          <h1 className="text-2xl font-bold text-white/90 mb-2 relative group" style={{ textShadow: '0 2px 16px rgba(80,180,255,0.12)' }}>
             🔍 ReFlow Logo Inspector
-            <span className="block absolute left-0 -bottom-1 w-full h-0.5 bg-gradient-to-r from-white/10 via-blue-400/20 to-white/10 scale-x-0 group-hover:scale-x-100 transition-transform origin-left" />
+            <span className="block absolute left-0 -bottom-1 w-full h-0.5 bg-gradient-to-r from-blue-400/40 via-purple-400/60 to-blue-400/40 scale-x-0 group-hover:scale-x-100 transition-all duration-500 origin-left" />
           </h1>
-          <p className="text-white/60 font-light text-sm" style={{ fontFamily: "'Geist Mono', 'JetBrains Mono', 'IBM Plex Mono', 'Fira Mono', 'Menlo', 'Monaco', 'Consolas', monospace" }}>
-            Infinite canvas exploration and spec sheet generation • Last generated: {lastGenerated}
+          <p className="text-white/60 font-semibold text-sm">
+            Infinite canvas exploration and spec sheet generation • Last generated: <span className="text-white text-[11px] font-mono ml-1">{lastGenerated}</span>
           </p>
         </div>
 
         {/* Template Selection */}
-        <div className="mb-6 p-4 bg-white/[0.015] border border-white/[0.04] rounded-lg">
-          <h2 className="font-light text-white/80 text-sm mb-3" style={{ fontFamily: "'Geist Mono', 'JetBrains Mono', 'IBM Plex Mono', 'Fira Mono', 'Menlo', 'Monaco', 'Consolas', monospace" }}>Template Selection</h2>
+        <div className="mb-6 p-4 bg-white/[0.015] border border-white/[0.04] rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300">
+          <h2 className="font-bold text-white/80 text-base mb-3">Template Selection</h2>
           <div className="flex flex-wrap gap-2">
             {availableTemplates.map((template) => (
               <button
                 key={template.id}
                 onClick={() => setSelectedTemplateId(template.id)}
-                className={`px-3 py-1 rounded text-xs font-mono transition-colors ${
+                className={`px-3 py-1 rounded text-xs font-mono transition-all duration-200 ${
                   selectedTemplateId === template.id
-                    ? 'bg-blue-500/30 text-blue-300 border border-blue-400/30'
-                    : 'bg-white/[0.025] text-white/60 border border-white/[0.04] hover:bg-white/[0.035]'
+                    ? 'bg-gradient-to-r from-blue-500/30 to-purple-500/30 text-white font-extralight border border-blue-400/40 shadow-md'
+                    : 'bg-white/[0.025] text-white/60 font-semibold border border-white/[0.04] hover:bg-white/[0.04] hover:border-white/[0.08] hover:text-white/80'
                 }`}
               >
                 {template.name}
@@ -1115,36 +1164,12 @@ export default function SpecSheetPage() {
             ))}
           </div>
           {selectedTemplateId && (
-            <div className="mt-3 text-xs text-white/50">
-              Selected: <span className="text-white/80 font-mono">{selectedTemplateId}</span>
+            <div className="mt-3 text-xs">
+              <span className="text-white/60 font-semibold">Selected:</span> <span className="text-white text-[11px] font-mono ml-1">{selectedTemplateId}</span>
             </div>
           )}
         </div>
 
-        {/* Logo Info */}
-        <div className="mb-6 p-4 bg-white/[0.015] border border-white/[0.04] rounded-lg">
-          <h2 className="font-light text-white/80 text-sm mb-2" style={{ fontFamily: "'Geist Mono', 'JetBrains Mono', 'IBM Plex Mono', 'Fira Mono', 'Menlo', 'Monaco', 'Consolas', monospace" }}>Preview Info</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-            <div>
-              <span className="text-white/60 font-light w-24" style={{ fontFamily: "'Geist Mono', 'JetBrains Mono', 'IBM Plex Mono', 'Fira Mono', 'Menlo', 'Monaco', 'Consolas', monospace" }}>Template:</span>
-              <span className="text-white/80 font-mono">
-                {selectedTemplateId}
-              </span>
-            </div>
-            <div>
-              <span className="text-white/60 font-light w-24" style={{ fontFamily: "'Geist Mono', 'JetBrains Mono', 'IBM Plex Mono', 'Fira Mono', 'Menlo', 'Monaco', 'Consolas', monospace" }}>Name:</span>
-              <span className="text-white/80 font-mono">
-                {availableTemplates.find(t => t.id === selectedTemplateId)?.name || selectedTemplateId}
-              </span>
-            </div>
-            <div>
-              <span className="text-white/60 font-light w-24" style={{ fontFamily: "'Geist Mono', 'JetBrains Mono', 'IBM Plex Mono', 'Fira Mono', 'Menlo', 'Monaco', 'Consolas', monospace" }}>Category:</span>
-              <span className="text-white/80 font-mono">
-                {availableTemplates.find(t => t.id === selectedTemplateId)?.category || 'Unknown'}
-              </span>
-            </div>
-          </div>
-        </div>
 
         {/* Specification Sheet */}
         <div className="relative mb-6">
@@ -1152,18 +1177,18 @@ export default function SpecSheetPage() {
           {/* Preview section */}
           <div 
             ref={specSheetRef}
-            className="bg-gradient-to-br from-slate-950 via-gray-950 to-black p-8 w-full relative z-10 border border-white/10"
+            className="bg-gradient-to-br from-slate-950 via-gray-950 to-black p-4 w-full relative z-10 border border-white/10 shadow-xl"
             style={{ minHeight: '600px' }}
           >
             <div className="flex h-full gap-6">
               {/* Left: Logo Preview */}
               <div className="flex-1 min-w-0 flex flex-col items-start justify-start">
-                <h3 className="text-white/80 font-light text-sm mb-4 relative group" style={{ fontFamily: "'Geist Mono', 'JetBrains Mono', 'IBM Plex Mono', 'Fira Mono', 'Menlo', 'Monaco', 'Consolas', monospace" }}>
+                <h3 className="font-bold text-white/80 text-base mb-4 relative group">
                   Logo Preview
-                  <span className="block absolute left-0 -bottom-1 w-8 h-0.5 bg-white/20 scale-x-0 group-hover:scale-x-100 transition-transform origin-left" />
+                  <span className="block absolute left-0 -bottom-1 w-8 h-0.5 bg-gradient-to-r from-blue-400/60 to-purple-400/60 scale-x-0 group-hover:scale-x-100 transition-all duration-300 origin-left" />
                 </h3>
                 <div
-                  className="bg-white rounded border border-white/10 p-0 w-full aspect-square flex items-center justify-center transition-transform duration-200 hover:shadow-lg hover:scale-[1.015]"
+                  className="bg-white rounded-lg border border-white/10 p-0 w-full aspect-square flex items-center justify-center transition-all duration-300 hover:shadow-2xl hover:scale-[1.02] hover:border-white/20 group"
                 >
                   {(() => {
                     const [canvasSize, setCanvasSize] = React.useState(350);
@@ -1181,10 +1206,9 @@ export default function SpecSheetPage() {
                             logo={{
                               templateId: selectedTemplateId,
                               parameters: {
-                                // Default parameters - templates will use their own defaults
                                 core: {},
                                 style: {},
-                                custom: {}
+                                custom: currentParameters
                               },
                               id: 'spec-sheet-preview',
                               name: 'Preview'
@@ -1207,30 +1231,30 @@ export default function SpecSheetPage() {
 
               {/* Right: Specification Details */}
               <div className="flex-1 min-w-0">
-                <h2 className="text-white/90 font-light text-xl mb-6 relative group" style={{ fontFamily: "'Geist Mono', 'JetBrains Mono', 'IBM Plex Mono', 'Fira Mono', 'Menlo', 'Monaco', 'Consolas', monospace" }}>
+                <h2 className="font-bold text-white/80 text-lg mb-6 relative group">
                   Logo Specification
-                  <span className="block absolute left-0 -bottom-1 w-12 h-0.5 bg-white/20 scale-x-0 group-hover:scale-x-100 transition-transform origin-left" />
+                  <span className="block absolute left-0 -bottom-1 w-12 h-0.5 bg-gradient-to-r from-blue-400/60 to-purple-400/60 scale-x-0 group-hover:scale-x-100 transition-all duration-300 origin-left" />
                 </h2>
                 
                 {/* Configuration */}
                 <div className="mb-6">
-                  <h3 className="text-white/80 font-light text-sm mb-3" style={{ fontFamily: "'Geist Mono', 'JetBrains Mono', 'IBM Plex Mono', 'Fira Mono', 'Menlo', 'Monaco', 'Consolas', monospace" }}>Configuration</h3>
-                  <div className="space-y-2 text-sm">
+                  <h3 className="font-bold text-white/80 text-base mb-3">Configuration</h3>
+                  <div className="space-y-2 text-xs">
                     <div className="flex">
-                      <span className="text-white/60 font-light w-24" style={{ fontFamily: "'Geist Mono', 'JetBrains Mono', 'IBM Plex Mono', 'Fira Mono', 'Menlo', 'Monaco', 'Consolas', monospace" }}>Template:</span>
-                      <span className="text-white/90 font-mono">
+                      <span className="text-white/60 font-semibold w-24">Template:</span>
+                      <span className="text-white text-[11px] font-mono ml-1">
                         {selectedTemplateId}
                       </span>
                     </div>
                     <div className="flex">
-                      <span className="text-white/60 font-light w-24" style={{ fontFamily: "'Geist Mono', 'JetBrains Mono', 'IBM Plex Mono', 'Fira Mono', 'Menlo', 'Monaco', 'Consolas', monospace" }}>Name:</span>
-                      <span className="text-white/90 font-mono">
+                      <span className="text-white/60 font-semibold w-24">Name:</span>
+                      <span className="text-white text-[11px] font-mono ml-1">
                         {availableTemplates.find(t => t.id === selectedTemplateId)?.name || selectedTemplateId}
                       </span>
                     </div>
                     <div className="flex">
-                      <span className="text-white/60 font-light w-24" style={{ fontFamily: "'Geist Mono', 'JetBrains Mono', 'IBM Plex Mono', 'Fira Mono', 'Menlo', 'Monaco', 'Consolas', monospace" }}>Category:</span>
-                      <span className="text-white/90 font-mono">
+                      <span className="text-white/60 font-semibold w-24">Category:</span>
+                      <span className="text-white text-[11px] font-mono ml-1">
                         {availableTemplates.find(t => t.id === selectedTemplateId)?.category || 'Unknown'}
                       </span>
                     </div>
@@ -1238,27 +1262,27 @@ export default function SpecSheetPage() {
                 </div>
 
                 {/* Parameters */}
-                <div className="relative bg-white/5 rounded p-3 my-6">
-
-                  {/* Content */}
-                  <pre className="text-white/70 font-extralight text-[11px] leading-tight relative z-10" style={{ fontFamily: "'Geist Mono', 'JetBrains Mono', 'IBM Plex Mono', 'Fira Mono', 'Menlo', 'Monaco', 'Consolas', monospace" }}>
-                    {selectedTemplateId ? `Template: ${selectedTemplateId}\nUsing default parameters\n(parameters auto-loaded by template)` : 'No template selected'}
-                  </pre>
+                <div className="my-6">
+                  <ParameterEditor
+                    parameters={currentParameters}
+                    onChange={setCurrentParameters}
+                    templateId={selectedTemplateId}
+                  />
                 </div>
 
                 {/* Metadata */}
                 <div>
-                  <h3 className="text-white/80 font-light text-sm mb-3" style={{ fontFamily: "'Geist Mono', 'JetBrains Mono', 'IBM Plex Mono', 'Fira Mono', 'Menlo', 'Monaco', 'Consolas', monospace" }}>Metadata</h3>
+                  <h3 className="font-bold text-white/80 text-base mb-3">Metadata</h3>
                   <div className="space-y-1 text-xs">
                     <div className="flex">
-                      <span className="text-white/50 font-light w-20" style={{ fontFamily: "'Geist Mono', 'JetBrains Mono', 'IBM Plex Mono', 'Fira Mono', 'Menlo', 'Monaco', 'Consolas', monospace" }}>Generated:</span>
-                      <span className="text-white/70 font-mono">
+                      <span className="text-white/60 font-semibold w-20">Generated:</span>
+                      <span className="text-white text-[11px] font-mono ml-1">
                         {hasHydrated ? new Date().toLocaleString() : 'Loading...'}
                       </span>
                     </div>
                     <div className="flex">
-                      <span className="text-white/50 font-light w-20" style={{ fontFamily: "'Geist Mono', 'JetBrains Mono', 'IBM Plex Mono', 'Fira Mono', 'Menlo', 'Monaco', 'Consolas', monospace" }}>Environment:</span>
-                      <span className="text-white/70 font-mono">development</span>
+                      <span className="text-white/60 font-semibold w-20">Environment:</span>
+                      <span className="text-white text-[11px] font-mono ml-1">development</span>
                     </div>
                   </div>
                 </div>
@@ -1266,6 +1290,38 @@ export default function SpecSheetPage() {
             </div>
           </div>
           
+          {/* Floating Action Buttons - Bottom Right */}
+          <div className="absolute bottom-4 right-4 z-20">
+            <div className="flex gap-2">
+              <button
+                onClick={generateSheet}
+                disabled={isGenerating}
+                className="px-3 py-1.5 bg-white/[0.015] border border-white/[0.04] text-white/80 font-light text-[11px] rounded-lg shadow-lg backdrop-blur-sm hover:bg-white/[0.03] hover:ring-1 hover:ring-white/20 hover:shadow-xl focus:ring-2 focus:ring-blue-400/30 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                title="Regenerate specification sheet"
+              >
+                {isGenerating ? 'Generating...' : 'Regenerate'}
+              </button>
+              
+              <button
+                onClick={downloadSheet}
+                disabled={isGenerating}
+                className="px-3 py-1.5 bg-blue-500/10 border border-blue-400/20 text-blue-300 font-light text-[11px] rounded-lg shadow-lg backdrop-blur-sm hover:bg-blue-500/20 hover:ring-1 hover:ring-blue-400/30 hover:shadow-xl focus:ring-2 focus:ring-blue-400/40 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                title="Download as PNG image"
+              >
+                Download PNG
+              </button>
+              
+              <button
+                onClick={copyToClipboard}
+                disabled={isGenerating}
+                className="px-3 py-1.5 bg-green-500/10 border border-green-400/20 text-green-300 font-light text-[11px] rounded-lg shadow-lg backdrop-blur-sm hover:bg-green-500/20 hover:ring-1 hover:ring-green-400/30 hover:shadow-xl focus:ring-2 focus:ring-green-400/40 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                title="Copy image to clipboard"
+              >
+                Copy to Clipboard
+              </button>
+            </div>
+          </div>
+
           {isGenerating && (
             <div className="mt-4 text-center text-white/60 font-mono text-sm">
               Generating specification sheet...
@@ -1273,35 +1329,8 @@ export default function SpecSheetPage() {
           )}
         </div>
 
-        {/* Quick Actions */}
-        <div className="mb-6 flex gap-4 flex-wrap">
-          <button
-            onClick={generateSheet}
-            disabled={isGenerating}
-            className="px-3 py-1.5 bg-white/[0.015] border border-white/[0.04] text-white/80 font-light text-[11px] rounded-sm shadow-sm hover:bg-white/[0.03] hover:ring-1 hover:ring-white/20 focus:ring-2 focus:ring-blue-400/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isGenerating ? 'Generating...' : 'Regenerate'}
-          </button>
-          
-          <button
-            onClick={downloadSheet}
-            disabled={isGenerating}
-            className="px-3 py-1.5 bg-blue-500/10 border border-blue-400/20 text-blue-300 font-light text-[11px] rounded-sm shadow-sm hover:bg-blue-500/20 hover:ring-1 hover:ring-blue-400/30 focus:ring-2 focus:ring-blue-400/40 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Download PNG
-          </button>
-          
-          <button
-            onClick={copyToClipboard}
-            disabled={isGenerating}
-            className="px-3 py-1.5 bg-green-500/10 border border-green-400/20 text-green-300 font-light text-[11px] rounded-sm shadow-sm hover:bg-green-500/20 hover:ring-1 hover:ring-green-400/30 focus:ring-2 focus:ring-green-400/40 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Copy to Clipboard
-          </button>
-        </div>
-
         {/* Interactive Terminal */}
-        <div className="mb-8 bg-black/20 border border-white/[0.04] rounded-lg overflow-hidden">
+        <div className="mb-8 bg-black/20 border border-white/[0.04] rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300">
           {/* Terminal Header */}
           <div className="bg-white/[0.005] border-b border-white/[0.03] px-4 py-2 flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -1434,208 +1463,27 @@ export default function SpecSheetPage() {
           </div>
         </div>
 
-        {/* Real-time Controls (for tweaking) */}
-        <div className="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {/* Style Controls */}
-          <div className="bg-white/[0.015] border border-white/[0.04] rounded-lg p-4">
-            <h3 className="font-mono text-white/80 text-sm mb-3">Style Controls</h3>
-            <div className="space-y-3">
-              <div>
-                <label className="block text-white/60 font-mono text-xs mb-1">
-                  Logo Size: {sheetOptions.logoSize}px
-                </label>
-                <input
-                  type="range"
-                  min="200"
-                  max="500"
-                  value={sheetOptions.logoSize}
-                  className="w-full accent-blue-400"
-                  onChange={(e) => {
-                    setSheetOptions(prev => ({
-                      ...prev,
-                      logoSize: parseInt(e.target.value)
-                    }));
-                  }}
-                />
-              </div>
-              
-              <div>
-                <label className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    checked={sheetOptions.showGrid}
-                    className="text-blue-400"
-                    onChange={(e) => {
-                      setSheetOptions(prev => ({
-                        ...prev,
-                        showGrid: e.target.checked
-                      }));
-                    }}
-                  />
-                  <span className="text-white/60 font-mono text-xs">Show Grid</span>
-                </label>
-              </div>
-              
-              <div>
-                <label className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    checked={sheetOptions.terminalStyle}
-                    className="text-blue-400"
-                    onChange={(e) => {
-                      setSheetOptions(prev => ({
-                        ...prev,
-                        terminalStyle: e.target.checked
-                      }));
-                    }}
-                  />
-                  <span className="text-white/60 font-mono text-xs">Terminal Style</span>
-                </label>
-              </div>
-            </div>
-          </div>
-
-          {/* Section Controls */}
-          <div className="bg-white/[0.015] border border-white/[0.04] rounded-lg p-4">
-            <h3 className="font-mono text-white/80 text-sm mb-3">Sections</h3>
-            <div className="space-y-3">
-              <div>
-                <label className="flex items-center space-x-2">
-                  <input 
-                    type="checkbox" 
-                    checked={sheetOptions.sections?.showParameters ?? true}
-                    className="text-blue-400" 
-                    onChange={(e) => {
-                      setSheetOptions(prev => ({
-                        ...prev,
-                        sections: {
-                          ...prev.sections,
-                          showParameters: e.target.checked
-                        }
-                      }));
-                    }}
-                  />
-                  <span className="text-white/60 font-mono text-xs">Parameters</span>
-                </label>
-              </div>
-              <div>
-                <label className="flex items-center space-x-2">
-                  <input 
-                    type="checkbox" 
-                    checked={sheetOptions.sections?.showMetadata ?? true}
-                    className="text-blue-400" 
-                    onChange={(e) => {
-                      setSheetOptions(prev => ({
-                        ...prev,
-                        sections: {
-                          ...prev.sections,
-                          showMetadata: e.target.checked
-                        }
-                      }));
-                    }}
-                  />
-                  <span className="text-white/60 font-mono text-xs">Metadata</span>
-                </label>
-              </div>
-              <div>
-                <label className="flex items-center space-x-2">
-                  <input 
-                    type="checkbox" 
-                    checked={sheetOptions.sections?.showEnvironment ?? true}
-                    className="text-blue-400" 
-                    onChange={(e) => {
-                      setSheetOptions(prev => ({
-                        ...prev,
-                        sections: {
-                          ...prev.sections,
-                          showEnvironment: e.target.checked
-                        }
-                      }));
-                    }}
-                  />
-                  <span className="text-white/60 font-mono text-xs">Environment</span>
-                </label>
-              </div>
-            </div>
-          </div>
-
-          {/* Presets */}
-          <div className="bg-white/[0.015] border border-white/[0.04] rounded-lg p-4">
-            <h3 className="font-mono text-white/80 text-sm mb-3">Presets</h3>
-            <div className="space-y-2">
-              <button
-                onClick={() => setSheetOptions({
-                  logoSize: 350,
-                  showGrid: true,
-                  terminalStyle: true,
-                  sections: { showMetadata: true, showParameters: true, showEnvironment: true }
-                })}
-                className="w-full px-3 py-2 bg-white/[0.025] border border-white/[0.04] text-white/70 
-                         hover:bg-white/[0.035] transition-colors font-mono text-xs rounded"
-              >
-                Default
-              </button>
-              <button
-                onClick={() => setSheetOptions({
-                  logoSize: 450,
-                  showGrid: false,
-                  terminalStyle: true,
-                  sections: { showMetadata: false, showParameters: true, showEnvironment: false }
-                })}
-                className="w-full px-3 py-2 bg-blue-500/20 border border-blue-400/20 text-blue-300 
-                         hover:bg-blue-500/30 transition-colors font-mono text-xs rounded"
-              >
-                Clean
-              </button>
-              <button
-                onClick={() => setSheetOptions({
-                  logoSize: 300,
-                  showGrid: true,
-                  terminalStyle: true,
-                  sections: { showMetadata: true, showParameters: true, showEnvironment: true }
-                })}
-                className="w-full px-3 py-2 bg-green-500/20 border border-green-400/20 text-green-300 
-                         hover:bg-green-500/30 transition-colors font-mono text-xs rounded"
-              >
-                Technical
-              </button>
-              <button
-                onClick={() => window.open('/', '_blank')}
-                className="w-full px-3 py-2 bg-white/[0.025] border border-white/[0.04] text-white/70 
-                         hover:bg-white/[0.035] transition-colors font-mono text-xs rounded mt-4"
-              >
-                Back to ReFlow Studio
-              </button>
-            </div>
-          </div>
-        </div>
 
 
-        {/* Debug Info */}
-        <div className="mt-8 p-4 bg-black/20 border border-white/[0.04] rounded-lg">
-          <h3 className="font-mono text-white/60 text-xs mb-2">Debug Info</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <h4 className="font-mono text-white/50 text-xs mb-1">Logo Data</h4>
-              <pre className="text-white/40 font-mono text-xs overflow-auto">
-                {hasHydrated ? JSON.stringify({
-                  selectedLogoId: selectedLogoId || "none",
-                  templateId: selectedLogo?.templateId || "none",
-                  parameterCount: selectedLogo ? Object.keys(selectedLogo?.parameters.custom || {}).length : 0,
-                  lastGenerated: lastGenerated || "none"
-                }, null, 2) : JSON.stringify({
-                  selectedLogoId: "loading...",
-                  templateId: "loading...",
-                  parameterCount: "loading...",
-                  lastGenerated: "loading..."
-                }, null, 2)}
-              </pre>
+        {/* Debug Logs */}
+        <div className="mt-8 p-3 bg-black/40 border border-white/[0.02] rounded text-[10px] font-mono">
+          <div className="text-white/30 mb-1">// debug logs</div>
+          <div className="space-y-0.5 text-white/40">
+            <div className="flex gap-2">
+              <span className="text-green-400/60">[INFO]</span>
+              <span>logo_inspector: template={hasHydrated ? (selectedTemplateId || "none") : "loading"} params={hasHydrated && selectedLogo ? Object.keys(selectedLogo?.parameters.custom || {}).length : 0}</span>
             </div>
-            <div>
-              <h4 className="font-mono text-white/50 text-xs mb-1">Sheet Options</h4>
-              <pre className="text-white/40 font-mono text-xs overflow-auto">
-                {JSON.stringify(sheetOptions, null, 2)}
-              </pre>
+            <div className="flex gap-2">
+              <span className="text-blue-400/60">[DATA]</span>
+              <span>selected_logo_id={hasHydrated ? (selectedLogoId || "none") : "loading"} last_gen={hasHydrated ? (lastGenerated || "none") : "loading"}</span>
+            </div>
+            <div className="flex gap-2">
+              <span className="text-yellow-400/60">[OPTS]</span>
+              <span>sheet_size={sheetOptions.logoSize} grid={sheetOptions.showGrid ? "on" : "off"} terminal={sheetOptions.terminalStyle ? "on" : "off"}</span>
+            </div>
+            <div className="flex gap-2">
+              <span className="text-purple-400/60">[SECT]</span>
+              <span>metadata={sheetOptions.sections.showMetadata ? "✓" : "✗"} params={sheetOptions.sections.showParameters ? "✓" : "✗"} env={sheetOptions.sections.showEnvironment ? "✓" : "✗"}</span>
             </div>
           </div>
         </div>
