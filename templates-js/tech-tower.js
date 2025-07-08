@@ -10,12 +10,13 @@ function draw(ctx, width, height, params, time, utils) {
   
   // Template-specific parameters (defaults come from exported parameters)
   const { floors, buildingWidth, buildingDepth, buildingColor, windowGlow, 
-          animationSpeed, perspective, showShadow } = p;
+          animationSpeed, perspective, showShadow, scale } = p;
   
   // Calculate positioning
   const centerX = width / 2;
   const centerY = height / 2;
-  const baseScale = Math.min(width, height) / 400;
+  // Improved scaling - larger default size with user control
+  const baseScale = (Math.min(width, height) / 250) * scale;
   
   // Scale building dimensions
   const scaledWidth = buildingWidth * baseScale;
@@ -181,7 +182,8 @@ export const parameters = {
   // Animation
   animationSpeed: slider(1, 0.2, 3, 0.1, "Animation Speed", "x"),
   
-  // Perspective & Effects
+  // Scale & Perspective
+  scale: slider(1.0, 0.3, 2.5, 0.1, "Scale", "x"),
   perspective: slider(0, -15, 15, 1, "Perspective Angle", "°"),
   showShadow: toggle(true, "Show Shadow"),
   showEffects: toggle(true, "Show Particle Effects"),

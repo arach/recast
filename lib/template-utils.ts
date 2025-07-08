@@ -270,7 +270,13 @@ function loadParams(
   let defaults = {};
   if (templateModule?.parameters) {
     defaults = Object.entries(templateModule.parameters).reduce((acc, [key, paramDef]: [string, any]) => {
-      acc[key] = paramDef.default;
+      // Handle both helper function format and object format
+      if (typeof paramDef === 'object' && paramDef.default !== undefined) {
+        acc[key] = paramDef.default;
+      } else if (typeof paramDef === 'function') {
+        // Skip function-type parameters for now
+        console.warn(`Parameter ${key} is a function and cannot be processed`);
+      }
       return acc;
     }, {} as Record<string, any>);
   }
@@ -280,7 +286,7 @@ function loadParams(
   
   if (templateModule?.parameters && params) {
     Object.entries(templateModule.parameters).forEach(([key, paramDef]: [string, any]) => {
-      if (params[key] !== undefined) {
+      if (params[key] !== undefined && typeof paramDef === 'object') {
         let value = params[key];
         
         // Type conversions based on parameter definition

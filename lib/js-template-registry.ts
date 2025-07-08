@@ -41,7 +41,10 @@ const JS_TEMPLATES: JSTemplateInfo[] = [
   
   // Isometric
   { id: 'tech-tower', name: '🏢 Tech Tower', description: 'Isometric tech building with animated glowing windows', category: 'isometric' },
-  { id: 'exploded-tech-stack', name: '🏗️ Exploded Tech Stack', description: 'Multi-layer architecture visualization with animated layer separation', category: 'isometric' }
+  { id: 'exploded-tech-stack', name: '🏗️ Exploded Tech Stack', description: 'Multi-layer architecture visualization with animated layer separation', category: 'isometric' },
+  { id: 'data-platform-stack', name: '📊 Data Platform Stack', description: 'Animated data platform architecture inspired by modern analytics stacks', category: 'isometric' },
+  { id: 'data-platform-test', name: '📊 Data Platform Test', description: 'Simple test template to debug isometric utilities', category: 'isometric' },
+  { id: 'simple-test', name: '⚡ Simple Test', description: 'Minimal test template with no parameters', category: 'test' }
 ]
 
 export async function getAllJSTemplates(): Promise<JSTemplateInfo[]> {

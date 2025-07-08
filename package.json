@@ -63,6 +63,7 @@
     "clsx": "^2.1.1",
     "file-saver": "^2.0.5",
     "gifencoder": "^2.0.1",
+    "html2canvas": "^1.4.1",
     "immer": "^10.1.1",
     "jszip": "^3.10.1",
     "kysely": "^0.28.2",

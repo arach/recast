@@ -1,12 +1,26 @@
 'use client';
 
-import { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
+import { useState, forwardRef, useImperativeHandle } from 'react';
 import { useLogoStore } from '@/lib/stores/logoStore';
 import { useUIStore } from '@/lib/stores/uiStore';
-import { Maximize2, Minimize2, Bug, X, Copy, Check } from 'lucide-react';
+import { Maximize2, Minimize2, Bug, X, Copy, Check, Share2, Download, Image, FileImage, Package } from 'lucide-react';
 import { useDebugActions } from '@/lib/debug/debugRegistry';
 import { StateTreeView } from './StateTreeView';
 import { copyExpandedState, formatForClipboard, copyToClipboard } from '@/lib/debug/copyExpandedState';
+import { 
+  generateDiagnosticReport, 
+  generateCompactDiagnostic, 
+  formatDiagnosticForClipboard, 
+  copyDiagnosticToClipboard,
+  extractImportData,
+  applyDiagnosticData,
+  downloadDiagnosticFiles,
+  captureLogoImage
+} from '@/lib/debug/diagnostic-sharing';
+import { 
+  generateSpecificationSheet, 
+  downloadSpecificationSheet
+} from '@/lib/debug/specification-sheet-generator';
 
 interface StateDebuggerProps {
   selectedLogo: any;
@@ -51,6 +65,20 @@ export const StateDebugger = forwardRef<any, StateDebuggerProps>(({
   // State for copy feedback
   const [copiedSection, setCopiedSection] = useState<string | null>(null);
   
+  // State for diagnostic sharing
+  const [diagnosticCopied, setDiagnosticCopied] = useState(false);
+  const [importMode, setImportMode] = useState(false);
+  const [importText, setImportText] = useState('');
+  
+  // State for image preview and enhanced diagnostics
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [includeImageInReport, setIncludeImageInReport] = useState(true);
+  const [imageFormat, setImageFormat] = useState<'png' | 'jpeg'>('png');
+  const [isCapturingImage, setIsCapturingImage] = useState(false);
+  
+  // State for specification sheet
+  const [isGeneratingSpecSheet, setIsGeneratingSpecSheet] = useState(false);
+  
   const zustandLogos = useLogoStore(state => state.logos);
   const zustandSelectedId = useLogoStore(state => state.selectedLogoId);
   const zoom = useUIStore(state => state.zoom);
@@ -90,7 +118,16 @@ export const StateDebugger = forwardRef<any, StateDebuggerProps>(({
 
   // Calculate logo bounding box for selected logo
   const logoSize = 600;
-  let logoBounds = null;
+  let logoBounds: {
+    minX: number;
+    maxX: number;
+    minY: number;
+    maxY: number;
+    centerX: number;
+    centerY: number;
+    width: number;
+    height: number;
+  } | null = null;
   if (selectedLogo) {
     const position = selectedLogo.position || { x: 0, y: 0 };
     logoBounds = {
@@ -233,7 +270,6 @@ export const StateDebugger = forwardRef<any, StateDebuggerProps>(({
     
     const idsSynced = selectedLogoId === zustandSelectedId;
     const templatesSynced = reactLogo?.templateId === zustandLogo?.templateId;
-    const logoCountSynced = (selectedLogo ? 1 : 0) === zustandLogos.filter(l => l.id === selectedLogoId).length;
     
     // Template loading status - check if template ID exists (we no longer store code directly)
     const templateLoaded = reactLogo?.templateId;
@@ -472,6 +508,353 @@ export const StateDebugger = forwardRef<any, StateDebuggerProps>(({
           </div>
         )}
         
+        {/* Visual Diagnostic Tool */}
+        <div className="space-y-3 mt-4">
+          <div className="flex items-center justify-between">
+            <h5 className="text-xs font-medium text-gray-400 uppercase tracking-wider">Visual Diagnostic Tool</h5>
+            <button
+              onClick={() => {
+                // Open Visual Diagnostic Tool in new window/tab
+                const url = `/diagnostic`;
+                window.open(url, '_blank', 'width=1200,height=800');
+              }}
+              disabled={!selectedLogo}
+              className="px-2 py-1 text-xs bg-indigo-600/20 hover:bg-indigo-600/30 
+                         text-indigo-400 border border-indigo-600/30 hover:border-indigo-600/40
+                         rounded transition-all duration-200 flex items-center gap-1
+                         disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Open full-page visual diagnostic tool"
+            >
+              <FileImage className="w-3 h-3" />
+              <span>Open Tool</span>
+            </button>
+          </div>
+          
+          {/* Image Preview */}
+          {previewImage && (
+            <div className="p-3 bg-white/5 rounded-lg border border-gray-700/50">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs text-gray-400">Logo Preview</span>
+                <button
+                  onClick={() => setPreviewImage(null)}
+                  className="text-gray-500 hover:text-gray-300"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </div>
+              <div className="flex justify-center">
+                <img 
+                  src={previewImage} 
+                  alt="Logo preview" 
+                  className="max-w-[120px] max-h-[120px] rounded border border-gray-600"
+                />
+              </div>
+            </div>
+          )}
+          
+          {/* Image Capture Options */}
+          <div className="p-3 bg-white/5 rounded-lg border border-gray-700/50">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs text-gray-400">Image Capture</span>
+            </div>
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="include-image"
+                  checked={includeImageInReport}
+                  onChange={(e) => setIncludeImageInReport(e.target.checked)}
+                  className="w-3 h-3 rounded"
+                />
+                <label htmlFor="include-image" className="text-xs text-gray-300">
+                  Include logo image in reports
+                </label>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-gray-400">Format:</span>
+                <select
+                  value={imageFormat}
+                  onChange={(e) => setImageFormat(e.target.value as 'png' | 'jpeg')}
+                  className="px-2 py-1 text-xs bg-gray-800 border border-gray-600 rounded text-gray-300"
+                >
+                  <option value="png">PNG (lossless)</option>
+                  <option value="jpeg">JPEG (smaller)</option>
+                </select>
+              </div>
+              
+              {/* Preview Button */}
+              <button
+                onClick={async () => {
+                  setIsCapturingImage(true);
+                  try {
+                    const imageData = await captureLogoImage(selectedLogo, 0.9, imageFormat, true);
+                    if (imageData?.thumbnail) {
+                      setPreviewImage(imageData.thumbnail);
+                    } else {
+                      console.warn('No image thumbnail captured');
+                    }
+                  } catch (error) {
+                    console.error('Failed to capture image preview:', error);
+                  } finally {
+                    setIsCapturingImage(false);
+                  }
+                }}
+                disabled={!selectedLogo || isCapturingImage}
+                className="w-full px-2 py-1.5 rounded text-xs font-medium
+                           bg-gray-600/30 hover:bg-gray-600/40 
+                           text-gray-300 hover:text-white
+                           border border-gray-600/30 hover:border-gray-600/40
+                           transition-all duration-200 flex items-center justify-center gap-1
+                           disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isCapturingImage ? (
+                  <>
+                    <div className="w-3 h-3 border border-gray-400 border-t-transparent rounded-full animate-spin"></div>
+                    <span>Capturing...</span>
+                  </>
+                ) : (
+                  <>
+                    <Image className="w-3 h-3" />
+                    <span>Preview Logo Image</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+          
+          {/* Enhanced Diagnostic Actions */}
+          <div className="grid grid-cols-1 gap-2">
+            {/* Visual Report - JSON with embedded image */}
+            <button 
+              className="px-3 py-2.5 rounded-lg text-xs font-medium text-left
+                         bg-emerald-500/20 hover:bg-emerald-500/30 
+                         text-emerald-400
+                         border border-emerald-500/30 hover:border-emerald-500/40
+                         transition-all duration-200
+                         flex items-center gap-2"
+              onClick={async () => {
+                setIsCapturingImage(true);
+                try {
+                  const report = await generateDiagnosticReport(
+                    selectedLogo,
+                    selectedLogoId,
+                    canvasOffset || null,
+                    zoom,
+                    fullLogoStore,
+                    fullUIStore,
+                    includeImageInReport,
+                    imageFormat,
+                    0.9
+                  );
+                  const formatted = formatDiagnosticForClipboard(report);
+                  const success = await copyDiagnosticToClipboard(formatted);
+                  
+                  if (success) {
+                    setDiagnosticCopied(true);
+                    console.log('📋 Visual diagnostic report copied to clipboard');
+                    setTimeout(() => setDiagnosticCopied(false), 3000);
+                  }
+                } finally {
+                  setIsCapturingImage(false);
+                }
+              }}
+              disabled={!selectedLogo || isCapturingImage}
+              title="Generate complete diagnostic with logo image"
+            >
+              {diagnosticCopied ? (
+                <>
+                  <Check className="w-3.5 h-3.5 text-green-400" />
+                  <span>Copied Visual Report!</span>
+                </>
+              ) : (
+                <>
+                  <FileImage className="w-3.5 h-3.5" />
+                  <span>Copy Visual Diagnostic</span>
+                </>
+              )}
+            </button>
+            
+            {/* Download Files - Separate JSON and image files */}
+            <button 
+              className="px-3 py-2.5 rounded-lg text-xs font-medium text-left
+                         bg-violet-500/20 hover:bg-violet-500/30 
+                         text-violet-400
+                         border border-violet-500/30 hover:border-violet-500/40
+                         transition-all duration-200
+                         flex items-center gap-2"
+              onClick={async () => {
+                setIsCapturingImage(true);
+                try {
+                  const report = await generateDiagnosticReport(
+                    selectedLogo,
+                    selectedLogoId,
+                    canvasOffset || null,
+                    zoom,
+                    fullLogoStore,
+                    fullUIStore,
+                    includeImageInReport,
+                    imageFormat,
+                    0.9
+                  );
+                  await downloadDiagnosticFiles(report, includeImageInReport);
+                  console.log('📁 Diagnostic files downloaded');
+                } finally {
+                  setIsCapturingImage(false);
+                }
+              }}
+              disabled={!selectedLogo || isCapturingImage}
+              title="Download diagnostic as separate files (JSON + image)"
+            >
+              <Package className="w-3.5 h-3.5" />
+              <span>Download Files</span>
+            </button>
+            
+            {/* Quick Config Share - No image, just parameters */}
+            <button 
+              className="px-3 py-2.5 rounded-lg text-xs font-medium text-left
+                         bg-cyan-500/20 hover:bg-cyan-500/30 
+                         text-cyan-400
+                         border border-cyan-500/30 hover:border-cyan-500/40
+                         transition-all duration-200
+                         flex items-center gap-2"
+              onClick={async () => {
+                const compact = generateCompactDiagnostic(selectedLogo, selectedLogoId);
+                const success = await copyDiagnosticToClipboard(compact);
+                
+                if (success) {
+                  setDiagnosticCopied(true);
+                  console.log('📋 Quick config copied to clipboard');
+                  setTimeout(() => setDiagnosticCopied(false), 2000);
+                }
+              }}
+              title="Copy just the logo configuration (no image)"
+            >
+              <Copy className="w-3.5 h-3.5" />
+              <span>Copy Config Only</span>
+            </button>
+            
+            {/* Specification Sheet - NEW FEATURE */}
+            <button 
+              className="px-3 py-2.5 rounded-lg text-xs font-medium text-left
+                         bg-orange-500/20 hover:bg-orange-500/30 
+                         text-orange-400
+                         border border-orange-500/30 hover:border-orange-500/40
+                         transition-all duration-200
+                         flex items-center gap-2"
+              onClick={async () => {
+                if (!selectedLogo) return;
+                
+                setIsGeneratingSpecSheet(true);
+                try {
+                  await downloadSpecificationSheet(
+                    selectedLogo,
+                    selectedLogoId,
+                    canvasOffset || undefined,
+                    zoom,
+                    {
+                      width: 1200,
+                      height: 800,
+                      terminalStyle: true,
+                      includeMetadata: true
+                    }
+                  );
+                  console.log('📄 Specification sheet downloaded');
+                } catch (error) {
+                  console.error('Failed to generate specification sheet:', error);
+                } finally {
+                  setIsGeneratingSpecSheet(false);
+                }
+              }}
+              disabled={!selectedLogo || isGeneratingSpecSheet}
+              title="Generate comprehensive PNG specification sheet with logo + all parameters"
+            >
+              {isGeneratingSpecSheet ? (
+                <>
+                  <div className="w-3 h-3 border border-orange-400 border-t-transparent rounded-full animate-spin"></div>
+                  <span>Generating...</span>
+                </>
+              ) : (
+                <>
+                  <FileImage className="w-3.5 h-3.5" />
+                  <span>📄 Generate Spec Sheet</span>
+                </>
+              )}
+            </button>
+          </div>
+          
+          {/* Import Diagnostic */}
+          <div className="mt-3">
+            <button 
+              className="w-full px-3 py-2.5 rounded-lg text-xs font-medium text-left
+                         bg-purple-500/20 hover:bg-purple-500/30 
+                         text-purple-400
+                         border border-purple-500/30 hover:border-purple-500/40
+                         transition-all duration-200
+                         flex items-center gap-2"
+              onClick={() => setImportMode(!importMode)}
+              title="Import logo configuration from diagnostic data"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span>{importMode ? 'Cancel Import' : 'Import Diagnostic'}</span>
+            </button>
+            
+            {importMode && (
+              <div className="mt-2 space-y-2">
+                <textarea
+                  className="w-full h-20 px-2 py-1.5 text-xs font-mono
+                             bg-gray-800/50 border border-gray-600/50 rounded
+                             text-gray-300 placeholder-gray-500
+                             focus:outline-none focus:border-purple-500/50
+                             resize-none"
+                  placeholder="Paste diagnostic JSON here..."
+                  value={importText}
+                  onChange={(e) => setImportText(e.target.value)}
+                />
+                <div className="flex gap-2">
+                  <button
+                    className="flex-1 px-2 py-1 rounded text-xs font-medium
+                               bg-purple-500/30 hover:bg-purple-500/40 
+                               text-purple-300 hover:text-white
+                               border border-purple-500/30 hover:border-purple-500/40
+                               transition-all duration-200"
+                    onClick={() => {
+                      const importData = extractImportData(importText);
+                      if (importData) {
+                        const logoId = applyDiagnosticData(importData, fullLogoStore);
+                        if (logoId) {
+                          console.log('✅ Successfully imported diagnostic data as logo:', logoId);
+                          setImportMode(false);
+                          setImportText('');
+                        } else {
+                          console.error('❌ Failed to apply diagnostic data');
+                        }
+                      } else {
+                        console.error('❌ Invalid diagnostic JSON format');
+                      }
+                    }}
+                    disabled={!importText.trim()}
+                  >
+                    Apply
+                  </button>
+                  <button
+                    className="px-2 py-1 rounded text-xs font-medium
+                               bg-gray-600/30 hover:bg-gray-600/40 
+                               text-gray-400 hover:text-gray-300
+                               border border-gray-600/30 hover:border-gray-600/40
+                               transition-all duration-200"
+                    onClick={() => {
+                      setImportMode(false);
+                      setImportText('');
+                    }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
         {/* Built-in System Actions */}
         <div className="space-y-2 mt-4">
           <h5 className="text-xs font-medium text-gray-400 uppercase tracking-wider">System Actions</h5>
@@ -662,72 +1045,6 @@ export const StateDebugger = forwardRef<any, StateDebuggerProps>(({
         </div>
       </div>
       </>
-    );
-  }
-  
-  function renderFullState() {
-    return (
-      <div className="space-y-4">
-        <h4 className="font-semibold text-sm mb-3 flex items-center gap-2">
-          <span className="text-base">🌳</span>
-          Full State Tree
-        </h4>
-        
-        {/* Logo Store State */}
-        <div className="space-y-2">
-          <h5 className="text-xs font-medium text-gray-400 uppercase tracking-wider">Logo Store</h5>
-          <div className="p-3 bg-white/5 rounded-lg border border-gray-700/50">
-            <pre className="text-[10px] text-gray-300 font-mono whitespace-pre-wrap overflow-x-auto">
-              {JSON.stringify({
-                logos: fullLogoStore.logos,
-                selectedLogoId: fullLogoStore.selectedLogoId,
-                // Add other relevant logo store properties
-              }, null, 2)}
-            </pre>
-          </div>
-        </div>
-        
-        {/* UI Store State */}
-        <div className="space-y-2">
-          <h5 className="text-xs font-medium text-gray-400 uppercase tracking-wider">UI Store</h5>
-          <div className="p-3 bg-white/5 rounded-lg border border-gray-700/50">
-            <pre className="text-[10px] text-gray-300 font-mono whitespace-pre-wrap overflow-x-auto">
-              {JSON.stringify({
-                zoom: fullUIStore.zoom,
-                // Add other relevant UI store properties
-              }, null, 2)}
-            </pre>
-          </div>
-        </div>
-        
-        {/* Component Props */}
-        <div className="space-y-2">
-          <h5 className="text-xs font-medium text-gray-400 uppercase tracking-wider">Component Props</h5>
-          <div className="p-3 bg-white/5 rounded-lg border border-gray-700/50">
-            <pre className="text-[10px] text-gray-300 font-mono whitespace-pre-wrap overflow-x-auto">
-              {JSON.stringify({
-                selectedLogo,
-                selectedLogoId,
-                canvasOffset,
-              }, null, 2)}
-            </pre>
-          </div>
-        </div>
-        
-        {/* localStorage State */}
-        <div className="space-y-2">
-          <h5 className="text-xs font-medium text-gray-400 uppercase tracking-wider">localStorage</h5>
-          <div className="p-3 bg-white/5 rounded-lg border border-gray-700/50">
-            <pre className="text-[10px] text-gray-300 font-mono whitespace-pre-wrap overflow-x-auto">
-              {JSON.stringify({
-                'reflow-canvas-offset': savedOffset,
-                'parse-error': localStorageParseError,
-                'raw-value': savedCanvasOffset,
-              }, null, 2)}
-            </pre>
-          </div>
-        </div>
-      </div>
     );
   }
   

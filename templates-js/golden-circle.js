@@ -24,6 +24,7 @@ function draw(ctx, width, height, params, time, utils) {
   const strokeOpacity = params.strokeOpacity ?? 1;
 
   // Golden ratio calculations for perfect proportions
+  const phi = (1 + Math.sqrt(5)) / 2; // Golden ratio constant ≈ 1.618
   const logoSize = Math.min(width, height) * 0.55; // Brand-appropriate sizing
   const baseRadius = logoSize / 2;
   
