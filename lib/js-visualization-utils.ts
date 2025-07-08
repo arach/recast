@@ -4,6 +4,25 @@ import * as templateUtils from '@reflow/template-utils'
 // Import local parameter utilities
 import { params, iso } from './template-utils'
 
+// Font utility function that templates expect
+const fontUtils = {
+  get: (fontStyle: string, customFont?: string) => {
+    const fontMap: Record<string, string> = {
+      'modern': 'Inter, system-ui, sans-serif',
+      'tech': 'JetBrains Mono, Consolas, monospace',
+      'elegant': 'Playfair Display, serif',
+      'bold': 'Montserrat, sans-serif',
+      'minimal': 'Inter, system-ui, sans-serif',
+      'silkscreen': 'Silkscreen, monospace',
+      'orbitron': 'Orbitron, sans-serif',
+      'doto': 'DotGothic16, monospace',
+      'custom': customFont || 'Arial, sans-serif'
+    };
+    
+    return fontMap[fontStyle] || fontMap['modern'];
+  }
+};
+
 // Create utils object using only package exports with modern namespaced functions
 const utils = {
   // All utilities from the package
@@ -13,7 +32,7 @@ const utils = {
   math: templateUtils.math,
   shape: templateUtils.shape,
   debug: templateUtils.debug,
-  font: templateUtils.font,
+  font: fontUtils,
   // Local parameter utilities
   params,
   // Isometric utilities
