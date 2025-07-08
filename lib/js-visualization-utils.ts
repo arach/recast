@@ -13,6 +13,7 @@ const utils = {
   math: templateUtils.math,
   shape: templateUtils.shape,
   debug: templateUtils.debug,
+  font: templateUtils.font,
   // Local parameter utilities
   params,
   // Isometric utilities

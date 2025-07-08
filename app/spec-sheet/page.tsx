@@ -586,6 +586,19 @@ function LogoCanvas({ logo, width, height }: LogoCanvasProps) {
     setViewport({ x: TILE_SIZE * 1.5, y: TILE_SIZE * 1.5, zoom: 1 });
   };
   
+  // Listen for custom resetViewport events from keyboard shortcuts
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    
+    const handleResetEvent = () => {
+      resetViewport();
+    };
+    
+    canvas.addEventListener('resetViewport', handleResetEvent);
+    return () => canvas.removeEventListener('resetViewport', handleResetEvent);
+  }, [resetViewport]);
+  
   return (
     <div 
       ref={containerRef}
@@ -757,6 +770,11 @@ export default function SpecSheetPage() {
     barSpacing: 2
   });
   
+  // UI enhancement states
+  const [justDownloaded, setJustDownloaded] = useState(false);
+  const [justCopied, setJustCopied] = useState(false);
+  const [keyPressed, setKeyPressed] = useState<string | null>(null);
+  
   // Load available templates
   useEffect(() => {
     getAllJSTemplates().then(setAvailableTemplates);
@@ -790,6 +808,7 @@ export default function SpecSheetPage() {
     
     loadTemplateDefaults();
   }, [selectedTemplateId]);
+
 
   // Real-time controls state
   const [sheetOptions, setSheetOptions] = useState<SpecSheetOptions>({
@@ -837,8 +856,8 @@ export default function SpecSheetPage() {
     setIsGenerating(true);
     
     try {
-      // Simulate generation delay
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Simulate generation delay with smoother animation
+      await new Promise(resolve => setTimeout(resolve, 800));
       setLastGenerated(new Date().toLocaleTimeString());
     } catch (error) {
       console.error('Error generating spec sheet:', error);
@@ -859,9 +878,13 @@ export default function SpecSheetPage() {
       });
       
       const link = document.createElement('a');
-      link.download = `reflow-spec-${selectedLogo?.templateId || 'logo'}-${Date.now()}.png`;
+      link.download = `reflow-spec-${selectedTemplateId || 'logo'}-${Date.now()}.png`;
       link.href = canvas.toDataURL('image/png');
       link.click();
+      
+      // Success feedback
+      setJustDownloaded(true);
+      setTimeout(() => setJustDownloaded(false), 2000);
     } catch (error) {
       console.error('Failed to download spec sheet:', error);
     }
@@ -883,7 +906,10 @@ export default function SpecSheetPage() {
         
         const item = new ClipboardItem({ 'image/png': blob });
         await navigator.clipboard.write([item]);
-        alert('Spec sheet copied to clipboard!');
+        
+        // Success feedback
+        setJustCopied(true);
+        setTimeout(() => setJustCopied(false), 2000);
       });
     } catch (error) {
       console.error('Failed to copy to clipboard:', error);
@@ -1131,6 +1157,59 @@ export default function SpecSheetPage() {
     }
   };
 
+  // Keyboard shortcuts - moved after function definitions
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      // Don't trigger if user is typing in an input field
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+      
+      // Visual feedback for key press
+      setKeyPressed(e.key.toLowerCase());
+      setTimeout(() => setKeyPressed(null), 200);
+      
+      switch (e.key.toLowerCase()) {
+        case ' ': // Space - center view
+          e.preventDefault();
+          // Find the LogoCanvas resetViewport function (we'll need to expose this)
+          const canvas = document.querySelector('canvas');
+          if (canvas) {
+            // For now, we'll create a custom event to trigger reset
+            const resetEvent = new CustomEvent('resetViewport');
+            canvas.dispatchEvent(resetEvent);
+          }
+          break;
+        
+        case 'r': // R - regenerate
+          e.preventDefault();
+          if (!isGenerating) {
+            generateSheet();
+          }
+          break;
+        
+        case 'd': // D - download
+          e.preventDefault();
+          if (!isGenerating) {
+            downloadSheet();
+          }
+          break;
+          
+        case 'c': // C - copy (with Ctrl/Cmd)
+          if (e.ctrlKey || e.metaKey) {
+            e.preventDefault();
+            if (!isGenerating) {
+              copyToClipboard();
+            }
+          }
+          break;
+      }
+    };
+    
+    document.addEventListener('keydown', handleKeyPress);
+    return () => document.removeEventListener('keydown', handleKeyPress);
+  }, [isGenerating]);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-gray-950 to-black p-8">
       <div className="max-w-7xl mx-auto">
@@ -1143,20 +1222,28 @@ export default function SpecSheetPage() {
           <p className="text-white/60 font-semibold text-sm">
             Infinite canvas exploration and spec sheet generation • Last generated: <span className="text-white text-[11px] font-mono ml-1">{lastGenerated}</span>
           </p>
+          <div className="mt-2 text-white/40 text-xs">
+            <span className="inline-flex items-center gap-4">
+              <span><kbd className="px-1 py-0.5 bg-white/10 rounded text-[10px] font-mono">Space</kbd> Center</span>
+              <span><kbd className="px-1 py-0.5 bg-white/10 rounded text-[10px] font-mono">R</kbd> Regenerate</span>
+              <span><kbd className="px-1 py-0.5 bg-white/10 rounded text-[10px] font-mono">D</kbd> Download</span>
+              <span><kbd className="px-1 py-0.5 bg-white/10 rounded text-[10px] font-mono">Ctrl+C</kbd> Copy</span>
+            </span>
+          </div>
         </div>
 
         {/* Template Selection */}
-        <div className="mb-6 p-4 bg-white/[0.015] border border-white/[0.04] rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300">
+        <div className="mb-6 p-4 bg-white/[0.015] border border-white/[0.04] rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 animate-in fade-in slide-in-from-bottom-4">
           <h2 className="font-bold text-white/80 text-base mb-3">Template Selection</h2>
           <div className="flex flex-wrap gap-2">
             {availableTemplates.map((template) => (
               <button
                 key={template.id}
                 onClick={() => setSelectedTemplateId(template.id)}
-                className={`px-3 py-1 rounded text-xs font-mono transition-all duration-200 ${
+                className={`px-3 py-1 rounded text-xs font-mono transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] ${
                   selectedTemplateId === template.id
-                    ? 'bg-gradient-to-r from-blue-500/30 to-purple-500/30 text-white font-extralight border border-blue-400/40 shadow-md'
-                    : 'bg-white/[0.025] text-white/60 font-semibold border border-white/[0.04] hover:bg-white/[0.04] hover:border-white/[0.08] hover:text-white/80'
+                    ? 'bg-gradient-to-r from-blue-500/30 to-purple-500/30 text-white font-extralight border border-blue-400/40 shadow-md transform scale-[1.02]'
+                    : 'bg-white/[0.025] text-white/60 font-semibold border border-white/[0.04] hover:bg-white/[0.04] hover:border-white/[0.08] hover:text-white/80 hover:shadow-md'
                 }`}
               >
                 {template.name}
@@ -1172,7 +1259,7 @@ export default function SpecSheetPage() {
 
 
         {/* Specification Sheet */}
-        <div className="relative mb-6">
+        <div className="relative mb-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
           <TargetOverlay inset={0} length={6} />
           {/* Preview section */}
           <div 
@@ -1202,25 +1289,30 @@ export default function SpecSheetPage() {
                     return (
                       <div ref={containerRef} className="w-full h-full">
                         {hasHydrated ? (
-                          <LogoCanvas
-                            logo={{
-                              templateId: selectedTemplateId,
-                              parameters: {
-                                core: {},
-                                style: {},
-                                custom: currentParameters
-                              },
-                              id: 'spec-sheet-preview',
-                              name: 'Preview'
-                            }}
-                            width={canvasSize}
-                            height={canvasSize}
-                          />
+                          <div className="animate-in fade-in duration-700">
+                            <LogoCanvas
+                              logo={{
+                                templateId: selectedTemplateId,
+                                parameters: {
+                                  core: {},
+                                  style: {},
+                                  custom: currentParameters
+                                },
+                                id: 'spec-sheet-preview',
+                                name: 'Preview'
+                              }}
+                              width={canvasSize}
+                              height={canvasSize}
+                            />
+                          </div>
                         ) : (
-                          <div className="w-full h-full bg-gray-100 rounded flex items-center justify-center">
-                            <span className="text-gray-600 font-mono text-sm">
-                              {hasHydrated ? 'No logo selected' : 'Loading logo...'}
-                            </span>
+                          <div className="w-full h-full bg-gray-100 rounded flex items-center justify-center animate-pulse">
+                            <div className="text-center">
+                              <div className="w-8 h-8 border-2 border-gray-400 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+                              <span className="text-gray-600 font-mono text-sm">
+                                Loading logo...
+                              </span>
+                            </div>
                           </div>
                         )}
                       </div>
@@ -1296,41 +1388,75 @@ export default function SpecSheetPage() {
               <button
                 onClick={generateSheet}
                 disabled={isGenerating}
-                className="px-3 py-1.5 bg-white/[0.015] border border-white/[0.04] text-white/80 font-light text-[11px] rounded-lg shadow-lg backdrop-blur-sm hover:bg-white/[0.03] hover:ring-1 hover:ring-white/20 hover:shadow-xl focus:ring-2 focus:ring-blue-400/30 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                title="Regenerate specification sheet"
+                className={`px-3 py-1.5 bg-white/[0.015] border border-white/[0.04] text-white/80 font-light text-[11px] rounded-lg shadow-lg backdrop-blur-sm hover:bg-white/[0.03] hover:ring-1 hover:ring-white/20 hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] focus:ring-2 focus:ring-blue-400/30 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${
+                  keyPressed === 'r' ? 'ring-2 ring-blue-400/50 scale-[1.02]' : ''
+                }`}
+                title="Regenerate specification sheet (R)"
               >
-                {isGenerating ? 'Generating...' : 'Regenerate'}
+                {isGenerating ? (
+                  <span className="flex items-center gap-1">
+                    <div className="w-3 h-3 border border-white/60 border-t-transparent rounded-full animate-spin"></div>
+                    Generating...
+                  </span>
+                ) : 'Regenerate'}
               </button>
               
               <button
                 onClick={downloadSheet}
                 disabled={isGenerating}
-                className="px-3 py-1.5 bg-blue-500/10 border border-blue-400/20 text-blue-300 font-light text-[11px] rounded-lg shadow-lg backdrop-blur-sm hover:bg-blue-500/20 hover:ring-1 hover:ring-blue-400/30 hover:shadow-xl focus:ring-2 focus:ring-blue-400/40 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                title="Download as PNG image"
+                className={`px-3 py-1.5 border font-light text-[11px] rounded-lg shadow-lg backdrop-blur-sm hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] focus:ring-2 focus:ring-blue-400/40 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${
+                  justDownloaded 
+                    ? 'bg-green-500/20 border-green-400/40 text-green-300 ring-2 ring-green-400/50'
+                    : 'bg-blue-500/10 border-blue-400/20 text-blue-300 hover:bg-blue-500/20 hover:ring-1 hover:ring-blue-400/30'
+                } ${
+                  keyPressed === 'd' ? 'ring-2 ring-blue-400/50 scale-[1.02]' : ''
+                }`}
+                title="Download as PNG image (D)"
               >
-                Download PNG
+                {justDownloaded ? (
+                  <span className="flex items-center gap-1">
+                    <span className="text-green-400">✓</span>
+                    Downloaded!
+                  </span>
+                ) : 'Download PNG'}
               </button>
               
               <button
                 onClick={copyToClipboard}
                 disabled={isGenerating}
-                className="px-3 py-1.5 bg-green-500/10 border border-green-400/20 text-green-300 font-light text-[11px] rounded-lg shadow-lg backdrop-blur-sm hover:bg-green-500/20 hover:ring-1 hover:ring-green-400/30 hover:shadow-xl focus:ring-2 focus:ring-green-400/40 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                title="Copy image to clipboard"
+                className={`px-3 py-1.5 border font-light text-[11px] rounded-lg shadow-lg backdrop-blur-sm hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] focus:ring-2 focus:ring-green-400/40 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${
+                  justCopied 
+                    ? 'bg-emerald-500/20 border-emerald-400/40 text-emerald-300 ring-2 ring-emerald-400/50'
+                    : 'bg-green-500/10 border-green-400/20 text-green-300 hover:bg-green-500/20 hover:ring-1 hover:ring-green-400/30'
+                } ${
+                  keyPressed === 'c' ? 'ring-2 ring-green-400/50 scale-[1.02]' : ''
+                }`}
+                title="Copy image to clipboard (Ctrl+C)"
               >
-                Copy to Clipboard
+                {justCopied ? (
+                  <span className="flex items-center gap-1">
+                    <span className="text-emerald-400">✓</span>
+                    Copied!
+                  </span>
+                ) : 'Copy to Clipboard'}
               </button>
             </div>
           </div>
 
           {isGenerating && (
-            <div className="mt-4 text-center text-white/60 font-mono text-sm">
-              Generating specification sheet...
+            <div className="mt-4 text-center">
+              <div className="inline-flex items-center gap-3 px-4 py-2 bg-blue-500/10 border border-blue-400/20 rounded-lg">
+                <div className="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin"></div>
+                <span className="text-blue-300 font-light text-sm animate-pulse">
+                  Generating specification sheet...
+                </span>
+              </div>
             </div>
           )}
         </div>
 
         {/* Interactive Terminal */}
-        <div className="mb-8 bg-black/20 border border-white/[0.04] rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300">
+        <div className="mb-8 bg-black/20 border border-white/[0.04] rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 animate-in fade-in slide-in-from-bottom-4">
           {/* Terminal Header */}
           <div className="bg-white/[0.005] border-b border-white/[0.03] px-4 py-2 flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -1465,8 +1591,20 @@ export default function SpecSheetPage() {
 
 
 
+        {/* Keyboard Shortcuts Indicator */}
+        {keyPressed && (
+          <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50">
+            <div className="bg-black/80 text-white px-4 py-2 rounded-lg border border-white/20 shadow-xl backdrop-blur-sm">
+              <div className="text-center">
+                <div className="text-white/60 text-xs mb-1">Key Pressed</div>
+                <div className="text-white font-bold text-lg">{keyPressed.toUpperCase()}</div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Debug Logs */}
-        <div className="mt-8 p-3 bg-black/40 border border-white/[0.02] rounded text-[10px] font-mono">
+        <div className="mt-8 p-3 bg-black/40 border border-white/[0.02] rounded text-[10px] font-mono hover:bg-black/50 transition-colors duration-300">
           <div className="text-white/30 mb-1">// debug logs</div>
           <div className="space-y-0.5 text-white/40">
             <div className="flex gap-2">
