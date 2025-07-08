@@ -184,7 +184,7 @@ function draw(ctx, width, height, params, time, utils) {
       const point = points[i];
       if (point.energy > 0.7 && Math.random() < spark * 0.1) {
         const sparkPhase = time * 8 + i;
-        const sparkSize = (1 + Math.sin(sparkPhase) * 2) * scale * 0.05;
+        const sparkSize = Math.max(0.1, (1 + Math.sin(sparkPhase) * 2)) * scale * 0.05;
         
         ctx.globalAlpha = spark * 0.8;
         
@@ -231,7 +231,7 @@ function draw(ctx, width, height, params, time, utils) {
         // Energy pulse
         const pulseGradient = ctx.createRadialGradient(
           point.x, point.y, 0,
-          point.x, point.y, 8
+          point.x, point.y, Math.max(0.1, 8)
         );
         pulseGradient.addColorStop(0, colors.bright);
         pulseGradient.addColorStop(0.5, colors.glow);

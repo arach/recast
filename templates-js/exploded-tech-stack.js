@@ -15,10 +15,11 @@ function draw(ctx, width, height, params, time, utils) {
           rotationSpeed, pulseIntensity, glowStrength, dataFlowDensity,
           perspective, showLabels, labelStyle, architecture } = p;
   
-  // Calculate positioning
-  const centerX = width / 2;
-  const centerY = height / 2;
-  const baseScale = Math.min(width, height) / 200; // Even larger base scale
+  // Calculate positioning with viewport support for infinite canvas
+  const viewport = p._viewport || { offsetX: 0, offsetY: 0, zoom: 1 };
+  const centerX = (width / 2) + viewport.offsetX;
+  const centerY = (height / 2) + viewport.offsetY;
+  const baseScale = Math.min(width, height) / 200 * viewport.zoom; // Scale with zoom level
   
   // Advanced animation calculations
   const animTime = time * animationSpeed;

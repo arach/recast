@@ -36,7 +36,29 @@ const utils = {
   // Local parameter utilities
   params,
   // Isometric utilities
-  iso
+  iso,
+  // Legacy compatibility - add all the utility functions templates expect
+  applyUniversalBackground: templateUtils.applyUniversalBackground,
+  applyUniversalFill: (ctx: CanvasRenderingContext2D, params: any) => {
+    if (params.fillType === 'none') return;
+    ctx.globalAlpha = params.fillOpacity ?? 1;
+    ctx.fillStyle = params.fillColor || '#000000';
+  },
+  applyUniversalStroke: (ctx: CanvasRenderingContext2D, params: any) => {
+    if (params.strokeType === 'none') return;
+    ctx.globalAlpha = params.strokeOpacity ?? 1;
+    ctx.strokeStyle = params.strokeColor || '#000000';
+    ctx.lineWidth = params.strokeWidth || 1;
+  },
+  // Additional utility functions that templates might expect
+  renderLiquidBody: (ctx: CanvasRenderingContext2D, x: number, y: number, width: number, height: number, params: any) => {
+    // Basic liquid body renderer as fallback
+    ctx.save();
+    ctx.fillStyle = params.fillColor || '#4299e1';
+    ctx.globalAlpha = params.fillOpacity ?? 0.8;
+    ctx.fillRect(x, y, width, height);
+    ctx.restore();
+  }
 }
 
 // Flatten nested parameter structures into a single level object

@@ -17,10 +17,6 @@ import {
   downloadDiagnosticFiles,
   captureLogoImage
 } from '@/lib/debug/diagnostic-sharing';
-import { 
-  generateSpecificationSheet, 
-  downloadSpecificationSheet
-} from '@/lib/debug/specification-sheet-generator';
 
 interface StateDebuggerProps {
   selectedLogo: any;
@@ -76,8 +72,6 @@ export const StateDebugger = forwardRef<any, StateDebuggerProps>(({
   const [imageFormat, setImageFormat] = useState<'png' | 'jpeg'>('png');
   const [isCapturingImage, setIsCapturingImage] = useState(false);
   
-  // State for specification sheet
-  const [isGeneratingSpecSheet, setIsGeneratingSpecSheet] = useState(false);
   
   const zustandLogos = useLogoStore(state => state.logos);
   const zustandSelectedId = useLogoStore(state => state.selectedLogoId);
@@ -733,7 +727,7 @@ export const StateDebugger = forwardRef<any, StateDebuggerProps>(({
               <span>Copy Config Only</span>
             </button>
             
-            {/* Specification Sheet - NEW FEATURE */}
+            {/* Logo Inspector - Navigation Link */}
             <button 
               className="px-3 py-2.5 rounded-lg text-xs font-medium text-left
                          bg-orange-500/20 hover:bg-orange-500/30 
@@ -741,44 +735,16 @@ export const StateDebugger = forwardRef<any, StateDebuggerProps>(({
                          border border-orange-500/30 hover:border-orange-500/40
                          transition-all duration-200
                          flex items-center gap-2"
-              onClick={async () => {
-                if (!selectedLogo) return;
-                
-                setIsGeneratingSpecSheet(true);
-                try {
-                  await downloadSpecificationSheet(
-                    selectedLogo,
-                    selectedLogoId,
-                    canvasOffset || undefined,
-                    zoom,
-                    {
-                      width: 1200,
-                      height: 800,
-                      terminalStyle: true,
-                      includeMetadata: true
-                    }
-                  );
-                  console.log('📄 Specification sheet downloaded');
-                } catch (error) {
-                  console.error('Failed to generate specification sheet:', error);
-                } finally {
-                  setIsGeneratingSpecSheet(false);
-                }
+              onClick={() => {
+                // Open Logo Inspector in new window/tab
+                const url = `/navigator/inspector`;
+                window.open(url, '_blank', 'width=1400,height=900');
               }}
-              disabled={!selectedLogo || isGeneratingSpecSheet}
-              title="Generate comprehensive PNG specification sheet with logo + all parameters"
+              disabled={!selectedLogo}
+              title="Open Logo Inspector with interactive canvas and parameter controls"
             >
-              {isGeneratingSpecSheet ? (
-                <>
-                  <div className="w-3 h-3 border border-orange-400 border-t-transparent rounded-full animate-spin"></div>
-                  <span>Generating...</span>
-                </>
-              ) : (
-                <>
-                  <FileImage className="w-3.5 h-3.5" />
-                  <span>📄 Generate Spec Sheet</span>
-                </>
-              )}
+              <FileImage className="w-3.5 h-3.5" />
+              <span>🔍 Open Inspector</span>
             </button>
           </div>
           

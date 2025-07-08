@@ -370,7 +370,7 @@ function LogoCanvas({ logo, width, height }: LogoCanvasProps) {
           viewHeight: height
         }
       };
-      generateJSVisualization(ctx, logo.templateId, enhancedParams, 0, width, height);
+      generateJSVisualization(ctx, logo.templateId, enhancedParams, Date.now() * 0.001, width, height);
     } else {
       console.log('🎨 Rendering placeholder');
       // Fallback placeholder
@@ -387,6 +387,42 @@ function LogoCanvas({ logo, width, height }: LogoCanvasProps) {
     console.log('✅ Throttled canvas render complete');
     setRenderPending(false);
   }, [logo, width, height, viewport]);
+  
+  // Single render for most cases, with optional animation toggle
+  useEffect(() => {
+    // Just do a single render for now - user can enable animation later if needed
+    performRender();
+  }, [performRender, logo.templateId]);
+  
+  // Optional animation loop (disabled by default to prevent exploding)
+  // Uncomment when we want smooth animations:
+  /*
+  useEffect(() => {
+    let animationId: number;
+    let lastFrameTime = 0;
+    const targetFPS = 30;
+    const frameInterval = 1000 / targetFPS;
+    
+    const animate = (currentTime: number) => {
+      if (currentTime - lastFrameTime >= frameInterval) {
+        performRender();
+        lastFrameTime = currentTime;
+      }
+      animationId = requestAnimationFrame(animate);
+    };
+    
+    const needsAnimation = logo.templateId?.includes('exploded');
+    if (needsAnimation) {
+      animationId = requestAnimationFrame(animate);
+    }
+    
+    return () => {
+      if (animationId) {
+        cancelAnimationFrame(animationId);
+      }
+    };
+  }, [performRender, logo.templateId]);
+  */
   
   // Tile render function - depends on performRender
   const performTileRender = useCallback(async () => {
@@ -867,52 +903,229 @@ export default function SpecSheetPage() {
   };
 
   const downloadSheet = async () => {
-    if (!specSheetRef.current) return;
+    console.log('📥 Download button clicked');
     
     try {
-      const canvas = await html2canvas(specSheetRef.current, {
+      // Get the main canvas
+      const mainCanvas = document.querySelector('canvas') as HTMLCanvasElement;
+      if (!mainCanvas) {
+        console.log('❌ No main canvas found');
+        alert('No canvas content to export');
+        return;
+      }
+      
+      console.log('🎨 Step 1: Capturing main canvas...');
+      // Convert main canvas to image
+      const canvasDataURL = mainCanvas.toDataURL('image/png');
+      
+      console.log('🎨 Step 2: Capturing HTML UI elements...');
+      // Capture the spec sheet div with html2canvas
+      const specDiv = specSheetRef.current;
+      if (!specDiv) {
+        console.log('❌ No spec div found');
+        alert('No UI content to export');
+        return;
+      }
+      
+      // Use html2canvas to capture the UI elements
+      const htmlCanvas = await html2canvas(specDiv, {
         backgroundColor: '#0f0f23',
-        scale: 2, // Higher resolution
+        scale: 1,
         useCORS: true,
-        allowTaint: true
+        allowTaint: true,
+        logging: false,
+        // Only capture specific elements, not the main canvas
+        ignoreElements: (element) => element.tagName === 'CANVAS'
       });
       
-      const link = document.createElement('a');
-      link.download = `reflow-spec-${selectedTemplateId || 'logo'}-${Date.now()}.png`;
-      link.href = canvas.toDataURL('image/png');
-      link.click();
+      console.log('🎨 Step 3: Creating composite canvas...');
+      // Create off-screen canvas for stitching
+      const compositeCanvas = document.createElement('canvas');
+      const ctx = compositeCanvas.getContext('2d');
+      if (!ctx) return;
       
-      // Success feedback
-      setJustDownloaded(true);
-      setTimeout(() => setJustDownloaded(false), 2000);
+      // Set composite canvas to match HTML canvas size (since we're overlaying)
+      compositeCanvas.width = htmlCanvas.width;
+      compositeCanvas.height = htmlCanvas.height;
+      
+      console.log('🎨 Step 4: Loading and stitching images...');
+      
+      // Prepare filename outside the callback
+      const templateId = selectedLogo.templateId || 'export';
+      
+      // Load canvas image
+      const canvasImg = new Image();
+      canvasImg.onload = () => {
+        // First, draw the HTML UI as the base
+        ctx.drawImage(htmlCanvas, 0, 0);
+        
+        // Then overlay the canvas content in the correct position
+        // Find the preview area within the HTML layout and position canvas there
+        // Approximate position based on the layout - adjust these values as needed
+        const previewX = htmlCanvas.width * 0.38; // Roughly where preview area starts
+        const previewY = htmlCanvas.height * 0.12; // Top of preview area
+        const previewWidth = htmlCanvas.width * 0.35; // Width of preview area
+        const previewHeight = htmlCanvas.height * 0.76; // Height of preview area
+        
+        // Scale and center the canvas content within the preview area
+        const canvasAspect = mainCanvas.width / mainCanvas.height;
+        const previewAspect = previewWidth / previewHeight;
+        
+        let drawWidth, drawHeight, drawX, drawY;
+        
+        if (canvasAspect > previewAspect) {
+          // Canvas is wider - fit to width
+          drawWidth = previewWidth * 0.9; // Leave some margin
+          drawHeight = drawWidth / canvasAspect;
+          drawX = previewX + (previewWidth - drawWidth) / 2;
+          drawY = previewY + (previewHeight - drawHeight) / 2;
+        } else {
+          // Canvas is taller - fit to height  
+          drawHeight = previewHeight * 0.9; // Leave some margin
+          drawWidth = drawHeight * canvasAspect;
+          drawX = previewX + (previewWidth - drawWidth) / 2;
+          drawY = previewY + (previewHeight - drawHeight) / 2;
+        }
+        
+        // Draw the canvas content scaled and positioned correctly
+        ctx.drawImage(canvasImg, drawX, drawY, drawWidth, drawHeight);
+        
+        console.log('🎨 Step 5: Exporting composite...');
+        // Export the final composite
+        const link = document.createElement('a');
+        link.download = `reflow-composite-${templateId}-${Date.now()}.png`;
+        link.href = compositeCanvas.toDataURL('image/png');
+        link.click();
+        
+        console.log('✅ Composite export successful');
+        setJustDownloaded(true);
+        setTimeout(() => setJustDownloaded(false), 2000);
+      };
+      
+      canvasImg.src = canvasDataURL;
+      
     } catch (error) {
-      console.error('Failed to download spec sheet:', error);
+      console.error('Failed to create composite export:', error);
+      alert('Failed to export canvas. Please try again.');
     }
   };
 
   const copyToClipboard = async () => {
-    if (!specSheetRef.current) return;
+    console.log('📋 Copy button clicked');
     
     try {
-      const canvas = await html2canvas(specSheetRef.current, {
+      // Ensure document has focus
+      if (!document.hasFocus()) {
+        window.focus();
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+      
+      // Get the main canvas
+      const mainCanvas = document.querySelector('canvas') as HTMLCanvasElement;
+      if (!mainCanvas) {
+        console.log('❌ No main canvas found');
+        alert('No canvas content to copy');
+        return;
+      }
+      
+      console.log('🎨 Step 1: Capturing main canvas for clipboard...');
+      // Convert main canvas to image
+      const canvasDataURL = mainCanvas.toDataURL('image/png');
+      
+      console.log('🎨 Step 2: Capturing HTML UI elements...');
+      // Capture the spec sheet div with html2canvas
+      const specDiv = specSheetRef.current;
+      if (!specDiv) {
+        console.log('❌ No spec div found');
+        alert('No UI content to copy');
+        return;
+      }
+      
+      // Use html2canvas to capture the UI elements
+      const htmlCanvas = await html2canvas(specDiv, {
         backgroundColor: '#0f0f23',
-        scale: 2,
+        scale: 1,
         useCORS: true,
-        allowTaint: true
+        allowTaint: true,
+        logging: false,
+        // Only capture specific elements, not the main canvas
+        ignoreElements: (element) => element.tagName === 'CANVAS'
       });
       
-      canvas.toBlob(async (blob) => {
-        if (!blob) return;
+      console.log('🎨 Step 3: Creating composite canvas...');
+      // Create off-screen canvas for stitching
+      const compositeCanvas = document.createElement('canvas');
+      const ctx = compositeCanvas.getContext('2d');
+      if (!ctx) return;
+      
+      // Set composite canvas to match HTML canvas size (since we're overlaying)
+      compositeCanvas.width = htmlCanvas.width;
+      compositeCanvas.height = htmlCanvas.height;
+      
+      console.log('🎨 Step 4: Loading and stitching images...');
+      
+      // Load canvas image
+      const canvasImg = new Image();
+      canvasImg.onload = () => {
+        // First, draw the HTML UI as the base
+        ctx.drawImage(htmlCanvas, 0, 0);
         
-        const item = new ClipboardItem({ 'image/png': blob });
-        await navigator.clipboard.write([item]);
+        // Then overlay the canvas content in the correct position
+        const previewX = htmlCanvas.width * 0.38; // Roughly where preview area starts
+        const previewY = htmlCanvas.height * 0.12; // Top of preview area
+        const previewWidth = htmlCanvas.width * 0.35; // Width of preview area
+        const previewHeight = htmlCanvas.height * 0.76; // Height of preview area
         
-        // Success feedback
-        setJustCopied(true);
-        setTimeout(() => setJustCopied(false), 2000);
-      });
+        // Scale and center the canvas content within the preview area
+        const canvasAspect = mainCanvas.width / mainCanvas.height;
+        const previewAspect = previewWidth / previewHeight;
+        
+        let drawWidth, drawHeight, drawX, drawY;
+        
+        if (canvasAspect > previewAspect) {
+          // Canvas is wider - fit to width
+          drawWidth = previewWidth * 0.9; // Leave some margin
+          drawHeight = drawWidth / canvasAspect;
+          drawX = previewX + (previewWidth - drawWidth) / 2;
+          drawY = previewY + (previewHeight - drawHeight) / 2;
+        } else {
+          // Canvas is taller - fit to height  
+          drawHeight = previewHeight * 0.9; // Leave some margin
+          drawWidth = drawHeight * canvasAspect;
+          drawX = previewX + (previewWidth - drawWidth) / 2;
+          drawY = previewY + (previewHeight - drawHeight) / 2;
+        }
+        
+        // Draw the canvas content scaled and positioned correctly
+        ctx.drawImage(canvasImg, drawX, drawY, drawWidth, drawHeight);
+        
+        console.log('🎨 Step 5: Copying composite to clipboard...');
+        // Copy to clipboard
+        compositeCanvas.toBlob(async (blob) => {
+          if (!blob) {
+            console.log('❌ Failed to create blob from composite canvas');
+            return;
+          }
+          
+          try {
+            const item = new ClipboardItem({ 'image/png': blob });
+            await navigator.clipboard.write([item]);
+            
+            console.log('✅ Composite canvas copied to clipboard');
+            setJustCopied(true);
+            setTimeout(() => setJustCopied(false), 2000);
+          } catch (clipboardError) {
+            console.error('Clipboard write failed:', clipboardError);
+            alert('Could not copy to clipboard. Please ensure the window is focused and try again.');
+          }
+        });
+      };
+      
+      canvasImg.src = canvasDataURL;
+      
     } catch (error) {
-      console.error('Failed to copy to clipboard:', error);
+      console.error('Failed to copy composite canvas:', error);
+      alert('Failed to copy canvas. Please try again.');
     }
   };
 
@@ -1150,10 +1363,18 @@ export default function SpecSheetPage() {
 
   const copyCommand = async () => {
     try {
+      // Ensure document has focus before clipboard operation
+      if (!document.hasFocus()) {
+        window.focus();
+        // Give a moment for focus to take effect
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+      
       await navigator.clipboard.writeText(terminalCommand);
       alert('Command copied to clipboard!');
     } catch (error) {
       console.error('Failed to copy command:', error);
+      alert('Could not copy to clipboard. Please ensure the window is focused and try again.');
     }
   };
 
