@@ -148,14 +148,6 @@ export function createTextTexture(
   // Clear canvas
   ctx.clearRect(0, 0, width, height);
   
-  // Add a colored background for debugging visibility
-  if (process.env.NODE_ENV === 'development') {
-    ctx.globalAlpha = 0.3;
-    ctx.fillStyle = 'red';
-    ctx.fillRect(0, 0, width, height);
-    ctx.globalAlpha = 1;
-  }
-  
   // Calculate font size based on params.textSize
   // Scale it relative to canvas size but respect the parameter
   const baseFontSize = Math.min(width, height) * 0.3; // Increased to 0.3 for better visibility
@@ -237,8 +229,8 @@ export function createRoundedPrism(
   const extrudeSettings: THREE.ExtrudeGeometryOptions = {
     depth: depth,
     bevelEnabled: true,
-    bevelThickness: radius * 0.1,
-    bevelSize: radius * 0.1,
+    bevelThickness: Math.min(radius * 0.05, depth * 0.1), // Limit bevel thickness
+    bevelSize: Math.min(radius * 0.05, Math.min(width, height) * 0.05), // Limit bevel size
     bevelSegments: 8,
     steps: 1
   };
@@ -278,7 +270,8 @@ export function createRoundedPrism(
         labelWidth = width * 0.9;
         labelHeight = height * 0.9;
         const frontText = createTextLabel(labelText, labelWidth, labelHeight, params);
-        frontText.position.z = depth / 2 + 0.01;
+        // Position text further out to clear the bevel
+        frontText.position.z = depth / 2 + Math.max(extrudeSettings.bevelThickness || 0, 0.01);
         label.add(frontText);
         break;
         
@@ -287,7 +280,8 @@ export function createRoundedPrism(
         labelWidth = depth * 0.9;
         labelHeight = height * 0.9;
         const sideText = createTextLabel(labelText, labelWidth, labelHeight, params);
-        sideText.position.x = width / 2 + 0.01;
+        // Position text further out to clear the bevel
+        sideText.position.x = width / 2 + Math.max(extrudeSettings.bevelThickness || 0, 0.01);
         sideText.rotation.y = Math.PI / 2;
         label.add(sideText);
         break;
@@ -297,7 +291,8 @@ export function createRoundedPrism(
         labelWidth = width * 0.9;
         labelHeight = depth * 0.9;
         const topText = createTextLabel(labelText, labelWidth, labelHeight, params);
-        topText.position.y = height / 2 + 0.01;
+        // Position text further out to clear the bevel
+        topText.position.y = height / 2 + Math.max(extrudeSettings.bevelThickness || 0, 0.01);
         topText.rotation.x = -Math.PI / 2;
         
         // For top face, apply text orientation
