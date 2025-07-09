@@ -176,15 +176,6 @@ function createPlatformGroup(p, time, utils, THREE) {
   // Create a single prism with wordmark
   const layerColor = getLayerColor(p.colorScheme, 0, 1);
   
-  // Debug logging
-  console.log('Creating prism with:', {
-    wordmark: p.wordmark,
-    wordmarkFace: p.wordmarkFace,
-    textColor: p.textColor,
-    textSize: p.textSize,
-    layerColor
-  });
-  
   const prism = utils.threeUtils.createRoundedPrism(
     prismWidth,
     prismHeight,

@@ -140,7 +140,6 @@ export function createTextTexture(
   height = 512,
   params: any
 ): THREE.CanvasTexture {
-  console.log('Creating text texture for:', { text, width, height, textColor: params.textColor, textSize: params.textSize });
   const canvas = document.createElement('canvas');
   canvas.width = width;
   canvas.height = height;
@@ -159,7 +158,7 @@ export function createTextTexture(
   
   // Calculate font size based on params.textSize
   // Scale it relative to canvas size but respect the parameter
-  const baseFontSize = Math.min(width, height) * 0.2; // Increased from 0.15 to 0.2
+  const baseFontSize = Math.min(width, height) * 0.3; // Increased to 0.3 for better visibility
   const fontSize = baseFontSize * (params.textSize / 24); // 24 is the default size
   
   // Get font family from style
@@ -175,10 +174,14 @@ export function createTextTexture(
     fontFamily = fontMap[params.textStyle] || fontFamily;
   }
   
-  ctx.font = `bold ${fontSize}px ${fontFamily}`;
+  ctx.font = `900 ${fontSize}px ${fontFamily}`; // Use 900 weight for extra bold
   ctx.fillStyle = params.textColor || '#ffffff';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
+  
+  // Add a stroke for better visibility
+  ctx.strokeStyle = 'rgba(0, 0, 0, 0.5)';
+  ctx.lineWidth = fontSize * 0.02;
   
   // Add text shadow if enabled
   if (params.textShadow > 0) {
@@ -187,11 +190,13 @@ export function createTextTexture(
     ctx.shadowBlur = params.textShadow * 2;
     ctx.shadowOffsetX = params.textShadow;
     ctx.shadowOffsetY = params.textShadow;
+    ctx.strokeText(text, width / 2, height / 2);
     ctx.fillText(text, width / 2, height / 2);
     ctx.restore();
   }
   
-  // Draw main text
+  // Draw main text with stroke for better visibility
+  ctx.strokeText(text, width / 2, height / 2);
   ctx.fillText(text, width / 2, height / 2);
   
   const texture = new THREE.CanvasTexture(canvas);
@@ -209,7 +214,8 @@ export function createTextLabel(
   const material = new THREE.MeshBasicMaterial({
     map: texture,
     transparent: true,
-    opacity: 1
+    opacity: 1,
+    side: THREE.DoubleSide
   });
   const geometry = new THREE.PlaneGeometry(planeWidth, planeHeight);
   
@@ -262,7 +268,6 @@ export function createRoundedPrism(
   
   // Add text label if provided
   if (labelText && params.wordmarkFace) {
-    console.log('Creating text label:', { labelText, wordmarkFace: params.wordmarkFace });
     let labelWidth, labelHeight;
     const label = new THREE.Group();
     
