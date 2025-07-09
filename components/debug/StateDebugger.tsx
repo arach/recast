@@ -15,7 +15,8 @@ import {
   extractImportData,
   applyDiagnosticData,
   downloadDiagnosticFiles,
-  captureLogoImage
+  captureLogoImage,
+  findLogoCanvas
 } from '@/lib/debug/diagnostic-sharing';
 
 interface StateDebuggerProps {
@@ -71,6 +72,7 @@ export const StateDebugger = forwardRef<any, StateDebuggerProps>(({
   const [includeImageInReport, setIncludeImageInReport] = useState(true);
   const [imageFormat, setImageFormat] = useState<'png' | 'jpeg'>('png');
   const [isCapturingImage, setIsCapturingImage] = useState(false);
+  const [quickCaptureSuccess, setQuickCaptureSuccess] = useState(false);
   
   
   const zustandLogos = useLogoStore(state => state.logos);
@@ -174,6 +176,108 @@ export const StateDebugger = forwardRef<any, StateDebuggerProps>(({
           <h3 className="font-semibold text-white">Debug Toolbar</h3>
         </div>
         <div className="flex items-center gap-2">
+          {/* Quick Capture Button */}
+          <button
+            onClick={async () => {
+              if (!selectedLogo) return;
+              setIsCapturingImage(true);
+              try {
+                // Generate a minimal specification sheet with data overlay
+                const canvas = document.createElement('canvas');
+                canvas.width = 800;
+                canvas.height = 600;
+                const ctx = canvas.getContext('2d');
+                
+                if (ctx) {
+                  // Background
+                  ctx.fillStyle = '#0f0f23';
+                  ctx.fillRect(0, 0, canvas.width, canvas.height);
+                  
+                  // Find and draw logo
+                  const logoCanvas = findLogoCanvas(selectedLogoId);
+                  if (logoCanvas) {
+                    // Draw logo on left side
+                    const logoSize = 300;
+                    const logoX = 50;
+                    const logoY = (canvas.height - logoSize) / 2;
+                    
+                    // White background for logo
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillRect(logoX - 5, logoY - 5, logoSize + 10, logoSize + 10);
+                    
+                    // Draw logo
+                    ctx.drawImage(logoCanvas, logoX, logoY, logoSize, logoSize);
+                    
+                    // Draw data overlay on right side
+                    const dataX = logoX + logoSize + 50;
+                    const dataY = 50;
+                    
+                    ctx.fillStyle = '#ffffff';
+                    ctx.font = 'bold 18px system-ui';
+                    ctx.fillText('Logo Specification', dataX, dataY);
+                    
+                    ctx.font = '14px system-ui';
+                    ctx.fillStyle = '#cccccc';
+                    
+                    // Template info
+                    ctx.fillText(`Template: ${selectedLogo.templateId || 'custom'}`, dataX, dataY + 40);
+                    ctx.fillText(`ID: ${selectedLogo.id}`, dataX, dataY + 60);
+                    
+                    // Key parameters
+                    ctx.fillText('Parameters:', dataX, dataY + 100);
+                    let paramY = dataY + 120;
+                    const params = selectedLogo.parameters || {};
+                    const keyParams = ['frequency', 'amplitude', 'complexity', 'layers', 'radius'];
+                    
+                    ctx.font = '12px monospace';
+                    for (const key of keyParams) {
+                      if (params[key] !== undefined) {
+                        ctx.fillText(`  ${key}: ${params[key]}`, dataX, paramY);
+                        paramY += 20;
+                      }
+                    }
+                    
+                    // Timestamp
+                    ctx.font = '10px system-ui';
+                    ctx.fillStyle = '#666666';
+                    ctx.fillText(new Date().toLocaleString(), dataX, canvas.height - 30);
+                  }
+                  
+                  // Download the image
+                  const dataUrl = canvas.toDataURL('image/png');
+                  const link = document.createElement('a');
+                  link.download = `logo-spec-${selectedLogo.id}-${Date.now()}.png`;
+                  link.href = dataUrl;
+                  link.click();
+                  
+                  setQuickCaptureSuccess(true);
+                  setTimeout(() => setQuickCaptureSuccess(false), 2000);
+                }
+              } catch (error) {
+                console.error('Failed to capture:', error);
+              } finally {
+                setIsCapturingImage(false);
+              }
+            }}
+            disabled={!selectedLogo || isCapturingImage}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium
+                       transition-all duration-200
+                       ${quickCaptureSuccess 
+                         ? 'bg-green-500/30 text-green-300 border border-green-500/40' 
+                         : 'bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 border border-blue-500/30 hover:border-blue-500/40'
+                       } flex items-center gap-1.5`}
+            title="Quick capture PNG with data overlay"
+          >
+            {isCapturingImage ? (
+              <div className="w-3 h-3 border border-blue-300 border-t-transparent rounded-full animate-spin" />
+            ) : quickCaptureSuccess ? (
+              <Check className="w-3 h-3" />
+            ) : (
+              <Image className="w-3 h-3" />
+            )}
+            <span>{quickCaptureSuccess ? 'Saved!' : 'Quick Capture'}</span>
+          </button>
+          
           <button
             onClick={() => setIsExpanded(!isExpanded)}
             className="w-7 h-7 rounded-full flex items-center justify-center
@@ -502,25 +606,25 @@ export const StateDebugger = forwardRef<any, StateDebuggerProps>(({
           </div>
         )}
         
-        {/* Visual Diagnostic Tool */}
+        {/* Logo Inspector (Replaced Visual Diagnostic Tool) */}
         <div className="space-y-3 mt-4">
           <div className="flex items-center justify-between">
-            <h5 className="text-xs font-medium text-gray-400 uppercase tracking-wider">Visual Diagnostic Tool</h5>
+            <h5 className="text-xs font-medium text-gray-400 uppercase tracking-wider">Logo Inspector</h5>
             <button
               onClick={() => {
-                // Open Visual Diagnostic Tool in new window/tab
-                const url = `/diagnostic`;
-                window.open(url, '_blank', 'width=1200,height=800');
+                // Open Logo Inspector in new window/tab
+                const url = `/navigator/inspector`;
+                window.open(url, '_blank', 'width=1400,height=900');
               }}
               disabled={!selectedLogo}
               className="px-2 py-1 text-xs bg-indigo-600/20 hover:bg-indigo-600/30 
                          text-indigo-400 border border-indigo-600/30 hover:border-indigo-600/40
                          rounded transition-all duration-200 flex items-center gap-1
                          disabled:opacity-50 disabled:cursor-not-allowed"
-              title="Open full-page visual diagnostic tool"
+              title="Open interactive logo inspector with canvas and controls"
             >
               <FileImage className="w-3 h-3" />
-              <span>Open Tool</span>
+              <span>Open Inspector</span>
             </button>
           </div>
           
@@ -663,7 +767,7 @@ export const StateDebugger = forwardRef<any, StateDebuggerProps>(({
               ) : (
                 <>
                   <FileImage className="w-3.5 h-3.5" />
-                  <span>Copy Visual Diagnostic</span>
+                  <span>Copy Report with Image</span>
                 </>
               )}
             </button>

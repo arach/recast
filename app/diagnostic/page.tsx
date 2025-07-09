@@ -1,7 +1,8 @@
 'use client';
 
-import { VisualDiagnosticTool } from '@/components/debug/VisualDiagnosticTool';
+import { redirect } from 'next/navigation';
 
 export default function DiagnosticPage() {
-  return <VisualDiagnosticTool />;
+  // Redirect to the new inspector page
+  redirect('/navigator/inspector');
 }
