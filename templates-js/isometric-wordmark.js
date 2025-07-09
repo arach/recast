@@ -76,22 +76,64 @@ function draw(ctx, width, height, params, time, utils) {
     );
   }
   
-  // Draw wordmark on the front face (facing right)
+  // Draw wordmark on selected face
   if (p.wordmark && p.wordmark.trim()) {
-    const textZ = (layerCount - 1) * layerSpacing + platformHeight/2; // Middle of the front face
-    drawFrontFaceWordmark(
-      ctx, 
-      p.wordmark, 
-      0, // Center X
-      platformDepth/2, // Front face Y position
-      textZ, 
-      p.textSize * baseScale, 
-      p.textColor, 
-      p.textStyle,
-      p.textShadow * baseScale,
-      platformWidth * 0.8, // Max width for text
-      utils
-    );
+    const textSize = p.textSize * baseScale;
+    const maxTextWidth = platformWidth * 0.8;
+    
+    switch (p.wordmarkFace) {
+      case 'front':
+        // Front face - vertical face facing viewer
+        drawFrontFaceWordmark(
+          ctx, 
+          p.wordmark, 
+          0, // Center X
+          platformDepth/2, // Y position at front of platform
+          (layerCount - 1) * layerSpacing + platformHeight/2, // Z position at middle height
+          textSize, 
+          p.textColor, 
+          p.textStyle,
+          p.textShadow * baseScale,
+          maxTextWidth,
+          utils
+        );
+        break;
+        
+      case 'top':
+        // Top face - horizontal face
+        drawTopFaceWordmark(
+          ctx,
+          p.wordmark,
+          0, // Center X
+          0, // Center Y 
+          (layerCount - 1) * layerSpacing + platformHeight, // Z position at top
+          textSize,
+          p.textColor,
+          p.textStyle,
+          p.textShadow * baseScale,
+          maxTextWidth,
+          platformDepth * 0.8,
+          utils
+        );
+        break;
+        
+      case 'side':
+        // Right side face
+        drawSideFaceWordmark(
+          ctx,
+          p.wordmark,
+          platformWidth/2, // X position at right edge
+          0, // Center Y
+          (layerCount - 1) * layerSpacing + platformHeight/2, // Z position at middle height
+          textSize,
+          p.textColor,
+          p.textStyle,
+          p.textShadow * baseScale,
+          platformDepth * 0.8,
+          utils
+        );
+        break;
+    }
   }
   
   ctx.restore();
@@ -241,7 +283,7 @@ function drawRightFace(ctx, x, y, z, depth, height, project) {
 }
 
 /**
- * Draw wordmark on the front face (facing right in isometric view)
+ * Draw wordmark on the front face (facing viewer in isometric view)
  */
 function drawFrontFaceWordmark(ctx, text, x, y, z, size, color, style, shadow, maxWidth, utils) {
   const project = (px, py, pz) => ({
@@ -257,14 +299,10 @@ function drawFrontFaceWordmark(ctx, text, x, y, z, size, color, style, shadow, m
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   
-  // Calculate center of front face
-  // Front face in isometric view is the x,y plane at the given depth
+  // Project text position - front face is at y position
   const textPos = project(x, y, z);
   
   ctx.translate(textPos.x, textPos.y);
-  
-  // No skew transform - text appears flat on the vertical front face
-  // The front face is already vertically oriented in isometric view
   
   // Draw text shadow if enabled
   if (shadow > 0) {
@@ -282,6 +320,86 @@ function drawFrontFaceWordmark(ctx, text, x, y, z, size, color, style, shadow, m
   ctx.strokeStyle = adjustBrightness(color, 0.9);
   ctx.lineWidth = 0.5;
   ctx.strokeText(text, 0, 0);
+  
+  ctx.restore();
+}
+
+/**
+ * Draw wordmark on the top face (horizontal in isometric view)
+ */
+function drawTopFaceWordmark(ctx, text, x, y, z, size, color, style, shadow, maxWidth, maxHeight, utils) {
+  const project = (px, py, pz) => ({
+    x: (px - py) * Math.cos(Math.PI / 6),
+    y: (px + py) * Math.sin(Math.PI / 6) - pz
+  });
+  
+  ctx.save();
+  
+  // Set font
+  const fontFamily = utils.font.get(style);
+  ctx.font = `bold ${size}px ${fontFamily}`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  
+  // Project text position
+  const textPos = project(x, y, z);
+  ctx.translate(textPos.x, textPos.y);
+  
+  // Apply isometric transform for top face
+  // This makes the text appear to lie flat on the horizontal top surface
+  ctx.transform(0.866, 0.5, -0.866, 0.5, 0, 0);
+  
+  // Draw text shadow if enabled
+  if (shadow > 0) {
+    ctx.globalAlpha = 0.3;
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+    ctx.fillText(text, shadow, shadow);
+  }
+  
+  // Draw main text
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = color;
+  ctx.fillText(text, 0, 0);
+  
+  ctx.restore();
+}
+
+/**
+ * Draw wordmark on the side face (right side in isometric view)
+ */
+function drawSideFaceWordmark(ctx, text, x, y, z, size, color, style, shadow, maxDepth, utils) {
+  const project = (px, py, pz) => ({
+    x: (px - py) * Math.cos(Math.PI / 6),
+    y: (px + py) * Math.sin(Math.PI / 6) - pz
+  });
+  
+  ctx.save();
+  
+  // Set font
+  const fontFamily = utils.font.get(style);
+  ctx.font = `bold ${size}px ${fontFamily}`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  
+  // Project text position
+  const textPos = project(x, y, z);
+  ctx.translate(textPos.x, textPos.y);
+  
+  // Apply transform for side face
+  // This makes the text appear to be on the vertical right side
+  ctx.transform(0, 1, -0.866, 0.5, 0, 0);
+  
+  // Draw text shadow if enabled
+  if (shadow > 0) {
+    ctx.globalAlpha = 0.3;
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+    ctx.fillText(text, shadow, shadow);
+  }
+  
+  // Draw main text
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = color;
+  ctx.fillText(text, 0, 0);
   
   ctx.restore();
 }
@@ -339,6 +457,11 @@ const toggle = (def, label, opts = {}) => ({
 export const parameters = {
   // Wordmark
   wordmark: text('ReFlow', 'Wordmark Text'),
+  wordmarkFace: select('front', [
+    { value: 'front', label: 'Front Face' },
+    { value: 'top', label: 'Top Face' },
+    { value: 'side', label: 'Side Face' }
+  ], 'Wordmark Position'),
   textSize: slider(24, 12, 60, 2, 'Text Size', 'px'),
   textColor: { type: "color", default: '#ffffff', label: 'Text Color' },
   textStyle: select('bold', [

@@ -176,11 +176,10 @@ export function UnifiedParametersTool() {
           
           {/* Render grouped parameters */}
           {Object.entries(groupedParams).map(([groupName, params]) => {
-            // Special handling for Platform Size group - render in single row
+            // Special handling for Platform Size group - render in single row without label
             if (groupName === 'Platform Size') {
               return (
                 <div key={groupName} className="space-y-1">
-                  <div className="text-xs font-medium text-gray-600">{groupName}</div>
                   <div className="flex items-center gap-3">
                     {params.map(([key, param]) => {
                       const value = customParams[key] ?? param.default ?? 0;
@@ -198,9 +197,20 @@ export function UnifiedParametersTool() {
                               step={param.step || 1}
                               className="flex-1"
                             />
-                            <span className="text-xs text-gray-500 w-10 text-right">
-                              {typeof value === 'number' ? value.toFixed(0) : value}
-                            </span>
+                            <input
+                              type="number"
+                              value={typeof value === 'number' ? value : 0}
+                              onChange={(e) => {
+                                const v = parseFloat(e.target.value);
+                                if (!isNaN(v)) {
+                                  updateCustom({ [key]: Math.max(param.min || 0, Math.min(param.max || 100, v)) });
+                                }
+                              }}
+                              min={param.min || 0}
+                              max={param.max || 100}
+                              step={param.step || 1}
+                              className="w-16 px-1 py-0.5 text-xs text-center border border-gray-200 rounded"
+                            />
                           </div>
                         </div>
                       );
@@ -230,7 +240,7 @@ export function UnifiedParametersTool() {
 
                   {/* Handle old format with type field */}
                   {param.type === 'slider' && (
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2">
                       <Slider
                         value={[typeof value === 'number' ? value : 0]}
                         onValueChange={([v]) => updateCustom({ [key]: v })}
@@ -239,9 +249,22 @@ export function UnifiedParametersTool() {
                         step={param.step || param.range?.[2] || 1}
                         className="flex-1"
                       />
-                      <span className="text-xs text-gray-500 w-12 text-right">
-                        {typeof value === 'number' ? value.toFixed(param.step < 1 ? 2 : 0) : value}
-                      </span>
+                      <input
+                        type="number"
+                        value={typeof value === 'number' ? value : 0}
+                        onChange={(e) => {
+                          const v = parseFloat(e.target.value);
+                          if (!isNaN(v)) {
+                            const min = param.min || param.range?.[0] || 0;
+                            const max = param.max || param.range?.[1] || 100;
+                            updateCustom({ [key]: Math.max(min, Math.min(max, v)) });
+                          }
+                        }}
+                        min={param.min || param.range?.[0] || 0}
+                        max={param.max || param.range?.[1] || 100}
+                        step={param.step || param.range?.[2] || 1}
+                        className="w-12 px-1 py-0.5 text-xs text-center border border-gray-200 rounded"
+                      />
                     </div>
                   )}
 
@@ -302,7 +325,7 @@ export function UnifiedParametersTool() {
                   
                   {/* Handle new format with range and options */}
                   {!param.type && param.range && (
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2">
                       <Slider
                         value={[typeof value === 'number' ? value : param.range[0] || 0]}
                         onValueChange={([v]) => updateCustom({ [key]: v })}
@@ -311,9 +334,20 @@ export function UnifiedParametersTool() {
                         step={param.range[2]}
                         className="flex-1"
                       />
-                      <span className="text-xs text-gray-500 w-12 text-right">
-                        {typeof value === 'number' ? value.toFixed(param.range[2] < 1 ? 2 : 0) : value}
-                      </span>
+                      <input
+                        type="number"
+                        value={typeof value === 'number' ? value : param.range[0] || 0}
+                        onChange={(e) => {
+                          const v = parseFloat(e.target.value);
+                          if (!isNaN(v)) {
+                            updateCustom({ [key]: Math.max(param.range[0], Math.min(param.range[1], v)) });
+                          }
+                        }}
+                        min={param.range[0]}
+                        max={param.range[1]}
+                        step={param.range[2]}
+                        className="w-12 px-1 py-0.5 text-xs text-center border border-gray-200 rounded"
+                      />
                     </div>
                   )}
                   
