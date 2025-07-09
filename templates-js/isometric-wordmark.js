@@ -1,8 +1,8 @@
 /**
  * 🏷️ Isometric Wordmark
  * 
- * Clean isometric wordmark positioned on rounded rectangle platforms
- * Perfect for brand identity with elegant 3D depth and optional layers
+ * Clean isometric wordmark with simplified 3D effect
+ * Perfect for brand identity with elegant depth and optional layers
  */
 
 function draw(ctx, width, height, params, time, utils) {
@@ -168,7 +168,9 @@ function drawUprightRoundedPlatform(ctx, x, y, z, width, depth, height, radius, 
   if (wordmarkFace === 'top') {
     drawRoundedTopFace(ctx, x, y, z + height, width, depth, radius, project);
   } else {
-    drawTopFace(ctx, x, y, z + height, width, depth, project);
+    // Pass radius info if adjacent face has rounded corners
+    const adjacentRadius = (wordmarkFace === 'front' || wordmarkFace === 'side') ? radius : 0;
+    drawTopFace(ctx, x, y, z + height, width, depth, project, adjacentRadius, wordmarkFace);
   }
   ctx.fill();
   ctx.stroke();
@@ -179,7 +181,9 @@ function drawUprightRoundedPlatform(ctx, x, y, z, width, depth, height, radius, 
   if (wordmarkFace === 'front') {
     drawRoundedFrontFace(ctx, x, y + depth, z, width, height, radius, project);
   } else {
-    drawFrontFace(ctx, x, y + depth, z, width, height, project);
+    // Pass radius info if adjacent face has rounded corners
+    const adjacentRadius = (wordmarkFace === 'top' || wordmarkFace === 'side') ? radius : 0;
+    drawFrontFace(ctx, x, y + depth, z, width, height, project, adjacentRadius, wordmarkFace);
   }
   ctx.fill();
   ctx.stroke();
@@ -190,7 +194,9 @@ function drawUprightRoundedPlatform(ctx, x, y, z, width, depth, height, radius, 
   if (wordmarkFace === 'side') {
     drawRoundedRightFace(ctx, x + width, y, z, depth, height, radius, project);
   } else {
-    drawRightFace(ctx, x + width, y, z, depth, height, project);
+    // Pass radius info if adjacent face has rounded corners
+    const adjacentRadius = (wordmarkFace === 'front' || wordmarkFace === 'top') ? radius : 0;
+    drawRightFace(ctx, x + width, y, z, depth, height, project, adjacentRadius, wordmarkFace);
   }
   ctx.fill();
   ctx.stroke();
@@ -214,53 +220,77 @@ function drawRoundedTopFace(ctx, x, y, z, width, depth, radius, project) {
   // Clamp radius to not exceed half the smallest dimension
   const maxRadius = Math.min(width, depth) / 2;
   const actualRadius = Math.min(radius, maxRadius);
+  const segments = 8;
   
-  // Start from top-left corner (after radius)
-  let p = project(x + actualRadius, y, z);
-  ctx.moveTo(p.x, p.y);
-  
-  // Top edge
-  p = project(x + width - actualRadius, y, z);
-  ctx.lineTo(p.x, p.y);
-  
-  // Top-right corner (rounded)
   if (actualRadius > 0) {
-    let p1 = project(x + width, y, z);
-    let p2 = project(x + width, y + actualRadius, z);
-    ctx.arcTo(p1.x, p1.y, p2.x, p2.y, actualRadius);
-  }
-  
-  // Right edge
-  p = project(x + width, y + depth - actualRadius, z);
-  ctx.lineTo(p.x, p.y);
-  
-  // Bottom-right corner (rounded)
-  if (actualRadius > 0) {
-    let p1 = project(x + width, y + depth, z);
-    let p2 = project(x + width - actualRadius, y + depth, z);
-    ctx.arcTo(p1.x, p1.y, p2.x, p2.y, actualRadius);
-  }
-  
-  // Bottom edge
-  p = project(x + actualRadius, y + depth, z);
-  ctx.lineTo(p.x, p.y);
-  
-  // Bottom-left corner (rounded)
-  if (actualRadius > 0) {
-    let p1 = project(x, y + depth, z);
-    let p2 = project(x, y + depth - actualRadius, z);
-    ctx.arcTo(p1.x, p1.y, p2.x, p2.y, actualRadius);
-  }
-  
-  // Left edge
-  p = project(x, y + actualRadius, z);
-  ctx.lineTo(p.x, p.y);
-  
-  // Top-left corner (rounded)
-  if (actualRadius > 0) {
-    let p1 = project(x, y, z);
-    let p2 = project(x + actualRadius, y, z);
-    ctx.arcTo(p1.x, p1.y, p2.x, p2.y, actualRadius);
+    // Start from top-left corner (after radius)
+    let p = project(x + actualRadius, y, z);
+    ctx.moveTo(p.x, p.y);
+    
+    // Top edge
+    p = project(x + width - actualRadius, y, z);
+    ctx.lineTo(p.x, p.y);
+    
+    // Top-right corner (rounded)
+    for (let i = 0; i <= segments; i++) {
+      const angle = (i / segments) * Math.PI / 2;
+      const px = x + width - actualRadius + actualRadius * Math.sin(angle);
+      const py = y + actualRadius * (1 - Math.cos(angle));
+      p = project(px, py, z);
+      ctx.lineTo(p.x, p.y);
+    }
+    
+    // Right edge
+    p = project(x + width, y + depth - actualRadius, z);
+    ctx.lineTo(p.x, p.y);
+    
+    // Bottom-right corner (rounded)
+    for (let i = 0; i <= segments; i++) {
+      const angle = (i / segments) * Math.PI / 2;
+      const px = x + width - actualRadius * (1 - Math.cos(angle));
+      const py = y + depth - actualRadius + actualRadius * Math.sin(angle);
+      p = project(px, py, z);
+      ctx.lineTo(p.x, p.y);
+    }
+    
+    // Bottom edge
+    p = project(x + actualRadius, y + depth, z);
+    ctx.lineTo(p.x, p.y);
+    
+    // Bottom-left corner (rounded)
+    for (let i = 0; i <= segments; i++) {
+      const angle = (i / segments) * Math.PI / 2;
+      const px = x + actualRadius - actualRadius * Math.sin(angle);
+      const py = y + depth - actualRadius * (1 - Math.cos(angle));
+      p = project(px, py, z);
+      ctx.lineTo(p.x, p.y);
+    }
+    
+    // Left edge
+    p = project(x, y + actualRadius, z);
+    ctx.lineTo(p.x, p.y);
+    
+    // Top-left corner (rounded)
+    for (let i = 0; i <= segments; i++) {
+      const angle = (i / segments) * Math.PI / 2;
+      const px = x + actualRadius * (1 - Math.cos(angle));
+      const py = y + actualRadius - actualRadius * Math.sin(angle);
+      p = project(px, py, z);
+      ctx.lineTo(p.x, p.y);
+    }
+  } else {
+    // No radius - draw straight edges
+    let p = project(x, y, z);
+    ctx.moveTo(p.x, p.y);
+    
+    p = project(x + width, y, z);
+    ctx.lineTo(p.x, p.y);
+    
+    p = project(x + width, y + depth, z);
+    ctx.lineTo(p.x, p.y);
+    
+    p = project(x, y + depth, z);
+    ctx.lineTo(p.x, p.y);
   }
   
   ctx.closePath();
@@ -276,116 +306,423 @@ function drawRoundedFrontFace(ctx, x, y, z, width, height, radius, project) {
   const maxRadius = Math.min(width, height) / 2;
   const actualRadius = Math.min(radius, maxRadius);
   
-  // Start from bottom-left corner (after radius)
-  let p = project(x + actualRadius, y, z);
-  ctx.moveTo(p.x, p.y);
-  
-  // Bottom edge
-  p = project(x + width - actualRadius, y, z);
-  ctx.lineTo(p.x, p.y);
-  
-  // Bottom-right corner (rounded)
   if (actualRadius > 0) {
-    let p1 = project(x + width, y, z);
-    let p2 = project(x + width, y, z + actualRadius);
-    ctx.arcTo(p1.x, p1.y, p2.x, p2.y, actualRadius);
+    // Start from bottom-left corner (after radius)
+    let p = project(x + actualRadius, y, z);
+    ctx.moveTo(p.x, p.y);
+    
+    // Bottom edge
+    p = project(x + width - actualRadius, y, z);
+    ctx.lineTo(p.x, p.y);
+    
+    // Bottom-right corner (rounded)
+    const segments = 8;
+    for (let i = 0; i <= segments; i++) {
+      const angle = (i / segments) * Math.PI / 2;
+      const px = x + width - actualRadius + actualRadius * Math.sin(angle);
+      const pz = z + actualRadius * (1 - Math.cos(angle));
+      p = project(px, y, pz);
+      ctx.lineTo(p.x, p.y);
+    }
+  } else {
+    // No radius - start from bottom-left
+    let p = project(x, y, z);
+    ctx.moveTo(p.x, p.y);
+    
+    // Bottom edge
+    p = project(x + width, y, z);
+    ctx.lineTo(p.x, p.y);
   }
   
-  // Right edge
-  p = project(x + width, y, z + height - actualRadius);
-  ctx.lineTo(p.x, p.y);
-  
-  // Top-right corner (rounded)
   if (actualRadius > 0) {
-    let p1 = project(x + width, y, z + height);
-    let p2 = project(x + width - actualRadius, y, z + height);
-    ctx.arcTo(p1.x, p1.y, p2.x, p2.y, actualRadius);
-  }
-  
-  // Top edge
-  p = project(x + actualRadius, y, z + height);
-  ctx.lineTo(p.x, p.y);
-  
-  // Top-left corner (rounded)
-  if (actualRadius > 0) {
-    let p1 = project(x, y, z + height);
-    let p2 = project(x, y, z + height - actualRadius);
-    ctx.arcTo(p1.x, p1.y, p2.x, p2.y, actualRadius);
-  }
-  
-  // Left edge
-  p = project(x, y, z + actualRadius);
-  ctx.lineTo(p.x, p.y);
-  
-  // Bottom-left corner (rounded)
-  if (actualRadius > 0) {
-    let p1 = project(x, y, z);
-    let p2 = project(x + actualRadius, y, z);
-    ctx.arcTo(p1.x, p1.y, p2.x, p2.y, actualRadius);
+    // Right edge
+    p = project(x + width, y, z + height - actualRadius);
+    ctx.lineTo(p.x, p.y);
+    
+    // Top-right corner (rounded)
+    const segments = 8;
+    for (let i = 0; i <= segments; i++) {
+      const angle = (i / segments) * Math.PI / 2;
+      const px = x + width - actualRadius * (1 - Math.cos(angle));
+      const pz = z + height - actualRadius + actualRadius * Math.sin(angle);
+      p = project(px, y, pz);
+      ctx.lineTo(p.x, p.y);
+    }
+    
+    // Top edge
+    p = project(x + actualRadius, y, z + height);
+    ctx.lineTo(p.x, p.y);
+    
+    // Top-left corner (rounded)
+    for (let i = 0; i <= segments; i++) {
+      const angle = (i / segments) * Math.PI / 2;
+      const px = x + actualRadius - actualRadius * Math.sin(angle);
+      const pz = z + height - actualRadius * (1 - Math.cos(angle));
+      p = project(px, y, pz);
+      ctx.lineTo(p.x, p.y);
+    }
+    
+    // Left edge
+    p = project(x, y, z + actualRadius);
+    ctx.lineTo(p.x, p.y);
+    
+    // Bottom-left corner (rounded)
+    for (let i = 0; i <= segments; i++) {
+      const angle = (i / segments) * Math.PI / 2;
+      const px = x + actualRadius * (1 - Math.cos(angle));
+      const pz = z + actualRadius - actualRadius * Math.sin(angle);
+      p = project(px, y, pz);
+      ctx.lineTo(p.x, p.y);
+    }
+  } else {
+    // No radius - draw straight edges
+    p = project(x + width, y, z + height);
+    ctx.lineTo(p.x, p.y);
+    
+    p = project(x, y, z + height);
+    ctx.lineTo(p.x, p.y);
+    
+    p = project(x, y, z);
+    ctx.lineTo(p.x, p.y);
   }
   
   ctx.closePath();
 }
 
 /**
- * Draw right face
+ * Draw rounded right face (side face)
  */
-function drawRightFace(ctx, x, y, z, depth, height, project) {
+function drawRoundedRightFace(ctx, x, y, z, depth, height, radius, project) {
   ctx.beginPath();
   
-  let p = project(x, y, z);
-  ctx.moveTo(p.x + 0.5, p.y + 0.5);
+  // Clamp radius to not exceed half the smallest dimension
+  const maxRadius = Math.min(depth, height) / 2;
+  const actualRadius = Math.min(radius, maxRadius);
+  const segments = 8;
   
-  p = project(x, y + depth, z);
-  ctx.lineTo(p.x, p.y);
-  
-  p = project(x, y + depth, z + height);
-  ctx.lineTo(p.x, p.y);
-  
-  p = project(x, y, z + height);
-  ctx.lineTo(p.x, p.y);
+  if (actualRadius > 0) {
+    // Start from bottom-back corner (after radius)
+    let p = project(x, y + actualRadius, z);
+    ctx.moveTo(p.x, p.y);
+    
+    // Bottom edge
+    p = project(x, y + depth - actualRadius, z);
+    ctx.lineTo(p.x, p.y);
+    
+    // Bottom-front corner (rounded)
+    for (let i = 0; i <= segments; i++) {
+      const angle = (i / segments) * Math.PI / 2;
+      const py = y + depth - actualRadius + actualRadius * Math.sin(angle);
+      const pz = z + actualRadius * (1 - Math.cos(angle));
+      p = project(x, py, pz);
+      ctx.lineTo(p.x, p.y);
+    }
+    
+    // Front edge
+    p = project(x, y + depth, z + height - actualRadius);
+    ctx.lineTo(p.x, p.y);
+    
+    // Top-front corner (rounded)
+    for (let i = 0; i <= segments; i++) {
+      const angle = (i / segments) * Math.PI / 2;
+      const py = y + depth - actualRadius * (1 - Math.cos(angle));
+      const pz = z + height - actualRadius + actualRadius * Math.sin(angle);
+      p = project(x, py, pz);
+      ctx.lineTo(p.x, p.y);
+    }
+    
+    // Top edge
+    p = project(x, y + actualRadius, z + height);
+    ctx.lineTo(p.x, p.y);
+    
+    // Top-back corner (rounded)
+    for (let i = 0; i <= segments; i++) {
+      const angle = (i / segments) * Math.PI / 2;
+      const py = y + actualRadius - actualRadius * Math.sin(angle);
+      const pz = z + height - actualRadius * (1 - Math.cos(angle));
+      p = project(x, py, pz);
+      ctx.lineTo(p.x, p.y);
+    }
+    
+    // Back edge
+    p = project(x, y, z + actualRadius);
+    ctx.lineTo(p.x, p.y);
+    
+    // Bottom-back corner (rounded)
+    for (let i = 0; i <= segments; i++) {
+      const angle = (i / segments) * Math.PI / 2;
+      const py = y + actualRadius * (1 - Math.cos(angle));
+      const pz = z + actualRadius - actualRadius * Math.sin(angle);
+      p = project(x, py, pz);
+      ctx.lineTo(p.x, p.y);
+    }
+  } else {
+    // No radius - draw straight edges
+    let p = project(x, y, z);
+    ctx.moveTo(p.x, p.y);
+    
+    p = project(x, y + depth, z);
+    ctx.lineTo(p.x, p.y);
+    
+    p = project(x, y + depth, z + height);
+    ctx.lineTo(p.x, p.y);
+    
+    p = project(x, y, z + height);
+    ctx.lineTo(p.x, p.y);
+  }
   
   ctx.closePath();
 }
 
 /**
- * Draw top face (without rounded corners)
+ * Draw right face with curved edges if adjacent face has rounded corners
  */
-function drawTopFace(ctx, x, y, z, width, depth, project) {
+function drawRightFace(ctx, x, y, z, depth, height, project, radius = 0, roundedFace = null) {
   ctx.beginPath();
   
-  let p = project(x, y, z);
-  ctx.moveTo(p.x + 0.5, p.y + 0.5);
+  const actualRadius = Math.min(radius, Math.min(depth, height) / 2);
   
-  p = project(x + width, y, z);
-  ctx.lineTo(p.x, p.y);
-  
-  p = project(x + width, y + depth, z);
-  ctx.lineTo(p.x, p.y);
-  
-  p = project(x, y + depth, z);
-  ctx.lineTo(p.x, p.y);
+  if (actualRadius > 0 && roundedFace) {
+    // If front face has rounded corners, adjust front edge
+    if (roundedFace === 'front') {
+      // Start from front-bottom corner (with curve)
+      let p = project(x, y + depth - actualRadius, z);
+      ctx.moveTo(p.x, p.y);
+      
+      // Bottom edge
+      p = project(x, y + actualRadius, z);
+      ctx.lineTo(p.x, p.y);
+      
+      // Back-bottom corner
+      p = project(x, y, z);
+      ctx.lineTo(p.x, p.y);
+      
+      // Back edge
+      p = project(x, y, z + height);
+      ctx.lineTo(p.x, p.y);
+      
+      // Top edge
+      p = project(x, y + depth - actualRadius, z + height);
+      ctx.lineTo(p.x, p.y);
+      
+      // Front-top curve
+      drawCurvedCorner(ctx, project, x, y + depth - actualRadius, z + height, x, y + depth, z + height - actualRadius, actualRadius);
+      
+      // Front edge with curves
+      p = project(x, y + depth, z + actualRadius);
+      ctx.lineTo(p.x, p.y);
+      
+      // Front-bottom curve
+      drawCurvedCorner(ctx, project, x, y + depth, z + actualRadius, x, y + depth - actualRadius, z, actualRadius);
+    }
+    // Similar logic for top face rounded corners
+    else if (roundedFace === 'top') {
+      // Adjust top edge for curved corners
+      let p = project(x, y, z);
+      ctx.moveTo(p.x, p.y);
+      
+      // Bottom edge
+      p = project(x, y + depth, z);
+      ctx.lineTo(p.x, p.y);
+      
+      // Front edge
+      p = project(x, y + depth, z + height - actualRadius);
+      ctx.lineTo(p.x, p.y);
+      
+      // Top-front curve
+      drawCurvedCorner(ctx, project, x, y + depth, z + height - actualRadius, x, y + depth - actualRadius, z + height, actualRadius);
+      
+      // Top edge with curves
+      p = project(x, y + actualRadius, z + height);
+      ctx.lineTo(p.x, p.y);
+      
+      // Top-back curve
+      drawCurvedCorner(ctx, project, x, y + actualRadius, z + height, x, y, z + height - actualRadius, actualRadius);
+      
+      // Back edge
+      p = project(x, y, z + actualRadius);
+      ctx.lineTo(p.x, p.y);
+    }
+  } else {
+    // Standard rectangular right face
+    let p = project(x, y, z);
+    ctx.moveTo(p.x + 0.5, p.y + 0.5);
+    
+    p = project(x, y + depth, z);
+    ctx.lineTo(p.x, p.y);
+    
+    p = project(x, y + depth, z + height);
+    ctx.lineTo(p.x, p.y);
+    
+    p = project(x, y, z + height);
+    ctx.lineTo(p.x, p.y);
+  }
   
   ctx.closePath();
 }
 
 /**
- * Draw front face (without rounded corners)
+ * Draw top face with curved edges if adjacent face has rounded corners
  */
-function drawFrontFace(ctx, x, y, z, width, height, project) {
+function drawTopFace(ctx, x, y, z, width, depth, project, radius = 0, roundedFace = null) {
   ctx.beginPath();
   
-  let p = project(x, y, z);
-  ctx.moveTo(p.x + 0.5, p.y + 0.5);
+  const actualRadius = Math.min(radius, Math.min(width, depth) / 2);
   
-  p = project(x + width, y, z);
-  ctx.lineTo(p.x, p.y);
+  if (actualRadius > 0 && roundedFace) {
+    // If front face has rounded corners, adjust front edge
+    if (roundedFace === 'front') {
+      // Start from front-left corner (with curve)
+      let p = project(x + actualRadius, y + depth, z);
+      ctx.moveTo(p.x, p.y);
+      
+      // Front edge with curves
+      p = project(x + width - actualRadius, y + depth, z);
+      ctx.lineTo(p.x, p.y);
+      
+      // Front-right curve
+      drawCurvedCorner(ctx, project, x + width - actualRadius, y + depth, z, x + width, y + depth - actualRadius, z, actualRadius);
+      
+      // Right edge
+      p = project(x + width, y + actualRadius, z);
+      ctx.lineTo(p.x, p.y);
+      
+      // Back-right corner
+      p = project(x + width, y, z);
+      ctx.lineTo(p.x, p.y);
+      
+      // Back edge
+      p = project(x, y, z);
+      ctx.lineTo(p.x, p.y);
+      
+      // Left edge
+      p = project(x, y + depth - actualRadius, z);
+      ctx.lineTo(p.x, p.y);
+      
+      // Front-left curve
+      drawCurvedCorner(ctx, project, x, y + depth - actualRadius, z, x + actualRadius, y + depth, z, actualRadius);
+    }
+    // Similar logic for side face rounded corners
+    else if (roundedFace === 'side') {
+      // Adjust right edge for curved corners
+      let p = project(x, y, z);
+      ctx.moveTo(p.x, p.y);
+      
+      // Top edge
+      p = project(x + width - actualRadius, y, z);
+      ctx.lineTo(p.x, p.y);
+      
+      // Back-right curve
+      drawCurvedCorner(ctx, project, x + width - actualRadius, y, z, x + width, y + actualRadius, z, actualRadius);
+      
+      // Right edge with curves
+      p = project(x + width, y + depth - actualRadius, z);
+      ctx.lineTo(p.x, p.y);
+      
+      // Front-right curve
+      drawCurvedCorner(ctx, project, x + width, y + depth - actualRadius, z, x + width - actualRadius, y + depth, z, actualRadius);
+      
+      // Bottom edge
+      p = project(x, y + depth, z);
+      ctx.lineTo(p.x, p.y);
+    }
+  } else {
+    // Standard rectangular top face
+    let p = project(x, y, z);
+    ctx.moveTo(p.x + 0.5, p.y + 0.5);
+    
+    p = project(x + width, y, z);
+    ctx.lineTo(p.x, p.y);
+    
+    p = project(x + width, y + depth, z);
+    ctx.lineTo(p.x, p.y);
+    
+    p = project(x, y + depth, z);
+    ctx.lineTo(p.x, p.y);
+  }
   
-  p = project(x + width, y, z + height);
-  ctx.lineTo(p.x, p.y);
+  ctx.closePath();
+}
+
+/**
+ * Draw front face with curved edges if adjacent face has rounded corners
+ */
+function drawFrontFace(ctx, x, y, z, width, height, project, radius = 0, roundedFace = null) {
+  ctx.beginPath();
   
-  p = project(x, y, z + height);
-  ctx.lineTo(p.x, p.y);
+  const actualRadius = Math.min(radius, Math.min(width, height) / 2);
+  
+  if (actualRadius > 0 && roundedFace) {
+    // If top face has rounded corners, adjust top edge
+    if (roundedFace === 'top') {
+      // Start from top-left corner (with curve)
+      let p = project(x + actualRadius, y, z + height);
+      ctx.moveTo(p.x, p.y);
+      
+      // Top edge with curves
+      p = project(x + width - actualRadius, y, z + height);
+      ctx.lineTo(p.x, p.y);
+      
+      // Top-right curve
+      drawCurvedCorner(ctx, project, x + width - actualRadius, y, z + height, x + width, y, z + height - actualRadius, actualRadius);
+      
+      // Right edge
+      p = project(x + width, y, z + actualRadius);
+      ctx.lineTo(p.x, p.y);
+      
+      // Bottom-right corner
+      p = project(x + width, y, z);
+      ctx.lineTo(p.x, p.y);
+      
+      // Bottom edge
+      p = project(x, y, z);
+      ctx.lineTo(p.x, p.y);
+      
+      // Left edge
+      p = project(x, y, z + height - actualRadius);
+      ctx.lineTo(p.x, p.y);
+      
+      // Top-left curve
+      drawCurvedCorner(ctx, project, x, y, z + height - actualRadius, x + actualRadius, y, z + height, actualRadius);
+    }
+    // Similar logic for side face rounded corners
+    else if (roundedFace === 'side') {
+      // Adjust right edge for curved corners
+      let p = project(x, y, z);
+      ctx.moveTo(p.x, p.y);
+      
+      // Bottom edge
+      p = project(x + width - actualRadius, y, z);
+      ctx.lineTo(p.x, p.y);
+      
+      // Bottom-right curve
+      drawCurvedCorner(ctx, project, x + width - actualRadius, y, z, x + width, y, z + actualRadius, actualRadius);
+      
+      // Right edge with curves
+      p = project(x + width, y, z + height - actualRadius);
+      ctx.lineTo(p.x, p.y);
+      
+      // Top-right curve
+      drawCurvedCorner(ctx, project, x + width, y, z + height - actualRadius, x + width - actualRadius, y, z + height, actualRadius);
+      
+      // Top edge
+      p = project(x, y, z + height);
+      ctx.lineTo(p.x, p.y);
+    }
+  } else {
+    // Standard rectangular front face
+    let p = project(x, y, z);
+    ctx.moveTo(p.x + 0.5, p.y + 0.5);
+    
+    p = project(x + width, y, z);
+    ctx.lineTo(p.x, p.y);
+    
+    p = project(x + width, y, z + height);
+    ctx.lineTo(p.x, p.y);
+    
+    p = project(x, y, z + height);
+    ctx.lineTo(p.x, p.y);
+  }
   
   ctx.closePath();
 }
@@ -564,15 +901,172 @@ function drawConnectingEdges(ctx, x, y, z, width, depth, height, radius, project
 }
 
 /**
+ * Draw a curved corner in 2D projection space
+ */
+function drawCurvedCorner(ctx, project, x1, y1, z1, x2, y2, z2, radius) {
+  const segments = 8;
+  
+  // Determine which axis the curve is on
+  const isXAxis = (y1 === y2 && z1 === z2);
+  const isYAxis = (x1 === x2 && z1 === z2);
+  const isZAxis = (x1 === x2 && y1 === y2);
+  
+  // Draw the curve by interpolating between the two points
+  for (let i = 0; i <= segments; i++) {
+    const t = i / segments;
+    const angle = t * Math.PI / 2; // 90 degree arc
+    
+    let x, y, z;
+    
+    if (isXAxis) {
+      // Curve in X-Y or X-Z plane
+      const centerX = Math.min(x1, x2) + radius;
+      x = centerX - radius * Math.cos(angle) * Math.sign(x2 - x1);
+      y = y1;
+      z = z1;
+    } else if (isYAxis) {
+      // Curve in Y-X or Y-Z plane
+      const centerY = Math.min(y1, y2) + radius;
+      x = x1;
+      y = centerY - radius * Math.cos(angle) * Math.sign(y2 - y1);
+      z = z1;
+    } else if (isZAxis) {
+      // Curve in Z-X or Z-Y plane
+      const centerZ = Math.min(z1, z2) + radius;
+      x = x1;
+      y = y1;
+      z = centerZ - radius * Math.cos(angle) * Math.sign(z2 - z1);
+    } else {
+      // Complex 3D curve - need to handle the corner where two axes change
+      const dx = x2 - x1;
+      const dy = y2 - y1;
+      const dz = z2 - z1;
+      
+      // Find the corner point
+      let cornerX = x1, cornerY = y1, cornerZ = z1;
+      if (dx !== 0 && dy !== 0) {
+        // X-Y corner
+        cornerX = x2;
+        cornerY = y1;
+        const cosA = Math.cos(angle);
+        const sinA = Math.sin(angle);
+        x = cornerX - radius * (1 - sinA) * Math.sign(dx);
+        y = cornerY + radius * (1 - cosA) * Math.sign(dy);
+        z = z1;
+      } else if (dx !== 0 && dz !== 0) {
+        // X-Z corner
+        cornerX = x2;
+        cornerZ = z1;
+        const cosA = Math.cos(angle);
+        const sinA = Math.sin(angle);
+        x = cornerX - radius * (1 - sinA) * Math.sign(dx);
+        y = y1;
+        z = cornerZ + radius * (1 - cosA) * Math.sign(dz);
+      } else if (dy !== 0 && dz !== 0) {
+        // Y-Z corner
+        cornerY = y2;
+        cornerZ = z1;
+        const cosA = Math.cos(angle);
+        const sinA = Math.sin(angle);
+        x = x1;
+        y = cornerY - radius * (1 - sinA) * Math.sign(dy);
+        z = cornerZ + radius * (1 - cosA) * Math.sign(dz);
+      }
+    }
+    
+    const p = project(x, y, z);
+    
+    if (i === 0) {
+      ctx.lineTo(p.x, p.y);
+    } else {
+      ctx.lineTo(p.x, p.y);
+    }
+  }
+}
+
+/**
  * Draw a curved connecting edge that follows the rounded corner
  */
 function drawCurvedConnectingEdge(ctx, project, x1, y1, z1, x2, y2, z2, radius, axis) {
-  const p1 = project(x1, y1, z1);
-  const p2 = project(x2, y2, z2);
-  
   ctx.beginPath();
-  ctx.moveTo(p1.x, p1.y);
-  ctx.lineTo(p2.x, p2.y);
+  
+  const segments = 8;
+  
+  // Determine the direction of the curve
+  if (axis === 'x') {
+    // Edge extends in X direction
+    const length = Math.abs(x2 - x1);
+    const dir = Math.sign(x2 - x1);
+    
+    for (let i = 0; i <= segments; i++) {
+      const t = i / segments;
+      const distance = t * radius;
+      
+      // Start straight, then curve
+      let x, y, z;
+      if (distance < radius) {
+        const angle = (1 - t) * Math.PI / 2;
+        x = x1 + dir * radius * (1 - Math.sin(angle));
+        y = y1;
+        z = z1;
+      } else {
+        x = x1 + dir * distance;
+        y = y1;
+        z = z1;
+      }
+      
+      const p = project(x, y, z);
+      if (i === 0) {
+        ctx.moveTo(p.x, p.y);
+      } else {
+        ctx.lineTo(p.x, p.y);
+      }
+    }
+    
+    // Complete the edge
+    const pEnd = project(x2, y2, z2);
+    ctx.lineTo(pEnd.x, pEnd.y);
+  } else if (axis === 'y') {
+    // Edge extends in Y direction
+    const length = Math.abs(y2 - y1);
+    const dir = Math.sign(y2 - y1);
+    
+    for (let i = 0; i <= segments; i++) {
+      const t = i / segments;
+      const distance = t * radius;
+      
+      // Start straight, then curve
+      let x, y, z;
+      if (distance < radius) {
+        const angle = (1 - t) * Math.PI / 2;
+        x = x1;
+        y = y1 + dir * radius * (1 - Math.sin(angle));
+        z = z1;
+      } else {
+        x = x1;
+        y = y1 + dir * distance;
+        z = z1;
+      }
+      
+      const p = project(x, y, z);
+      if (i === 0) {
+        ctx.moveTo(p.x, p.y);
+      } else {
+        ctx.lineTo(p.x, p.y);
+      }
+    }
+    
+    // Complete the edge
+    const pEnd = project(x2, y2, z2);
+    ctx.lineTo(pEnd.x, pEnd.y);
+  } else {
+    // Z axis or unknown - draw straight line
+    const p1 = project(x1, y1, z1);
+    const p2 = project(x2, y2, z2);
+    ctx.moveTo(p1.x, p1.y);
+    ctx.lineTo(p2.x, p2.y);
+  }
+  
   ctx.stroke();
 }
 
@@ -581,13 +1075,36 @@ function drawCurvedConnectingEdge(ctx, project, x1, y1, z1, x2, y2, z2, radius, 
  */
 function drawCurvedVerticalEdge(ctx, project, x, y, z1, x2, y2, z2, radius) {
   // For vertical edges on faces with rounded corners
-  const segments = 8;
+  const segments = 12;
   ctx.beginPath();
+  
+  const height = Math.abs(z2 - z1);
+  const dir = Math.sign(z2 - z1);
   
   for (let i = 0; i <= segments; i++) {
     const t = i / segments;
-    const z = z1 + (z2 - z1) * t;
-    const p = project(x, y, z);
+    let z, offsetX = 0, offsetY = 0;
+    
+    // Create rounded corners at top and bottom
+    if (t < 0.1) {
+      // Bottom curve
+      const angle = (1 - t * 10) * Math.PI / 2;
+      z = z1 + dir * radius * (1 - Math.cos(angle));
+      // Slightly offset to follow the curve
+      offsetX = radius * (1 - Math.sin(angle)) * 0.1;
+    } else if (t > 0.9) {
+      // Top curve
+      const localT = (t - 0.9) * 10;
+      const angle = localT * Math.PI / 2;
+      z = z2 - dir * radius * (1 - Math.cos(angle));
+      // Slightly offset to follow the curve
+      offsetX = radius * (1 - Math.sin(angle)) * 0.1;
+    } else {
+      // Straight middle section
+      z = z1 + dir * height * t;
+    }
+    
+    const p = project(x + offsetX, y + offsetY, z);
     
     if (i === 0) {
       ctx.moveTo(p.x, p.y);

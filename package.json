@@ -53,6 +53,7 @@
     "@swc/wasm-web": "^1.12.9",
     "@types/better-sqlite3": "^7.6.13",
     "@types/lodash": "^4.17.20",
+    "@types/three": "^0.178.1",
     "@uiw/react-codemirror": "^4.23.13",
     "ai": "^4.3.16",
     "better-auth": "^1.2.12",
@@ -78,6 +79,7 @@
     "sharp": "^0.33.4",
     "tailwind-merge": "^3.3.1",
     "tailwindcss-animate": "^1.0.7",
+    "three": "^0.178.0",
     "zod": "^3.25.74",
     "zustand": "^4.5.4"
   },

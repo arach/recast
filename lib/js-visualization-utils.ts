@@ -3,6 +3,12 @@ import { loadJSTemplate } from './js-template-registry'
 import * as templateUtils from '@reflow/template-utils'
 // Import local parameter utilities
 import { params, iso } from './template-utils'
+// Import Three.js
+import * as THREE from 'three'
+// Import Three.js utilities
+import * as threeUtils from './three-utils'
+// Import Three.js canvas manager
+import { threeCanvasManager } from './three-canvas-manager'
 
 // Font utility function that templates expect
 const fontUtils = {
@@ -37,6 +43,17 @@ const utils = {
   params,
   // Isometric utilities
   iso,
+  // Three.js
+  three: THREE,
+  threeUtils: {
+    getOrCreateScene: threeUtils.getOrCreateScene,
+    clearScene: threeUtils.clearScene,
+    createRoundedRectShape: threeUtils.createRoundedRectShape,
+    createTextTexture: threeUtils.createTextTexture,
+    createTextLabel: threeUtils.createTextLabel,
+    createRoundedPrism: threeUtils.createRoundedPrism
+  },
+  threeCanvasManager,
   // Legacy compatibility - add all the utility functions templates expect
   applyUniversalBackground: templateUtils.applyUniversalBackground,
   applyUniversalFill: (ctx: CanvasRenderingContext2D, params: any) => {
