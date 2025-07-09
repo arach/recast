@@ -7,6 +7,7 @@ import html2canvas from 'html2canvas';
 import { generateJSVisualization } from '@/lib/js-visualization-utils';
 import { getAllJSTemplates } from '@/lib/js-template-registry';
 import TargetOverlay from '@/components/TargetOverlay';
+import ParameterEditor from '@/components/ParameterEditor';
 import { ZoomIn, ZoomOut, Home, Search } from 'lucide-react';
 
 // Logo rendering component with pan/zoom for the spec sheet
@@ -14,11 +15,19 @@ interface LogoCanvasProps {
   logo: any;
   width: number;
   height: number;
+  onTemplateLoaded?: (date: Date) => void;
+  forceRefetch?: boolean;
 }
 
-function LogoCanvas({ logo, width, height }: LogoCanvasProps) {
+function LogoCanvas({ logo, width, height, onTemplateLoaded, forceRefetch }: LogoCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  
+  // Cache for loaded templates to avoid reloading on every render
+  const templateCacheRef = useRef<Map<string, any>>(new Map());
+  const [templateLoaded, setTemplateLoaded] = useState(false);
+  const [templateLastFetched, setTemplateLastFetched] = useState<Date | null>(null);
+  const [isRefetching, setIsRefetching] = useState(false);
   
   // Tile system configuration
   const TILE_SIZE = 200; // Pixels per tile
@@ -369,7 +378,36 @@ function LogoCanvas({ logo, width, height }: LogoCanvasProps) {
           viewHeight: height
         }
       };
-      generateJSVisualization(ctx, logo.templateId, enhancedParams, Date.now() * 0.001, width, height);
+      
+      // Check if we should render (skip during drag if template not loaded)
+      const shouldRender = !isDragging || templateCacheRef.current.has(logo.templateId);
+      
+      if (shouldRender) {
+        generateJSVisualization(ctx, logo.templateId, enhancedParams, Date.now() * 0.001, width, height)
+          .then(() => {
+            // Mark template as loaded for future renders
+            if (!templateCacheRef.current.has(logo.templateId)) {
+              templateCacheRef.current.set(logo.templateId, true);
+              setTemplateLoaded(true);
+              const now = new Date();
+              setTemplateLastFetched(now);
+              onTemplateLoaded?.(now);
+              console.log('✅ Template cached:', logo.templateId, 'at', now.toLocaleTimeString());
+            }
+          })
+          .catch(error => {
+            console.error('Failed to render template:', error);
+          });
+      } else {
+        // Show loading state during drag if template not yet loaded
+        ctx.fillStyle = '#f3f4f6';
+        ctx.fillRect(0, 0, width, height);
+        ctx.fillStyle = '#6b7280';
+        ctx.font = '14px monospace';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('Loading template...', width / 2, height / 2);
+      }
     } else {
       console.log('🎨 Rendering placeholder');
       // Fallback placeholder
@@ -387,11 +425,36 @@ function LogoCanvas({ logo, width, height }: LogoCanvasProps) {
     setRenderPending(false);
   }, [logo, width, height, viewport]);
   
-  // Single render for most cases, with optional animation toggle
+  // Preload template when logo changes or force refetch
   useEffect(() => {
-    // Just do a single render for now - user can enable animation later if needed
+    if (!logo?.templateId) return;
+    
+    // Check if already loaded and not forcing refetch
+    if (templateCacheRef.current.has(logo.templateId) && !forceRefetch) {
+      setTemplateLoaded(true);
+      return;
+    }
+    
+    // Clear cache if force refetch
+    if (forceRefetch) {
+      templateCacheRef.current.delete(logo.templateId);
+      console.log('🔄 Force refetching template:', logo.templateId);
+    } else {
+      console.log('🔄 Preloading template:', logo.templateId);
+    }
+    
+    setTemplateLoaded(false);
+    
+    // Just do a single render which will trigger the template load
     performRender();
-  }, [performRender, logo?.templateId]);
+  }, [logo?.templateId, forceRefetch]);
+  
+  // Render when template is loaded or viewport changes significantly
+  useEffect(() => {
+    if (templateLoaded && !isDragging) {
+      performRender();
+    }
+  }, [templateLoaded, viewport.zoom, performRender]);
   
   // Optional animation loop (disabled by default to prevent exploding)
   // Uncomment when we want smooth animations:
@@ -771,11 +834,16 @@ export default function SpecSheetPage() {
   const [lastGenerated, setLastGenerated] = useState<string>('');
   const [hasHydrated, setHasHydrated] = useState(false);
   
+  // Template loading state
+  const [templateLastFetched, setTemplateLastFetched] = useState<Date | null>(null);
+  const [forceRefetchTrigger, setForceRefetchTrigger] = useState(0);
+  
   // Get current logo data from store
   const selectedLogoId = useLogoStore(state => state.selectedLogoId);
   const selectedLogo = useLogoStore(state => state.getSelectedLogo());
   const logos = useLogoStore(state => state.logos);
   const updateLogo = useLogoStore(state => state.updateLogo);
+  const setSelectedLogoId = useLogoStore(state => state.setSelectedLogoId);
   
   // Wait for Zustand persistence to hydrate
   useEffect(() => {
@@ -791,9 +859,37 @@ export default function SpecSheetPage() {
     return unsubHydrate;
   }, []);
   
+  // Handle URL parameters for deep linking
+  useEffect(() => {
+    if (!hasHydrated) return;
+    
+    // Check for logo parameter in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const logoIdParam = urlParams.get('logo');
+    
+    if (logoIdParam && logos.some(logo => logo.id === logoIdParam)) {
+      setSelectedLogoId(logoIdParam);
+    }
+  }, [hasHydrated, logos, setSelectedLogoId]);
+  
+  // Reset force refetch trigger after it's been used
+  useEffect(() => {
+    if (forceRefetchTrigger > 0) {
+      const timer = setTimeout(() => setForceRefetchTrigger(0), 100);
+      return () => clearTimeout(timer);
+    }
+  }, [forceRefetchTrigger]);
+  
   // Template selection state
   const [availableTemplates, setAvailableTemplates] = useState<any[]>([]);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>('wave-bars');
+  
+  // Sync template ID with selected logo
+  useEffect(() => {
+    if (selectedLogo?.templateId) {
+      setSelectedTemplateId(selectedLogo.templateId);
+    }
+  }, [selectedLogo]);
   
   // Parameter editing state
   const [currentParameters, setCurrentParameters] = useState<any>({
@@ -816,34 +912,6 @@ export default function SpecSheetPage() {
     getAllJSTemplates().then(setAvailableTemplates);
   }, []);
 
-  // Load template-specific default parameters when template changes
-  useEffect(() => {
-    const loadTemplateDefaults = async () => {
-      if (!selectedTemplateId) return;
-      
-      try {
-        const templates = await getAllJSTemplates();
-        const template = templates.find(t => t.id === selectedTemplateId);
-        
-        if (template?.parameters) {
-          // Extract default values from parameter definitions
-          const defaults: any = {};
-          Object.entries(template.parameters).forEach(([key, param]: [string, any]) => {
-            if (param.default !== undefined) {
-              defaults[key] = param.default;
-            }
-          });
-          
-          // Set template-specific defaults
-          setCurrentParameters(defaults);
-        }
-      } catch (error) {
-        console.error('Failed to load template defaults:', error);
-      }
-    };
-    
-    loadTemplateDefaults();
-  }, [selectedTemplateId]);
 
 
   // Real-time controls state
@@ -1495,6 +1563,52 @@ export default function SpecSheetPage() {
           </div>
         </div>
 
+        {/* Logo Selection */}
+        <div className="mb-6 p-4 bg-white/[0.015] border border-white/[0.04] rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 animate-in fade-in slide-in-from-bottom-4">
+          <h2 className="font-bold text-white/80 text-base mb-3">Logo Selection</h2>
+          <div className="flex flex-wrap gap-2">
+            {logos.map((logo) => (
+              <button
+                key={logo.id}
+                onClick={() => setSelectedLogoId(logo.id)}
+                className={`group flex items-center gap-2 px-3 py-1 rounded text-xs font-mono transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] ${
+                  selectedLogoId === logo.id
+                    ? 'bg-gradient-to-r from-blue-500/30 to-purple-500/30 text-white font-extralight border border-blue-400/40 shadow-md transform scale-[1.02]'
+                    : 'bg-white/[0.025] text-white/60 font-semibold border border-white/[0.04] hover:bg-white/[0.04] hover:border-white/[0.08] hover:text-white/80 hover:shadow-md'
+                }`}
+              >
+                {/* Mini logo thumbnail */}
+                <div className="w-8 h-8 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded overflow-hidden border border-white/10 group-hover:border-white/20 transition-all flex items-center justify-center">
+                  <span className="text-sm">
+                    {logo.templateId === 'wave-bars' ? '📊' : 
+                     logo.templateId === 'isometric-wordmark' ? '🔤' :
+                     logo.templateId === 'concentric-circles' ? '⭕' :
+                     logo.templateId === 'spiral-phyllotaxis' ? '🌻' :
+                     logo.templateId === 'geometric-flower' ? '🌸' :
+                     logo.templateId === 'wave-interference' ? '🌊' :
+                     logo.templateId === 'particle-system' ? '✨' :
+                     logo.templateId === 'fractal-tree' ? '🌳' :
+                     logo.templateId === 'hexagonal-grid' ? '⬡' :
+                     logo.templateId === 'oscilloscope' ? '📈' :
+                     '🎨'}
+                  </span>
+                </div>
+                <span>{logo.id}</span>
+                <span className="text-white/40">•</span>
+                <span className="text-white/60">{logo.templateName || logo.templateId}</span>
+              </button>
+            ))}
+          </div>
+          {selectedLogoId && (
+            <div className="mt-3 text-xs">
+              <span className="text-white/60 font-semibold">Selected:</span> 
+              <span className="text-white text-[11px] font-mono ml-1">
+                🎨 {selectedLogoId} ({logos.find(l => l.id === selectedLogoId)?.templateName || 'Unknown'})
+              </span>
+            </div>
+          )}
+        </div>
+
         {/* Template Selection */}
         <div className="mb-6 p-4 bg-white/[0.015] border border-white/[0.04] rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 animate-in fade-in slide-in-from-bottom-4">
           <h2 className="font-bold text-white/80 text-base mb-3">Template Selection</h2>
@@ -1502,9 +1616,13 @@ export default function SpecSheetPage() {
             {availableTemplates.map((template) => (
               <button
                 key={template.id}
-                onClick={() => setSelectedTemplateId(template.id)}
+                onClick={() => {
+                  setSelectedTemplateId(template.id);
+                  // Deselect logo when switching to template exploration
+                  setSelectedLogoId(null);
+                }}
                 className={`px-3 py-1 rounded text-xs font-mono transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] ${
-                  selectedTemplateId === template.id
+                  selectedTemplateId === template.id && !selectedLogoId
                     ? 'bg-gradient-to-r from-blue-500/30 to-purple-500/30 text-white font-extralight border border-blue-400/40 shadow-md transform scale-[1.02]'
                     : 'bg-white/[0.025] text-white/60 font-semibold border border-white/[0.04] hover:bg-white/[0.04] hover:border-white/[0.08] hover:text-white/80 hover:shadow-md'
                 }`}
@@ -1513,13 +1631,17 @@ export default function SpecSheetPage() {
               </button>
             ))}
           </div>
-          {selectedTemplateId && (
+          {selectedTemplateId && !selectedLogoId && (
             <div className="mt-3 text-xs">
-              <span className="text-white/60 font-semibold">Selected:</span> <span className="text-white text-[11px] font-mono ml-1">{selectedTemplateId}</span>
+              <span className="text-white/60 font-semibold">Exploring Template:</span> <span className="text-white text-[11px] font-mono ml-1">{selectedTemplateId}</span>
+            </div>
+          )}
+          {selectedLogoId && (
+            <div className="mt-3 text-xs">
+              <span className="text-white/60 font-semibold">Using template from logo:</span> <span className="text-white text-[11px] font-mono ml-1">{selectedTemplateId}</span>
             </div>
           )}
         </div>
-
 
         {/* Specification Sheet */}
         <div className="relative mb-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -1527,10 +1649,10 @@ export default function SpecSheetPage() {
           {/* Preview section */}
           <div 
             ref={specSheetRef}
-            className="bg-gradient-to-br from-slate-950 via-gray-950 to-black p-4 w-full relative z-10 border border-white/10 shadow-xl"
-            style={{ minHeight: '600px' }}
+            className="bg-gradient-to-br from-slate-950 via-gray-950 to-black p-4 w-full relative z-10 border border-white/10 shadow-xl flex"
+            style={{ minHeight: '800px' }}
           >
-            <div className="flex h-full gap-6">
+            <div className="flex flex-1 gap-6">
               {/* Left: Logo Preview */}
               <div className="flex-1 min-w-0 flex flex-col items-start justify-start">
                 <h3 className="font-bold text-white/80 text-base mb-4 relative group">
@@ -1554,18 +1676,17 @@ export default function SpecSheetPage() {
                         {hasHydrated ? (
                           <div className="animate-in fade-in duration-700">
                             <LogoCanvas
-                              logo={{
+                              logo={selectedLogo || {
+                                id: 'template-preview',
                                 templateId: selectedTemplateId,
-                                parameters: {
-                                  core: {},
-                                  style: {},
-                                  custom: currentParameters
-                                },
-                                id: 'spec-sheet-preview',
-                                name: 'Preview'
+                                templateName: availableTemplates.find(t => t.id === selectedTemplateId)?.name || selectedTemplateId,
+                                parameters: currentParameters,
+                                jsParameters: currentParameters
                               }}
                               width={canvasSize}
                               height={canvasSize}
+                              onTemplateLoaded={setTemplateLastFetched}
+                              forceRefetch={forceRefetchTrigger > 0}
                             />
                           </div>
                         ) : (
@@ -1585,7 +1706,7 @@ export default function SpecSheetPage() {
               </div>
 
               {/* Right: Specification Details */}
-              <div className="flex-1 min-w-0">
+              <div className="flex-1 min-w-0 flex flex-col">
                 <h2 className="font-bold text-white/80 text-lg mb-6 relative group">
                   Logo Specification
                   <span className="block absolute left-0 -bottom-1 w-12 h-0.5 bg-gradient-to-r from-blue-400/60 to-purple-400/60 scale-x-0 group-hover:scale-x-100 transition-all duration-300 origin-left" />
@@ -1593,8 +1714,20 @@ export default function SpecSheetPage() {
                 
                 {/* Configuration */}
                 <div className="mb-6">
-                  <h3 className="font-bold text-white/80 text-base mb-3">Configuration</h3>
+                  <h3 className="font-bold text-white/80 text-base mb-3">
+                    Configuration {selectedLogoId && (
+                      <span className="text-white/60 font-normal text-sm">
+                        for <span className="text-white font-mono">{selectedLogoId}</span>
+                      </span>
+                    )}
+                  </h3>
                   <div className="space-y-2 text-xs">
+                    <div className="flex">
+                      <span className="text-white/60 font-semibold w-24">Logo ID:</span>
+                      <span className="text-white text-[11px] font-mono ml-1">
+                        {selectedLogoId || 'template-preview'}
+                      </span>
+                    </div>
                     <div className="flex">
                       <span className="text-white/60 font-semibold w-24">Template:</span>
                       <span className="text-white text-[11px] font-mono ml-1">
@@ -1613,26 +1746,58 @@ export default function SpecSheetPage() {
                         {availableTemplates.find(t => t.id === selectedTemplateId)?.category || 'Unknown'}
                       </span>
                     </div>
+                    <div className="flex items-center">
+                      <span className="text-white/60 font-semibold w-24">Last Fetched:</span>
+                      <span className={`text-[11px] font-mono ml-1 flex-1 ${
+                        templateLastFetched 
+                          ? 'text-green-400' 
+                          : 'text-yellow-400'
+                      }`}>
+                        {templateLastFetched 
+                          ? `✓ ${templateLastFetched.toLocaleTimeString()}`
+                          : '⚠ Not loaded'}
+                        {templateLastFetched && (
+                          <span className="text-white/40 text-[10px] ml-2">
+                            ({Math.floor((Date.now() - templateLastFetched.getTime()) / 1000)}s ago)
+                          </span>
+                        )}
+                      </span>
+                      <button
+                        onClick={() => setForceRefetchTrigger(prev => prev + 1)}
+                        className="ml-2 px-2 py-0.5 text-[10px] bg-white/[0.025] hover:bg-white/[0.04] text-white/60 hover:text-white/80 border border-white/[0.04] hover:border-white/[0.08] rounded transition-all duration-200 flex items-center gap-1"
+                        title="Refetch template code"
+                      >
+                        <span className="text-xs">↻</span>
+                        Refetch
+                      </button>
+                    </div>
                   </div>
                 </div>
 
                 {/* Parameters */}
-                <div className="my-6">
-                  <div className="space-y-4">
-                    <h3 className="font-bold text-white/80 text-base mb-3 flex items-center gap-2">
-                      <span className="text-white/60">⚙️</span>
-                      Template Parameters
-                    </h3>
-                    <div className="bg-white/[0.015] border border-white/[0.04] rounded-lg p-4">
-                      <div className="font-mono text-xs text-white/80">
-                        <pre className="whitespace-pre-wrap break-words">
-                          {JSON.stringify(selectedLogo?.jsParameters || {}, null, 2)}
-                        </pre>
-                      </div>
-                      <div className="text-white/40 text-xs mt-3">
-                        Edit parameters in the studio for full control
-                      </div>
-                    </div>
+                <div className="flex-1 flex flex-col">
+                  <h3 className="font-bold text-white/80 text-base mb-3 flex items-center gap-2">
+                    <span className="text-white/60">⚙️</span>
+                    Template Parameters
+                  </h3>
+                  <div className="flex-1 bg-white/[0.015] border border-white/[0.04] rounded-lg overflow-hidden">
+                    <ParameterEditor
+                          parameters={selectedLogo?.jsParameters || selectedLogo?.parameters || currentParameters}
+                          onChange={(newParams) => {
+                            // Update current parameters for preview
+                            setCurrentParameters(newParams);
+                            
+                            // If we're editing a logo from the studio, deselect it
+                            // This puts us in "exploration mode" like Chrome DevTools
+                            if (selectedLogo) {
+                              setSelectedLogoId(null);
+                              // Keep the template ID from the logo we were inspecting
+                              setSelectedTemplateId(selectedLogo.templateId);
+                            }
+                          }}
+                          templateId={selectedTemplateId}
+                          className="h-full"
+                        />
                   </div>
                 </div>
 

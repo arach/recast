@@ -122,7 +122,7 @@ export default function ParameterEditor({
   };
 
   return (
-    <div className={`bg-white/5 rounded border border-white/10 ${className}`}>
+    <div className={`bg-white/5 rounded border border-white/10 flex flex-col ${className}`}>
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-2 border-b border-white/10">
         <div className="flex items-center space-x-2">
@@ -143,7 +143,7 @@ export default function ParameterEditor({
       </div>
       
       {/* Monaco Editor */}
-      <div className="h-64 w-full">
+      <div className="flex-1 w-full" style={{ minHeight: '400px' }}>
         <Editor
           height="100%"
           defaultLanguage="json"

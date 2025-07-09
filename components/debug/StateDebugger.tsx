@@ -612,8 +612,8 @@ export const StateDebugger = forwardRef<any, StateDebuggerProps>(({
             <h5 className="text-xs font-medium text-gray-400 uppercase tracking-wider">Logo Inspector</h5>
             <button
               onClick={() => {
-                // Open Logo Inspector in new window/tab
-                const url = `/navigator/inspector`;
+                // Open Logo Inspector in new window/tab with current logo ID
+                const url = selectedLogoId ? `/navigator/inspector?logo=${selectedLogoId}` : `/navigator/inspector`;
                 window.open(url, '_blank', 'width=1400,height=900');
               }}
               disabled={!selectedLogo}
