@@ -330,7 +330,7 @@ function LogoCanvas({ logo, width, height }: LogoCanvasProps) {
   // Throttled render function using requestAnimationFrame
   const performRender = useCallback(() => {
     const canvas = canvasRef.current;
-    if (!canvas || !selectedLogo) {
+    if (!canvas || !logo) {
       console.log('⚠️ Canvas render skipped - missing canvas or logo');
       setRenderPending(false);
       return;
@@ -356,11 +356,11 @@ function LogoCanvas({ logo, width, height }: LogoCanvasProps) {
     ctx.restore(); // Restore to original coordinate system for template rendering
     
     // Render the actual logo content with viewport information for infinite rendering
-    if (selectedLogo.templateId) {
-      console.log('🎨 Rendering template:', selectedLogo.templateId, 'at viewport:', viewport);
+    if (logo.templateId) {
+      console.log('🎨 Rendering template:', logo.templateId, 'at viewport:', viewport);
       // Pass viewport information so templates can render for infinite coordinate space
       const enhancedParams = {
-        ...selectedLogo.parameters,
+        ...logo.parameters,
         // Viewport information for infinite rendering
         _viewport: {
           offsetX: viewport.x,
@@ -370,7 +370,7 @@ function LogoCanvas({ logo, width, height }: LogoCanvasProps) {
           viewHeight: height
         }
       };
-      generateJSVisualization(ctx, selectedLogo.templateId, enhancedParams, Date.now() * 0.001, width, height);
+      generateJSVisualization(ctx, logo.templateId, enhancedParams, Date.now() * 0.001, width, height);
     } else {
       console.log('🎨 Rendering placeholder');
       // Fallback placeholder
@@ -386,13 +386,13 @@ function LogoCanvas({ logo, width, height }: LogoCanvasProps) {
     ctx.restore();
     console.log('✅ Throttled canvas render complete');
     setRenderPending(false);
-  }, [selectedLogo, width, height, viewport]);
+  }, [logo, width, height, viewport]);
   
   // Single render for most cases, with optional animation toggle
   useEffect(() => {
     // Just do a single render for now - user can enable animation later if needed
     performRender();
-  }, [performRender, selectedLogo?.templateId]);
+  }, [performRender, logo?.templateId]);
   
   // Optional animation loop (disabled by default to prevent exploding)
   // Uncomment when we want smooth animations:
@@ -411,7 +411,7 @@ function LogoCanvas({ logo, width, height }: LogoCanvasProps) {
       animationId = requestAnimationFrame(animate);
     };
     
-    const needsAnimation = selectedLogo?.templateId?.includes('exploded');
+    const needsAnimation = logo?.templateId?.includes('exploded');
     if (needsAnimation) {
       animationId = requestAnimationFrame(animate);
     }
@@ -421,7 +421,7 @@ function LogoCanvas({ logo, width, height }: LogoCanvasProps) {
         cancelAnimationFrame(animationId);
       }
     };
-  }, [performRender, selectedLogo?.templateId]);
+  }, [performRender, logo?.templateId]);
   */
   
   // Tile render function - depends on performRender
