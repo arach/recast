@@ -57,7 +57,7 @@ async function discoverTemplates(): Promise<JSTemplateInfo[]> {
 // Cached templates - cleared when templates change
 let cachedTemplates: JSTemplateInfo[] | null = null;
 
-// Clear cache when needed (for development)
+// Clear template cache (useful for development)
 export function clearTemplateCache() {
   cachedTemplates = null;
 }
@@ -109,8 +109,11 @@ export async function getAllJSTemplates(): Promise<JSTemplateInfo[]> {
 
 export async function loadJSTemplate(templateId: string) {
   try {
-    // Fetch the template code
-    const codeResponse = await fetch(`/api/templates-js/${templateId}.js`)
+    // Fetch the template code with cache busting in development
+    const url = process.env.NODE_ENV === 'development' 
+      ? `/api/templates-js/${templateId}.js?t=${Date.now()}`
+      : `/api/templates-js/${templateId}.js`
+    const codeResponse = await fetch(url)
     if (!codeResponse.ok) {
       throw new Error(`Failed to load template code: ${templateId}`)
     }
@@ -166,6 +169,11 @@ export async function loadJSTemplate(templateId: string) {
             helperFunctions.toggle,
             helperFunctions.text
           )
+          
+          // Debug log for isometric template
+          if (templateId === 'isometric-wordmark') {
+            console.log('Loaded isometric-wordmark parameters:', parameters)
+          }
           
         } catch (evalError) {
           console.warn(`Failed to evaluate parameters object for ${templateId}, falling back to regex parsing:`, evalError)

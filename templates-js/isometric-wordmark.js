@@ -59,6 +59,7 @@ function draw(ctx, width, height, params, time, utils) {
     const layerColor = getLayerColor(p.colorScheme, layerIndex, layerCount);
     
     // Draw the rounded platform (upright rectangle)
+    // Only apply corner radius to the face with the wordmark
     drawUprightRoundedPlatform(
       ctx, 
       -finalWidth / 2, 
@@ -71,7 +72,8 @@ function draw(ctx, width, height, params, time, utils) {
       layerColor,
       p.lighting,
       utils,
-      isoAngle
+      isoAngle,
+      p.wordmarkFace || 'front'
     );
   }
   
@@ -144,7 +146,7 @@ function draw(ctx, width, height, params, time, utils) {
 /**
  * Draw an upright rounded rectangle platform in isometric view
  */
-function drawUprightRoundedPlatform(ctx, x, y, z, width, depth, height, radius, color, lighting, utils, isoAngle) {
+function drawUprightRoundedPlatform(ctx, x, y, z, width, depth, height, radius, color, lighting, utils, isoAngle, wordmarkFace) {
   // Helper function to project 3D to 2D with pixel-perfect alignment
   const project = (px, py, pz) => ({
     x: Math.round((px - py) * Math.cos(isoAngle)),
@@ -157,24 +159,36 @@ function drawUprightRoundedPlatform(ctx, x, y, z, width, depth, height, radius, 
   ctx.imageSmoothingEnabled = false;
   ctx.lineWidth = 1;
   
-  // Draw top face (with rounded corners)
+  // Draw top face (rounded only if wordmark is on top)
   ctx.fillStyle = lighting ? adjustBrightness(color, 1.0) : color;
   ctx.strokeStyle = lighting ? adjustBrightness(color, 0.9) : adjustBrightness(color, 0.8);
-  drawRoundedTopFace(ctx, x, y, z + height, width, depth, radius, project);
+  if (wordmarkFace === 'top') {
+    drawRoundedTopFace(ctx, x, y, z + height, width, depth, radius, project);
+  } else {
+    drawTopFace(ctx, x, y, z + height, width, depth, project);
+  }
   ctx.fill();
   ctx.stroke();
   
-  // Draw front face (upright rectangle with rounded corners)
+  // Draw front face (rounded only if wordmark is on front)
   ctx.fillStyle = lighting ? adjustBrightness(color, 0.8) : color;
   ctx.strokeStyle = lighting ? adjustBrightness(color, 0.7) : adjustBrightness(color, 0.6);
-  drawRoundedFrontFace(ctx, x, y + depth, z, width, height, radius, project);
+  if (wordmarkFace === 'front') {
+    drawRoundedFrontFace(ctx, x, y + depth, z, width, height, radius, project);
+  } else {
+    drawFrontFace(ctx, x, y + depth, z, width, height, project);
+  }
   ctx.fill();
   ctx.stroke();
   
-  // Draw right face (side face)
+  // Draw right face (rounded only if wordmark is on side)
   ctx.fillStyle = lighting ? adjustBrightness(color, 0.6) : color;
   ctx.strokeStyle = lighting ? adjustBrightness(color, 0.5) : adjustBrightness(color, 0.4);
-  drawRightFace(ctx, x + width, y, z, depth, height, project);
+  if (wordmarkFace === 'side') {
+    drawRoundedRightFace(ctx, x + width, y, z, depth, height, radius, project);
+  } else {
+    drawRightFace(ctx, x + width, y, z, depth, height, project);
+  }
   ctx.fill();
   ctx.stroke();
   
@@ -279,6 +293,89 @@ function drawRightFace(ctx, x, y, z, depth, height, project) {
   ctx.lineTo(p.x, p.y);
   
   p = project(x, y, z + height);
+  ctx.lineTo(p.x, p.y);
+  
+  ctx.closePath();
+}
+
+/**
+ * Draw top face (without rounded corners)
+ */
+function drawTopFace(ctx, x, y, z, width, depth, project) {
+  ctx.beginPath();
+  
+  let p = project(x, y, z);
+  ctx.moveTo(p.x + 0.5, p.y + 0.5);
+  
+  p = project(x + width, y, z);
+  ctx.lineTo(p.x, p.y);
+  
+  p = project(x + width, y + depth, z);
+  ctx.lineTo(p.x, p.y);
+  
+  p = project(x, y + depth, z);
+  ctx.lineTo(p.x, p.y);
+  
+  ctx.closePath();
+}
+
+/**
+ * Draw front face (without rounded corners)
+ */
+function drawFrontFace(ctx, x, y, z, width, height, project) {
+  ctx.beginPath();
+  
+  let p = project(x, y, z);
+  ctx.moveTo(p.x + 0.5, p.y + 0.5);
+  
+  p = project(x + width, y, z);
+  ctx.lineTo(p.x, p.y);
+  
+  p = project(x + width, y, z + height);
+  ctx.lineTo(p.x, p.y);
+  
+  p = project(x, y, z + height);
+  ctx.lineTo(p.x, p.y);
+  
+  ctx.closePath();
+}
+
+/**
+ * Draw rounded right face
+ */
+function drawRoundedRightFace(ctx, x, y, z, depth, height, radius, project) {
+  ctx.beginPath();
+  
+  // Start from bottom-front corner (after radius)
+  let p = project(x, y + radius, z);
+  ctx.moveTo(p.x + 0.5, p.y + 0.5);
+  
+  // Bottom edge
+  p = project(x, y + depth - radius, z);
+  ctx.lineTo(p.x, p.y);
+  
+  // Bottom-back corner
+  p = project(x, y + depth, z + radius);
+  ctx.lineTo(p.x, p.y);
+  
+  // Back edge
+  p = project(x, y + depth, z + height - radius);
+  ctx.lineTo(p.x, p.y);
+  
+  // Top-back corner
+  p = project(x, y + depth - radius, z + height);
+  ctx.lineTo(p.x, p.y);
+  
+  // Top edge
+  p = project(x, y + radius, z + height);
+  ctx.lineTo(p.x, p.y);
+  
+  // Top-front corner
+  p = project(x, y, z + height - radius);
+  ctx.lineTo(p.x, p.y);
+  
+  // Front edge
+  p = project(x, y, z + radius);
   ctx.lineTo(p.x, p.y);
   
   ctx.closePath();
@@ -390,9 +487,14 @@ function drawSideFaceWordmark(ctx, text, x, y, z, size, color, style, shadow, ma
   ctx.translate(textPos.x, textPos.y);
   
   // Apply transform for side face
-  // This makes the text appear to be on the vertical right side
+  // Rotate text 90 degrees counter-clockwise so it reads horizontally
+  // when you tilt your head to the right
+  ctx.rotate(-Math.PI / 2);
+  
+  // Then apply the isometric transform for the side face
   const sin = Math.sin(isoAngle);
-  ctx.transform(0, 1, -Math.cos(isoAngle), sin, 0, 0);
+  const cos = Math.cos(isoAngle);
+  ctx.transform(sin, cos, 0, 1, 0, 0);
   
   // Draw text shadow if enabled
   if (shadow > 0) {

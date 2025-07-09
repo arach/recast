@@ -209,7 +209,7 @@ export function UnifiedParametersTool() {
                               min={param.min || 0}
                               max={param.max || 100}
                               step={param.step || 1}
-                              className="w-16 px-1 py-0.5 text-xs text-center border border-gray-200 rounded"
+                              className="w-14 px-2 py-1.5 text-xs text-center border border-gray-200 rounded"
                             />
                           </div>
                         </div>
@@ -263,7 +263,7 @@ export function UnifiedParametersTool() {
                         min={param.min || param.range?.[0] || 0}
                         max={param.max || param.range?.[1] || 100}
                         step={param.step || param.range?.[2] || 1}
-                        className="w-12 px-1 py-0.5 text-xs text-center border border-gray-200 rounded"
+                        className="w-14 px-2 py-1.5 text-xs text-center border border-gray-200 rounded"
                       />
                     </div>
                   )}
@@ -302,7 +302,7 @@ export function UnifiedParametersTool() {
                       value={String(value || '')}
                       onChange={(e) => updateCustom({ [key]: e.target.value })}
                       placeholder={param.placeholder}
-                      className="w-full px-2 py-1 text-xs border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      className="w-full px-2 py-1.5 text-xs border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
                     />
                   )}
 
@@ -318,7 +318,7 @@ export function UnifiedParametersTool() {
                         type="text"
                         value={String(value || '#000000')}
                         onChange={(e) => updateCustom({ [key]: e.target.value })}
-                        className="flex-1 px-2 py-1 text-xs font-mono border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        className="flex-1 px-2 py-1.5 text-xs font-mono border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
                       />
                     </div>
                   )}
@@ -346,7 +346,7 @@ export function UnifiedParametersTool() {
                         min={param.range[0]}
                         max={param.range[1]}
                         step={param.range[2]}
-                        className="w-12 px-1 py-0.5 text-xs text-center border border-gray-200 rounded"
+                        className="w-14 px-2 py-1.5 text-xs text-center border border-gray-200 rounded"
                       />
                     </div>
                   )}
