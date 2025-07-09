@@ -27,10 +27,8 @@ function draw(ctx, width, height, params, time, utils) {
   ctx.save();
   ctx.translate(centerX, centerY);
   
-  // Apply perspective rotation
-  if (p.perspective !== 0) {
-    ctx.rotate((p.perspective * Math.PI) / 180);
-  }
+  // Calculate isometric angle based on perspective parameter
+  const isoAngle = Math.PI / 6 + (p.perspective * Math.PI / 180); // 30° + adjustment
   
   // Calculate platform dimensions - make it upright (taller than wide)
   const platformWidth = p.platformWidth * baseScale;
@@ -72,7 +70,8 @@ function draw(ctx, width, height, params, time, utils) {
       cornerRadius * layerScale, 
       layerColor,
       p.lighting,
-      utils
+      utils,
+      isoAngle
     );
   }
   
@@ -95,7 +94,8 @@ function draw(ctx, width, height, params, time, utils) {
           p.textStyle,
           p.textShadow * baseScale,
           maxTextWidth,
-          utils
+          utils,
+          isoAngle
         );
         break;
         
@@ -113,7 +113,8 @@ function draw(ctx, width, height, params, time, utils) {
           p.textShadow * baseScale,
           maxTextWidth,
           platformDepth * 0.8,
-          utils
+          utils,
+          isoAngle
         );
         break;
         
@@ -130,7 +131,8 @@ function draw(ctx, width, height, params, time, utils) {
           p.textStyle,
           p.textShadow * baseScale,
           platformDepth * 0.8,
-          utils
+          utils,
+          isoAngle
         );
         break;
     }
@@ -142,11 +144,11 @@ function draw(ctx, width, height, params, time, utils) {
 /**
  * Draw an upright rounded rectangle platform in isometric view
  */
-function drawUprightRoundedPlatform(ctx, x, y, z, width, depth, height, radius, color, lighting, utils) {
+function drawUprightRoundedPlatform(ctx, x, y, z, width, depth, height, radius, color, lighting, utils, isoAngle) {
   // Helper function to project 3D to 2D with pixel-perfect alignment
   const project = (px, py, pz) => ({
-    x: Math.round((px - py) * Math.cos(Math.PI / 6)),
-    y: Math.round((px + py) * Math.sin(Math.PI / 6) - pz)
+    x: Math.round((px - py) * Math.cos(isoAngle)),
+    y: Math.round((px + py) * Math.sin(isoAngle) - pz)
   });
   
   ctx.save();
@@ -285,10 +287,10 @@ function drawRightFace(ctx, x, y, z, depth, height, project) {
 /**
  * Draw wordmark on the front face (facing viewer in isometric view)
  */
-function drawFrontFaceWordmark(ctx, text, x, y, z, size, color, style, shadow, maxWidth, utils) {
+function drawFrontFaceWordmark(ctx, text, x, y, z, size, color, style, shadow, maxWidth, utils, isoAngle) {
   const project = (px, py, pz) => ({
-    x: (px - py) * Math.cos(Math.PI / 6),
-    y: (px + py) * Math.sin(Math.PI / 6) - pz
+    x: (px - py) * Math.cos(isoAngle),
+    y: (px + py) * Math.sin(isoAngle) - pz
   });
   
   ctx.save();
@@ -327,10 +329,10 @@ function drawFrontFaceWordmark(ctx, text, x, y, z, size, color, style, shadow, m
 /**
  * Draw wordmark on the top face (horizontal in isometric view)
  */
-function drawTopFaceWordmark(ctx, text, x, y, z, size, color, style, shadow, maxWidth, maxHeight, utils) {
+function drawTopFaceWordmark(ctx, text, x, y, z, size, color, style, shadow, maxWidth, maxHeight, utils, isoAngle) {
   const project = (px, py, pz) => ({
-    x: (px - py) * Math.cos(Math.PI / 6),
-    y: (px + py) * Math.sin(Math.PI / 6) - pz
+    x: (px - py) * Math.cos(isoAngle),
+    y: (px + py) * Math.sin(isoAngle) - pz
   });
   
   ctx.save();
@@ -347,7 +349,9 @@ function drawTopFaceWordmark(ctx, text, x, y, z, size, color, style, shadow, max
   
   // Apply isometric transform for top face
   // This makes the text appear to lie flat on the horizontal top surface
-  ctx.transform(0.866, 0.5, -0.866, 0.5, 0, 0);
+  const cos = Math.cos(isoAngle);
+  const sin = Math.sin(isoAngle);
+  ctx.transform(cos, sin, -cos, sin, 0, 0);
   
   // Draw text shadow if enabled
   if (shadow > 0) {
@@ -367,10 +371,10 @@ function drawTopFaceWordmark(ctx, text, x, y, z, size, color, style, shadow, max
 /**
  * Draw wordmark on the side face (right side in isometric view)
  */
-function drawSideFaceWordmark(ctx, text, x, y, z, size, color, style, shadow, maxDepth, utils) {
+function drawSideFaceWordmark(ctx, text, x, y, z, size, color, style, shadow, maxDepth, utils, isoAngle) {
   const project = (px, py, pz) => ({
-    x: (px - py) * Math.cos(Math.PI / 6),
-    y: (px + py) * Math.sin(Math.PI / 6) - pz
+    x: (px - py) * Math.cos(isoAngle),
+    y: (px + py) * Math.sin(isoAngle) - pz
   });
   
   ctx.save();
@@ -387,7 +391,8 @@ function drawSideFaceWordmark(ctx, text, x, y, z, size, color, style, shadow, ma
   
   // Apply transform for side face
   // This makes the text appear to be on the vertical right side
-  ctx.transform(0, 1, -0.866, 0.5, 0, 0);
+  const sin = Math.sin(isoAngle);
+  ctx.transform(0, 1, -Math.cos(isoAngle), sin, 0, 0);
   
   // Draw text shadow if enabled
   if (shadow > 0) {
@@ -473,9 +478,9 @@ export const parameters = {
   textShadow: slider(2, 0, 8, 1, 'Text Shadow', 'px'),
   
   // Platform dimensions - grouped together
-  platformWidth: slider(100, 40, 300, 10, 'Width', 'px', { group: 'Platform Size' }),
-  platformDepth: slider(40, 20, 80, 5, 'Depth', 'px', { group: 'Platform Size' }),
-  platformHeight: slider(120, 60, 200, 10, 'Height', 'px', { group: 'Platform Size' }),
+  platformWidth: slider(100, 1, 300, 1, 'Width', 'px', { group: 'Platform Size' }),
+  platformDepth: slider(40, 1, 80, 1, 'Depth', 'px', { group: 'Platform Size' }),
+  platformHeight: slider(120, 1, 200, 1, 'Height', 'px', { group: 'Platform Size' }),
   
   // Platform styling
   cornerRadius: slider(12, 0, 25, 2, 'Corner Radius', 'px'),
