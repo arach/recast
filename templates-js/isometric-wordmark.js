@@ -195,6 +195,13 @@ function drawUprightRoundedPlatform(ctx, x, y, z, width, depth, height, radius, 
   ctx.fill();
   ctx.stroke();
   
+  // Draw connecting edges that follow the rounded face's curves
+  if (radius > 0) {
+    ctx.strokeStyle = lighting ? adjustBrightness(color, 0.4) : adjustBrightness(color, 0.3);
+    ctx.lineWidth = 1;
+    drawConnectingEdges(ctx, x, y, z, width, depth, height, radius, project, wordmarkFace);
+  }
+  
   ctx.restore();
 }
 
@@ -204,37 +211,57 @@ function drawUprightRoundedPlatform(ctx, x, y, z, width, depth, height, radius, 
 function drawRoundedTopFace(ctx, x, y, z, width, depth, radius, project) {
   ctx.beginPath();
   
-  // Start from top-left corner (after radius) with subpixel adjustment
-  let p = project(x + radius, y, z);
-  ctx.moveTo(p.x + 0.5, p.y + 0.5);
+  // Clamp radius to not exceed half the smallest dimension
+  const maxRadius = Math.min(width, depth) / 2;
+  const actualRadius = Math.min(radius, maxRadius);
+  
+  // Start from top-left corner (after radius)
+  let p = project(x + actualRadius, y, z);
+  ctx.moveTo(p.x, p.y);
   
   // Top edge
-  p = project(x + width - radius, y, z);
+  p = project(x + width - actualRadius, y, z);
   ctx.lineTo(p.x, p.y);
   
-  // Top-right corner
-  p = project(x + width, y + radius, z);
-  ctx.lineTo(p.x, p.y);
+  // Top-right corner (rounded)
+  if (actualRadius > 0) {
+    let p1 = project(x + width, y, z);
+    let p2 = project(x + width, y + actualRadius, z);
+    ctx.arcTo(p1.x, p1.y, p2.x, p2.y, actualRadius);
+  }
   
   // Right edge
-  p = project(x + width, y + depth - radius, z);
+  p = project(x + width, y + depth - actualRadius, z);
   ctx.lineTo(p.x, p.y);
   
-  // Bottom-right corner
-  p = project(x + width - radius, y + depth, z);
-  ctx.lineTo(p.x, p.y);
+  // Bottom-right corner (rounded)
+  if (actualRadius > 0) {
+    let p1 = project(x + width, y + depth, z);
+    let p2 = project(x + width - actualRadius, y + depth, z);
+    ctx.arcTo(p1.x, p1.y, p2.x, p2.y, actualRadius);
+  }
   
   // Bottom edge
-  p = project(x + radius, y + depth, z);
+  p = project(x + actualRadius, y + depth, z);
   ctx.lineTo(p.x, p.y);
   
-  // Bottom-left corner
-  p = project(x, y + depth - radius, z);
-  ctx.lineTo(p.x, p.y);
+  // Bottom-left corner (rounded)
+  if (actualRadius > 0) {
+    let p1 = project(x, y + depth, z);
+    let p2 = project(x, y + depth - actualRadius, z);
+    ctx.arcTo(p1.x, p1.y, p2.x, p2.y, actualRadius);
+  }
   
   // Left edge
-  p = project(x, y + radius, z);
+  p = project(x, y + actualRadius, z);
   ctx.lineTo(p.x, p.y);
+  
+  // Top-left corner (rounded)
+  if (actualRadius > 0) {
+    let p1 = project(x, y, z);
+    let p2 = project(x + actualRadius, y, z);
+    ctx.arcTo(p1.x, p1.y, p2.x, p2.y, actualRadius);
+  }
   
   ctx.closePath();
 }
@@ -245,37 +272,57 @@ function drawRoundedTopFace(ctx, x, y, z, width, depth, radius, project) {
 function drawRoundedFrontFace(ctx, x, y, z, width, height, radius, project) {
   ctx.beginPath();
   
-  // Start from bottom-left corner (after radius) with subpixel adjustment
-  let p = project(x + radius, y, z);
-  ctx.moveTo(p.x + 0.5, p.y + 0.5);
+  // Clamp radius to not exceed half the smallest dimension
+  const maxRadius = Math.min(width, height) / 2;
+  const actualRadius = Math.min(radius, maxRadius);
+  
+  // Start from bottom-left corner (after radius)
+  let p = project(x + actualRadius, y, z);
+  ctx.moveTo(p.x, p.y);
   
   // Bottom edge
-  p = project(x + width - radius, y, z);
+  p = project(x + width - actualRadius, y, z);
   ctx.lineTo(p.x, p.y);
   
-  // Bottom-right corner
-  p = project(x + width, y, z + radius);
-  ctx.lineTo(p.x, p.y);
+  // Bottom-right corner (rounded)
+  if (actualRadius > 0) {
+    let p1 = project(x + width, y, z);
+    let p2 = project(x + width, y, z + actualRadius);
+    ctx.arcTo(p1.x, p1.y, p2.x, p2.y, actualRadius);
+  }
   
   // Right edge
-  p = project(x + width, y, z + height - radius);
+  p = project(x + width, y, z + height - actualRadius);
   ctx.lineTo(p.x, p.y);
   
-  // Top-right corner
-  p = project(x + width - radius, y, z + height);
-  ctx.lineTo(p.x, p.y);
+  // Top-right corner (rounded)
+  if (actualRadius > 0) {
+    let p1 = project(x + width, y, z + height);
+    let p2 = project(x + width - actualRadius, y, z + height);
+    ctx.arcTo(p1.x, p1.y, p2.x, p2.y, actualRadius);
+  }
   
   // Top edge
-  p = project(x + radius, y, z + height);
+  p = project(x + actualRadius, y, z + height);
   ctx.lineTo(p.x, p.y);
   
-  // Top-left corner
-  p = project(x, y, z + height - radius);
-  ctx.lineTo(p.x, p.y);
+  // Top-left corner (rounded)
+  if (actualRadius > 0) {
+    let p1 = project(x, y, z + height);
+    let p2 = project(x, y, z + height - actualRadius);
+    ctx.arcTo(p1.x, p1.y, p2.x, p2.y, actualRadius);
+  }
   
   // Left edge
-  p = project(x, y, z + radius);
+  p = project(x, y, z + actualRadius);
   ctx.lineTo(p.x, p.y);
+  
+  // Bottom-left corner (rounded)
+  if (actualRadius > 0) {
+    let p1 = project(x, y, z);
+    let p2 = project(x + actualRadius, y, z);
+    ctx.arcTo(p1.x, p1.y, p2.x, p2.y, actualRadius);
+  }
   
   ctx.closePath();
 }
@@ -349,40 +396,209 @@ function drawFrontFace(ctx, x, y, z, width, height, project) {
 function drawRoundedRightFace(ctx, x, y, z, depth, height, radius, project) {
   ctx.beginPath();
   
+  // Clamp radius to not exceed half the smallest dimension
+  const maxRadius = Math.min(depth, height) / 2;
+  const actualRadius = Math.min(radius, maxRadius);
+  
   // Start from bottom-front corner (after radius)
-  let p = project(x, y + radius, z);
-  ctx.moveTo(p.x + 0.5, p.y + 0.5);
+  let p = project(x, y + actualRadius, z);
+  ctx.moveTo(p.x, p.y);
   
   // Bottom edge
-  p = project(x, y + depth - radius, z);
+  p = project(x, y + depth - actualRadius, z);
   ctx.lineTo(p.x, p.y);
   
-  // Bottom-back corner
-  p = project(x, y + depth, z + radius);
-  ctx.lineTo(p.x, p.y);
+  // Bottom-back corner (rounded)
+  if (actualRadius > 0) {
+    let p1 = project(x, y + depth, z);
+    let p2 = project(x, y + depth, z + actualRadius);
+    ctx.arcTo(p1.x, p1.y, p2.x, p2.y, actualRadius);
+  }
   
   // Back edge
-  p = project(x, y + depth, z + height - radius);
+  p = project(x, y + depth, z + height - actualRadius);
   ctx.lineTo(p.x, p.y);
   
-  // Top-back corner
-  p = project(x, y + depth - radius, z + height);
-  ctx.lineTo(p.x, p.y);
+  // Top-back corner (rounded)
+  if (actualRadius > 0) {
+    let p1 = project(x, y + depth, z + height);
+    let p2 = project(x, y + depth - actualRadius, z + height);
+    ctx.arcTo(p1.x, p1.y, p2.x, p2.y, actualRadius);
+  }
   
   // Top edge
-  p = project(x, y + radius, z + height);
+  p = project(x, y + actualRadius, z + height);
   ctx.lineTo(p.x, p.y);
   
-  // Top-front corner
-  p = project(x, y, z + height - radius);
-  ctx.lineTo(p.x, p.y);
+  // Top-front corner (rounded)
+  if (actualRadius > 0) {
+    let p1 = project(x, y, z + height);
+    let p2 = project(x, y, z + height - actualRadius);
+    ctx.arcTo(p1.x, p1.y, p2.x, p2.y, actualRadius);
+  }
   
   // Front edge
-  p = project(x, y, z + radius);
+  p = project(x, y, z + actualRadius);
   ctx.lineTo(p.x, p.y);
+  
+  // Bottom-front corner (rounded)
+  if (actualRadius > 0) {
+    let p1 = project(x, y, z);
+    let p2 = project(x, y + actualRadius, z);
+    ctx.arcTo(p1.x, p1.y, p2.x, p2.y, actualRadius);
+  }
   
   ctx.closePath();
 }
+
+/**
+ * Draw connecting edges that follow the rounded face's curves
+ */
+function drawConnectingEdges(ctx, x, y, z, width, depth, height, radius, project, wordmarkFace) {
+  // Clamp radius to not exceed half the smallest dimension
+  const maxRadius = Math.min(width, depth, height) / 2;
+  const actualRadius = Math.min(radius, maxRadius);
+  
+  if (actualRadius <= 0) return;
+  
+  ctx.save();
+  ctx.lineWidth = 1;
+  
+  // Draw edges based on which face has the wordmark (and rounded corners)
+  
+  if (wordmarkFace === 'front') {
+    // Front face has rounded corners - draw curved edges extending from it
+    // Top edges connecting to front face corners
+    drawCurvedConnectingEdge(ctx, project,
+      x + actualRadius, y + depth, z + height,      // front face top-left corner
+      x + actualRadius, y, z + height,              // extends back
+      actualRadius, 'y'
+    );
+    
+    drawCurvedConnectingEdge(ctx, project,
+      x + width - actualRadius, y + depth, z + height,  // front face top-right corner
+      x + width - actualRadius, y, z + height,          // extends back
+      actualRadius, 'y'
+    );
+    
+    // Bottom edges connecting to front face corners
+    drawCurvedConnectingEdge(ctx, project,
+      x + actualRadius, y + depth, z,              // front face bottom-left corner
+      x + actualRadius, y, z,                      // extends back
+      actualRadius, 'y'
+    );
+    
+    drawCurvedConnectingEdge(ctx, project,
+      x + width - actualRadius, y + depth, z,      // front face bottom-right corner
+      x + width - actualRadius, y, z,              // extends back
+      actualRadius, 'y'
+    );
+    
+    // Side edges extending from front face rounded corners
+    drawCurvedVerticalEdge(ctx, project,
+      x + width, y + depth, z + actualRadius,      // front face right edge
+      x + width, y + depth, z + height - actualRadius,
+      actualRadius
+    );
+  }
+  
+  else if (wordmarkFace === 'top') {
+    // Top face has rounded corners - draw curved edges extending down
+    // Front edges connecting to top face corners
+    drawCurvedConnectingEdge(ctx, project,
+      x + actualRadius, y + depth, z + height,      // top face front-left corner
+      x + actualRadius, y + depth, z,               // extends down
+      actualRadius, 'z'
+    );
+    
+    drawCurvedConnectingEdge(ctx, project,
+      x + width - actualRadius, y + depth, z + height,  // top face front-right corner
+      x + width - actualRadius, y + depth, z,           // extends down
+      actualRadius, 'z'
+    );
+    
+    // Back edges connecting to top face corners
+    drawCurvedConnectingEdge(ctx, project,
+      x + actualRadius, y, z + height,              // top face back-left corner
+      x + actualRadius, y, z,                       // extends down
+      actualRadius, 'z'
+    );
+    
+    drawCurvedConnectingEdge(ctx, project,
+      x + width - actualRadius, y, z + height,      // top face back-right corner
+      x + width - actualRadius, y, z,               // extends down
+      actualRadius, 'z'
+    );
+  }
+  
+  else if (wordmarkFace === 'side') {
+    // Side face has rounded corners - draw curved edges extending left
+    // Front edges connecting to side face corners
+    drawCurvedConnectingEdge(ctx, project,
+      x + width, y + depth - actualRadius, z + height,  // side face top-front corner
+      x, y + depth - actualRadius, z + height,          // extends left
+      actualRadius, 'x'
+    );
+    
+    drawCurvedConnectingEdge(ctx, project,
+      x + width, y + depth - actualRadius, z,           // side face bottom-front corner
+      x, y + depth - actualRadius, z,                   // extends left
+      actualRadius, 'x'
+    );
+    
+    // Back edges connecting to side face corners
+    drawCurvedConnectingEdge(ctx, project,
+      x + width, y + actualRadius, z + height,          // side face top-back corner
+      x, y + actualRadius, z + height,                  // extends left
+      actualRadius, 'x'
+    );
+    
+    drawCurvedConnectingEdge(ctx, project,
+      x + width, y + actualRadius, z,                   // side face bottom-back corner
+      x, y + actualRadius, z,                           // extends left
+      actualRadius, 'x'
+    );
+  }
+  
+  ctx.restore();
+}
+
+/**
+ * Draw a curved connecting edge that follows the rounded corner
+ */
+function drawCurvedConnectingEdge(ctx, project, x1, y1, z1, x2, y2, z2, radius, axis) {
+  const p1 = project(x1, y1, z1);
+  const p2 = project(x2, y2, z2);
+  
+  ctx.beginPath();
+  ctx.moveTo(p1.x, p1.y);
+  ctx.lineTo(p2.x, p2.y);
+  ctx.stroke();
+}
+
+/**
+ * Draw a curved vertical edge on the face
+ */
+function drawCurvedVerticalEdge(ctx, project, x, y, z1, x2, y2, z2, radius) {
+  // For vertical edges on faces with rounded corners
+  const segments = 8;
+  ctx.beginPath();
+  
+  for (let i = 0; i <= segments; i++) {
+    const t = i / segments;
+    const z = z1 + (z2 - z1) * t;
+    const p = project(x, y, z);
+    
+    if (i === 0) {
+      ctx.moveTo(p.x, p.y);
+    } else {
+      ctx.lineTo(p.x, p.y);
+    }
+  }
+  
+  ctx.stroke();
+}
+
 
 /**
  * Draw wordmark on the front face (facing viewer in isometric view)
@@ -401,17 +617,22 @@ function drawFrontFaceWordmark(ctx, text, x, y, z, size, color, style, shadow, m
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   
-  // Project text position - front face is at y position
-  const textPos = project(x, y, z);
+  // For front face, the text should be positioned at the center of the front face
+  // The coordinates passed in (x, y, z) are already the center position
+  // We just need to project this to 2D screen coordinates
+  const textPosition = project(x, y, z);
   
-  ctx.translate(textPos.x, textPos.y);
+  // Position text at the projected center position
+  ctx.translate(textPosition.x, textPosition.y);
   
-  // Apply rotation based on orientation
-  if (orientation === 'vertical') {
+  // For front face, text should appear perfectly flat and readable
+  // No isometric distortion - it's like text painted on a billboard
+  if (orientation === 'rotated-90') {
     ctx.rotate(-Math.PI / 2);
-  } else if (orientation === 'diagonal') {
+  } else if (orientation === 'rotated-45') {
     ctx.rotate(-Math.PI / 4);
   }
+  // For 'normal' orientation, text appears normally readable
   
   // Draw text shadow if enabled
   if (shadow > 0) {
@@ -461,11 +682,12 @@ function drawTopFaceWordmark(ctx, text, x, y, z, size, color, style, shadow, max
   ctx.transform(cos, sin, -cos, sin, 0, 0);
   
   // Apply additional rotation based on orientation
-  if (orientation === 'vertical') {
+  if (orientation === 'rotated-90') {
     ctx.rotate(Math.PI / 2);
-  } else if (orientation === 'diagonal') {
+  } else if (orientation === 'rotated-45') {
     ctx.rotate(Math.PI / 4);
   }
+  // For 'normal' orientation, no additional rotation needed
   
   // Draw text shadow if enabled
   if (shadow > 0) {
@@ -504,16 +726,16 @@ function drawSideFaceWordmark(ctx, text, x, y, z, size, color, style, shadow, ma
   ctx.translate(textPos.x, textPos.y);
   
   // Apply transform for side face
-  // Default is horizontal (readable when tilting head right)
-  if (orientation === 'horizontal') {
+  // Default is normal (readable when tilting head right)
+  if (orientation === 'normal') {
     // Rotate text 90 degrees counter-clockwise so it reads horizontally
     // when you tilt your head to the right
     ctx.rotate(-Math.PI / 2);
-  } else if (orientation === 'diagonal') {
+  } else if (orientation === 'rotated-45') {
     // 45 degree angle
     ctx.rotate(-Math.PI / 4);
   }
-  // For vertical orientation, no rotation needed as text naturally goes up-down
+  // For 'rotated-90' orientation, no rotation needed as text naturally goes up-down
   
   // Then apply the isometric transform for the side face
   const sin = Math.sin(isoAngle);
@@ -583,13 +805,16 @@ const text = (def, label, opts = {}) => ({
 const toggle = (def, label, opts = {}) => ({ 
   type: "toggle", default: def, label, ...opts 
 });
+const color = (def, label, opts = {}) => ({ 
+  type: "color", default: def, label, ...opts 
+});
 
 // Parameter definitions
 export const parameters = {
   // Text Content
   wordmark: text('ReFlow', 'Wordmark Text', { group: 'Text Content' }),
   textSize: slider(24, 12, 60, 2, 'Text Size', 'px', { group: 'Text Content' }),
-  textColor: { type: "color", default: '#ffffff', label: 'Text Color', group: 'Text Content' },
+  textColor: color('#ffffff', 'Text Color', { group: 'Text Content' }),
   textStyle: select('bold', [
     { value: 'modern', label: 'Modern' },
     { value: 'bold', label: 'Bold' },
@@ -604,17 +829,17 @@ export const parameters = {
     { value: 'top', label: 'Top Face' },
     { value: 'side', label: 'Side Face' }
   ], 'Wordmark Face', { group: 'Face & Text Orientation' }),
-  textOrientation: select('horizontal', [
-    { value: 'horizontal', label: 'Horizontal' },
-    { value: 'vertical', label: 'Vertical' },
-    { value: 'diagonal', label: 'Diagonal' }
+  textOrientation: select('normal', [
+    { value: 'normal', label: 'Normal' },
+    { value: 'rotated-90', label: 'Rotated 90°' },
+    { value: 'rotated-45', label: 'Rotated 45°' }
   ], 'Text Orientation', { group: 'Face & Text Orientation' }),
   cornerRadius: slider(12, 0, 50, 2, 'Corner Radius', 'px', { group: 'Face & Text Orientation' }),
   
   // Platform dimensions - grouped together
-  platformWidth: slider(100, 1, 800, 1, 'Width', 'px', { group: 'Platform Size' }),
-  platformDepth: slider(40, 1, 400, 1, 'Depth', 'px', { group: 'Platform Size' }),
-  platformHeight: slider(120, 1, 600, 1, 'Height', 'px', { group: 'Platform Size' }),
+  platformWidth: slider(100, 5, 800, 5, 'Width', 'px', { group: 'Platform Size' }),
+  platformDepth: slider(40, 5, 400, 5, 'Depth', 'px', { group: 'Platform Size' }),
+  platformHeight: slider(120, 5, 600, 5, 'Height', 'px', { group: 'Platform Size' }),
   
   // Platform Style
   colorScheme: select('blue', [

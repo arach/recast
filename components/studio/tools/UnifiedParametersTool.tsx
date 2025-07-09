@@ -151,7 +151,20 @@ export function UnifiedParametersTool() {
   
   // Group parameters by their group property
   const groupedParams = templateParams.reduce((acc, [key, param]) => {
-    const group = (param as any).group || 'default';
+    const paramObj = param as any;
+    
+    // Safely extract group name, ensuring it's always a string
+    let group = 'default';
+    if (paramObj.group) {
+      if (typeof paramObj.group === 'string') {
+        group = paramObj.group;
+      } else if (typeof paramObj.group === 'object' && paramObj.group.group) {
+        group = String(paramObj.group.group);
+      } else {
+        group = 'default';
+      }
+    }
+    
     if (!acc[group]) acc[group] = [];
     acc[group].push([key, param]);
     return acc;
@@ -176,8 +189,11 @@ export function UnifiedParametersTool() {
           
           {/* Render grouped parameters */}
           {Object.entries(groupedParams).map(([groupName, params]) => {
+            // Ensure groupName is always a string
+            const safeGroupName = String(groupName);
+            
             // Special handling for specific groups
-            if (groupName === 'Platform Size') {
+            if (safeGroupName === 'Platform Size') {
               return (
                 <div key={groupName} className="space-y-1 pt-2">
                   <div className="flex items-center gap-3">
@@ -221,12 +237,12 @@ export function UnifiedParametersTool() {
             }
             
             // Special handling for Face & Text Orientation group
-            if (groupName === 'Face & Text Orientation') {
+            if (safeGroupName === 'Face & Text Orientation') {
               return (
                 <div key={groupName} className="space-y-2">
                   <div className="flex items-center gap-2 pt-2 pb-1">
                     <div className="flex-1 h-px bg-gray-200"></div>
-                    <div className="text-xs font-medium text-gray-500">{groupName}</div>
+                    <div className="text-xs font-medium text-gray-500">{safeGroupName}</div>
                     <div className="flex-1 h-px bg-gray-200"></div>
                   </div>
                   <div className="space-y-3">
@@ -315,10 +331,10 @@ export function UnifiedParametersTool() {
             // Regular groups - render in 2-column grid
             return (
               <div key={groupName} className="space-y-2">
-                {groupName !== 'default' && (
+                {safeGroupName !== 'default' && (
                   <div className="flex items-center gap-2 pt-2 pb-1">
                     <div className="flex-1 h-px bg-gray-200"></div>
-                    <div className="text-xs font-medium text-gray-500">{groupName}</div>
+                    <div className="text-xs font-medium text-gray-500">{safeGroupName}</div>
                     <div className="flex-1 h-px bg-gray-200"></div>
                   </div>
                 )}

@@ -1620,8 +1620,13 @@ export default function SpecSheetPage() {
                 <div className="my-6">
                   <TemplateParameterControls
                     templateId={selectedTemplateId}
-                    parameters={currentParameters}
-                    onChange={setCurrentParameters}
+                    parameters={logo.jsParameters || {}}
+                    onChange={(newParams) => {
+                      setLogo({
+                        ...logo,
+                        jsParameters: newParams
+                      });
+                    }}
                   />
                 </div>
 

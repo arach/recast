@@ -143,23 +143,46 @@ export async function loadJSTemplate(templateId: string) {
         try {
           // Create a safe evaluation context
           const helperFunctions = {
-            slider: (def: any, min: any, max: any, step: any, label?: string, unit?: string, opts = {}) => ({ 
-              type: "slider", default: def, min, max, step, label, unit, ...opts 
-            }),
-            select: (def: any, options: any, label?: string, opts = {}) => ({ 
-              type: "select", default: def, options, label, ...opts 
-            }),
-            toggle: (def: any, label?: string, opts = {}) => ({ 
-              type: "toggle", default: def, label, ...opts 
-            }),
-            text: (def: any, label?: string, opts = {}) => ({ 
-              type: "text", default: def, label, ...opts 
-            })
+            slider: (def: any, min: any, max: any, step: any, label?: string, unit?: string, opts = {}) => {
+              const result = { type: "slider", default: def, min, max, step, label, unit };
+              if (opts && typeof opts === 'object') {
+                Object.assign(result, opts);
+              }
+              return result;
+            },
+            select: (def: any, options: any, label?: string, opts = {}) => {
+              const result = { type: "select", default: def, options, label };
+              if (opts && typeof opts === 'object') {
+                Object.assign(result, opts);
+              }
+              return result;
+            },
+            toggle: (def: any, label?: string, opts = {}) => {
+              const result = { type: "toggle", default: def, label };
+              if (opts && typeof opts === 'object') {
+                Object.assign(result, opts);
+              }
+              return result;
+            },
+            text: (def: any, label?: string, opts = {}) => {
+              const result = { type: "text", default: def, label };
+              if (opts && typeof opts === 'object') {
+                Object.assign(result, opts);
+              }
+              return result;
+            },
+            color: (def: any, label?: string, opts = {}) => {
+              const result = { type: "color", default: def, label };
+              if (opts && typeof opts === 'object') {
+                Object.assign(result, opts);
+              }
+              return result;
+            }
           }
           
           // Create function to evaluate the parameters object
           const evalFunction = new Function(
-            'slider', 'select', 'toggle', 'text',
+            'slider', 'select', 'toggle', 'text', 'color',
             `return ${paramText}`
           )
           
@@ -167,13 +190,40 @@ export async function loadJSTemplate(templateId: string) {
             helperFunctions.slider,
             helperFunctions.select, 
             helperFunctions.toggle,
-            helperFunctions.text
+            helperFunctions.text,
+            helperFunctions.color
           )
           
-          // Debug log for isometric template
-          if (templateId === 'isometric-wordmark') {
-            console.log('Loaded isometric-wordmark parameters:', parameters)
-          }
+          // Debug log for all templates to see parameter structure
+          console.log(`Loaded ${templateId} parameters:`, parameters)
+          
+          // Clean up any problematic parameter objects
+          Object.entries(parameters).forEach(([key, param]) => {
+            if (param && typeof param === 'object') {
+              console.log(`Parameter ${key}:`, param)
+              
+              // Fix any group properties that are objects
+              if (param.group && typeof param.group === 'object') {
+                console.warn(`FIXING: Parameter ${key} has group as object:`, param.group)
+                // Try to extract a string value, or default to 'main'
+                if (param.group.group && typeof param.group.group === 'string') {
+                  param.group = param.group.group
+                } else {
+                  param.group = 'main'
+                }
+              }
+              
+              // Also check category
+              if (param.category && typeof param.category === 'object') {
+                console.warn(`FIXING: Parameter ${key} has category as object:`, param.category)
+                if (param.category.category && typeof param.category.category === 'string') {
+                  param.category = param.category.category
+                } else {
+                  param.category = 'main'
+                }
+              }
+            }
+          })
           
         } catch (evalError) {
           console.warn(`Failed to evaluate parameters object for ${templateId}, falling back to regex parsing:`, evalError)

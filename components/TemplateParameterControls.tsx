@@ -112,11 +112,15 @@ export default function TemplateParameterControls({
               onChange={(e) => handleParameterChange(key, e.target.value)}
               className="w-full px-2 py-1 text-xs bg-white/5 border border-white/10 rounded text-white/90 focus:outline-none focus:border-blue-400/50"
             >
-              {paramDef.options.map((option: any) => (
-                <option key={option.value} value={option.value} className="bg-gray-900">
-                  {option.label}
-                </option>
-              ))}
+              {paramDef.options.map((option: any, index: number) => {
+                const optionValue = typeof option === 'string' ? option : option.value;
+                const optionLabel = typeof option === 'string' ? option : option.label;
+                return (
+                  <option key={`${key}-${optionValue}-${index}`} value={optionValue} className="bg-gray-900">
+                    {optionLabel}
+                  </option>
+                );
+              })}
             </select>
           </div>
         );
@@ -169,11 +173,21 @@ export default function TemplateParameterControls({
     };
 
     Object.entries(templateDefinition.parameters).forEach(([key, param]) => {
-      const category = (param as any).category || 'main';
+      // Ensure we're working with the parameter object, not nested objects
+      const paramObj = param as any;
+      
+      // Safely extract the group/category, handling nested objects
+      let category = 'main';
+      if (paramObj.group && typeof paramObj.group === 'string') {
+        category = paramObj.group;
+      } else if (paramObj.category && typeof paramObj.category === 'string') {
+        category = paramObj.category;
+      }
+      
       if (!groups[category]) {
         groups[category] = [];
       }
-      groups[category].push([key, param]);
+      groups[category].push([key, paramObj]);
     });
 
     return groups;
@@ -209,21 +223,25 @@ export default function TemplateParameterControls({
       </h3>
       
       <div className="space-y-3">
-        {Object.entries(parameterGroups).map(([category, params]) => (
-          <div key={category} className="bg-white/[0.015] border border-white/[0.04] rounded-lg overflow-hidden">
-            <button
-              onClick={() => toggleSection(category)}
-              className="w-full px-3 py-2 flex items-center justify-between text-xs font-medium text-white/70 hover:bg-white/[0.02] transition-colors"
-            >
-              <span className="capitalize">{category === 'main' ? 'General' : category}</span>
-              {expandedSections.has(category) ? (
+        {Object.entries(parameterGroups).map(([category, params]) => {
+          // Ensure category is always a string
+          const safeCategory = String(category);
+          
+          return (
+            <div key={safeCategory} className="bg-white/[0.015] border border-white/[0.04] rounded-lg overflow-hidden">
+              <button
+                onClick={() => toggleSection(safeCategory)}
+                className="w-full px-3 py-2 flex items-center justify-between text-xs font-medium text-white/70 hover:bg-white/[0.02] transition-colors"
+              >
+                <span className="capitalize">{safeCategory === 'main' ? 'General' : safeCategory}</span>
+              {expandedSections.has(safeCategory) ? (
                 <ChevronDown size={14} />
               ) : (
                 <ChevronRight size={14} />
               )}
             </button>
             
-            {expandedSections.has(category) && (
+            {expandedSections.has(safeCategory) && (
               <div className="px-3 py-3 space-y-4 border-t border-white/[0.04]">
                 {params.map(([key, param]) => (
                   <div key={key}>
@@ -233,7 +251,8 @@ export default function TemplateParameterControls({
               </div>
             )}
           </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
