@@ -18,7 +18,7 @@ const templateFiles = [
   'wordmark', 'letter-mark',
   'prism', 'circles', 'triangles', 'golden-circle', 'minimal-shape', 'crystal-lattice',
   'neon-glow', 'organic-bark', 'sophisticated-strokes',
-  'tech-tower', 'exploded-tech-stack', 'data-platform-stack', 'data-platform-test', 'isometric-wordmark', 'isometric-wordmark-simple', 'isometric-wordmark-threejs', 'isometric-wordmark-interactive',
+  'tech-tower', 'exploded-tech-stack', 'data-platform-stack', 'data-platform-test', 'isometric-wordmark',
   'simple-test'
 ];
 
