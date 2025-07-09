@@ -7,7 +7,7 @@ import html2canvas from 'html2canvas';
 import { generateJSVisualization } from '@/lib/js-visualization-utils';
 import { getAllJSTemplates } from '@/lib/js-template-registry';
 import TargetOverlay from '@/components/TargetOverlay';
-import ParameterEditor from '@/components/ParameterEditor';
+import TemplateParameterControls from '@/components/TemplateParameterControls';
 import { ZoomIn, ZoomOut, Home, Search } from 'lucide-react';
 
 // Logo rendering component with pan/zoom for the spec sheet
@@ -927,6 +927,28 @@ export default function SpecSheetPage() {
         return;
       }
       
+      // Get precise coordinates of the LogoCanvas container
+      const logoCanvasContainer = document.querySelector('[data-testid="logo-canvas-container"]') || 
+                                 document.querySelector('.logo-preview') ||
+                                 document.querySelector('canvas')?.parentElement;
+      
+      let previewBounds = { x: 0, y: 0, width: 400, height: 400 }; // fallback
+      
+      if (logoCanvasContainer) {
+        const containerRect = logoCanvasContainer.getBoundingClientRect();
+        const specRect = specDiv.getBoundingClientRect();
+        
+        // Calculate precise position relative to the spec div
+        previewBounds = {
+          x: containerRect.left - specRect.left,
+          y: containerRect.top - specRect.top,
+          width: containerRect.width,
+          height: containerRect.height
+        };
+        
+        console.log('🎯 Precise preview bounds:', previewBounds);
+      }
+      
       // Use html2canvas to capture the UI elements
       const htmlCanvas = await html2canvas(specDiv, {
         backgroundColor: '#0f0f23',
@@ -959,13 +981,11 @@ export default function SpecSheetPage() {
         // First, draw the HTML UI as the base
         ctx.drawImage(htmlCanvas, 0, 0);
         
-        // Then overlay the canvas content in the correct position
-        // Find the preview area within the HTML layout and position canvas there
-        // Approximate position based on the layout - adjust these values as needed
-        const previewX = htmlCanvas.width * 0.38; // Roughly where preview area starts
-        const previewY = htmlCanvas.height * 0.12; // Top of preview area
-        const previewWidth = htmlCanvas.width * 0.35; // Width of preview area
-        const previewHeight = htmlCanvas.height * 0.76; // Height of preview area
+        // Use precise coordinates instead of percentages
+        const previewX = previewBounds.x;
+        const previewY = previewBounds.y;
+        const previewWidth = previewBounds.width;
+        const previewHeight = previewBounds.height;
         
         // Scale and center the canvas content within the preview area
         const canvasAspect = mainCanvas.width / mainCanvas.height;
@@ -1041,6 +1061,28 @@ export default function SpecSheetPage() {
         return;
       }
       
+      // Get precise coordinates of the LogoCanvas container
+      const logoCanvasContainer = document.querySelector('[data-testid="logo-canvas-container"]') || 
+                                 document.querySelector('.logo-preview') ||
+                                 document.querySelector('canvas')?.parentElement;
+      
+      let previewBounds = { x: 0, y: 0, width: 400, height: 400 }; // fallback
+      
+      if (logoCanvasContainer) {
+        const containerRect = logoCanvasContainer.getBoundingClientRect();
+        const specRect = specDiv.getBoundingClientRect();
+        
+        // Calculate precise position relative to the spec div
+        previewBounds = {
+          x: containerRect.left - specRect.left,
+          y: containerRect.top - specRect.top,
+          width: containerRect.width,
+          height: containerRect.height
+        };
+        
+        console.log('🎯 Precise preview bounds:', previewBounds);
+      }
+      
       // Use html2canvas to capture the UI elements
       const htmlCanvas = await html2canvas(specDiv, {
         backgroundColor: '#0f0f23',
@@ -1070,11 +1112,11 @@ export default function SpecSheetPage() {
         // First, draw the HTML UI as the base
         ctx.drawImage(htmlCanvas, 0, 0);
         
-        // Then overlay the canvas content in the correct position
-        const previewX = htmlCanvas.width * 0.38; // Roughly where preview area starts
-        const previewY = htmlCanvas.height * 0.12; // Top of preview area
-        const previewWidth = htmlCanvas.width * 0.35; // Width of preview area
-        const previewHeight = htmlCanvas.height * 0.76; // Height of preview area
+        // Use precise coordinates instead of percentages
+        const previewX = previewBounds.x;
+        const previewY = previewBounds.y;
+        const previewWidth = previewBounds.width;
+        const previewHeight = previewBounds.height;
         
         // Scale and center the canvas content within the preview area
         const canvasAspect = mainCanvas.width / mainCanvas.height;
@@ -1576,10 +1618,10 @@ export default function SpecSheetPage() {
 
                 {/* Parameters */}
                 <div className="my-6">
-                  <ParameterEditor
+                  <TemplateParameterControls
+                    templateId={selectedTemplateId}
                     parameters={currentParameters}
                     onChange={setCurrentParameters}
-                    templateId={selectedTemplateId}
                   />
                 </div>
 

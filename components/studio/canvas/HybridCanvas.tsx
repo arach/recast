@@ -13,24 +13,38 @@ interface LogoCanvasProps {
   width: number
   height: number
   currentTime?: number
+  zoom?: number
 }
 
 // Pure rendering component - no interaction logic
 // Note: React.memo might prevent re-renders when templateId changes
-const LogoCanvas = React.memo(function LogoCanvas({ id, templateId, parameters, width, height, currentTime = 0 }: LogoCanvasProps) {
+const LogoCanvas = React.memo(function LogoCanvas({ id, templateId, parameters, width, height, currentTime = 0, zoom = 1 }: LogoCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
     
-    const ctx = canvas.getContext('2d')
+    const ctx = canvas.getContext('2d', { alpha: false })
     if (!ctx) return
     
-    // Clear canvas
-    ctx.clearRect(0, 0, width, height)
+    // Use device pixel ratio for sharper rendering on high DPI displays
+    const dpr = window.devicePixelRatio || 1
+    const scaledWidth = width * dpr
+    const scaledHeight = height * dpr
     
-    // Generate and render the actual logo
+    // Set actual canvas size accounting for device pixel ratio
+    canvas.width = scaledWidth
+    canvas.height = scaledHeight
+    
+    // Scale the context to match device pixel ratio
+    ctx.scale(dpr, dpr)
+    
+    // Clear canvas with white background
+    ctx.fillStyle = 'white'
+    ctx.fillRect(0, 0, width, height)
+    
+    // Generate and render the logo
     if (templateId) {
       generateJSVisualization(ctx, templateId, parameters, currentTime, width, height)
     } else {
@@ -44,14 +58,18 @@ const LogoCanvas = React.memo(function LogoCanvas({ id, templateId, parameters, 
       ctx.textBaseline = 'middle'
       ctx.fillText('No template selected', width / 2, height / 2)
     }
-  }, [id, templateId, parameters, width, height, currentTime])
+  }, [id, templateId, parameters, width, height, currentTime, zoom])
   
   return (
     <canvas 
       ref={canvasRef} 
-      width={width} 
-      height={height}
-      style={{ display: 'block' }}
+      style={{ 
+        display: 'block',
+        width: '600px',
+        height: '600px',
+        imageRendering: '-webkit-optimize-contrast',
+        WebkitFontSmoothing: 'antialiased'
+      }}
     />
   )
 })
@@ -354,13 +372,14 @@ export function HybridCanvas({
               style={{ pointerEvents: 'none' }}
             >
               <LogoCanvas
-                key={`${logo.id}-${logo.templateId}`}
+                key={`${logo.id}-${logo.templateId}-${zoom}`}
                 id={logo.id}
                 templateId={logo.templateId}
                 parameters={logo.parameters}
-                width={600}
-                height={600}
+                width={Math.round(600 * Math.max(1, zoom))}
+                height={Math.round(600 * Math.max(1, zoom))}
                 currentTime={currentTime}
+                zoom={zoom}
               />
             </foreignObject>
             )}

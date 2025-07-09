@@ -51,6 +51,16 @@ export function TemplateSelectorModule() {
     if (templateId && currentLogo && currentSelectedLogoId) {
       const template = availableTemplates.find(t => t.id === templateId)
       if (template) {
+        // Extract default values from template parameters
+        const defaultParams: Record<string, any> = {}
+        if (template.parameters) {
+          Object.entries(template.parameters).forEach(([key, param]: [string, any]) => {
+            if (param.default !== undefined) {
+              defaultParams[key] = param.default
+            }
+          })
+        }
+        
         updateLogo(currentSelectedLogoId, {
           templateId: template.id,
           templateName: template.name,
@@ -59,7 +69,7 @@ export function TemplateSelectorModule() {
             ...currentLogo.parameters,
             custom: {
               ...currentLogo.parameters.custom,
-              ...template.defaultParams
+              ...defaultParams
             }
           }
         })

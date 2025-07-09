@@ -12,69 +12,99 @@ export interface JSTemplateInfo {
   parameters?: any
 }
 
-// Our JS templates
-const JS_TEMPLATES: JSTemplateInfo[] = [
-  // Generative
-  { id: 'wave-bars', name: '🌊 Wave Bars', description: 'Dynamic wave patterns with customizable bar styles', category: 'generative' },
-  { id: 'audio-bars', name: '🎵 Audio Bars', description: 'Animated equalizer-style bars', category: 'generative' },
-  { id: 'liquid-flow', name: '💧 Liquid Flow', description: 'Fluid dynamics simulation with color gradients', category: 'generative' },
-  { id: 'network-constellation', name: '🌐 Network Constellation', description: 'Connected nodes with dynamic particles', category: 'generative' },
-  { id: 'pulse-spotify', name: '🎧 Pulse Spotify', description: 'Pulsing circles with orbital elements', category: 'generative' },
-  { id: 'quantum-field', name: '⚛️ Quantum Field', description: 'Quantum mechanics visualization with wave functions', category: 'generative' },
+// Template files list - this could be auto-discovered in the future
+const templateFiles = [
+  'wave-bars', 'audio-bars', 'liquid-flow', 'network-constellation', 'pulse-spotify', 'quantum-field',
+  'wordmark', 'letter-mark',
+  'prism', 'circles', 'triangles', 'golden-circle', 'minimal-shape', 'crystal-lattice',
+  'neon-glow', 'organic-bark', 'sophisticated-strokes',
+  'tech-tower', 'exploded-tech-stack', 'data-platform-stack', 'data-platform-test', 'isometric-wordmark',
+  'simple-test'
+];
+
+// Auto-discover templates from the templates-js directory
+async function discoverTemplates(): Promise<JSTemplateInfo[]> {
+  const templates: JSTemplateInfo[] = [];
   
-  // Typography
-  { id: 'wordmark', name: '✏️ Wordmark', description: 'Text-based logo with animations', category: 'typography' },
-  { id: 'letter-mark', name: '🔤 Letter Mark', description: 'Single or multi-letter logos with containers', category: 'typography' },
+  for (const templateId of templateFiles) {
+    try {
+      const template = await loadJSTemplate(templateId);
+      if (template?.metadata) {
+        templates.push({
+          id: templateId,
+          name: template.metadata.name || templateId,
+          description: template.metadata.description || 'No description available',
+          category: template.metadata.category || 'uncategorized',
+          parameters: template.parameters
+        });
+      }
+    } catch (error) {
+      console.warn(`Failed to load template ${templateId}:`, error);
+      // Still add the template with basic info so it doesn't disappear
+      templates.push({
+        id: templateId,
+        name: templateId,
+        description: 'Error loading template metadata',
+        category: 'error',
+        parameters: {}
+      });
+    }
+  }
   
-  // Geometric
-  { id: 'prism', name: '💎 Prism', description: '3D isometric geometric shapes', category: 'geometric' },
-  { id: 'circles', name: '⭕ Circles', description: 'Pulsing circles, orbital patterns, and nested rings', category: 'geometric' },
-  { id: 'triangles', name: '🔺 Triangles', description: 'Spinning triangles, constellation patterns, and geometric formations', category: 'geometric' },
-  { id: 'golden-circle', name: '🟡 Golden Circle', description: 'Golden ratio based circular designs', category: 'geometric' },
-  { id: 'minimal-shape', name: '⬜ Minimal Shape', description: 'Simple geometric shapes with clean aesthetics', category: 'geometric' },
-  { id: 'crystal-lattice', name: '💠 Crystal Lattice', description: 'Crystalline structures with light refraction', category: 'geometric' },
-  
-  // Artistic
-  { id: 'neon-glow', name: '✨ Neon Glow', description: 'Glowing neon effects with electric pulses', category: 'artistic' },
-  { id: 'organic-bark', name: '🌳 Organic Bark', description: 'Natural wood textures with growth patterns', category: 'artistic' },
-  { id: 'sophisticated-strokes', name: '🎨 Sophisticated Strokes', description: 'Artistic brush strokes with calligraphy effects', category: 'artistic' },
-  
-  // Isometric
-  { id: 'tech-tower', name: '🏢 Tech Tower', description: 'Isometric tech building with animated glowing windows', category: 'isometric' },
-  { id: 'exploded-tech-stack', name: '🏗️ Exploded Tech Stack', description: 'Multi-layer architecture visualization with animated layer separation', category: 'isometric' },
-  { id: 'data-platform-stack', name: '📊 Data Platform Stack', description: 'Animated data platform architecture inspired by modern analytics stacks', category: 'isometric' },
-  { id: 'data-platform-test', name: '📊 Data Platform Test', description: 'Simple test template to debug isometric utilities', category: 'isometric' },
-  { id: 'simple-test', name: '⚡ Simple Test', description: 'Minimal test template with no parameters', category: 'test' }
-]
+  return templates;
+}
+
+// Cached templates - cleared when templates change
+let cachedTemplates: JSTemplateInfo[] | null = null;
+
+// Clear cache when needed (for development)
+export function clearTemplateCache() {
+  cachedTemplates = null;
+}
 
 export async function getAllJSTemplates(): Promise<JSTemplateInfo[]> {
+  // Use cached templates if available
+  if (cachedTemplates) {
+    return cachedTemplates;
+  }
+  
   // For server-side, load parameters from template modules
   if (typeof window === 'undefined') {
     const templatesWithParams = await Promise.all(
-      JS_TEMPLATES.map(async (template) => {
+      templateFiles.map(async (templateId) => {
         try {
           const path = await import('path');
-          const templatePath = path.default.join(process.cwd(), 'templates-js', `${template.id}.js`);
+          const templatePath = path.default.join(process.cwd(), 'templates-js', `${templateId}.js`);
           // Dynamic import the template module to get parameters and metadata
           const templateModule = await import(templatePath);
           return {
-            ...template,
-            parameters: templateModule.parameters || {},
-            name: templateModule.metadata?.name || template.name,
-            description: templateModule.metadata?.description || template.description,
-            category: templateModule.metadata?.category || template.category
+            id: templateId,
+            name: templateModule.metadata?.name || templateId,
+            description: templateModule.metadata?.description || 'No description available',
+            category: templateModule.metadata?.category || 'uncategorized',
+            parameters: templateModule.parameters || {}
           };
         } catch (error) {
-          console.warn(`Failed to load template module for ${template.id}:`, error);
-          return template;
+          console.warn(`Failed to load template module for ${templateId}:`, error);
+          return {
+            id: templateId,
+            name: templateId,
+            description: 'Error loading template',
+            category: 'error',
+            parameters: {}
+          };
         }
       })
     );
+    
+    // Cache the results
+    cachedTemplates = templatesWithParams;
     return templatesWithParams;
   }
   
-  // For client-side, return basic info
-  return JS_TEMPLATES;
+  // For client-side, discover templates dynamically
+  cachedTemplates = await discoverTemplates();
+  return cachedTemplates;
 }
 
 export async function loadJSTemplate(templateId: string) {
@@ -118,19 +148,23 @@ export async function loadJSTemplate(templateId: string) {
             }),
             toggle: (def: any, label?: string, opts = {}) => ({ 
               type: "toggle", default: def, label, ...opts 
+            }),
+            text: (def: any, label?: string, opts = {}) => ({ 
+              type: "text", default: def, label, ...opts 
             })
           }
           
           // Create function to evaluate the parameters object
           const evalFunction = new Function(
-            'slider', 'select', 'toggle',
+            'slider', 'select', 'toggle', 'text',
             `return ${paramText}`
           )
           
           parameters = evalFunction(
             helperFunctions.slider,
             helperFunctions.select, 
-            helperFunctions.toggle
+            helperFunctions.toggle,
+            helperFunctions.text
           )
           
         } catch (evalError) {

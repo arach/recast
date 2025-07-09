@@ -40,9 +40,15 @@ export function UnifiedParametersTool() {
   // Load JS template parameters if using a JS template
   useEffect(() => {
     if (logo.templateId) {
+      console.log('Loading parameters for template:', logo.templateId);
       loadJSTemplateParameters(logo.templateId).then(params => {
+        console.log('Loaded parameters:', params);
         setJsParameters(params);
+      }).catch(error => {
+        console.error('Error loading parameters:', error);
       });
+    } else {
+      setJsParameters(null);
     }
   }, [logo.templateId]);
 
@@ -142,6 +148,14 @@ export function UnifiedParametersTool() {
   const templateParams = Object.entries(templateSpecificParams).filter(([key]) => 
     !styleParameterNames.includes(key)
   );
+  
+  // Group parameters by their group property
+  const groupedParams = templateParams.reduce((acc, [key, param]) => {
+    const group = (param as any).group || 'default';
+    if (!acc[group]) acc[group] = [];
+    acc[group].push([key, param]);
+    return acc;
+  }, {} as Record<string, Array<[string, JSParameterDefinition]>>);
 
   // Check which core parameters are actually used by this template
   const usedCoreParams = coreParameters.filter(param => {
@@ -160,9 +174,53 @@ export function UnifiedParametersTool() {
             <h3 className="text-xs font-medium text-gray-700">Template Parameters</h3>
           </div>
           
-          <div className="grid grid-cols-2 gap-x-3 gap-y-3">
-            {templateParams.map(([key, param]) => {
-              const value = customParams[key] ?? param.default ?? 0;
+          {/* Render grouped parameters */}
+          {Object.entries(groupedParams).map(([groupName, params]) => {
+            // Special handling for Platform Size group - render in single row
+            if (groupName === 'Platform Size') {
+              return (
+                <div key={groupName} className="space-y-1">
+                  <div className="text-xs font-medium text-gray-600">{groupName}</div>
+                  <div className="flex items-center gap-3">
+                    {params.map(([key, param]) => {
+                      const value = customParams[key] ?? param.default ?? 0;
+                      return (
+                        <div key={key} className="flex-1 space-y-1">
+                          <Label className="text-xs text-gray-600">
+                            {param.label || key}
+                          </Label>
+                          <div className="flex items-center gap-2">
+                            <Slider
+                              value={[typeof value === 'number' ? value : 0]}
+                              onValueChange={([v]) => updateCustom({ [key]: v })}
+                              min={param.min || 0}
+                              max={param.max || 100}
+                              step={param.step || 1}
+                              className="flex-1"
+                            />
+                            <span className="text-xs text-gray-500 w-10 text-right">
+                              {typeof value === 'number' ? value.toFixed(0) : value}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            }
+            
+            // Regular groups - render in 2-column grid
+            return (
+              <div key={groupName} className="space-y-2">
+                {groupName !== 'default' && (
+                  <div className="text-xs font-medium text-gray-600 mt-2">
+                    {groupName}
+                  </div>
+                )}
+                <div className="grid grid-cols-2 gap-x-3 gap-y-3">
+                  {params.map(([key, param]) => {
+                    const value = customParams[key] ?? param.default ?? 0;
 
               return (
                 <div key={key} className="space-y-1">
@@ -214,6 +272,33 @@ export function UnifiedParametersTool() {
                       onCheckedChange={(checked) => updateCustom({ [key]: checked })}
                     />
                   )}
+
+                  {param.type === 'text' && (
+                    <input
+                      type="text"
+                      value={String(value || '')}
+                      onChange={(e) => updateCustom({ [key]: e.target.value })}
+                      placeholder={param.placeholder}
+                      className="w-full px-2 py-1 text-xs border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    />
+                  )}
+
+                  {param.type === 'color' && (
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="color"
+                        value={String(value || '#000000')}
+                        onChange={(e) => updateCustom({ [key]: e.target.value })}
+                        className="w-8 h-8 rounded border border-gray-200 cursor-pointer"
+                      />
+                      <input
+                        type="text"
+                        value={String(value || '#000000')}
+                        onChange={(e) => updateCustom({ [key]: e.target.value })}
+                        className="flex-1 px-2 py-1 text-xs font-mono border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      />
+                    </div>
+                  )}
                   
                   {/* Handle new format with range and options */}
                   {!param.type && param.range && (
@@ -251,15 +336,18 @@ export function UnifiedParametersTool() {
                   )}
                 </div>
               );
-            })}
-          </div>
+                  })}
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
 
       {/* No parameters message */}
-      {templateParams.length === 0 && (
+      {templateParams.length === 0 && logo.templateId && (
         <div className="text-sm text-gray-500 text-center py-4">
-          Loading template parameters...
+          {jsParameters === null ? 'Loading template parameters...' : 'No template-specific parameters'}
         </div>
       )}
     </div>
