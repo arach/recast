@@ -97,7 +97,8 @@ function draw(ctx, width, height, params, time, utils) {
           p.textShadow * baseScale,
           maxTextWidth,
           utils,
-          isoAngle
+          isoAngle,
+          p.textOrientation
         );
         break;
         
@@ -116,7 +117,8 @@ function draw(ctx, width, height, params, time, utils) {
           maxTextWidth,
           platformDepth * 0.8,
           utils,
-          isoAngle
+          isoAngle,
+          p.textOrientation
         );
         break;
         
@@ -134,7 +136,8 @@ function draw(ctx, width, height, params, time, utils) {
           p.textShadow * baseScale,
           platformDepth * 0.8,
           utils,
-          isoAngle
+          isoAngle,
+          p.textOrientation
         );
         break;
     }
@@ -384,7 +387,7 @@ function drawRoundedRightFace(ctx, x, y, z, depth, height, radius, project) {
 /**
  * Draw wordmark on the front face (facing viewer in isometric view)
  */
-function drawFrontFaceWordmark(ctx, text, x, y, z, size, color, style, shadow, maxWidth, utils, isoAngle) {
+function drawFrontFaceWordmark(ctx, text, x, y, z, size, color, style, shadow, maxWidth, utils, isoAngle, orientation) {
   const project = (px, py, pz) => ({
     x: (px - py) * Math.cos(isoAngle),
     y: (px + py) * Math.sin(isoAngle) - pz
@@ -402,6 +405,13 @@ function drawFrontFaceWordmark(ctx, text, x, y, z, size, color, style, shadow, m
   const textPos = project(x, y, z);
   
   ctx.translate(textPos.x, textPos.y);
+  
+  // Apply rotation based on orientation
+  if (orientation === 'vertical') {
+    ctx.rotate(-Math.PI / 2);
+  } else if (orientation === 'diagonal') {
+    ctx.rotate(-Math.PI / 4);
+  }
   
   // Draw text shadow if enabled
   if (shadow > 0) {
@@ -426,7 +436,7 @@ function drawFrontFaceWordmark(ctx, text, x, y, z, size, color, style, shadow, m
 /**
  * Draw wordmark on the top face (horizontal in isometric view)
  */
-function drawTopFaceWordmark(ctx, text, x, y, z, size, color, style, shadow, maxWidth, maxHeight, utils, isoAngle) {
+function drawTopFaceWordmark(ctx, text, x, y, z, size, color, style, shadow, maxWidth, maxHeight, utils, isoAngle, orientation) {
   const project = (px, py, pz) => ({
     x: (px - py) * Math.cos(isoAngle),
     y: (px + py) * Math.sin(isoAngle) - pz
@@ -450,6 +460,13 @@ function drawTopFaceWordmark(ctx, text, x, y, z, size, color, style, shadow, max
   const sin = Math.sin(isoAngle);
   ctx.transform(cos, sin, -cos, sin, 0, 0);
   
+  // Apply additional rotation based on orientation
+  if (orientation === 'vertical') {
+    ctx.rotate(Math.PI / 2);
+  } else if (orientation === 'diagonal') {
+    ctx.rotate(Math.PI / 4);
+  }
+  
   // Draw text shadow if enabled
   if (shadow > 0) {
     ctx.globalAlpha = 0.3;
@@ -468,7 +485,7 @@ function drawTopFaceWordmark(ctx, text, x, y, z, size, color, style, shadow, max
 /**
  * Draw wordmark on the side face (right side in isometric view)
  */
-function drawSideFaceWordmark(ctx, text, x, y, z, size, color, style, shadow, maxDepth, utils, isoAngle) {
+function drawSideFaceWordmark(ctx, text, x, y, z, size, color, style, shadow, maxDepth, utils, isoAngle, orientation) {
   const project = (px, py, pz) => ({
     x: (px - py) * Math.cos(isoAngle),
     y: (px + py) * Math.sin(isoAngle) - pz
@@ -487,9 +504,16 @@ function drawSideFaceWordmark(ctx, text, x, y, z, size, color, style, shadow, ma
   ctx.translate(textPos.x, textPos.y);
   
   // Apply transform for side face
-  // Rotate text 90 degrees counter-clockwise so it reads horizontally
-  // when you tilt your head to the right
-  ctx.rotate(-Math.PI / 2);
+  // Default is horizontal (readable when tilting head right)
+  if (orientation === 'horizontal') {
+    // Rotate text 90 degrees counter-clockwise so it reads horizontally
+    // when you tilt your head to the right
+    ctx.rotate(-Math.PI / 2);
+  } else if (orientation === 'diagonal') {
+    // 45 degree angle
+    ctx.rotate(-Math.PI / 4);
+  }
+  // For vertical orientation, no rotation needed as text naturally goes up-down
   
   // Then apply the isometric transform for the side face
   const sin = Math.sin(isoAngle);
@@ -562,30 +586,37 @@ const toggle = (def, label, opts = {}) => ({
 
 // Parameter definitions
 export const parameters = {
-  // Wordmark
-  wordmark: text('ReFlow', 'Wordmark Text'),
-  wordmarkFace: select('front', [
-    { value: 'front', label: 'Front Face' },
-    { value: 'top', label: 'Top Face' },
-    { value: 'side', label: 'Side Face' }
-  ], 'Wordmark Position'),
-  textSize: slider(24, 12, 60, 2, 'Text Size', 'px'),
-  textColor: { type: "color", default: '#ffffff', label: 'Text Color' },
+  // Text Content
+  wordmark: text('ReFlow', 'Wordmark Text', { group: 'Text Content' }),
+  textSize: slider(24, 12, 60, 2, 'Text Size', 'px', { group: 'Text Content' }),
+  textColor: { type: "color", default: '#ffffff', label: 'Text Color', group: 'Text Content' },
   textStyle: select('bold', [
     { value: 'modern', label: 'Modern' },
     { value: 'bold', label: 'Bold' },
     { value: 'elegant', label: 'Elegant' },
     { value: 'minimal', label: 'Minimal' }
-  ], 'Text Style'),
-  textShadow: slider(2, 0, 8, 1, 'Text Shadow', 'px'),
+  ], 'Text Style', { group: 'Text Content' }),
+  textShadow: slider(2, 0, 8, 1, 'Text Shadow', 'px', { group: 'Text Content' }),
+  
+  // Face & Text Orientation
+  wordmarkFace: select('front', [
+    { value: 'front', label: 'Front Face' },
+    { value: 'top', label: 'Top Face' },
+    { value: 'side', label: 'Side Face' }
+  ], 'Wordmark Face', { group: 'Face & Text Orientation' }),
+  textOrientation: select('horizontal', [
+    { value: 'horizontal', label: 'Horizontal' },
+    { value: 'vertical', label: 'Vertical' },
+    { value: 'diagonal', label: 'Diagonal' }
+  ], 'Text Orientation', { group: 'Face & Text Orientation' }),
+  cornerRadius: slider(12, 0, 50, 2, 'Corner Radius', 'px', { group: 'Face & Text Orientation' }),
   
   // Platform dimensions - grouped together
-  platformWidth: slider(100, 1, 300, 1, 'Width', 'px', { group: 'Platform Size' }),
-  platformDepth: slider(40, 1, 80, 1, 'Depth', 'px', { group: 'Platform Size' }),
-  platformHeight: slider(120, 1, 200, 1, 'Height', 'px', { group: 'Platform Size' }),
+  platformWidth: slider(100, 1, 800, 1, 'Width', 'px', { group: 'Platform Size' }),
+  platformDepth: slider(40, 1, 400, 1, 'Depth', 'px', { group: 'Platform Size' }),
+  platformHeight: slider(120, 1, 600, 1, 'Height', 'px', { group: 'Platform Size' }),
   
-  // Platform styling
-  cornerRadius: slider(12, 0, 25, 2, 'Corner Radius', 'px'),
+  // Platform Style
   colorScheme: select('blue', [
     { value: 'monochrome', label: '⚫ Monochrome' },
     { value: 'blue', label: '🔵 Blue' },
@@ -593,20 +624,20 @@ export const parameters = {
     { value: 'green', label: '🟢 Green' },
     { value: 'warm', label: '🔴 Warm' },
     { value: 'cool', label: '🔵 Cool' }
-  ], 'Color Scheme'),
+  ], 'Color Scheme', { group: 'Platform Style' }),
+  lighting: toggle(true, 'Enable Lighting', { group: 'Platform Style' }),
   
   // Layers
-  layerCount: slider(1, 1, 3, 1, 'Layer Count'),
-  layerSpacing: slider(20, 10, 40, 2, 'Layer Spacing', 'px'),
-  layerTaper: slider(0.08, 0, 0.2, 0.02, 'Layer Taper'),
+  layerCount: slider(1, 1, 3, 1, 'Layer Count', { group: 'Layers' }),
+  layerSpacing: slider(20, 10, 40, 2, 'Layer Spacing', 'px', { group: 'Layers' }),
+  layerTaper: slider(0.08, 0, 0.2, 0.02, 'Layer Taper', { group: 'Layers' }),
   
   // Animation
-  animationSpeed: slider(0.3, 0, 1.5, 0.1, 'Animation Speed', 'x'),
-  breathingIntensity: slider(0.02, 0, 0.08, 0.01, 'Breathing Effect'),
+  animationSpeed: slider(0.3, 0, 1.5, 0.1, 'Animation Speed', 'x', { group: 'Animation' }),
+  breathingIntensity: slider(0.02, 0, 0.08, 0.01, 'Breathing Effect', { group: 'Animation' }),
   
   // View
-  perspective: slider(0, -20, 20, 2, 'View Angle', '°'),
-  lighting: toggle(true, 'Enable Lighting')
+  perspective: slider(0, -20, 20, 2, 'View Angle', '°', { group: 'View' })
 };
 
 // Template metadata

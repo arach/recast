@@ -176,10 +176,10 @@ export function UnifiedParametersTool() {
           
           {/* Render grouped parameters */}
           {Object.entries(groupedParams).map(([groupName, params]) => {
-            // Special handling for Platform Size group - render in single row without label
+            // Special handling for specific groups
             if (groupName === 'Platform Size') {
               return (
-                <div key={groupName} className="space-y-1">
+                <div key={groupName} className="space-y-1 pt-2">
                   <div className="flex items-center gap-3">
                     {params.map(([key, param]) => {
                       const value = customParams[key] ?? param.default ?? 0;
@@ -220,12 +220,106 @@ export function UnifiedParametersTool() {
               );
             }
             
+            // Special handling for Face & Text Orientation group
+            if (groupName === 'Face & Text Orientation') {
+              return (
+                <div key={groupName} className="space-y-2">
+                  <div className="flex items-center gap-2 pt-2 pb-1">
+                    <div className="flex-1 h-px bg-gray-200"></div>
+                    <div className="text-xs font-medium text-gray-500">{groupName}</div>
+                    <div className="flex-1 h-px bg-gray-200"></div>
+                  </div>
+                  <div className="space-y-3">
+                    {params.map(([key, param]) => {
+                      const value = customParams[key] ?? param.default ?? 0;
+                      
+                      // Render selects side by side
+                      if (param.type === 'select' && (key === 'wordmarkFace' || key === 'textOrientation')) {
+                        return null; // Will render these together below
+                      }
+                      
+                      // Render corner radius normally
+                      return (
+                        <div key={key} className="space-y-1">
+                          <Label className="text-xs font-medium text-gray-700">
+                            {param.label || key}
+                          </Label>
+                          <div className="flex items-center gap-2">
+                            <Slider
+                              value={[typeof value === 'number' ? value : 0]}
+                              onValueChange={([v]) => updateCustom({ [key]: v })}
+                              min={param.min || 0}
+                              max={param.max || 100}
+                              step={param.step || 1}
+                              className="flex-1"
+                            />
+                            <input
+                              type="number"
+                              value={typeof value === 'number' ? value : 0}
+                              onChange={(e) => {
+                                const v = parseFloat(e.target.value);
+                                if (!isNaN(v)) {
+                                  const min = param.min || 0;
+                                  const max = param.max || 100;
+                                  updateCustom({ [key]: Math.max(min, Math.min(max, v)) });
+                                }
+                              }}
+                              min={param.min || 0}
+                              max={param.max || 100}
+                              step={param.step || 1}
+                              className="w-14 px-2 py-1.5 text-xs text-center border border-gray-200 rounded"
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
+                    
+                    {/* Render the two selects side by side */}
+                    <div className="grid grid-cols-2 gap-3">
+                      {params.filter(([key, param]) => 
+                        param.type === 'select' && (key === 'wordmarkFace' || key === 'textOrientation')
+                      ).map(([key, param]) => {
+                        const value = customParams[key] ?? param.default ?? '';
+                        return (
+                          <div key={key} className="space-y-1">
+                            <Label className="text-xs font-medium text-gray-700">
+                              {param.label || key}
+                            </Label>
+                            <Select
+                              value={String(value)}
+                              onValueChange={(v) => updateCustom({ [key]: v })}
+                            >
+                              <SelectTrigger className="text-xs h-8">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {param.options?.map((option: any) => (
+                                  <SelectItem 
+                                    key={typeof option === 'string' ? option : option.value} 
+                                    value={typeof option === 'string' ? option : option.value}
+                                  >
+                                    {typeof option === 'string' ? option : option.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              );
+            }
+            
             // Regular groups - render in 2-column grid
             return (
               <div key={groupName} className="space-y-2">
                 {groupName !== 'default' && (
-                  <div className="text-xs font-medium text-gray-600 mt-2">
-                    {groupName}
+                  <div className="flex items-center gap-2 pt-2 pb-1">
+                    <div className="flex-1 h-px bg-gray-200"></div>
+                    <div className="text-xs font-medium text-gray-500">{groupName}</div>
+                    <div className="flex-1 h-px bg-gray-200"></div>
                   </div>
                 )}
                 <div className="grid grid-cols-2 gap-x-3 gap-y-3">
@@ -273,7 +367,7 @@ export function UnifiedParametersTool() {
                       value={String(value || '')}
                       onValueChange={(v) => updateCustom({ [key]: v })}
                     >
-                      <SelectTrigger className="text-xs">
+                      <SelectTrigger className="text-xs h-8">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -356,7 +450,7 @@ export function UnifiedParametersTool() {
                       value={String(value || '')}
                       onValueChange={(v) => updateCustom({ [key]: v })}
                     >
-                      <SelectTrigger className="text-xs">
+                      <SelectTrigger className="text-xs h-8">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
