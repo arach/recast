@@ -1,0 +1,33 @@
+{
+  "id": "canvas-Bdu3oBGY",
+  "name": "Canvas 7/9/2025",
+  "description": "1 logo",
+  "layout": "grid",
+  "logos": [
+    {
+      "id": "logo-0_Qq_AXt",
+      "templateId": "isometric-wordmark-threejs",
+      "parameters": {},
+      "position": {
+        "x": -4656.502192971656,
+        "y": 3616.054866532589
+      },
+      "size": {
+        "width": 180,
+        "height": 180
+      },
+      "metadata": {
+        "name": "Logo logo-4zdSLpi9"
+      }
+    }
+  ],
+  "settings": {},
+  "metadata": {
+    "createdAt": "2025-07-09T21:00:53.367Z",
+    "updatedAt": "2025-07-09T21:00:55.047Z",
+    "lastAccessedAt": "2025-07-09T21:31:11.509Z",
+    "isPublic": false
+  },
+  "createdAt": "2025-07-09T21:00:53.368Z",
+  "updatedAt": "2025-07-09T21:31:11.510Z"
+}

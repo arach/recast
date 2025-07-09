@@ -173,35 +173,57 @@ function createPlatformGroup(p, time, utils, THREE) {
   const animTime = time * p.animationSpeed;
   const breathingPhase = Math.sin(animTime * 0.8) * p.breathingIntensity * 0.1;
   
-  // Create layers
-  const layerCount = Math.floor(p.layerCount);
-  const layerSpacing = p.layerSpacing * scale;
+  // Create a single prism with wordmark
+  const layerColor = getLayerColor(p.colorScheme, 0, 1);
   
-  for (let i = 0; i < layerCount; i++) {
-    const layerScale = 1 - (i * p.layerTaper);
-    const layerBreathing = 1 + breathingPhase * (1 - i * 0.3);
+  // Debug logging
+  console.log('Creating prism with:', {
+    wordmark: p.wordmark,
+    wordmarkFace: p.wordmarkFace,
+    textColor: p.textColor,
+    textSize: p.textSize,
+    layerColor
+  });
+  
+  const prism = utils.threeUtils.createRoundedPrism(
+    prismWidth,
+    prismHeight,
+    prismDepth,
+    cornerRadius,
+    p.wordmark, // Always show wordmark
+    p,
+    layerColor
+  );
+  
+  prism.castShadow = true;
+  prism.receiveShadow = true;
+  
+  platformGroup.add(prism);
+  
+  // Optionally add more layers if requested
+  if (p.layerCount > 1) {
+    const layerSpacing = p.layerSpacing * scale;
     
-    // Get layer color
-    const layerColor = getLayerColor(p.colorScheme, i, layerCount);
-    
-    // Create prism with text only on top layer
-    const isTopLayer = i === layerCount - 1;
-    const prism = utils.threeUtils.createRoundedPrism(
-      prismWidth * layerScale,
-      prismHeight * layerScale,
-      prismDepth * layerScale,
-      cornerRadius * layerScale,
-      isTopLayer ? p.wordmark : null,
-      p,
-      layerColor
-    );
-    
-    prism.position.y = i * layerSpacing;
-    prism.scale.setScalar(layerBreathing);
-    prism.castShadow = true;
-    prism.receiveShadow = true;
-    
-    platformGroup.add(prism);
+    for (let i = 1; i < Math.floor(p.layerCount); i++) {
+      const layerScale = 1 - (i * p.layerTaper);
+      const layerColor = getLayerColor(p.colorScheme, i, p.layerCount);
+      
+      const layer = utils.threeUtils.createRoundedPrism(
+        prismWidth * layerScale,
+        prismHeight * layerScale,
+        prismDepth * layerScale,
+        cornerRadius * layerScale,
+        null, // No text on other layers
+        p,
+        layerColor
+      );
+      
+      layer.position.y = -i * layerSpacing; // Stack below
+      layer.castShadow = true;
+      layer.receiveShadow = true;
+      
+      platformGroup.add(layer);
+    }
   }
   
   // Base rotation

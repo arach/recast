@@ -140,6 +140,7 @@ export function createTextTexture(
   height = 512,
   params: any
 ): THREE.CanvasTexture {
+  console.log('Creating text texture for:', { text, width, height, textColor: params.textColor, textSize: params.textSize });
   const canvas = document.createElement('canvas');
   canvas.width = width;
   canvas.height = height;
@@ -148,9 +149,33 @@ export function createTextTexture(
   // Clear canvas
   ctx.clearRect(0, 0, width, height);
   
-  // Set font properties
-  const fontSize = Math.min(width, height) * 0.25;
-  ctx.font = `bold ${fontSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
+  // Add a colored background for debugging visibility
+  if (process.env.NODE_ENV === 'development') {
+    ctx.globalAlpha = 0.3;
+    ctx.fillStyle = 'red';
+    ctx.fillRect(0, 0, width, height);
+    ctx.globalAlpha = 1;
+  }
+  
+  // Calculate font size based on params.textSize
+  // Scale it relative to canvas size but respect the parameter
+  const baseFontSize = Math.min(width, height) * 0.2; // Increased from 0.15 to 0.2
+  const fontSize = baseFontSize * (params.textSize / 24); // 24 is the default size
+  
+  // Get font family from style
+  let fontFamily = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+  if (params.textStyle) {
+    const fontMap: Record<string, string> = {
+      'modern': 'Inter, system-ui, sans-serif',
+      'tech': 'JetBrains Mono, Consolas, monospace',
+      'elegant': 'Playfair Display, serif',
+      'bold': 'Montserrat, sans-serif',
+      'minimal': 'Inter, system-ui, sans-serif'
+    };
+    fontFamily = fontMap[params.textStyle] || fontFamily;
+  }
+  
+  ctx.font = `bold ${fontSize}px ${fontFamily}`;
   ctx.fillStyle = params.textColor || '#ffffff';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
@@ -237,39 +262,51 @@ export function createRoundedPrism(
   
   // Add text label if provided
   if (labelText && params.wordmarkFace) {
-    const labelWidth = width * 0.8;
-    const labelHeight = height * 0.8;
-    const label = createTextLabel(labelText, labelWidth, labelHeight, params);
+    console.log('Creating text label:', { labelText, wordmarkFace: params.wordmarkFace });
+    let labelWidth, labelHeight;
+    const label = new THREE.Group();
     
-    // Position label based on face selection
+    // Position and size label based on face selection
     switch (params.wordmarkFace) {
       case 'front':
-        label.position.z = depth / 2 + 0.01;
-        // No rotation needed for front face
+        // Front face: width x height
+        labelWidth = width * 0.9;
+        labelHeight = height * 0.9;
+        const frontText = createTextLabel(labelText, labelWidth, labelHeight, params);
+        frontText.position.z = depth / 2 + 0.01;
+        label.add(frontText);
         break;
-      case 'top':
-        label.position.y = height / 2 + 0.01;
-        label.rotation.x = -Math.PI / 2;
-        break;
+        
       case 'side':
-        label.position.x = width / 2 + 0.01;
-        label.rotation.y = Math.PI / 2;
+        // Side face: depth x height
+        labelWidth = depth * 0.9;
+        labelHeight = height * 0.9;
+        const sideText = createTextLabel(labelText, labelWidth, labelHeight, params);
+        sideText.position.x = width / 2 + 0.01;
+        sideText.rotation.y = Math.PI / 2;
+        label.add(sideText);
         break;
-    }
-    
-    // Apply text orientation after face rotation
-    if (params.textOrientation === 'rotated-90') {
-      if (params.wordmarkFace === 'top') {
-        label.rotation.z = Math.PI / 2;
-      } else {
-        label.rotation.z = -Math.PI / 2;
-      }
-    } else if (params.textOrientation === 'rotated-45') {
-      if (params.wordmarkFace === 'top') {
-        label.rotation.z = Math.PI / 4;
-      } else {
-        label.rotation.z = -Math.PI / 4;
-      }
+        
+      case 'top':
+        // Top face: width x depth
+        labelWidth = width * 0.9;
+        labelHeight = depth * 0.9;
+        const topText = createTextLabel(labelText, labelWidth, labelHeight, params);
+        topText.position.y = height / 2 + 0.01;
+        topText.rotation.x = -Math.PI / 2;
+        
+        // For top face, apply text orientation
+        if (params.textOrientation === 'rotated-90') {
+          // 90 degrees: perpendicular to length
+          topText.rotation.z = Math.PI / 2;
+        } else if (params.textOrientation === 'rotated-45') {
+          // 45 degrees: diagonal
+          topText.rotation.z = Math.PI / 4;
+        }
+        // else normal: along the length (no additional rotation)
+        
+        label.add(topText);
+        break;
     }
     
     group.add(label);
