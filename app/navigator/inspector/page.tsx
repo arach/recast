@@ -7,7 +7,6 @@ import html2canvas from 'html2canvas';
 import { generateJSVisualization } from '@/lib/js-visualization-utils';
 import { getAllJSTemplates } from '@/lib/js-template-registry';
 import TargetOverlay from '@/components/TargetOverlay';
-import TemplateParameterControls from '@/components/TemplateParameterControls';
 import { ZoomIn, ZoomOut, Home, Search } from 'lucide-react';
 
 // Logo rendering component with pan/zoom for the spec sheet
@@ -1619,18 +1618,22 @@ export default function SpecSheetPage() {
 
                 {/* Parameters */}
                 <div className="my-6">
-                  <TemplateParameterControls
-                    templateId={selectedTemplateId}
-                    parameters={selectedLogo?.jsParameters || {}}
-                    onChange={(newParams) => {
-                      if (selectedLogo) {
-                        updateLogo(selectedLogo.id, {
-                          ...selectedLogo,
-                          jsParameters: newParams
-                        });
-                      }
-                    }}
-                  />
+                  <div className="space-y-4">
+                    <h3 className="font-bold text-white/80 text-base mb-3 flex items-center gap-2">
+                      <span className="text-white/60">⚙️</span>
+                      Template Parameters
+                    </h3>
+                    <div className="bg-white/[0.015] border border-white/[0.04] rounded-lg p-4">
+                      <div className="font-mono text-xs text-white/80">
+                        <pre className="whitespace-pre-wrap break-words">
+                          {JSON.stringify(selectedLogo?.jsParameters || {}, null, 2)}
+                        </pre>
+                      </div>
+                      <div className="text-white/40 text-xs mt-3">
+                        Edit parameters in the studio for full control
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Metadata */}
